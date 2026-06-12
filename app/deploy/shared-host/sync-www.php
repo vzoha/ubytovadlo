@@ -1,16 +1,10 @@
 <?php
 
 /*
- * Dorovná DocumentRoot sdíleného hostingu (~/www) podle aktuálního buildu aplikace.
+ * This file is part of Ubytovadlo.
  *
- * Spouští se na serveru přes `composer deploy-www` z project rootu (~/src/app)
- * po `git pull` + `composer install --no-dev`. Dělá:
- *   1) zrcadlí public/ → ~/www (assets, bundles, robots, … KROMĚ index.php/.htaccess)
- *   2) nakopíruje deploy/shared-host/www-index.php → ~/www/index.php (shim)
- *   3) nakopíruje deploy/shared-host/htaccess     → ~/www/.htaccess
- *
- * Cíl ~/www se odvodí z umístění aplikace; lze přepsat env DEPLOY_WWW_DIR.
- * V dev prostředí (kde ~/www neexistuje) skript bezpečně skončí chybou.
+ * SPDX-License-Identifier: LicenseRef-FSL-1.1-ALv2
+ * SPDX-FileCopyrightText: 2026 Vojtěch Žoha
  */
 
 $projectRoot = dirname(__DIR__, 2);          // …/src/app
