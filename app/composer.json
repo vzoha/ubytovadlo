@@ -9,22 +9,22 @@
         "php": ">=8.2",
         "ext-ctype": "*",
         "ext-iconv": "*",
-        "doctrine/doctrine-bundle": "^3.2",
+        "doctrine/doctrine-bundle": "^3.2.4",
         "doctrine/doctrine-migrations-bundle": "^4.0",
-        "doctrine/orm": "^3.6",
-        "mpdf/mpdf": "^8.3",
-        "mpdf/qrcode": "^1.2",
-        "smalot/pdfparser": "^2.12",
+        "doctrine/orm": "^3.6.7",
+        "mpdf/mpdf": "^8.3.1",
+        "mpdf/qrcode": "^1.2.2",
+        "smalot/pdfparser": "^2.12.5",
         "symfony/asset": "7.4.*",
         "symfony/console": "7.4.*",
         "symfony/dotenv": "7.4.*",
-        "symfony/flex": "^2",
+        "symfony/flex": "^2.11",
         "symfony/form": "7.4.*",
         "symfony/framework-bundle": "7.4.*",
         "symfony/http-client": "7.4.*",
         "symfony/maker-bundle": "^1.67",
         "symfony/mime": "7.4.*",
-        "symfony/monolog-bundle": "^4.0",
+        "symfony/monolog-bundle": "^4.0.2",
         "symfony/runtime": "7.4.*",
         "symfony/security-bundle": "7.4.*",
         "symfony/twig-bundle": "7.4.*",
@@ -32,7 +32,7 @@
         "symfony/yaml": "7.4.*",
         "twig/extra-bundle": "^3.24",
         "webklex/php-imap": "^6.2",
-        "zbateson/mail-mime-parser": "^4.0"
+        "zbateson/mail-mime-parser": "^4.0.1"
     },
     "config": {
         "allow-plugins": {
@@ -86,12 +86,12 @@
         }
     },
     "require-dev": {
-        "friendsofphp/php-cs-fixer": "^3.95",
-        "phpstan/phpstan": "^2.1",
-        "phpstan/phpstan-doctrine": "^2.0",
-        "phpstan/phpstan-phpunit": "^2.0",
-        "phpstan/phpstan-symfony": "^2.0",
-        "phpunit/phpunit": "^13.1",
+        "friendsofphp/php-cs-fixer": "^3.95.5",
+        "phpstan/phpstan": "^2.2.2",
+        "phpstan/phpstan-doctrine": "^2.0.27",
+        "phpstan/phpstan-phpunit": "^2.0.16",
+        "phpstan/phpstan-symfony": "^2.0.19",
+        "phpunit/phpunit": "^13.2",
         "symfony/browser-kit": "7.4.*",
         "symfony/css-selector": "7.4.*"
     }
