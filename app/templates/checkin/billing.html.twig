@@ -1,0 +1,100 @@
+{% extends 'checkin/_base.html.twig' %}
+
+{% block body %}
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+            <a href="{{ path('checkin_index', {token: token}) }}" class="text-decoration-none small">← Zpět</a>
+            <h1 class="h3 mt-1 mb-3">Fakturační údaje</h1>
+            <p class="small text-muted mb-3">
+                Vyplňte, jen pokud chcete vystavit fakturu. Na firmu zadejte IČO —
+                název a adresu doplníme automaticky z rejstříku ARES.
+            </p>
+
+            {{ form_start(form) }}
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-12">{{ form_row(form.guestName) }}</div>
+
+                            <div class="col-md-5">
+                                {{ form_label(form.guestIco) }}
+                                <div class="input-group">
+                                    {{ form_widget(form.guestIco) }}
+                                    <button type="button" id="billing-ares-btn" class="btn btn-outline-secondary">Načíst z ARES</button>
+                                </div>
+                                <div id="billing-ares-status" class="form-text"></div>
+                            </div>
+                            <div class="col-md-7">{{ form_row(form.guestCompanyName) }}</div>
+                            <div class="col-md-6">{{ form_row(form.guestDic) }}</div>
+
+                            <div class="col-12">{{ form_row(form.guestStreet) }}</div>
+                            <div class="col-md-3">{{ form_row(form.guestZip) }}</div>
+                            <div class="col-md-6">{{ form_row(form.guestCity) }}</div>
+                            <div class="col-md-3">{{ form_row(form.guestCountry) }}</div>
+
+                            <div class="col-12">{{ form_row(form.guestEmail) }}</div>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-3">
+                            <a href="{{ path('checkin_index', {token: token}) }}" class="btn btn-outline-secondary">Zrušit</a>
+                            <button type="submit" class="btn btn-primary">Uložit</button>
+                        </div>
+                    </div>
+                </div>
+            {{ form_end(form) }}
+        </div>
+    </div>
+
+    <script>
+    (function() {
+        // Symfony renders field ids from the form name (checkin_billing_*), not
+        // from attr.id, so we target those generated ids.
+        var ico = document.getElementById('{{ form.guestIco.vars.id }}');
+        var btn = document.getElementById('billing-ares-btn');
+        var status = document.getElementById('billing-ares-status');
+        if (!ico || !btn) return;
+        var aresUrl = {{ path('checkin_ares', {token: token})|json_encode|raw }};
+        var IDS = {
+            company: '{{ form.guestCompanyName.vars.id }}',
+            street: '{{ form.guestStreet.vars.id }}',
+            city: '{{ form.guestCity.vars.id }}',
+            zip: '{{ form.guestZip.vars.id }}',
+            country: '{{ form.guestCountry.vars.id }}',
+            dic: '{{ form.guestDic.vars.id }}'
+        };
+
+        function setIfEmpty(id, value) {
+            var el = document.getElementById(id);
+            if (el && value && !el.value.trim()) el.value = value;
+        }
+        function setAlways(id, value) {
+            var el = document.getElementById(id);
+            if (el && value) el.value = value;
+        }
+
+        function lookup() {
+            var v = (ico.value || '').replace(/\D/g, '');
+            if (v.length < 1) { status.textContent = 'Zadejte IČO.'; return; }
+            status.textContent = 'Hledám v ARES…';
+            btn.disabled = true;
+            fetch(aresUrl + '?ico=' + encodeURIComponent(v))
+                .then(function(r) { return r.ok ? r.json() : null; })
+                .then(function(d) {
+                    btn.disabled = false;
+                    if (!d || !d.found) { status.textContent = 'IČO nenalezeno v ARES.'; return; }
+                    setAlways(IDS.company, d.companyName);
+                    setAlways(IDS.street, d.street);
+                    setAlways(IDS.city, d.city);
+                    setAlways(IDS.zip, d.zip);
+                    setIfEmpty(IDS.country, d.country);
+                    setIfEmpty(IDS.dic, d.dic);
+                    status.textContent = '✓ Doplněno z ARES: ' + (d.companyName || '');
+                })
+                .catch(function() { btn.disabled = false; status.textContent = 'ARES je nedostupný, vyplňte ručně.'; });
+        }
+
+        btn.addEventListener('click', lookup);
+        ico.addEventListener('blur', function() { if ((ico.value || '').replace(/\D/g, '').length >= 6) lookup(); });
+    })();
+    </script>
+{% endblock %}

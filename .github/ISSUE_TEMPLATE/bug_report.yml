@@ -1,0 +1,41 @@
+name: Bug
+description: Nahlásit chybu
+labels: [bug]
+body:
+  - type: textarea
+    id: popis
+    attributes:
+      label: Popis
+      description: Co se děje a v čem je problém.
+    validations:
+      required: true
+  - type: textarea
+    id: kroky
+    attributes:
+      label: Kroky k reprodukci
+      placeholder: |
+        1. Jdi na …
+        2. Klikni na …
+        3. …
+    validations:
+      required: true
+  - type: textarea
+    id: ocekavane
+    attributes:
+      label: Očekávané vs. skutečné chování
+    validations:
+      required: true
+  - type: textarea
+    id: prostredi
+    attributes:
+      label: Prostředí
+      description: Verze/commit, PHP, DB (MySQL/MariaDB), prohlížeč.
+    validations:
+      required: false
+  - type: checkboxes
+    id: bez-udaju
+    attributes:
+      label: Potvrzení
+      options:
+        - label: Hlášení neobsahuje reálné osobní údaje hostů (jména, adresy, doklady).
+          required: true

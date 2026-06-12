@@ -1,0 +1,239 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Ubyport — hlášení cizinců{% endblock %}
+
+{% block stylesheets %}
+    <style>
+        @keyframes ubyportPulse {
+            0%, 100% { box-shadow: inset 4px 0 0 var(--bs-danger); background-color: var(--bs-danger-bg-subtle); }
+            50%      { box-shadow: inset 4px 0 0 var(--bs-danger); background-color: transparent; }
+        }
+        tr.deadline-overdue > td { animation: ubyportPulse 1.6s ease-in-out infinite; }
+    </style>
+{% endblock %}
+
+{% macro deadline_badge(row) %}
+    {% if row.deadlineState == 'overdue' %}
+        <span class="badge text-bg-danger">po termínu{% if row.daysLeft < 0 %} ({{ row.daysLeft * -1 }} d){% endif %}</span>
+    {% elseif row.deadlineState == 'due_soon' %}
+        <span class="badge text-bg-warning">{% if row.daysLeft <= 0 %}dnes{% elseif row.daysLeft == 1 %}zítra{% endif %}</span>
+    {% else %}
+        <span class="badge text-bg-light text-dark border">do {{ row.deadline|date('d. m.') }}</span>
+    {% endif %}
+{% endmacro %}
+
+{% macro guest_list(row) %}
+    {% for g in row.foreigners %}
+        <div class="small">
+            {{ g.lastName }} {{ g.firstName }}
+            <span class="text-muted">· {{ g.birthDate|date('d. m. Y') }}{% if g.nationalityCode %} · {{ g.nationalityCode }}{% endif %}{% if g.documentNumber %} · {{ g.documentNumber }}{% endif %}</span>
+        </div>
+    {% endfor %}
+{% endmacro %}
+
+{% block body %}
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h3 mb-0">Ubyport — hlášení ubytovaných cizinců</h1>
+        <a href="https://ubyport.policie.cz" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary">
+            ubyport.policie.cz ↗
+        </a>
+    </div>
+
+    {% if overdue > 0 %}
+        <div class="alert alert-danger">
+            <strong>{{ overdue }}</strong> {{ overdue == 1 ? 'rezervace je' : 'rezervací je' }} po zákonné lhůtě
+            (do 3 pracovních dnů od příjezdu). Nahlas co nejdřív.
+        </div>
+    {% endif %}
+
+    {% if profile is null %}
+        <div class="alert alert-danger">
+            Není vyplněný profil ubytování (IDUB + adresa).
+            <a href="{{ path('accommodation_profile_edit') }}" class="alert-link">Doplň ho v Nastavení</a>,
+            jinak nejde UNL vygenerovat.
+        </div>
+    {% endif %}
+
+    {# 1. K NAHLÁŠENÍ #}
+    <div class="card mb-3">
+        <div class="card-header">K nahlášení ({{ toReport|length }})</div>
+        <div class="card-body p-0">
+            <table class="table table-sm table-hover mb-0 align-middle">
+                <thead class="small text-muted">
+                <tr>
+                    <th>Lhůta</th>
+                    <th>Pobyt</th>
+                    <th>Cizinci</th>
+                    <th class="text-end">Akce</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for row in toReport %}
+                    {% set r = row.reservation %}
+                    <tr class="{{ row.isOverdue ? 'deadline-overdue' : '' }}">
+                        <td>{{ _self.deadline_badge(row) }}</td>
+                        <td class="small">
+                            <a href="{{ path('reservation_detail', {id: r.id}) }}">
+                                {{ r.checkIn|date('d. m.') }} – {{ r.checkOut|date('d. m. Y') }}
+                            </a>
+                            {% if r.guestName %}<div class="text-muted">{{ r.guestName }}</div>{% endif %}
+                        </td>
+                        <td>{{ _self.guest_list(row) }}</td>
+                        <td class="text-end">
+                            {% if profile is not null %}
+                                <form method="post" action="{{ path('ubyport_export', {id: r.id}) }}">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('ubyport-export-' ~ r.id) }}">
+                                    <button class="btn btn-sm btn-primary">Stáhnout UNL ({{ row.foreigners|length }})</button>
+                                </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="4" class="text-muted small p-3">Fronta je prázdná.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {# 2. ČEKÁ NA DORUČENKU #}
+    {% if awaiting|length > 0 %}
+        <div class="card mb-3 border-info">
+            <div class="card-header bg-info-subtle">
+                Staženo — čeká na doručenku ({{ awaiting|length }})
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-sm mb-0 align-middle">
+                    <thead class="small text-muted">
+                    <tr>
+                        <th>Staženo</th>
+                        <th>Pobyt</th>
+                        <th>Cizinci</th>
+                        <th class="text-end">Doručenka</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for row in awaiting %}
+                        {% set r = row.reservation %}
+                        <tr>
+                            <td class="small">{{ r.ubyportExportedAt|date('d. m. Y H:i') }}</td>
+                            <td class="small">
+                                <a href="{{ path('reservation_detail', {id: r.id}) }}">
+                                    {{ r.checkIn|date('d. m.') }} – {{ r.checkOut|date('d. m. Y') }}
+                                </a>
+                            </td>
+                            <td>{{ _self.guest_list(row) }}</td>
+                            <td class="text-end">
+                                <form method="post" action="{{ path('ubyport_receipt_upload', {id: r.id}) }}"
+                                      enctype="multipart/form-data" class="d-flex gap-1 justify-content-end align-items-center">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('ubyport-receipt-' ~ r.id) }}">
+                                    <input type="file" name="receipt" accept="application/pdf" class="form-control form-control-sm" style="max-width: 16rem;" required>
+                                    <button class="btn btn-sm btn-success">Nahrát</button>
+                                </form>
+                                <form method="post" action="{{ path('ubyport_confirm_manual', {id: r.id}) }}"
+                                      class="mt-1" onsubmit="return confirm('Označit jako nahlášené bez doručenky?')">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('ubyport-confirm-' ~ r.id) }}">
+                                    <button class="btn btn-sm btn-link text-muted p-0">označit bez doručenky</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% endif %}
+
+    {# 3. NEÚPLNÉ #}
+    {% if incomplete|length > 0 %}
+        <div class="card mb-3 border-warning">
+            <div class="card-header bg-warning-subtle">
+                Neúplné — čekají na doplnění ({{ incomplete|length }})
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-sm mb-0 align-middle">
+                    <thead class="small text-muted">
+                    <tr>
+                        <th>Lhůta</th>
+                        <th>Pobyt</th>
+                        <th>Cizinci</th>
+                        <th>Chybí</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for row in incomplete %}
+                        {% set r = row.reservation %}
+                        <tr class="{{ row.isOverdue ? 'deadline-overdue' : '' }}">
+                            <td>{{ _self.deadline_badge(row) }}</td>
+                            <td class="small">
+                                <a href="{{ path('reservation_detail', {id: r.id}) }}">
+                                    {{ r.checkIn|date('d. m.') }} – {{ r.checkOut ? r.checkOut|date('d. m. Y') : '?' }}
+                                </a>
+                            </td>
+                            <td>{{ _self.guest_list(row) }}</td>
+                            <td class="small text-danger">{{ row.missing|join(', ') }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% endif %}
+
+    {# 4. NAHLÁŠENÉ #}
+    <div class="card">
+        <div class="card-header">Nahlášené ({{ reported|length }})</div>
+        <div class="card-body p-0">
+            <table class="table table-sm mb-0 align-middle">
+                <thead class="small text-muted">
+                <tr>
+                    <th>Nahlášeno</th>
+                    <th>Pobyt</th>
+                    <th>Cizinci</th>
+                    <th>Doručenka</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for row in reported %}
+                    {% set r = row.reservation %}
+                    <tr>
+                        <td class="small">{{ r.ubyportConfirmedAt|date('d. m. Y H:i') }}</td>
+                        <td class="small">
+                            <a href="{{ path('reservation_detail', {id: r.id}) }}">
+                                {{ r.checkIn|date('d. m.') }} – {{ r.checkOut ? r.checkOut|date('d. m. Y') : '?' }}
+                            </a>
+                        </td>
+                        <td>{{ _self.guest_list(row) }}</td>
+                        <td class="small">
+                            {% if r.ubyportReceiptFilename %}
+                                <a href="{{ path('ubyport_receipt_download', {id: r.id}) }}">PDF</a>
+                                {% if r.ubyportReceiptAccepted is not null %}
+                                    <span class="badge {{ r.ubyportReceiptRejected ? 'text-bg-warning' : 'text-bg-success' }}">
+                                        {{ r.ubyportReceiptAccepted }} přijato{% if r.ubyportReceiptRejected %}, {{ r.ubyportReceiptRejected }} ne{% endif %}
+                                    </span>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-muted">bez PDF</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            <form method="post" action="{{ path('ubyport_unreport', {id: r.id}) }}"
+                                  onsubmit="return confirm('Vrátit zpět do fronty k nahlášení?')">
+                                <input type="hidden" name="_token" value="{{ csrf_token('ubyport-unreport-' ~ r.id) }}">
+                                <button class="btn btn-sm btn-link text-muted p-0">vrátit</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="5" class="text-muted small p-3">Zatím nic nenahlášeno.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a href="{{ path('dashboard') }}" class="btn btn-outline-secondary btn-sm">← Zpět na přehled</a>
+    </div>
+{% endblock %}

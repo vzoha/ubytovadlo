@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Bezpečnostní zranitelnost
+    url: https://github.com/vzoha/ubytovadlo/security/advisories/new
+    about: Zranitelnosti hlas neveřejně — viz SECURITY.md, ne přes veřejné issue.
+  - name: Nasazení na klíč / úpravy na míru
+    url: https://ubytovadlo.cz
+    about: Chceš to nasadit nebo upravit a nechceš se v tom hrabat? Ozvi se.

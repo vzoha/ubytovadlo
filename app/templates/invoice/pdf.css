@@ -1,0 +1,128 @@
+@page { margin: 12mm 14mm 12mm 14mm; }
+
+body {
+    font-family: 'dejavusans', Calibri, sans-serif;
+    font-size: 9pt;
+    color: #222;
+    line-height: 1.45;
+}
+
+h1 { margin: 0; padding: 0; font-weight: normal; }
+
+/* === HEADING === */
+.heading {
+    padding-bottom: 4mm;
+    border-bottom: 0.6pt solid #ddd;
+    text-align: right;
+    margin-bottom: 6mm;
+}
+.heading .h1 {
+    font-size: 15pt;
+    color: #999;
+    font-weight: normal;
+}
+.heading .h1 span { font-weight: bold; color: #000; }
+
+/* === DODAVATEL / ODBĚRATEL (50/50, logo v pravé části dodavatele) === */
+table.head { width: 100%; border-collapse: collapse; }
+table.head td { vertical-align: top; padding: 0; line-height: 1.55em; }
+td.col-supplier { width: 50%; padding-right: 6mm; }
+td.col-customer { width: 50%; padding-left: 6mm; }
+table.supplier-inner { width: 100%; border-collapse: collapse; }
+table.supplier-inner td { padding: 0; vertical-align: top; }
+table.supplier-inner td.s-text { padding-right: 4mm; }
+table.supplier-inner td.s-logo { width: 30mm; text-align: center; padding-right: 4mm; padding-top: 2mm; }
+img.logo { width: 22mm; height: 22mm; }
+
+.sect-label {
+    font-size: 7.5pt;
+    font-weight: bold;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 0.3pt;
+    margin-bottom: 2mm;
+}
+.strong-name { font-weight: bold; color: #1a1a1a; font-size: 9.5pt; }
+/* mPDF nerespektuje margin/padding na divech mimo table cell — kontakt drzime v table jako supplier-inner. */
+table.kontakt { width: 100%; border-collapse: collapse; line-height: 1.6em; margin-bottom: 4mm; }
+table.kontakt td { padding: 0; vertical-align: top; }
+
+/* === PAYMENT BLOCK (VS, dates, QR) === */
+.payment-wrap {
+    border-top: 0.6pt solid #ddd;
+    border-bottom: 0.6pt solid #ddd;
+    padding: 4mm 0;
+    margin-bottom: 0;
+}
+table.payment { width: 100%; border-collapse: collapse; }
+table.payment td { vertical-align: top; padding: 0; line-height: 1.7em; }
+td.pay-left { width: 50%; padding-right: 4mm; vertical-align: top; }
+td.pay-right { width: 50%; padding-left: 0; vertical-align: top; }
+table.pay-inner { border-collapse: collapse; }
+table.pay-inner td { padding: 0; vertical-align: top; line-height: 1.7em; }
+td.pay-keys-left, td.pay-keys-right, td.pay-vals-right { vertical-align: top; }
+td.pay-keys-left { width: 36mm; }
+td.pay-keys-right { width: 36mm; }
+table.pay-inner-right { width: 100%; }
+td.pay-vals-right { width: 100%; }
+td.pay-qr { width: 34mm; text-align: right; padding-left: 4mm; padding-right: 0; vertical-align: top; }
+
+.pay-key { color: #444; padding-right: 4mm; }
+.pay-val { color: #1a1a1a; }
+.pay-strong { font-weight: bold; }
+td.nw { white-space: nowrap; }
+
+/* === LINES === */
+table.lines { width: 100%; border-collapse: collapse; margin-top: 4mm; border-bottom: 0.6pt solid #ddd; }
+table.lines thead th {
+    padding: 1.5mm 0;
+    font-size: 7pt;
+    font-weight: normal;
+    color: #999;
+    border-bottom: 0.4pt solid #eee;
+    text-align: left;
+}
+table.lines thead th.amt,
+table.lines thead th.price,
+table.lines thead th.total { text-align: right; }
+table.lines thead th.unit { text-align: left; padding-left: 2mm; }
+table.lines thead th.amt { width: 18mm; }
+table.lines thead th.unit { width: 12mm; }
+table.lines thead th.price { width: 32mm; }
+table.lines thead th.total { width: 32mm; }
+
+table.lines tbody td {
+    padding: 3mm 0;
+    font-size: 8.5pt;
+    text-align: left;
+}
+table.lines tbody td.amt,
+table.lines tbody td.price,
+table.lines tbody td.total { text-align: right; white-space: nowrap; }
+table.lines tbody td.unit { text-align: left; padding-left: 2mm; white-space: nowrap; }
+
+/* === SUMMARY (paid stamp + Celkem k úhradě) === */
+table.summary { width: 100%; border-collapse: collapse; margin-top: 4mm; }
+table.summary td { vertical-align: middle; padding: 4mm 0; }
+td.s-spacer { width: 50%; }
+td.s-label {
+    text-align: left;
+    font-size: 10pt;
+    text-transform: uppercase;
+    padding-left: 6mm;
+}
+td.s-amount {
+    text-align: right;
+    white-space: nowrap;
+    font-weight: bold;
+    font-size: 11pt;
+    width: 32mm;
+}
+td.paid-text {
+    text-align: right;
+    font-size: 9pt;
+    color: #222;
+    padding-top: 8mm;
+}
+
+.fine-note { color: #777; font-size: 7pt; padding-top: 4mm; }

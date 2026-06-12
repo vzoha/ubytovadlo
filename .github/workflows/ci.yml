@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  tests:
+    name: Testy a statická analýza
+    runs-on: ubuntu-latest
+
+    services:
+      db:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: ubytovadlo
+          MYSQL_USER: app
+          MYSQL_PASSWORD: app
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -uroot -proot"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=10
+
+    defaults:
+      run:
+        working-directory: app
+
+    env:
+      DATABASE_URL: "mysql://app:app@127.0.0.1:3306/ubytovadlo?serverVersion=8.4&charset=utf8mb4"
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: imap, intl, gd, zip, pdo_mysql, mbstring, dom, xml, curl, openssl, gmp, bcmath
+          coverage: none
+
+      - name: Cache Composer
+        uses: actions/cache@v5
+        with:
+          path: ~/.composer/cache
+          key: composer-${{ hashFiles('app/composer.lock') }}
+          restore-keys: composer-
+
+      - name: Install dependencies
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Code style (php-cs-fixer)
+        run: vendor/bin/php-cs-fixer fix --dry-run --diff
+        env:
+          PHP_CS_FIXER_IGNORE_ENV: 1
+
+      - name: Static analysis (PHPStan)
+        run: vendor/bin/phpstan analyse --no-progress
+
+      - name: Grant privileges on test database
+        run: |
+          mysql -h127.0.0.1 -uroot -proot -e "CREATE DATABASE IF NOT EXISTS ubytovadlo_test; GRANT ALL PRIVILEGES ON ubytovadlo_test.* TO 'app'@'%'; FLUSH PRIVILEGES;"
+
+      - name: Prepare test database
+        run: |
+          php bin/console --env=test doctrine:database:create --if-not-exists
+          php bin/console --env=test doctrine:migrations:migrate --no-interaction
+
+      - name: PHPUnit
+        run: vendor/bin/phpunit

@@ -1,0 +1,58 @@
+# yaml-language-server: $schema=../vendor/symfony/dependency-injection/Loader/schema/services.schema.json
+
+# This file is the entry point to configure your own services.
+# Files in the packages/ subdirectory configure your dependencies.
+# See also https://symfony.com/doc/current/service_container/import.html
+
+# Put parameters here that don't need to change on each machine where the app is deployed
+# https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
+parameters:
+
+services:
+    # default configuration for services in *this* file
+    _defaults:
+        autowire: true      # Automatically injects dependencies in your services.
+        autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+        bind:
+            string $projectDir: '%kernel.project_dir%'
+            string $imapHost: '%env(IMAP_HOST)%'
+            int $imapPort: '%env(int:IMAP_PORT)%'
+            string $imapEncryption: '%env(IMAP_ENCRYPTION)%'
+            string $imapUsername: '%env(IMAP_USERNAME)%'
+            string $imapPassword: '%env(IMAP_PASSWORD)%'
+            string $imapFolder: '%env(IMAP_FOLDER)%'
+            string $motopressBaseUrl: '%env(MOTOPRESS_BASE_URL)%'
+            string $motopressConsumerKey: '%env(MOTOPRESS_CONSUMER_KEY)%'
+            string $motopressConsumerSecret: '%env(MOTOPRESS_CONSUMER_SECRET)%'
+            string $airbnbListingName: '%env(AIRBNB_LISTING_NAME)%'
+            array $motopressPetServiceIds: '%env(csv:MOTOPRESS_PET_SERVICE_IDS)%'
+            array $motopressBabyCotServiceIds: '%env(csv:MOTOPRESS_BABY_COT_SERVICE_IDS)%'
+            string $invoiceDepositAmount: '%env(INVOICE_DEPOSIT_AMOUNT)%'
+            string $appEnv: '%kernel.environment%'
+
+    # makes classes in src/ available to be used as services
+    # this creates a service per class whose id is the fully-qualified class name
+    App\:
+        resource: '../src/'
+
+    App\Invoice\InvoiceNumberAllocator:
+        arguments:
+            $seriesStarts: '%env(json:INVOICE_SERIES_STARTS)%'
+
+    App\Invoice\IssuerProfile:
+        arguments:
+            $name: '%env(INVOICE_ISSUER_NAME)%'
+            $street: '%env(INVOICE_ISSUER_STREET)%'
+            $city: '%env(INVOICE_ISSUER_CITY)%'
+            $zip: '%env(INVOICE_ISSUER_ZIP)%'
+            $country: '%env(INVOICE_ISSUER_COUNTRY)%'
+            $ico: '%env(INVOICE_ISSUER_ICO)%'
+            $dic: '%env(INVOICE_ISSUER_DIC)%'
+            $phone: '%env(INVOICE_ISSUER_PHONE)%'
+            $email: '%env(INVOICE_ISSUER_EMAIL)%'
+            $web: '%env(INVOICE_ISSUER_WEB)%'
+            $bankAccount: '%env(INVOICE_BANK_ACCOUNT)%'
+            $bankAccountIban: '%env(INVOICE_BANK_IBAN)%'
+
+    # add more service definitions when explicit configuration is needed
+    # please note that last definitions always *replace* previous ones

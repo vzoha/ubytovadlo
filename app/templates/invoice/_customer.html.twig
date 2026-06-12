@@ -1,0 +1,11 @@
+<div class="sect-label">Odběratel</div>
+<div class="strong-name">{{ invoice.customerName }}</div>
+{% if invoice.customerCompanyName %}<div>{{ invoice.customerCompanyName }}</div>{% endif %}
+{% if invoice.customerStreet %}<div>{{ invoice.customerStreet }}</div>{% endif %}
+{% if invoice.customerZip or invoice.customerCity %}
+    <div>{{ invoice.customerZip }} {{ invoice.customerCity }}</div>
+{% endif %}
+{% if invoice.customerCountry %}<div>{{ invoice.customerCountry }}</div>{% endif %}
+{% if invoice.customerIco or invoice.customerDic %}<br>{% endif %}
+{% if invoice.customerIco %}<div>IČO {{ invoice.customerIco }}</div>{% endif %}
+{% if invoice.customerDic %}<div>DIČ {{ invoice.customerDic }}</div>{% endif %}

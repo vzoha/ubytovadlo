@@ -1,0 +1,17 @@
+{
+    "id": 1724,
+    "status": "confirmed",
+    "check_in_date": "2026-09-03",
+    "check_out_date": "2026-09-09",
+    "check_in_time": "16:00:00",
+    "check_out_time": "11:00:00",
+    "customer": {"first_name": "", "last_name": "", "email": ""},
+    "reserved_accommodations": [{"accommodation": 369, "adults": 4, "children": 0}],
+    "currency": "CZK",
+    "total_price": 0,
+    "imported": true,
+    "ical_description": "\"Reservation URL: https://www.airbnb.com/hosting/reservations/details/HMABCD12EF\nPhone Number (Last 4 Digits): 0000\"",
+    "ical_prodid": "-//Airbnb Inc//Hosting Calendar 1.0//EN",
+    "ical_summary": "\"Reserved\"",
+    "note": ""
+}

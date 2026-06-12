@@ -1,0 +1,1094 @@
+{% extends 'checkin/_base.html.twig' %}
+
+{% block body %}
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+            <a href="{{ path('checkin_index', {token: token}) }}" class="text-decoration-none small">← Zpět na seznam</a>
+            <h1 class="h3 mt-1 mb-3">{{ isNew ? 'Přidat zahraničního hosta' : 'Upravit hosta' }}</h1>
+
+            {% if isNew %}
+            <div class="card mb-4 border-primary">
+                <div class="card-body">
+                    <h2 class="h6 card-title mb-2">📷 Naskenovat doklad</h2>
+                    <p class="small text-muted mb-2">
+                        Vyfoťte stranu dokladu s MRZ řádky (řádky s &lt;&lt;&lt; na spodní straně).
+                        Jméno, datum narození, číslo dokladu a státní příslušnost se předvyplní; adresu doplňte ručně.
+                    </p>
+
+                    <div id="mrz-scanner">
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button type="button" id="mrz-live-btn" class="btn btn-primary mb-0">
+                                📹 Skenovat kamerou (živě)
+                            </button>
+                            <label class="btn btn-outline-primary mb-0">
+                                📷 Vyfotit doklad
+                                <input type="file" accept="image/*" capture="environment" id="mrz-input-camera" class="d-none">
+                            </label>
+                            <label class="btn btn-outline-secondary mb-0">
+                                🖼️ Nahrát obrázek
+                                <input type="file" accept="image/*" id="mrz-input-file" class="d-none">
+                            </label>
+                        </div>
+
+                        <div id="mrz-live" class="mt-3 d-none">
+                            <div class="position-relative bg-dark rounded overflow-hidden mx-auto" style="max-width: 480px">
+                                <video id="mrz-video" playsinline muted class="d-block w-100" style="max-height: 360px; object-fit: cover"></video>
+                                <div class="position-absolute top-50 start-50 translate-middle text-center" style="width: 88%; pointer-events: none">
+                                    <div style="border: 2px dashed rgba(255,255,255,.9); border-radius: 6px; height: 84px"></div>
+                                    <div class="small text-white mt-1" style="text-shadow: 0 0 4px #000">Umísti MRZ řádky (&lt;&lt;&lt;) do rámečku</div>
+                                </div>
+                                <div id="mrz-live-status" class="position-absolute bottom-0 start-0 end-0 text-center small text-white py-1" style="background: rgba(0,0,0,.55)">Spouštím kameru…</div>
+                            </div>
+                            <div class="d-flex gap-2 mt-2">
+                                <button type="button" id="mrz-live-shot" class="btn btn-sm btn-outline-primary">📸 Cvaknout teď</button>
+                                <button type="button" id="mrz-live-close" class="btn btn-sm btn-outline-secondary">Zavřít kameru</button>
+                            </div>
+                        </div>
+
+                        <div id="mrz-preview" class="mt-3 d-none">
+                            <img id="mrz-image" class="img-fluid rounded border" style="max-height: 300px" alt="Doklad">
+                        </div>
+
+                        <div id="mrz-progress" class="mt-3 d-none">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                                <span id="mrz-status" class="small">Načítám OCR engine…</span>
+                            </div>
+                            <div class="progress mt-2" style="height: 6px">
+                                <div id="mrz-progress-bar" class="progress-bar" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <div id="mrz-result" class="mt-3 d-none"></div>
+
+                        <details class="mt-3 small">
+                            <summary class="text-muted" style="cursor:pointer">⌨️ Nedaří se? Opiš MRZ ručně</summary>
+                            <div class="mt-2">
+                                <p class="text-muted small mb-2">
+                                    Z pasu nebo ID karty opiš dva (pas) nebo tři (občanka) řádky MRZ — tu posloupnost znaků na konci, kde jsou znaky <code>&lt;</code>.
+                                </p>
+                                <textarea id="mrz-manual" class="form-control font-monospace small" rows="3" placeholder="P&lt;CZECITIZEN&lt;&lt;FIRSTNAME&lt;&lt;&lt;&lt;&lt;&lt;&lt;…&#10;DOC#######&lt;…"></textarea>
+                                <button id="mrz-manual-btn" type="button" class="btn btn-sm btn-outline-primary mt-2">Předvyplnit z MRZ</button>
+                            </div>
+                        </details>
+
+                        <details class="mt-3 small">
+                            <summary class="text-muted" style="cursor:pointer">🔬 Debug</summary>
+                            <div class="mt-2">
+                                <div class="text-muted mb-1">Předzpracovaný náhled (do OCR jde tohle):</div>
+                                <canvas id="mrz-debug-canvas" class="img-fluid rounded border mb-2" style="max-height: 200px; display:none"></canvas>
+                                <div id="mrz-debug-info" class="text-muted mb-2"></div>
+                                <div class="text-muted mb-1">Pokusy OCR:</div>
+                                <pre id="mrz-debug-passes" class="bg-light p-2 small mb-2" style="white-space:pre-wrap; max-height:240px; overflow:auto"></pre>
+                                <div class="text-muted mb-1">Kandidáti MRZ řádků (po normalizaci):</div>
+                                <pre id="mrz-debug-candidates" class="bg-light p-2 small mb-0" style="white-space:pre-wrap; max-height:120px; overflow:auto"></pre>
+                            </div>
+                        </details>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            {{ form_start(form) }}
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">{{ form_row(form.lastName) }}</div>
+                            <div class="col-md-6">{{ form_row(form.firstName) }}</div>
+                            <div class="col-md-6">{{ form_row(form.birthDate) }}</div>
+                            <div class="col-12">{{ form_row(form.isCzechCitizen) }}</div>
+                        </div>
+
+                        <hr>
+                        <p class="small text-muted mb-3">U cizinců (vše vyplňte podle cestovního dokladu):</p>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">{{ form_row(form.nationality) }}</div>
+                            <div class="col-md-6">{{ form_row(form.documentType) }}</div>
+                            <div class="col-md-6">{{ form_row(form.documentNumber) }}</div>
+                            <div class="col-md-6">{{ form_row(form.visaNumber) }}</div>
+                            <div class="col-12">{{ form_row(form.permanentResidenceAbroad) }}</div>
+                            <div class="col-12">{{ form_row(form.note) }}</div>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-3">
+                            <a href="{{ path('checkin_index', {token: token}) }}" class="btn btn-outline-secondary">Zrušit</a>
+                            <button type="submit" class="btn btn-primary">Uložit</button>
+                        </div>
+                    </div>
+                </div>
+            {{ form_end(form) }}
+        </div>
+    </div>
+
+    {% if isNew %}
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <script>
+    (function() {
+        var mrzEndpoint = {{ path('checkin_mrz', {token: token})|json_encode|raw }};
+        var inputCamera = document.getElementById('mrz-input-camera');
+        var inputFile = document.getElementById('mrz-input-file');
+        var preview = document.getElementById('mrz-preview');
+        var image = document.getElementById('mrz-image');
+        var progressEl = document.getElementById('mrz-progress');
+        var statusEl = document.getElementById('mrz-status');
+        var progressBar = document.getElementById('mrz-progress-bar');
+        var resultEl = document.getElementById('mrz-result');
+        var dbgCanvas = document.getElementById('mrz-debug-canvas');
+        var dbgInfo = document.getElementById('mrz-debug-info');
+        var dbgPasses = document.getElementById('mrz-debug-passes');
+        var dbgCandidates = document.getElementById('mrz-debug-candidates');
+
+        function dbgReset() {
+            dbgCanvas.style.display = 'none';
+            dbgInfo.textContent = '';
+            dbgPasses.textContent = '';
+            dbgCandidates.textContent = '';
+        }
+
+        function dbgPass(name, text) {
+            dbgPasses.textContent += '── ' + name + ' ──\n' + (text || '(prázdné)') + '\n\n';
+        }
+
+        var LOCATE_ACCEPT = 30;
+        function handleFile(file) {
+            if (!file) return;
+            var url = URL.createObjectURL(file);
+            image.src = url;
+            preview.classList.remove('d-none');
+            progressEl.classList.remove('d-none');
+            resultEl.classList.add('d-none');
+            statusEl.textContent = 'Připravuji obrázek…';
+            progressBar.style.width = '0%';
+            dbgReset();
+
+            // Primary: locate the MRZ with tesseract's line boxes, recrop tight,
+            // OCR that. Accept only a checksum-solid read (confidence ≥ ACCEPT);
+            // otherwise fall back to the whole-image preprocessing passes. The
+            // tight crop reads the name zone far cleaner than the fallback.
+            var img = new Image();
+            img.onload = function() {
+                statusEl.textContent = 'Hledám MRZ…';
+                locateRecropTexts(img).then(function(texts) {
+                    if (texts.length === 0) { fallbackPasses(file); return; }
+                    statusEl.textContent = 'Vyhodnocuji…';
+                    postTexts(texts).then(function(res) {
+                        if (res.ok && (res.data.confidence || 0) >= LOCATE_ACCEPT) {
+                            handleBackendResponse(res);
+                        } else {
+                            fallbackPasses(file);
+                        }
+                    }).catch(function() { fallbackPasses(file); });
+                }).catch(function() { fallbackPasses(file); });
+            };
+            img.onerror = function() { fallbackPasses(file); };
+            img.src = url;
+        }
+
+        function fallbackPasses(file) {
+            preprocessImage(file, function(prep) {
+                runAllPasses(buildPasses(prep, file), file);
+            });
+        }
+
+        inputCamera.addEventListener('change', function() { handleFile(this.files[0]); });
+        inputFile.addEventListener('change', function() { handleFile(this.files[0]); });
+
+        var manualBtn = document.getElementById('mrz-manual-btn');
+        if (manualBtn) manualBtn.addEventListener('click', function() {
+            var raw = (document.getElementById('mrz-manual').value || '').trim();
+            if (!raw) return;
+            resultEl.classList.add('d-none');
+            resultEl.innerHTML = '';
+            sendToBackend(raw).then(function(ok) {
+                if (!ok) showError('MRZ nelze rozpoznat. Zkontroluj řádky, nezapomeň znaky &lt;.');
+            });
+        });
+
+        // ─── Image processing ──────────────────────────────────────────────
+
+        function toGrey(data) {
+            var n = data.length / 4;
+            var grey = new Uint8ClampedArray(n);
+            for (var i = 0, p = 0; i < n; i++, p += 4) {
+                grey[i] = (0.299 * data[p] + 0.587 * data[p + 1] + 0.114 * data[p + 2]) | 0;
+            }
+            return grey;
+        }
+
+        function otsuFromGrey(grey) {
+            var hist = new Array(256);
+            for (var i = 0; i < 256; i++) hist[i] = 0;
+            for (var p = 0; p < grey.length; p++) hist[grey[p]]++;
+            var n = grey.length;
+            var sum = 0;
+            for (var t = 0; t < 256; t++) sum += t * hist[t];
+            var sumB = 0, wB = 0, maxV = 0, thr = 127;
+            for (var u = 0; u < 256; u++) {
+                wB += hist[u];
+                if (wB === 0) continue;
+                var wF = n - wB;
+                if (wF === 0) break;
+                sumB += u * hist[u];
+                var mB = sumB / wB;
+                var mF = (sum - sumB) / wF;
+                var between = wB * wF * (mB - mF) * (mB - mF);
+                if (between > maxV) { maxV = between; thr = u; }
+            }
+            return thr;
+        }
+
+        function applyThreshold(data, mask) {
+            for (var i = 0, p = 0; i < mask.length; i++, p += 4) {
+                var v = mask[i];
+                data[p] = data[p + 1] = data[p + 2] = v;
+            }
+        }
+
+        function otsuBinarize(data) {
+            var grey = toGrey(data);
+            var thr = otsuFromGrey(grey);
+            var mask = new Uint8ClampedArray(grey.length);
+            for (var i = 0; i < grey.length; i++) mask[i] = grey[i] < thr ? 0 : 255;
+            applyThreshold(data, mask);
+        }
+
+        // Adaptive (mean-C) using integral image. windowPx ~ font height × 2.
+        function adaptiveBinarize(data, w, h, windowPx, cFactor) {
+            var grey = toGrey(data);
+            var ii = new Float64Array(w * h);
+            for (var y = 0; y < h; y++) {
+                var row = 0;
+                for (var x = 0; x < w; x++) {
+                    var idx = y * w + x;
+                    row += grey[idx];
+                    ii[idx] = (y > 0 ? ii[idx - w] : 0) + row;
+                }
+            }
+            var half = (windowPx / 2) | 0;
+            var mask = new Uint8ClampedArray(grey.length);
+            for (var y2 = 0; y2 < h; y2++) {
+                var y1 = y2 - half; if (y1 < 0) y1 = 0;
+                var y3 = y2 + half; if (y3 >= h) y3 = h - 1;
+                for (var x2 = 0; x2 < w; x2++) {
+                    var x1 = x2 - half; if (x1 < 0) x1 = 0;
+                    var x3 = x2 + half; if (x3 >= w) x3 = w - 1;
+                    var area = (x3 - x1 + 1) * (y3 - y1 + 1);
+                    var sum = ii[y3 * w + x3];
+                    if (x1 > 0) sum -= ii[y3 * w + (x1 - 1)];
+                    if (y1 > 0) sum -= ii[(y1 - 1) * w + x3];
+                    if (x1 > 0 && y1 > 0) sum += ii[(y1 - 1) * w + (x1 - 1)];
+                    var mean = sum / area;
+                    var thr = mean - cFactor;
+                    mask[y2 * w + x2] = grey[y2 * w + x2] < thr ? 0 : 255;
+                }
+            }
+            applyThreshold(data, mask);
+        }
+
+        // detectMrzBand expects already-thresholded data (0/255 in R channel).
+        function detectMrzBand(data, w, h) {
+            var transitions = new Array(h);
+            for (var y = 0; y < h; y++) {
+                var base = y * w * 4;
+                var prev = data[base];
+                var t = 0;
+                for (var x = 1; x < w; x++) {
+                    var cur = data[base + x * 4];
+                    if (cur !== prev) { t++; prev = cur; }
+                }
+                transitions[y] = t;
+            }
+            var minT = Math.max(40, w * 0.045);
+            var lines = [];
+            var start = -1;
+            for (var y2 = 0; y2 < h; y2++) {
+                if (transitions[y2] >= minT) {
+                    if (start === -1) start = y2;
+                } else if (start !== -1) {
+                    lines.push({s: start, e: y2 - 1});
+                    start = -1;
+                }
+            }
+            if (start !== -1) lines.push({s: start, e: h - 1});
+            var lower = lines.filter(function(l) { return l.s > h * 0.35 && (l.e - l.s) >= 3; });
+            if (lower.length === 0) return null;
+            lower.sort(function(a, b) { return a.s - b.s; });
+            var bottom = lower[lower.length - 1];
+            var bottomH = bottom.e - bottom.s;
+            var picked = [bottom];
+            for (var i = lower.length - 2; i >= 0; i--) {
+                if (picked.length >= 3) break;
+                var line = lower[i];
+                var gap = picked[0].s - line.e;
+                var lineH = line.e - line.s;
+                var heightRatio = Math.abs(lineH - bottomH) / Math.max(bottomH, 1);
+                if (gap <= bottomH * 2.5 && gap >= 0 && heightRatio < 0.6) {
+                    picked.unshift(line);
+                } else {
+                    break;
+                }
+            }
+            if (picked.length < 2) return null;
+            var s = picked[0].s;
+            var e = picked[picked.length - 1].e;
+            if (s > h * 0.92) return null;
+            if ((e - s) < h * 0.025) return null;
+            return { s: s, e: e, lines: picked, lineHeight: bottomH };
+        }
+
+        function preprocessImage(file, callback) {
+            var img = new Image();
+            img.onload = function() {
+                // Detect MRZ band on a downscaled copy (speed).
+                var detectW = Math.min(1600, img.width);
+                var detectScale = detectW / img.width;
+                var detectH = Math.floor(img.height * detectScale);
+                var dc = document.createElement('canvas');
+                dc.width = detectW; dc.height = detectH;
+                var dctx = dc.getContext('2d');
+                dctx.drawImage(img, 0, 0, detectW, detectH);
+                var dData = dctx.getImageData(0, 0, detectW, detectH);
+                otsuBinarize(dData.data);
+                var detection = detectMrzBand(dData.data, detectW, detectH);
+
+                var cropY, cropH;
+                var lineRangesOrig = [];
+                if (detection) {
+                    var pad = Math.max(8, Math.floor(detection.lineHeight * 0.8));
+                    var detS = Math.max(0, detection.s - pad);
+                    var detE = Math.min(detectH - 1, detection.e + pad);
+                    cropY = Math.floor(detS / detectScale);
+                    cropH = Math.floor((detE - detS) / detectScale);
+                    for (var i = 0; i < detection.lines.length; i++) {
+                        var ln = detection.lines[i];
+                        lineRangesOrig.push({
+                            s: Math.floor(ln.s / detectScale) - cropY,
+                            e: Math.floor(ln.e / detectScale) - cropY,
+                        });
+                    }
+                } else {
+                    cropY = Math.floor(img.height * 0.65);
+                    cropH = img.height - cropY;
+                }
+
+                // Upscale 3× (capped at 3000 px wide) for sharper glyphs at OCR.
+                var scale = 3;
+                var maxCanvasW = 3000;
+                if (img.width * scale > maxCanvasW) scale = maxCanvasW / img.width;
+                var canvas = document.createElement('canvas');
+                canvas.width = Math.floor(img.width * scale);
+                canvas.height = Math.floor(cropH * scale);
+                var ctx = canvas.getContext('2d');
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
+                ctx.drawImage(img, 0, cropY, img.width, cropH, 0, 0, canvas.width, canvas.height);
+
+                var scaledLines = lineRangesOrig.map(function(l) {
+                    return { s: Math.floor(l.s * scale), e: Math.floor(l.e * scale) };
+                });
+
+                statusEl.textContent = detection
+                    ? 'MRZ detekováno (' + detection.lines.length + ' řádky), spouštím OCR…'
+                    : 'MRZ pásmo nedetekováno, zkouším spodní třetinu…';
+
+                showDebug(canvas, img, cropY, cropH, detection);
+
+                callback({
+                    canvas: canvas,
+                    lineRanges: scaledLines,
+                    detection: detection,
+                });
+            };
+            img.onerror = function() { callback({ canvas: null, lineRanges: [], detection: null }); };
+            img.src = URL.createObjectURL(file);
+        }
+
+        function showDebug(canvas, img, cropY, cropH, detection) {
+            var maxDbgW = 800;
+            var dbgScale = Math.min(1, maxDbgW / canvas.width);
+            dbgCanvas.width = Math.floor(canvas.width * dbgScale);
+            dbgCanvas.height = Math.floor(canvas.height * dbgScale);
+            dbgCanvas.getContext('2d').drawImage(canvas, 0, 0, dbgCanvas.width, dbgCanvas.height);
+            dbgCanvas.style.display = 'block';
+            dbgInfo.textContent = 'Originál: ' + img.width + '×' + img.height + ' px. '
+                + 'Po cropu: ' + canvas.width + '×' + canvas.height + ' px. '
+                + 'Auto-crop: ' + (detection
+                    ? 'ANO (' + detection.lines.length + ' řádky)'
+                    : 'NE (fallback spodních 35 %)');
+        }
+
+        // ─── OCR passes ────────────────────────────────────────────────────
+
+        function cloneCanvas(src) {
+            var c = document.createElement('canvas');
+            c.width = src.width; c.height = src.height;
+            c.getContext('2d').drawImage(src, 0, 0);
+            return c;
+        }
+
+        function cropLine(canvas, range) {
+            var lh = range.e - range.s + 1;
+            var pad = Math.max(4, Math.floor(lh * 0.25));
+            var s = Math.max(0, range.s - pad);
+            var e = Math.min(canvas.height - 1, range.e + pad);
+            var lc = document.createElement('canvas');
+            lc.width = canvas.width;
+            lc.height = e - s + 1;
+            lc.getContext('2d').drawImage(canvas, 0, s, canvas.width, lc.height, 0, 0, canvas.width, lc.height);
+            return lc;
+        }
+
+        // Unsharp-mask the glyphs (mirrors ImageMagick -unsharp) so edges stay
+        // crisp through binarization — a 3×3 sharpen on the grey channel.
+        function sharpenCanvas(canvas) {
+            var ctx = canvas.getContext('2d');
+            var img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            var w = canvas.width, h = canvas.height;
+            var grey = toGrey(img.data);
+            var out = new Uint8ClampedArray(grey.length);
+            for (var y = 0; y < h; y++) {
+                for (var x = 0; x < w; x++) {
+                    var idx = y * w + x;
+                    if (x === 0 || y === 0 || x === w - 1 || y === h - 1) { out[idx] = grey[idx]; continue; }
+                    var v = 5 * grey[idx] - grey[idx - 1] - grey[idx + 1] - grey[idx - w] - grey[idx + w];
+                    out[idx] = v < 0 ? 0 : (v > 255 ? 255 : v);
+                }
+            }
+            applyThreshold(img.data, out);
+            ctx.putImageData(img, 0, 0);
+        }
+
+        function binarizeCanvas(canvas, mode) {
+            var ctx = canvas.getContext('2d');
+            var data = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            if (mode === 'otsu') {
+                otsuBinarize(data.data);
+            } else if (mode === 'adaptive') {
+                // Local window ≈ a third of a glyph height. The band holds ~3
+                // MRZ rows, so one glyph ≈ canvas.height / 4; a sub-glyph window
+                // (~canvas.height / 12, like ImageMagick -lat 25 on a 3000-px
+                // band) keeps thin strokes (the openings in S vs B) instead of
+                // flooding them as a near-global threshold would.
+                var win = Math.max(15, Math.floor(canvas.height / 12));
+                if (win % 2 === 0) win++;
+                adaptiveBinarize(data.data, canvas.width, canvas.height, win, 12);
+            }
+            ctx.putImageData(data, 0, 0);
+        }
+
+        function ocrLogger(m) {
+            if (m.status === 'recognizing text') {
+                var pct = Math.round((m.progress || 0) * 100);
+                progressBar.style.width = pct + '%';
+            } else if (m.status) {
+                statusEl.textContent = m.status;
+            }
+        }
+
+        var workerPromise = null;
+        function getOcrWorker() {
+            if (!workerPromise) {
+                workerPromise = Tesseract.createWorker('mrz', 1, {
+                    langPath: '{{ asset('assets/tessdata') }}',
+                    logger: ocrLogger,
+                });
+            }
+            return workerPromise;
+        }
+
+        function ocrCanvas(canvas, psm) {
+            return getOcrWorker().then(function(worker) {
+                return worker.setParameters({ tessedit_pageseg_mode: String(psm) })
+                    .then(function() { return worker.recognize(canvas); })
+                    .then(function(r) { return r.data.text || ''; });
+            });
+        }
+
+        // ─── Locate-then-recrop ──────────────────────────────────────────────
+        // Find the MRZ via tesseract's own line boxes, then re-OCR a tight
+        // high-res crop of just those lines. Line detection is what tesseract is
+        // good at; the tight crop drops the content bleed-in that otherwise
+        // prepends stray glyphs to the surname (e.g. "BVLATUSEK" → "LATUSEK").
+        function mrzClean(t) { return (t || '').toUpperCase().replace(/[^A-Z0-9<]/g, ''); }
+        function isAnchor(t) { var c = mrzClean(t); return c.length >= 15 && (c.match(/</g) || []).length >= 2; }
+        function isNumericMrz(t) { var c = mrzClean(t); if (c.length < 14) return false; return (c.match(/[0-9]/g) || []).length / c.length >= 0.45; }
+        function adaptWin(c) { return Math.max(15, Math.floor(c.width / 100)); }
+        function binAdaptW(canvas) {
+            var win = adaptWin(canvas); if (win % 2 === 0) win++;
+            var ctx = canvas.getContext('2d'), d = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            adaptiveBinarize(d.data, canvas.width, canvas.height, win, 12); ctx.putImageData(d, 0, 0);
+        }
+        function locateMrzLines(canvas) {
+            return getOcrWorker().then(function(worker) {
+                return worker.setParameters({ tessedit_pageseg_mode: '6' })
+                    .then(function() { return worker.recognize(canvas, {}, { blocks: true }); })
+                    .then(function(r) {
+                        var L = [];
+                        (r.data.blocks || []).forEach(function(b) { (b.paragraphs || []).forEach(function(pp) { (pp.lines || []).forEach(function(ln) {
+                            if (isAnchor(ln.text) || isNumericMrz(ln.text)) L.push({ b: ln.bbox });
+                        }); }); });
+                        return L;
+                    });
+            });
+        }
+        function bottomCluster(L) {
+            if (L.length < 2) return null;
+            L.sort(function(a, b) { return a.b.y0 - b.b.y0; });
+            var cl = [L[L.length - 1]];
+            for (var i = L.length - 2; i >= 0; i--) {
+                var lh = cl[0].b.y1 - cl[0].b.y0, gap = cl[0].b.y0 - L[i].b.y1;
+                if (gap < lh * 1.6 && gap > -lh * 0.5) { cl.unshift(L[i]); } else break;
+            }
+            return cl.length >= 2 ? cl : null;
+        }
+        function recropBlock(img, cl, sc) {
+            var y0 = cl[0].b.y0 / sc, y1 = cl[cl.length - 1].b.y1 / sc;
+            var xs0 = cl.map(function(p) { return p.b.x0 / sc; }).sort(function(a, b) { return a - b; });
+            var xs1 = cl.map(function(p) { return p.b.x1 / sc; }).sort(function(a, b) { return a - b; });
+            var x0 = xs0[Math.floor(xs0.length / 2)], x1 = xs1[Math.floor(xs1.length / 2)];
+            var padY = (y1 - y0) * 0.16, padX = (x1 - x0) * 0.02;
+            y0 = Math.max(0, y0 - padY); y1 = Math.min(img.height, y1 + padY);
+            x0 = Math.max(0, x0 - padX); x1 = Math.min(img.width, x1 + padX);
+            var sw = x1 - x0, s2 = Math.min(4, 3000 / sw);
+            var bc = document.createElement('canvas'); bc.width = Math.floor(sw * s2); bc.height = Math.floor((y1 - y0) * s2);
+            var bx = bc.getContext('2d'); bx.imageSmoothingEnabled = true; bx.imageSmoothingQuality = 'high';
+            bx.drawImage(img, x0, y0, sw, y1 - y0, 0, 0, bc.width, bc.height);
+            return bc;
+        }
+        // Locate the MRZ, recrop tight, OCR two binarizations of the SAME crop and
+        // return their raw texts (the backend votes them). Same pixels both ways,
+        // so the name zone stays consistent. Returns [] when no block is found.
+        function locateRecropTexts(img) {
+            var sc = Math.min(1, 2000 / img.width);
+            var c = document.createElement('canvas');
+            c.width = Math.floor(img.width * sc); c.height = Math.floor(img.height * sc);
+            c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+            return locateMrzLines(c).then(function(L) {
+                var cl = bottomCluster(L);
+                if (!cl) return [];
+                var crop = recropBlock(img, cl, sc);
+                showDebug(crop, img, 0, img.height, { lines: cl });
+                var texts = [];
+                // 'grey' = sharpen only, no binarization — keeps faint strokes
+                // (S vs P/D) and digit shapes that thresholding eats; on clean
+                // crops it reads best and its checksum-solid vote wins, on noisy
+                // ones it scores low and loses. adaptive/otsu cover the rest.
+                return ['adaptive', 'otsu', 'grey'].reduce(function(ch, mode) {
+                    return ch.then(function() {
+                        var cc = cloneCanvas(crop); sharpenCanvas(cc);
+                        if (mode === 'adaptive') binAdaptW(cc); else if (mode === 'otsu') binarizeCanvas(cc, 'otsu');
+                        return ocrCanvas(cc, 6).then(function(t) {
+                            dbgPass('locate-' + mode, t);
+                            if (t && t.trim()) texts.push(t);
+                        }).catch(function() {});
+                    });
+                }, Promise.resolve()).then(function() { return texts; });
+            });
+        }
+
+        // Build the preprocessing variants whose raw reads will be voted on.
+        // PSM 6 throughout (PSM 7 single-line never wins on a real MRZ block and
+        // only slows the phone down). Each variant is a different way to isolate
+        // and binarize the MRZ; the backend vote across them recovers the right
+        // fields even when no single read is perfect.
+        function buildPasses(prep, originalFile) {
+            var passes = [];
+
+            if (prep.canvas) {
+                passes.push({
+                    name: 'band-adaptive PSM 6',
+                    run: function() {
+                        var c = cloneCanvas(prep.canvas);
+                        sharpenCanvas(c);
+                        binarizeCanvas(c, 'adaptive');
+                        return ocrCanvas(c, 6);
+                    },
+                });
+                passes.push({
+                    name: 'band-otsu PSM 6',
+                    run: function() {
+                        var c = cloneCanvas(prep.canvas);
+                        sharpenCanvas(c);
+                        binarizeCanvas(c, 'otsu');
+                        return ocrCanvas(c, 6);
+                    },
+                });
+            }
+
+            // Whole image (raw + binarized) — rescues cards where band detection
+            // misfires, mirroring the full-* variants of the PHP harness.
+            passes.push({
+                name: 'full raw PSM 6',
+                run: function() { return ocrCanvas(originalFile, 6); },
+            });
+
+            return passes;
+        }
+
+        // Run every preprocessing variant, collect all raw OCR reads, then send
+        // them together so the backend can merge them by per-field majority
+        // vote (parseMany). This is the browser counterpart of the PHP harness:
+        // no single read needs to be perfect — the check digits and the vote
+        // across variants recover the correct fields. Raw text only; all
+        // cleaning/repair/voting happens server-side in MrzParser.
+        function runAllPasses(passes, originalFile) {
+            var texts = [];
+            function next(idx) {
+                if (idx >= passes.length) {
+                    if (texts.length === 0) {
+                        progressEl.classList.add('d-none');
+                        showError('Nepodařilo se přečíst MRZ. Otevři Debug a zkus opsat řádky ručně.');
+                        return;
+                    }
+                    statusEl.textContent = 'Vyhodnocuji…';
+                    sendTexts(texts).then(function(ok) {
+                        if (!ok) showError('MRZ se nepodařilo rozpoznat. Otevři Debug nebo opiš řádky ručně.');
+                    });
+                    return;
+                }
+                var pass = passes[idx];
+                statusEl.textContent = 'Čtu doklad (' + (idx + 1) + '/' + passes.length + ')…';
+                progressBar.style.width = '0%';
+                pass.run().then(function(text) {
+                    dbgPass(pass.name, text);
+                    if (text && text.trim()) texts.push(text);
+                    next(idx + 1);
+                }).catch(function(err) {
+                    dbgPass(pass.name, 'ERROR: ' + (err.message || err));
+                    next(idx + 1);
+                });
+            }
+            next(0);
+        }
+
+        // ─── MRZ text normalization ────────────────────────────────────────
+
+        var DIGIT_SUBS = {'O': '0', 'I': '1', 'L': '1', 'S': '5', 'B': '8', 'R': '8', 'Z': '2', 'D': '0', 'Q': '0', 'G': '6', 'T': '7', 'A': '4'};
+        var ALPHA_SUBS = {'0': 'O', '1': 'I', '5': 'S', '8': 'B', '2': 'Z', '6': 'G', '4': 'A'};
+
+        function mrzCharValue(c) {
+            if (c >= '0' && c <= '9') return c.charCodeAt(0) - 48;
+            if (c >= 'A' && c <= 'Z') return c.charCodeAt(0) - 55;
+            return 0;
+        }
+
+        function mrzCheckDigit(s) {
+            var w = [7, 3, 1];
+            var sum = 0;
+            for (var i = 0; i < s.length; i++) sum += mrzCharValue(s[i]) * w[i % 3];
+            return sum % 10;
+        }
+
+        function fixFieldByCheckDigit(field, expectedChar) {
+            var expected = parseInt(expectedChar, 10);
+            if (isNaN(expected)) return field;
+            if (mrzCheckDigit(field) === expected) return field;
+            for (var p = 0; p < field.length; p++) {
+                var ch = field[p];
+                var alts = [];
+                if (DIGIT_SUBS[ch]) alts.push(DIGIT_SUBS[ch]);
+                if (ALPHA_SUBS[ch]) alts.push(ALPHA_SUBS[ch]);
+                for (var a = 0; a < alts.length; a++) {
+                    var candidate = field.substring(0, p) + alts[a] + field.substring(p + 1);
+                    if (mrzCheckDigit(candidate) === expected) return candidate;
+                }
+            }
+            return field;
+        }
+
+        function restoreFillers(s) {
+            s = s.replace(/[KLCI]{3,}/g, function(r) { return '<'.repeat(r.length); });
+            s = s.replace(/<[KLCI]</g, '<<<');
+            s = s.replace(/<[KLCI]{1,2}$/g, function(r) { return '<'.repeat(r.length); });
+            s = s.replace(/<[KLCI]{1,2}(?=<)/g, function(r) { return '<'.repeat(r.length); });
+            s = s.replace(/([A-Z]{3,})[KLC]{2}([A-Z]{3,})/g, '$1<<$2');
+            return s;
+        }
+
+        function padTo(s, n) {
+            if (s.length > n) return s.slice(0, n);
+            while (s.length < n) s += '<';
+            return s;
+        }
+
+        function fixDigitsAt(s, positions) {
+            var arr = s.split('');
+            for (var k = 0; k < positions.length; k++) {
+                var p = positions[k];
+                if (arr[p] && DIGIT_SUBS[arr[p]]) arr[p] = DIGIT_SUBS[arr[p]];
+            }
+            return arr.join('');
+        }
+
+        function fixAlphaAt(s, positions) {
+            var arr = s.split('');
+            for (var k = 0; k < positions.length; k++) {
+                var p = positions[k];
+                if (arr[p] && ALPHA_SUBS[arr[p]]) arr[p] = ALPHA_SUBS[arr[p]];
+            }
+            return arr.join('');
+        }
+
+        function normalizeTd3Line1(s) {
+            s = s.replace(/[^A-Z0-9<]/g, '');
+            var m = s.match(/[PIACR][PIACDSV<][A-Z]{3}/);
+            if (m && m.index > 0 && m.index <= 6) s = s.slice(m.index);
+            s = restoreFillers(s);
+            return padTo(s, 44);
+        }
+
+        function normalizeTd3Line2(s) {
+            s = s.replace(/[^A-Z0-9<]/g, '');
+            var m = s.match(/[A-Z0-9<]{9}[0-9OISLBR][A-Z]{3}/);
+            if (m && m.index > 0 && m.index <= 4) s = s.slice(m.index);
+            s = padTo(s, 44);
+            s = fixDigitsAt(s, [9, 19, 27, 42, 43]);
+            s = fixAlphaAt(s, [10, 11, 12]);
+            var arr = s.split('');
+            if (arr[20] === '8') arr[20] = 'F';
+            if (arr[20] === '0') arr[20] = 'F';
+            s = arr.join('');
+            var dobChars = s.substring(13, 19).split('');
+            for (var i = 0; i < dobChars.length; i++) if (DIGIT_SUBS[dobChars[i]]) dobChars[i] = DIGIT_SUBS[dobChars[i]];
+            var expChars = s.substring(21, 27).split('');
+            for (var j = 0; j < expChars.length; j++) if (DIGIT_SUBS[expChars[j]]) expChars[j] = DIGIT_SUBS[expChars[j]];
+            s = s.substring(0, 13) + dobChars.join('') + s.substring(19, 21) + expChars.join('') + s.substring(27);
+            var doc = fixFieldByCheckDigit(s.substring(0, 9), s[9]);
+            return doc + s.substring(9);
+        }
+
+        function normalizeTd1Line1(s) {
+            s = s.replace(/[^A-Z0-9<]/g, '');
+            var m = s.match(/[IAC][DPCA<][A-Z]{3}/);
+            if (m && m.index > 0 && m.index <= 4) s = s.slice(m.index);
+            s = padTo(s, 30);
+            var doc = s.substring(5, 14);
+            var fixed = fixFieldByCheckDigit(doc, s[14]);
+            return s.substring(0, 5) + fixed + s.substring(14);
+        }
+
+        function normalizeTd1Line2(s) {
+            s = s.replace(/[^A-Z0-9<]/g, '');
+            var m = s.match(/[0-9OISLBR]{6}[0-9OISLBR<][MF<][0-9OISLBR]{6}/);
+            if (m && m.index > 0 && m.index <= 4) s = s.slice(m.index);
+            s = padTo(s, 30);
+            s = fixDigitsAt(s, [6, 14, 29]);
+            var dobChars = s.substring(0, 6).split('');
+            for (var i = 0; i < dobChars.length; i++) if (DIGIT_SUBS[dobChars[i]]) dobChars[i] = DIGIT_SUBS[dobChars[i]];
+            var expChars = s.substring(8, 14).split('');
+            for (var j = 0; j < expChars.length; j++) if (DIGIT_SUBS[expChars[j]]) expChars[j] = DIGIT_SUBS[expChars[j]];
+            return dobChars.join('') + s.substring(6, 8) + expChars.join('') + s.substring(14);
+        }
+
+        function normalizeTd1Line3(s) {
+            s = s.replace(/[^A-Z0-9<]/g, '');
+            var letters = s.replace(/[<0-9]/g, '');
+            var klc = (letters.match(/[KLC]/g) || []).length;
+            var ratio = klc / Math.max(1, letters.length);
+            s = restoreFillers(s);
+            if (ratio > 0.25) {
+                s = s.replace(/<([KLCI])([A-Z]{3,})/g, '<$2');
+                s = s.replace(/([A-Z]{3,})[KLC](<|$)/g, '$1$2');
+            }
+            s = s.replace(/<+$/, '');
+            return padTo(s, 30);
+        }
+
+        function looksLikeMrz(s) {
+            if (/<{2,}/.test(s)) return true;
+            if (/[PI]<[A-Z]{3}/.test(s)) return true;
+            if (/PP[A-Z]{3}/.test(s)) return true;
+            if (/^ID[A-Z]{3}/.test(s)) return true;
+            if (/^[IAC][PDCA<][A-Z]{3}/.test(s)) return true;
+            if (/[0-9]{6}[0-9<][MF<][0-9]{6}/.test(s)) return true;
+            return false;
+        }
+
+        function extractMrzLines(text) {
+            if (!text) return null;
+            var lines = text.split(/\n/);
+            var rawCandidates = [];
+
+            for (var i = 0; i < lines.length; i++) {
+                var clean = lines[i].replace(/\s/g, '').toUpperCase();
+                clean = clean.replace(/[^A-Z0-9<]/g, '');
+                if (clean.length >= 26 && clean.length <= 50) {
+                    rawCandidates.push(clean);
+                }
+            }
+            var candidates = rawCandidates.filter(looksLikeMrz);
+
+            dbgCandidates.textContent = candidates.length
+                ? candidates.map(function(c, i) { return (i + 1) + ' (' + c.length + ' znaků): ' + c; }).join('\n')
+                : '(žádný řádek 26–50 znaků z A-Z 0-9 <)';
+
+            var avgLen = candidates.length ? candidates.reduce(function(a, c) { return a + c.length; }, 0) / candidates.length : 0;
+
+            if (candidates.length >= 3 && avgLen >= 26 && avgLen <= 38) {
+                var t1 = candidates.slice(-3);
+                var nt1 = normalizeTd1Line1(t1[0]);
+                var nt2 = normalizeTd1Line2(t1[1]);
+                var nt3 = normalizeTd1Line3(t1[2]);
+                dbgCandidates.textContent += '\n\nNormalized (TD1):\n' + nt1 + '\n' + nt2 + '\n' + nt3;
+                return nt1 + '\n' + nt2 + '\n' + nt3;
+            }
+            if (candidates.length >= 2 && avgLen >= 40) {
+                var t3 = candidates.slice(-2);
+                var n0 = normalizeTd3Line1(t3[0]);
+                var n1 = normalizeTd3Line2(t3[1]);
+                dbgCandidates.textContent += '\n\nNormalized (TD3):\n' + n0 + '\n' + n1;
+                return n0 + '\n' + n1;
+            }
+            if (candidates.length === 2 && avgLen >= 34 && avgLen <= 40) {
+                var t3b = candidates.slice(-2);
+                var n0b = normalizeTd3Line1(t3b[0]);
+                var n1b = normalizeTd3Line2(t3b[1]);
+                dbgCandidates.textContent += '\n\nNormalized (TD3-fallback):\n' + n0b + '\n' + n1b;
+                return n0b + '\n' + n1b;
+            }
+
+            var blob = text.toUpperCase().replace(/[^A-Z0-9<\n]/g, '');
+            var pSearch = blob.replace(/\n/g, '');
+            var pIdx = pSearch.search(/[PI]<[A-Z<]/);
+            if (pIdx === -1) pIdx = pSearch.search(/PP[A-Z]{3}/);
+            if (pIdx !== -1 && pSearch.length >= pIdx + 88) {
+                var l1 = normalizeTd3Line1(pSearch.slice(pIdx, pIdx + 44));
+                var l2 = normalizeTd3Line2(pSearch.slice(pIdx + 44, pIdx + 88));
+                dbgCandidates.textContent += '\n\nP< fallback (TD3):\n' + l1 + '\n' + l2;
+                return l1 + '\n' + l2;
+            }
+
+            return null;
+        }
+
+        // ─── Backend ───────────────────────────────────────────────────────
+
+        function handleBackendResponse(res) {
+            progressEl.classList.add('d-none');
+            if (!res.ok) {
+                return false;
+            }
+            prefillForm(res.data);
+            showSuccess('Údaje rozpoznány a předvyplněny. Zkontrolujte a doplňte adresu a zbývající pole.');
+            return true;
+        }
+
+        // Several OCR reads → backend merges by majority vote.
+        function sendTexts(texts) {
+            return postTexts(texts).then(handleBackendResponse)
+                .catch(function(err) { showError('Chyba komunikace: ' + err.message); return false; });
+        }
+
+        // Low-level POST that returns {ok, data} without prefilling, so the
+        // caller can gate on data.confidence before deciding to use the read.
+        function postTexts(texts) {
+            return fetch(mrzEndpoint, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({mrz_texts: texts})
+            }).then(function(resp) { return resp.json().then(function(d) { return {ok: resp.ok, data: d}; }); });
+        }
+
+        // Single text (manual entry).
+        function sendToBackend(mrzText) {
+            return fetch(mrzEndpoint, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({mrz: mrzText})
+            })
+            .then(function(resp) { return resp.json().then(function(d) { return {ok: resp.ok, data: d}; }); })
+            .then(handleBackendResponse)
+            .catch(function(err) { showError('Chyba komunikace: ' + err.message); return false; });
+        }
+
+        function prefillForm(data) {
+            setField('guest_document_lastName', data.lastName);
+            setField('guest_document_firstName', data.firstName);
+            setField('guest_document_birthDate', data.birthDate);
+            setField('guest_document_documentNumber', data.documentNumber);
+
+            var cb = document.getElementById('guest_document_isCzechCitizen');
+            if (data.nationalityCode === 'CZE') {
+                if (cb) cb.checked = true;
+            } else {
+                if (cb) cb.checked = false;
+                if (data.nationalityFound) {
+                    setSelect('guest_document_nationality', data.nationalityCode);
+                }
+            }
+
+            if (data.documentType) {
+                setSelect('guest_document_documentType', data.documentType);
+            }
+        }
+
+        function setField(id, value) {
+            var el = document.getElementById(id);
+            if (el && value) el.value = value;
+        }
+
+        function setSelect(id, value) {
+            var el = document.getElementById(id);
+            if (!el) return;
+            for (var i = 0; i < el.options.length; i++) {
+                if (el.options[i].value === value) {
+                    el.selectedIndex = i;
+                    return;
+                }
+            }
+        }
+
+        function showError(msg) {
+            progressEl.classList.add('d-none');
+            resultEl.classList.remove('d-none');
+            resultEl.innerHTML = '<div class="alert alert-warning mb-0 small">' + msg + '</div>';
+        }
+
+        function showSuccess(msg) {
+            resultEl.classList.remove('d-none');
+            resultEl.innerHTML = '<div class="alert alert-success mb-0 small">' + msg + '</div>';
+        }
+
+        // ─── Live camera scanner ───────────────────────────────────────────
+        // Opens the rear camera, shows a guide frame, and grades every frame
+        // for brightness / glare / sharpness / steadiness — cheap pixel stats,
+        // no OCR. When a steady, sharp, well-lit frame is in view it runs the
+        // same locate-then-recrop OCR as a still photo; a checksum-solid read
+        // (confidence ≥ LOCATE_ACCEPT) auto-captures, stops the camera and
+        // prefills. The pixel stats only decide *when* to try — the OCR gate is
+        // the real arbiter, so loose thresholds just mean it tries more often.
+        // Silently hides itself when no camera API is available (insecure
+        // context / desktop without webcam); the file buttons stay as fallback.
+        (function initLiveScan() {
+            var liveBtn = document.getElementById('mrz-live-btn');
+            if (!liveBtn) return;
+            if (!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)) {
+                liveBtn.classList.add('d-none');
+                return;
+            }
+            var live = document.getElementById('mrz-live');
+            var video = document.getElementById('mrz-video');
+            var liveStatus = document.getElementById('mrz-live-status');
+            var analysis = document.createElement('canvas');
+            var stream = null, rafId = null, busy = false, done = false;
+            var steady = 0, lastSig = null, cooldownUntil = 0;
+
+            function now() { return (window.performance && performance.now) ? performance.now() : Date.now(); }
+
+            function setStatus(msg, kind) {
+                liveStatus.textContent = msg;
+                liveStatus.style.background = kind === 'ok' ? 'rgba(25,135,84,.78)'
+                    : kind === 'warn' ? 'rgba(176,120,0,.72)' : 'rgba(0,0,0,.55)';
+            }
+
+            function start() {
+                done = false; steady = 0; lastSig = null; cooldownUntil = 0;
+                navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false })
+                    .then(function(s) {
+                        stream = s; video.srcObject = s;
+                        live.classList.remove('d-none');
+                        resultEl.classList.add('d-none');
+                        setStatus('Zaměřuji…');
+                        var p = video.play();
+                        if (p && p.catch) p.catch(function() {});
+                        loop();
+                    })
+                    .catch(function() {
+                        showError('Kameru se nepodařilo spustit (chybí oprávnění?). Použij „Vyfotit doklad" nebo „Nahrát obrázek".');
+                    });
+            }
+
+            function stop() {
+                if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+                if (stream) { stream.getTracks().forEach(function(t) { t.stop(); }); stream = null; }
+                video.srcObject = null;
+                live.classList.add('d-none');
+            }
+
+            // Brightness, glare fraction, Laplacian-variance sharpness and a
+            // coarse frame-to-frame steadiness flag, all on a 320-px grey copy.
+            function grade() {
+                var vw = video.videoWidth, vh = video.videoHeight;
+                if (!vw || !vh) return null;
+                var aw = 320, ah = Math.round(aw * vh / vw);
+                analysis.width = aw; analysis.height = ah;
+                var ctx = analysis.getContext('2d', { willReadFrequently: true });
+                ctx.drawImage(video, 0, 0, aw, ah);
+                var grey = toGrey(ctx.getImageData(0, 0, aw, ah).data);
+                var sum = 0, glare = 0;
+                for (var i = 0; i < grey.length; i++) { sum += grey[i]; if (grey[i] > 245) glare++; }
+                var mean = sum / grey.length;
+                var lapSum = 0, lapSq = 0, cnt = 0;
+                for (var y = 1; y < ah - 1; y++) {
+                    for (var x = 1; x < aw - 1; x++) {
+                        var idx = y * aw + x;
+                        var lap = 4 * grey[idx] - grey[idx - 1] - grey[idx + 1] - grey[idx - aw] - grey[idx + aw];
+                        lapSum += lap; lapSq += lap * lap; cnt++;
+                    }
+                }
+                var lapVar = lapSq / cnt - (lapSum / cnt) * (lapSum / cnt);
+                var sig = Math.round(mean);
+                var stable = lastSig !== null && Math.abs(sig - lastSig) <= 2;
+                lastSig = sig;
+                return { mean: mean, glare: glare / grey.length, sharp: lapVar, stable: stable };
+            }
+
+            function loop() {
+                rafId = requestAnimationFrame(loop);
+                if (busy || done || now() < cooldownUntil) return;
+                var g = grade();
+                if (!g) { setStatus('Zaměřuji…'); return; }
+                if (g.mean < 55) { setStatus('🔅 Moc tmavé – přisviť', 'warn'); steady = 0; return; }
+                if (g.glare > 0.06) { setStatus('✨ Odlesk – nakloň doklad', 'warn'); steady = 0; return; }
+                if (g.sharp < 90) { setStatus('🔍 Rozmazané – přibliž a podrž', 'warn'); steady = 0; return; }
+                if (!g.stable) { setStatus('✋ Drž klidně…'); steady = 0; return; }
+                steady++;
+                setStatus('🟢 Čtu doklad…', 'ok');
+                if (steady >= 2) attempt();
+            }
+
+            function attempt() {
+                busy = true;
+                var vw = video.videoWidth, vh = video.videoHeight;
+                var frame = document.createElement('canvas');
+                frame.width = vw; frame.height = vh;
+                frame.getContext('2d').drawImage(video, 0, 0, vw, vh);
+                locateRecropTexts(frame).then(function(texts) {
+                    if (done) return null;
+                    if (!texts.length) { miss(); return null; }
+                    return postTexts(texts).then(function(res) {
+                        if (done) return;
+                        if (res.ok && (res.data.confidence || 0) >= LOCATE_ACCEPT) {
+                            success(res, frame);
+                        } else {
+                            miss();
+                        }
+                    });
+                }).catch(function() { miss(); });
+            }
+
+            function miss() {
+                busy = false; steady = 0; cooldownUntil = now() + 700;
+                if (!done) setStatus('Nečitelné – drž doklad v rámečku…', 'warn');
+            }
+
+            function success(res, frame) {
+                done = true; busy = false;
+                image.src = frame.toDataURL('image/jpeg', 0.8);
+                preview.classList.remove('d-none');
+                stop();
+                prefillForm(res.data);
+                showSuccess('Doklad načten z kamery a předvyplněn. Zkontrolujte a doplňte adresu a zbývající pole.');
+            }
+
+            liveBtn.addEventListener('click', start);
+            var shot = document.getElementById('mrz-live-shot');
+            if (shot) shot.addEventListener('click', function() { if (!busy && !done) { steady = 0; cooldownUntil = 0; attempt(); } });
+            var close = document.getElementById('mrz-live-close');
+            if (close) close.addEventListener('click', stop);
+        })();
+    })();
+    </script>
+    {% endif %}
+{% endblock %}

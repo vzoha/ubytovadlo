@@ -1,0 +1,34 @@
+# Symfony front-controller rewrite pro DocumentRoot sdíleného hostingu (~/www).
+# Kopíruje sem `composer deploy-www` jako ~/www/.htaccess — needituj na serveru.
+
+# Volitelně: když je git clone jinde než ~/src, odkomentuj a nastav cestu k app:
+# SetEnv DEPLOY_APP_DIR /path/to/app/src/app
+
+DirectoryIndex index.php
+
+<IfModule mod_negotiation.c>
+    Options -MultiViews
+</IfModule>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Přesměrování na URI bez front controlleru (index.php) pro hezčí adresy.
+    RewriteCond %{ENV:REDIRECT_STATUS} =""
+    RewriteRule ^index\.php(?:/(.*)|$) %{ENV:BASE}/$1 [R=301,L]
+
+    # Existující soubory/adresáře (assets, …) servíruj přímo.
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # Vše ostatní pošli na index.php.
+    RewriteRule ^ index.php [L]
+</IfModule>
+
+<IfModule !mod_rewrite.c>
+    <IfModule mod_alias.c>
+        # Fallback bez mod_rewrite.
+        RedirectMatch 307 ^/$ /index.php/
+    </IfModule>
+</IfModule>

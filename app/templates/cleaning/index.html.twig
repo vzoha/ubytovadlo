@@ -1,0 +1,97 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Úklid{% endblock %}
+
+{% block body %}
+    <h1 class="h3 mb-3">Úklid — vyplácení uklízečce</h1>
+
+    <div class="card mb-3">
+        <div class="card-header d-flex justify-content-between">
+            <span>Čeká na vyplacení ({{ pending|length }})</span>
+            {% set total = 0 %}
+            {% for c in pending %}{% set total = total + c.payoutCzk %}{% endfor %}
+            <span class="fw-bold">{{ total|number_format(0, ',', ' ') }} Kč</span>
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-sm table-hover mb-0">
+                <thead class="small text-muted">
+                <tr>
+                    <th>Pobyt</th>
+                    <th>Host</th>
+                    <th>Typ</th>
+                    <th class="text-end">Vyplatit</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for c in pending %}
+                    <tr>
+                        <td>
+                            {{ c.reservation.checkOut ? c.reservation.checkOut|date('d. m. Y') : c.reservation.checkIn|date('d. m. Y') }}
+                        </td>
+                        <td>
+                            <a href="{{ path('reservation_detail', {id: c.reservation.id}) }}">
+                                {{ c.reservation.guestName ?? '—' }}
+                            </a>
+                        </td>
+                        <td>{{ c.type|cleaning_label }}</td>
+                        <td class="text-end fw-bold">{{ c.payoutCzk|number_format(0, ',', ' ') }} Kč</td>
+                        <td class="text-end">
+                            <form method="post" action="{{ path('cleaning_mark_paid', {id: c.id}) }}"
+                                  onsubmit="return confirm('Označit jako vyplacené dnes?')">
+                                <input type="hidden" name="_token" value="{{ csrf_token('cleaning-paid-' ~ c.id) }}">
+                                <button class="btn btn-sm btn-outline-success">Zaplaceno</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="5" class="text-muted small p-3">Nic k vyplacení.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header d-flex justify-content-between">
+            <span>Vyplaceno v {{ month_label }} ({{ paid_this_month|length }})</span>
+            {% set paid_total = 0 %}
+            {% for c in paid_this_month %}{% set paid_total = paid_total + c.payoutCzk %}{% endfor %}
+            <span class="fw-bold">{{ paid_total|number_format(0, ',', ' ') }} Kč</span>
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-sm mb-0">
+                <thead class="small text-muted">
+                <tr>
+                    <th>Vyplaceno</th>
+                    <th>Pobyt</th>
+                    <th>Host</th>
+                    <th>Typ</th>
+                    <th class="text-end">Částka</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for c in paid_this_month %}
+                    <tr>
+                        <td>{{ c.paidAt|date('d. m. Y') }}</td>
+                        <td>{{ c.reservation.checkOut ? c.reservation.checkOut|date('d. m. Y') : c.reservation.checkIn|date('d. m. Y') }}</td>
+                        <td>
+                            <a href="{{ path('reservation_detail', {id: c.reservation.id}) }}">
+                                {{ c.reservation.guestName ?? '—' }}
+                            </a>
+                        </td>
+                        <td>{{ c.type|cleaning_label }}</td>
+                        <td class="text-end">{{ c.payoutCzk|number_format(0, ',', ' ') }} Kč</td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="5" class="text-muted small p-3">Tento měsíc nic vyplaceno.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a href="{{ path('dashboard') }}" class="btn btn-outline-secondary btn-sm">← Zpět na přehled</a>
+    </div>
+{% endblock %}

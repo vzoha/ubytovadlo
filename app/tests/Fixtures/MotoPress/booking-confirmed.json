@@ -1,0 +1,30 @@
+{
+    "id": 1234,
+    "status": "confirmed",
+    "date_created": "2026-05-01T14:23:45",
+    "date_created_utc": "2026-05-01T12:23:45",
+    "check_in_date": "2026-07-15",
+    "check_out_date": "2026-07-22",
+    "total_price": "14000",
+    "note": "Pejsek s sebou.",
+    "customer": {
+        "first_name": "Jan",
+        "last_name": "Novak",
+        "email": "jan.novak@example.cz",
+        "phone": "+420777123456",
+        "address1": "Hlavni 12",
+        "city": "Praha",
+        "zip": "11000",
+        "country": "CZ"
+    },
+    "reserved_accommodations": [
+        {
+            "accommodation": 369,
+            "adults": 2,
+            "children": 1,
+            "services": [
+                {"id": 42, "title": "Pes", "qty": 1, "total_price": "200"}
+            ]
+        }
+    ]
+}

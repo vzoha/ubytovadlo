@@ -1,0 +1,55 @@
+<div class="heading">
+    <div class="h1">Faktura číslo <span>{{ invoice.number }}</span></div>
+</div>
+
+<table class="head"><tr>
+    <td class="col-supplier">{% include 'invoice/_supplier.html.twig' %}</td>
+    <td class="col-customer">{% include 'invoice/_customer.html.twig' %}</td>
+</tr></table>
+
+{% include 'invoice/_payment.html.twig' %}
+
+{% set currency = invoice.currency %}
+<table class="lines">
+    <thead>
+    <tr>
+        <th>Název položky</th>
+        <th class="amt">Množství</th>
+        <th class="unit">MJ</th>
+        <th class="price">Cena / MJ</th>
+        <th class="total">Celkem</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for line in invoice.lines %}
+        <tr>
+            <td>{{ line.description }}</td>
+            <td class="amt">{{ line.quantity|number_format(line.quantity == line.quantity|round ? 0 : 2, ',', ' ') }}</td>
+            <td class="unit">{{ line.unit }}</td>
+            <td class="price">{{ line.unitPrice|money(currency) }}</td>
+            <td class="total">{{ line.totalPrice|money(currency) }}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+<table class="summary">
+    <tr>
+        <td class="s-spacer"></td>
+        <td class="s-label">CELKEM K ÚHRADĚ</td>
+        <td class="s-amount">{{ invoice.totalAmount|money(currency) }}</td>
+    </tr>
+    {% if invoice.isPaid %}
+    <tr>
+        <td></td>
+        <td colspan="2" class="paid-text">Neplaťte, uhrazeno {{ invoice.paidAt|date('j.n.Y') }}</td>
+    </tr>
+    {% endif %}
+</table>
+
+{% if invoice.originalAmount and invoice.originalCurrency != invoice.currency %}
+    <div class="fine-note">
+        Původní částka: {{ invoice.originalAmount|money(invoice.originalCurrency) }}.
+        Kurz ČNB k {{ invoice.exchangeRateDate|date('j.n.Y') }}: 1 {{ invoice.originalCurrency }} = {{ invoice.exchangeRate|number_format(3, ',', ' ') }} Kč.
+    </div>
+{% endif %}

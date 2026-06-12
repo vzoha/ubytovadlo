@@ -1,0 +1,99 @@
+{% extends 'checkin/_base.html.twig' %}
+
+{% block body %}
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <h1 class="h3 mb-2">Online check-in</h1>
+            <p class="text-muted small">
+                Příjezd <strong>{{ reservation.checkIn|date('d. m. Y') }}</strong>
+                · odjezd <strong>{{ reservation.checkOut|date('d. m. Y') }}</strong>
+                · očekáváme <strong>{{ expectedGuests }}</strong> {{ expectedGuests == 1 ? 'osobu' : (expectedGuests < 5 ? 'osoby' : 'osob') }}
+            </p>
+
+            {% if isCompleted %}
+                <div class="alert alert-success">
+                    <strong>Check-in byl uzavřen {{ reservation.checkinCompletedAt|date('d. m. Y H:i') }}.</strong>
+                    Údaje jsme přijali, na úpravy nás kontaktujte přímo.
+                </div>
+            {% else %}
+                {# ── Fakturace (objednatel) — nabídneme jen když adresa chybí ── #}
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h2 class="h6 card-title mb-2">🧾 Faktura</h2>
+                        {% if hasBilling %}
+                            <p class="small text-success mb-2">✓ Fakturační údaje máme vyplněné.</p>
+                            <a href="{{ path('checkin_billing', {token: reservation.checkinToken}) }}" class="btn btn-sm btn-outline-secondary">Upravit fakturační údaje</a>
+                        {% else %}
+                            <p class="small text-muted mb-2">
+                                Chcete za pobyt fakturu (na sebe, nebo na firmu)? Doplňte prosím
+                                fakturační adresu. Pokud fakturu nepotřebujete, tento krok přeskočte.
+                            </p>
+                            <a href="{{ path('checkin_billing', {token: reservation.checkinToken}) }}" class="btn btn-sm btn-primary">Doplnit fakturační adresu</a>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {# ── Hosté: registrujeme jen cizince (Ubyport), Čechy ne ── #}
+                <h2 class="h5 mb-2">Hosté</h2>
+                <p class="small text-muted">
+                    Zákon nám ukládá nahlásit cizinecké policii (Ubyport) <strong>jen ubytované cizince</strong>.
+                    Občany ČR nikde neevidujeme — nevyplňujte je.
+                </p>
+            {% endif %}
+
+            {% if guests is not empty %}
+                <div class="list-group mb-3">
+                    {% for g in guests %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <div><strong>{{ g.lastName }} {{ g.firstName }}</strong>{% if g.isCzechCitizen %} <span class="badge bg-secondary">občan ČR</span>{% endif %}</div>
+                                <div class="small text-muted">
+                                    {{ g.birthDate|date('d. m. Y') }}
+                                    {% if g.nationalityCode %} · {{ g.nationalityCode }}{% endif %}
+                                    {% if g.documentNumber %} · {{ g.documentNumber }}{% endif %}
+                                </div>
+                            </div>
+                            {% if not isCompleted %}
+                                <div class="d-flex gap-2">
+                                    <a class="btn btn-sm btn-outline-secondary" href="{{ path('checkin_host_edit', {token: reservation.checkinToken, id: g.id}) }}">Upravit</a>
+                                    <form method="post" action="{{ path('checkin_host_delete', {token: reservation.checkinToken, id: g.id}) }}" onsubmit="return confirm('Opravdu smazat tohoto hosta?');">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('checkin_delete_' ~ g.id) }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Smazat</button>
+                                    </form>
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            {% if not isCompleted %}
+                {% if guests is empty %}
+                    {# Vstupní rozcestník: jsou mezi hosty cizinci? #}
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <p class="mb-3">Jsou mezi ubytovanými <strong>cizinci</strong> (občané jiného státu než ČR)?</p>
+                            <div class="d-flex justify-content-center gap-2 flex-wrap">
+                                <a class="btn btn-primary" href="{{ path('checkin_host_new', {token: reservation.checkinToken}) }}">
+                                    Ano, přidat zahraničního hosta
+                                </a>
+                                <form method="post" action="{{ path('checkin_finish', {token: reservation.checkinToken}) }}">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('checkin_finish') }}">
+                                    <button type="submit" class="btn btn-outline-success">Ne, jsme všichni Češi — dokončit</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="d-flex justify-content-between gap-2 flex-wrap">
+                        <a class="btn btn-outline-primary" href="{{ path('checkin_host_new', {token: reservation.checkinToken}) }}">+ Přidat dalšího cizince</a>
+                        <form method="post" action="{{ path('checkin_finish', {token: reservation.checkinToken}) }}">
+                            <input type="hidden" name="_token" value="{{ csrf_token('checkin_finish') }}">
+                            <button type="submit" class="btn btn-success">Vše vyplněno, odeslat</button>
+                        </form>
+                    </div>
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

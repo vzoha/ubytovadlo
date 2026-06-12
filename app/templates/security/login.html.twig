@@ -1,0 +1,32 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Přihlášení — {{ brand_name }}{% endblock %}
+
+{% block body %}
+<div class="row justify-content-center">
+    <div class="col-md-5 col-lg-4">
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <h1 class="h4 mb-4 text-center">🏡 Přihlášení</h1>
+
+                {% if error %}
+                    <div class="alert alert-danger">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
+                {% endif %}
+
+                <form method="post">
+                    <div class="mb-3">
+                        <label for="inputEmail" class="form-label">E-mail</label>
+                        <input type="email" name="_username" id="inputEmail" class="form-control" value="{{ last_username }}" required autofocus>
+                    </div>
+                    <div class="mb-3">
+                        <label for="inputPassword" class="form-label">Heslo</label>
+                        <input type="password" name="_password" id="inputPassword" class="form-control" required>
+                    </div>
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+                    <button class="btn btn-primary w-100" type="submit">Přihlásit</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

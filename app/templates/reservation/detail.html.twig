@@ -1,0 +1,499 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Rezervace #{{ reservation.id }}{% endblock %}
+
+{% block body %}
+    <div class="d-flex justify-content-between align-items-start mb-3">
+        <div>
+            <h1 class="h3 mb-0">{{ reservation.guestName ?? ('Rezervace #' ~ reservation.id) }}</h1>
+            <div class="text-muted">
+                {{ reservation.channel.label }}
+                {% if reservation.externalId %}· kód <code>{{ reservation.externalId }}</code>{% endif %}
+                {% if reservation.motopressExternalId %}· MotoPress #{{ reservation.motopressExternalId }}{% endif %}
+            </div>
+        </div>
+        <div>
+            {% set badge = {
+                needs_details: 'warning',
+                confirmed: 'success',
+                in_progress: 'primary',
+                completed: 'secondary',
+                cancelled: 'dark',
+            }[reservation.status.value] %}
+            <span class="badge text-bg-{{ badge }} fs-6">{{ reservation.status.label }}</span>
+        </div>
+    </div>
+
+    {% if reservation.status.value == 'needs_details' %}
+        <div class="alert alert-warning d-flex align-items-center">
+            <span class="me-3">
+                Tato rezervace čeká na doplnění údajů hosta.
+                {% if reservation.motopressExternalId and reservation.channel.value != 'web' %}
+                    Vznikla z iCal bloku v MotoPressu — host data dohledej v {{ reservation.channel.label }} extranetu.
+                {% endif %}
+            </span>
+            <a href="{{ path('reservation_details', {id: reservation.id}) }}" class="btn btn-warning btn-sm">Doplnit</a>
+        </div>
+    {% endif %}
+
+    <div class="row g-3">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">Pobyt</div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4">Příjezd</dt>
+                        <dd class="col-sm-8">{{ reservation.checkIn|date('d. m. Y') }} {% if reservation.checkInTime %}{{ reservation.checkInTime|date('H:i') }}{% endif %}</dd>
+
+                        <dt class="col-sm-4">Odjezd</dt>
+                        <dd class="col-sm-8">{{ reservation.checkOut ? reservation.checkOut|date('d. m. Y') : '—' }} {% if reservation.checkOutTime %}{{ reservation.checkOutTime|date('H:i') }}{% endif %}</dd>
+
+                        <dt class="col-sm-4">Hosté</dt>
+                        <dd class="col-sm-8">
+                            {{ reservation.guestsAdult }} dospěl{{ reservation.guestsAdult == 1 ? 'ý' : 'í' }}
+                            {% if reservation.guestsChild %}, {{ reservation.guestsChild }} dít{{ reservation.guestsChild == 1 ? 'ě' : 'ě' }}{% endif %}
+                            {% if reservation.guestsInfant %}, {{ reservation.guestsInfant }} kojen{{ reservation.guestsInfant == 1 ? 'ec' : 'ci' }}{% endif %}
+                        </dd>
+
+                        <dt class="col-sm-4">Objednáno</dt>
+                        <dd class="col-sm-8">
+                            {% if reservation.bookedAt %}
+                                {{ reservation.bookedAt|date('d. m. Y H:i') }}
+                            {% else %}
+                                <span class="text-muted">—</span>
+                            {% endif %}
+                        </dd>
+
+                        <dt class="col-sm-4">Vytvořeno u nás</dt>
+                        <dd class="col-sm-8 text-muted">{{ reservation.createdAt|date('d. m. Y H:i') }}</dd>
+                    </dl>
+                </div>
+            </div>
+
+            {% if reservation.totalKwh is not null %}
+                <div class="card mt-3">
+                    <div class="card-header d-flex justify-content-between">
+                        <span>Elektřina</span>
+                        <span class="small text-muted">
+                            {% if reservation.electricitySource.value == 'measured' %}
+                                <span class="badge text-bg-success">odečteno</span>
+                            {% else %}
+                                <span class="badge text-bg-secondary">rozpočteno</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <dl class="row mb-0">
+                            <dt class="col-sm-5">Spotřeba VT</dt>
+                            <dd class="col-sm-7 text-end">{{ reservation.vtKwh ?? 0 }} kWh</dd>
+                            <dt class="col-sm-5">Spotřeba NT</dt>
+                            <dd class="col-sm-7 text-end">{{ reservation.ntKwh ?? 0 }} kWh</dd>
+                            <dt class="col-sm-5">Celkem</dt>
+                            <dd class="col-sm-7 text-end fw-bold">{{ reservation.totalKwh }} kWh</dd>
+                            {% if reservation.checkOut %}
+                                {% set nights = reservation.checkIn.diff(reservation.checkOut).days %}
+                                {% if nights > 0 %}
+                                    <dt class="col-sm-5">Na noc</dt>
+                                    <dd class="col-sm-7 text-end">{{ (reservation.totalKwh / nights)|number_format(1, ',', ' ') }} kWh/noc</dd>
+                                {% endif %}
+                            {% endif %}
+                            {% if electricity_cost %}
+                                <dt class="col-sm-5">Náklad (orientačně)</dt>
+                                <dd class="col-sm-7 text-end">
+                                    {{ electricity_cost.totalCzk|number_format(0, ',', ' ') }} Kč
+                                    <div class="small text-muted">
+                                        VT {{ electricity_cost.vtRate|number_format(2, ',', ' ') }} / NT {{ electricity_cost.ntRate|number_format(2, ',', ' ') }} Kč/kWh
+                                    </div>
+                                </dd>
+                            {% endif %}
+                        </dl>
+                        <p class="small text-muted mb-0 mt-2">Hostovi neúčtujeme — elektřina je v ceně pobytu.</p>
+                    </div>
+                </div>
+            {% endif %}
+
+            {% if cleaning %}
+                <div class="card mt-3">
+                    <div class="card-header d-flex justify-content-between">
+                        <span>Úklid</span>
+                        {% if cleaning.payoutCzk > 0 %}
+                            {% if cleaning.paidAt %}
+                                <span class="badge text-bg-success">vyplaceno {{ cleaning.paidAt|date('d. m. Y') }}</span>
+                            {% else %}
+                                <span class="badge text-bg-warning">čeká na vyplacení</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="badge text-bg-secondary">bez výplaty</span>
+                        {% endif %}
+                    </div>
+                    <div class="card-body">
+                        <form method="post" action="{{ path('reservation_set_cleaning', {id: reservation.id}) }}"
+                              data-cleaning-defaults="{{ cleaning_defaults|json_encode|e('html_attr') }}">
+                            <input type="hidden" name="_token" value="{{ csrf_token('cleaning-' ~ reservation.id) }}">
+                            <div class="row g-2 mb-2">
+                                <div class="col-sm-6">
+                                    <label class="form-label small mb-1">Typ</label>
+                                    <select name="type" class="form-select form-select-sm" data-cleaning-type>
+                                        {% for t in cleaning_types %}
+                                            <option value="{{ t.value }}" {{ cleaning.type == t ? 'selected' : '' }}>{{ t|cleaning_label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-sm-3">
+                                    <label class="form-label small mb-1">Náklad Kč</label>
+                                    <input type="number" name="cost_czk" min="0" class="form-control form-control-sm" value="{{ cleaning.costCzk }}" data-cleaning-cost>
+                                </div>
+                                <div class="col-sm-3">
+                                    <label class="form-label small mb-1">Výplata Kč</label>
+                                    <input type="number" name="payout_czk" min="0" class="form-control form-control-sm" value="{{ cleaning.payoutCzk }}" data-cleaning-payout>
+                                </div>
+                            </div>
+                            <div class="row g-2 mb-2">
+                                <div class="col-sm-6">
+                                    <label class="form-label small mb-1">Vyplaceno dne</label>
+                                    <input type="date" name="paid_at" class="form-control form-control-sm" value="{{ cleaning.paidAt ? cleaning.paidAt|date('Y-m-d') : '' }}" data-cleaning-paid-at>
+                                </div>
+                                <div class="col-sm-6">
+                                    <label class="form-label small mb-1">Poznámka</label>
+                                    <input type="text" name="note" class="form-control form-control-sm" value="{{ cleaning.note ?? '' }}">
+                                </div>
+                            </div>
+                            <button class="btn btn-primary btn-sm">Uložit úklid</button>
+                            <p class="small text-muted mb-0 mt-2">Náklad vstupuje do zisk/noc i u Barči (oportunita). Výplata = jen reálná hotovost.</p>
+                        </form>
+                    </div>
+                </div>
+            {% endif %}
+
+            <div class="card mt-3">
+                <div class="card-header d-flex justify-content-between">
+                    <span>Host</span>
+                    <a href="{{ path('reservation_details', {id: reservation.id}) }}" class="btn btn-sm btn-link p-0">Upravit</a>
+                </div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4">Jméno</dt>
+                        <dd class="col-sm-8">{{ reservation.guestName ?? '—' }}</dd>
+
+                        <dt class="col-sm-4">E-mail</dt>
+                        <dd class="col-sm-8">{{ reservation.guestEmail ?? '—' }}</dd>
+
+                        <dt class="col-sm-4">Telefon</dt>
+                        <dd class="col-sm-8">{{ reservation.guestPhone ?? '—' }}</dd>
+
+                        <dt class="col-sm-4">Adresa</dt>
+                        <dd class="col-sm-8">{{ reservation.guestAddressFormatted ?? '—' }}</dd>
+
+                        {% if reservation.guestCompanyName %}
+                            <dt class="col-sm-4">Firma</dt>
+                            <dd class="col-sm-8">{{ reservation.guestCompanyName }}</dd>
+
+                            <dt class="col-sm-4">IČO / DIČ</dt>
+                            <dd class="col-sm-8">{{ reservation.guestIco ?? '—' }} / {{ reservation.guestDic ?? '—' }}</dd>
+                        {% endif %}
+
+                        {% if reservation.guestRegion %}
+                            <dt class="col-sm-4">Region</dt>
+                            <dd class="col-sm-8">{{ reservation.guestRegion }}</dd>
+                        {% endif %}
+
+                        {% if reservation.hasPet %}
+                            <dt class="col-sm-4">Pes</dt>
+                            <dd class="col-sm-8"><span class="badge text-bg-warning">ano</span>{% if reservation.petsNote %} · {{ reservation.petsNote }}{% endif %}</dd>
+                        {% endif %}
+
+                        {% if reservation.needsBabyCot %}
+                            <dt class="col-sm-4">Dětská postýlka</dt>
+                            <dd class="col-sm-8"><span class="badge text-bg-info">připravit</span></dd>
+                        {% endif %}
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>Online check-in</span>
+                    {% if reservation.checkinCompletedAt %}
+                        <span class="badge text-bg-success">dokončen {{ reservation.checkinCompletedAt|date('d. m. Y H:i') }}</span>
+                    {% else %}
+                        <span class="badge text-bg-warning">čeká na vyplnění</span>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    {% set checkin_url = url('checkin_index', {token: reservation.checkinToken}) %}
+                    <div class="input-group input-group-sm mb-2">
+                        <input type="text" class="form-control" value="{{ checkin_url }}" readonly id="checkin-link">
+                        <button class="btn btn-outline-secondary" type="button" data-copy="#checkin-link">Zkopírovat</button>
+                    </div>
+
+                    {% if guest_documents is not empty %}
+                        <table class="table table-sm small mb-2">
+                            <thead class="text-muted"><tr><th>Jméno</th><th>Občanství</th><th>Doklad</th><th>Stav</th></tr></thead>
+                            <tbody>
+                            {% for g in guest_documents %}
+                                <tr>
+                                    <td>{{ g.lastName }} {{ g.firstName }}</td>
+                                    <td>{% if g.isCzechCitizen %}ČR{% elseif g.nationalityCode %}{{ g.nationalityCode }}{% else %}—{% endif %}</td>
+                                    <td>{{ g.documentNumber ?? '—' }}</td>
+                                    <td>{% if g.confirmedAt %}<span class="text-success">potvrzeno</span>{% else %}<span class="text-muted">rozpracováno</span>{% endif %}</td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <p class="text-muted small mb-2">Zatím žádný host nevyplnil check-in.</p>
+                    {% endif %}
+
+                    <div class="d-flex gap-2">
+                        <a href="{{ checkin_url }}" target="_blank" class="btn btn-sm btn-outline-primary">Otevřít jako host</a>
+                        {% if reservation.checkinCompletedAt %}
+                            <form method="post" action="{{ path('reservation_reset_checkin', {id: reservation.id}) }}" onsubmit="return confirm('Opravdu znovu otevřít check-in?');">
+                                <input type="hidden" name="_token" value="{{ csrf_token('reset-checkin-' ~ reservation.id) }}">
+                                <button class="btn btn-sm btn-outline-warning">Znovu otevřít</button>
+                            </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header">Finance</div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-6">Celkem od hosta</dt>
+                        <dd class="col-sm-6 text-end">
+                            {% if reservation.priceTotal %}{{ reservation.priceTotal|number_format(2, ',', ' ') }} {{ reservation.priceCurrency }}{% else %}—{% endif %}
+                        </dd>
+
+                        <dt class="col-sm-6">Provize OTA</dt>
+                        <dd class="col-sm-6 text-end">
+                            {% if reservation.commissionAmount %}{{ reservation.commissionAmount|number_format(2, ',', ' ') }} {{ reservation.commissionCurrency }}{% else %}—{% endif %}
+                        </dd>
+
+                        <dt class="col-sm-6">Čistá výplata</dt>
+                        <dd class="col-sm-6 text-end fw-bold">
+                            {% if reservation.netPayout %}{{ reservation.netPayout|number_format(2, ',', ' ') }} {{ reservation.priceCurrency }}{% else %}—{% endif %}
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header d-flex justify-content-between">
+                    <span>Ekonomika</span>
+                    <span>
+                        {% if (reservation.checkOut ?? reservation.checkIn) > date('today') %}
+                            <span class="badge text-bg-warning">výhled — pobyt neproběhl</span>
+                        {% endif %}
+                        {% if profit.incomeIsEstimate %}
+                            <span class="badge text-bg-warning">příjem odhadem</span>
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-6">Příjem</dt>
+                        <dd class="col-sm-6 text-end">
+                            {% if profit.incomeCzk is not null %}
+                                {{ profit.incomeCzk|number_format(0, ',', ' ') }} Kč{% if profit.incomeIsEstimate %} *{% endif %}
+                            {% else %}
+                                <span class="text-muted">—</span>
+                            {% endif %}
+                        </dd>
+
+                        <dt class="col-sm-6 text-muted">Provize OTA</dt>
+                        <dd class="col-sm-6 text-end text-muted">−{{ profit.commissionCzk|number_format(0, ',', ' ') }} Kč</dd>
+
+                        <dt class="col-sm-6 text-muted">DPH z provize</dt>
+                        <dd class="col-sm-6 text-end text-muted">−{{ profit.vatCzk|number_format(0, ',', ' ') }} Kč</dd>
+
+                        <dt class="col-sm-6 text-muted">Elektřina
+                            {% if profit.missingElectricity %}<span class="badge text-bg-secondary">chybí odečet</span>{% endif %}
+                        </dt>
+                        <dd class="col-sm-6 text-end text-muted">−{{ profit.electricityCzk|number_format(0, ',', ' ') }} Kč</dd>
+
+                        <dt class="col-sm-6 text-muted">Úklid
+                            {% if profit.missingCleaning %}<span class="badge text-bg-secondary">nezadán</span>{% endif %}
+                        </dt>
+                        <dd class="col-sm-6 text-end text-muted">−{{ profit.cleaningCzk|number_format(0, ',', ' ') }} Kč</dd>
+
+                        <dt class="col-sm-6 text-muted">Rekreační poplatek</dt>
+                        <dd class="col-sm-6 text-end text-muted">−{{ profit.recreationFeeCzk|number_format(0, ',', ' ') }} Kč</dd>
+
+                        <dt class="col-sm-6 border-top pt-1">Výdaje celkem</dt>
+                        <dd class="col-sm-6 text-end border-top pt-1">−{{ profit.expensesTotalCzk|number_format(0, ',', ' ') }} Kč</dd>
+
+                        <dt class="col-sm-6 fw-bold">Zisk</dt>
+                        <dd class="col-sm-6 text-end fw-bold {{ profit.profitCzk is not null and profit.profitCzk < 0 ? 'text-danger' : 'text-success' }}">
+                            {% if profit.profitCzk is not null %}
+                                {{ profit.profitCzk|number_format(0, ',', ' ') }} Kč
+                            {% else %}
+                                <span class="text-muted fw-normal">—</span>
+                            {% endif %}
+                        </dd>
+
+                        {% if profit.profitPerNightCzk is not null %}
+                            <dt class="col-sm-6 text-muted">Zisk / noc</dt>
+                            <dd class="col-sm-6 text-end text-muted">{{ profit.profitPerNightCzk|number_format(0, ',', ' ') }} Kč</dd>
+                        {% endif %}
+                    </dl>
+                    {% if profit.incomeIsEstimate %}
+                        <p class="small text-muted mb-0 mt-2">* Orientační přepočet kurzem ČNB — faktura zatím nevystavena.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if reservation.notes %}
+                <div class="card mt-3">
+                    <div class="card-header">Poznámka</div>
+                    <div class="card-body">{{ reservation.notes|nl2br }}</div>
+                </div>
+            {% endif %}
+
+            {% if reservation.acquisitionSource %}
+                <div class="card mt-3">
+                    <div class="card-header">Odkud nás zná</div>
+                    <div class="card-body">{{ reservation.acquisitionSource }}</div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% set invoices = invoices ?? [] %}
+    {% set has_deposit = false %}
+    {% set has_final = false %}
+    {% set has_full = false %}
+    {% for inv in invoices %}
+        {% if inv.type.value == 'deposit' %}{% set has_deposit = true %}{% endif %}
+        {% if inv.type.value == 'final' %}{% set has_final = true %}{% endif %}
+        {% if inv.type.value == 'full' %}{% set has_full = true %}{% endif %}
+    {% endfor %}
+
+    <div class="card mt-3">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span>Fakturace</span>
+            <span class="text-muted small">
+                {{ reservation.billingMode ? reservation.billingMode.label : 'fakturační režim není nastaven' }}
+                {% if reservation.motopressPaymentGateway %}· MotoPress gateway <code>{{ reservation.motopressPaymentGateway }}</code>{% endif %}
+            </span>
+        </div>
+        <div class="card-body">
+            <form method="post" action="{{ path('reservation_set_billing_mode', {id: reservation.id}) }}" class="mb-3">
+                <input type="hidden" name="_token" value="{{ csrf_token('billing-mode-' ~ reservation.id) }}">
+                <div class="input-group input-group-sm">
+                    <label class="input-group-text" for="bm">Režim</label>
+                    <select name="billing_mode" id="bm" class="form-select">
+                        <option value="">— neurčeno —</option>
+                        {% for mode in billing_modes %}
+                            <option value="{{ mode.value }}" {{ reservation.billingMode == mode ? 'selected' : '' }}>{{ mode.label }}</option>
+                        {% endfor %}
+                    </select>
+                    <button class="btn btn-outline-secondary">Uložit režim</button>
+                </div>
+            </form>
+
+            {% if invoices is empty %}
+                <p class="text-muted small mb-2">Žádné faktury zatím nebyly vystaveny.</p>
+            {% else %}
+                <table class="table table-sm align-middle">
+                    <thead class="small text-muted">
+                    <tr><th>Číslo</th><th>Typ</th><th class="text-end">Částka</th><th>Vystaveno</th><th>Stav</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                    {% for inv in invoices %}
+                        <tr>
+                            <td><a href="{{ path('invoice_pdf', {id: inv.id}) }}" target="_blank">{{ inv.number }}</a></td>
+                            <td>{{ inv.type.label }}</td>
+                            <td class="text-end">{{ inv.totalAmount|number_format(2, ',', ' ') }} {{ inv.currency == 'CZK' ? 'Kč' : inv.currency }}</td>
+                            <td>{{ inv.issuedAt|date('d. m. Y') }}</td>
+                            <td>
+                                {% if inv.isPaid %}
+                                    <span class="badge text-bg-success">Zaplaceno {{ inv.paidAt|date('d. m. Y') }}</span>
+                                {% else %}
+                                    <span class="badge text-bg-warning">Splatnost {{ inv.dueAt|date('d. m. Y') }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <a href="{{ path('invoice_edit', {id: inv.id}) }}" class="btn btn-sm btn-outline-secondary">Upravit</a>
+                                {% if not inv.isPaid %}
+                                    <form method="post" action="{{ path('invoice_mark_paid', {id: inv.id}) }}" class="d-inline">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('invoice-paid-' ~ inv.id) }}">
+                                        <button class="btn btn-sm btn-outline-success">Zaplaceno</button>
+                                    </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            {% endif %}
+
+            <div class="mt-3 d-flex gap-2 flex-wrap">
+                {% set mode = reservation.billingMode %}
+                {% if mode and mode.value == 'standard_with_deposit' %}
+                    {% if not has_deposit %}
+                        <form method="post" action="{{ path('invoice_issue_deposit', {id: reservation.id}) }}">
+                            <input type="hidden" name="_token" value="{{ csrf_token('invoice-deposit-' ~ reservation.id) }}">
+                            <button class="btn btn-sm btn-primary">Vystavit zálohu (1 000 Kč)</button>
+                        </form>
+                    {% endif %}
+                    {% if has_deposit and not has_final %}
+                        <form method="post" action="{{ path('invoice_issue_final', {id: reservation.id}) }}">
+                            <input type="hidden" name="_token" value="{{ csrf_token('invoice-final-' ~ reservation.id) }}">
+                            <button class="btn btn-sm btn-primary">Vystavit doplatek</button>
+                        </form>
+                    {% endif %}
+                {% elseif mode and mode.value == 'waived' %}
+                    <p class="text-muted small mb-0">Fakturace prominuta — pobyt bez vystavení faktury.</p>
+                {% elseif mode %}
+                    {% if not has_full %}
+                        <form method="post" action="{{ path('invoice_issue_full', {id: reservation.id}) }}">
+                            <input type="hidden" name="_token" value="{{ csrf_token('invoice-full-' ~ reservation.id) }}">
+                            <button class="btn btn-sm btn-primary">Vystavit fakturu na celou částku</button>
+                        </form>
+                    {% endif %}
+                {% else %}
+                    <p class="text-muted small mb-0">Nastav fakturační režim a tlačítka pro vystavení faktury se objeví.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a href="{{ path('reservation_list') }}" class="btn btn-outline-secondary btn-sm">← Zpět na seznam</a>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    <script>
+        document.querySelectorAll('[data-copy]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var input = document.querySelector(btn.dataset.copy);
+                navigator.clipboard.writeText(input.value).then(function () {
+                    var orig = btn.textContent;
+                    btn.textContent = 'Zkopírováno';
+                    setTimeout(function () { btn.textContent = orig; }, 1500);
+                });
+            });
+        });
+        document.querySelectorAll('form[data-cleaning-defaults]').forEach(function (form) {
+            const defaults = JSON.parse(form.dataset.cleaningDefaults);
+            const typeSelect = form.querySelector('[data-cleaning-type]');
+            const costInput = form.querySelector('[data-cleaning-cost]');
+            const payoutInput = form.querySelector('[data-cleaning-payout]');
+            const paidAtInput = form.querySelector('[data-cleaning-paid-at]');
+            if (!typeSelect || !costInput || !payoutInput) return;
+            typeSelect.addEventListener('change', function () {
+                const preset = defaults[typeSelect.value];
+                if (!preset) return;
+                costInput.value = preset.cost;
+                payoutInput.value = preset.payout;
+                if (paidAtInput && !paidAtInput.value) {
+                    paidAtInput.value = preset.paid_at;
+                }
+            });
+        });
+    </script>
+{% endblock %}

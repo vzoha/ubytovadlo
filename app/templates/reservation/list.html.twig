@@ -1,0 +1,73 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Rezervace{% endblock %}
+
+{% block body %}
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h3 mb-0">Rezervace</h1>
+        <div class="btn-group" role="group">
+            <a href="{{ path('reservation_list') }}" class="btn btn-sm btn-outline-secondary {{ currentStatus is null ? 'active' : '' }}">Vše</a>
+            {% for status in statuses %}
+                <a href="{{ path('reservation_list', {status: status.value}) }}"
+                   class="btn btn-sm btn-outline-secondary {{ currentStatus == status ? 'active' : '' }}">
+                    {{ status.label }}
+                </a>
+            {% endfor %}
+        </div>
+    </div>
+
+    {% if reservations is empty %}
+        <div class="alert alert-info">Žádné rezervace.</div>
+    {% else %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                <tr>
+                    <th>Stav</th>
+                    <th>Kanál</th>
+                    <th>Příjezd</th>
+                    <th>Odjezd</th>
+                    <th>Host</th>
+                    <th class="text-end">Cena</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for r in reservations %}
+                    <tr>
+                        <td>
+                            {% set badge = {
+                                needs_details: 'warning',
+                                confirmed: 'success',
+                                in_progress: 'primary',
+                                completed: 'secondary',
+                                cancelled: 'dark',
+                            }[r.status.value] %}
+                            <span class="badge text-bg-{{ badge }}">{{ r.status.label }}</span>
+                            {% if r.motopressExternalId and not r.guestEmail and r.channel.value != 'web' %}
+                                <span class="badge text-bg-warning ms-1" title="MotoPress hlasi blok obsazenosti, ale chybi data hosta. Doplnit z extranetu.">⚠ z extranetu</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ r.channel.label }}</td>
+                        <td>{{ r.checkIn|date('d. m. Y') }}</td>
+                        <td>{{ r.checkOut ? r.checkOut|date('d. m. Y') : '—' }}</td>
+                        <td>
+                            {{ r.guestName ?? '(nedoplněno)' }}
+                            {% if r.hasPet %}<span class="badge text-bg-warning ms-1" title="{{ r.petsNote ?? 'Host se psem' }}">🐶</span>{% endif %}
+                            {% if r.needsBabyCot %}<span class="badge text-bg-info ms-1" title="Připravit dětskou postýlku">👶</span>{% endif %}
+                        </td>
+                        <td class="text-end">
+                            {% if r.priceTotal %}
+                                {{ r.priceTotal|number_format(0, ',', ' ') }} {{ r.priceCurrency }}
+                            {% else %}—{% endif %}
+                        </td>
+                        <td class="text-end">
+                            <a href="{{ path('reservation_detail', {id: r.id}) }}" class="btn btn-sm btn-outline-primary">Detail</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+{% endblock %}

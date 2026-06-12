@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<title>MRZ browser pipeline test</title>
+<style>
+  body { font: 13px monospace; margin: 16px; }
+  table { border-collapse: collapse; }
+  td, th { border: 1px solid #ccc; padding: 2px 6px; }
+  .ok { color: #176; } .bad { color: #b00; font-weight: bold; }
+  #summary { font-size: 15px; font-weight: bold; margin: 10px 0; }
+</style>
+</head>
+<body>
+<h1>MRZ browser pipeline test</h1>
+<p>Drives the REAL production browser OCR pipeline (Canvas preprocessing +
+tesseract.js + parseMany) over the local corpus, scoring per field against
+ground truth — the frontend counterpart of <code>app:mrz:test</code>. The image
+processing below is copied verbatim from <code>checkin/host.html.twig</code>; keep
+the two in sync. Query params: <code>?only=a.jpg,b.jpg</code>, <code>?debug=1</code>
+(stores raw reads in <code>window.__MRZ_RAW</code>).</p>
+<div id="status">Init…</div>
+<div id="summary"></div>
+<table id="results">
+  <thead><tr><th>Soubor</th><th>Příjm.</th><th>Jméno</th><th>Nar.</th><th>Doklad</th><th>Stát</th><th>Typ</th><th>OK</th></tr></thead>
+  <tbody></tbody>
+</table>
+
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script>
+window.__MRZ_DONE = false;
+window.__MRZ_SUMMARY = null;
+window.__MRZ_RAW = {};
+var GROUND_TRUTH = {{ groundTruth|json_encode|raw }};
+var FIELDS = ['lastName','firstName','birthDate','documentNumber','nationalityCode','documentType'];
+var statusEl = document.getElementById('status');
+var tbody = document.querySelector('#results tbody');
+
+// ─── Image processing — copied verbatim from checkin/host.html.twig ─────────
+function toGrey(data) {
+  var n = data.length / 4, grey = new Uint8ClampedArray(n);
+  for (var i = 0, p = 0; i < n; i++, p += 4) grey[i] = (0.299*data[p]+0.587*data[p+1]+0.114*data[p+2])|0;
+  return grey;
+}
+function otsuFromGrey(grey) {
+  var hist = new Array(256); for (var i=0;i<256;i++) hist[i]=0;
+  for (var p=0;p<grey.length;p++) hist[grey[p]]++;
+  var n=grey.length, sum=0; for (var t=0;t<256;t++) sum+=t*hist[t];
+  var sumB=0,wB=0,maxV=0,thr=127;
+  for (var u=0;u<256;u++){ wB+=hist[u]; if(wB===0)continue; var wF=n-wB; if(wF===0)break;
+    sumB+=u*hist[u]; var mB=sumB/wB, mF=(sum-sumB)/wF, between=wB*wF*(mB-mF)*(mB-mF);
+    if(between>maxV){maxV=between;thr=u;} }
+  return thr;
+}
+function applyThreshold(data, mask){ for(var i=0,p=0;i<mask.length;i++,p+=4){ var v=mask[i]; data[p]=data[p+1]=data[p+2]=v; } }
+function otsuBinarize(data){ var grey=toGrey(data), thr=otsuFromGrey(grey), mask=new Uint8ClampedArray(grey.length);
+  for(var i=0;i<grey.length;i++) mask[i]=grey[i]<thr?0:255; applyThreshold(data,mask); }
+function adaptiveBinarize(data,w,h,windowPx,cFactor){
+  var grey=toGrey(data), ii=new Float64Array(w*h);
+  for(var y=0;y<h;y++){ var row=0; for(var x=0;x<w;x++){ var idx=y*w+x; row+=grey[idx]; ii[idx]=(y>0?ii[idx-w]:0)+row; } }
+  var half=(windowPx/2)|0, mask=new Uint8ClampedArray(grey.length);
+  for(var y2=0;y2<h;y2++){ var y1=y2-half; if(y1<0)y1=0; var y3=y2+half; if(y3>=h)y3=h-1;
+    for(var x2=0;x2<w;x2++){ var x1=x2-half; if(x1<0)x1=0; var x3=x2+half; if(x3>=w)x3=w-1;
+      var area=(x3-x1+1)*(y3-y1+1), sum=ii[y3*w+x3];
+      if(x1>0)sum-=ii[y3*w+(x1-1)]; if(y1>0)sum-=ii[(y1-1)*w+x3]; if(x1>0&&y1>0)sum+=ii[(y1-1)*w+(x1-1)];
+      var mean=sum/area, thr=mean-cFactor; mask[y2*w+x2]=grey[y2*w+x2]<thr?0:255; } }
+  applyThreshold(data,mask);
+}
+function detectMrzBand(data,w,h){
+  var transitions=new Array(h);
+  for(var y=0;y<h;y++){ var base=y*w*4, prev=data[base], t=0;
+    for(var x=1;x<w;x++){ var cur=data[base+x*4]; if(cur!==prev){t++;prev=cur;} } transitions[y]=t; }
+  var minT=Math.max(40,w*0.045), lines=[], start=-1;
+  for(var y2=0;y2<h;y2++){ if(transitions[y2]>=minT){ if(start===-1)start=y2; }
+    else if(start!==-1){ lines.push({s:start,e:y2-1}); start=-1; } }
+  if(start!==-1) lines.push({s:start,e:h-1});
+  var lower=lines.filter(function(l){return l.s>h*0.35&&(l.e-l.s)>=3;});
+  if(lower.length===0) return null;
+  lower.sort(function(a,b){return a.s-b.s;});
+  var bottom=lower[lower.length-1], bottomH=bottom.e-bottom.s, picked=[bottom];
+  for(var i=lower.length-2;i>=0;i--){ if(picked.length>=3)break; var line=lower[i];
+    var gap=picked[0].s-line.e, lineH=line.e-line.s, heightRatio=Math.abs(lineH-bottomH)/Math.max(bottomH,1);
+    if(gap<=bottomH*2.5&&gap>=0&&heightRatio<0.6){ picked.unshift(line); } else { break; } }
+  if(picked.length<2) return null;
+  var s=picked[0].s, e=picked[picked.length-1].e;
+  if(s>h*0.92) return null; if((e-s)<h*0.025) return null;
+  return {s:s,e:e,lines:picked,lineHeight:bottomH};
+}
+function preprocessLoadedImage(img){
+  var detectW=Math.min(1600,img.width), detectScale=detectW/img.width, detectH=Math.floor(img.height*detectScale);
+  var dc=document.createElement('canvas'); dc.width=detectW; dc.height=detectH;
+  var dctx=dc.getContext('2d'); dctx.drawImage(img,0,0,detectW,detectH);
+  var dData=dctx.getImageData(0,0,detectW,detectH); otsuBinarize(dData.data);
+  var detection=detectMrzBand(dData.data,detectW,detectH);
+  var cropY, cropH;
+  if(detection){
+    var pad=Math.max(8,Math.floor(detection.lineHeight*0.8));
+    var detS=Math.max(0,detection.s-pad), detE=Math.min(detectH-1,detection.e+pad);
+    cropY=Math.floor(detS/detectScale); cropH=Math.floor((detE-detS)/detectScale);
+  } else { cropY=Math.floor(img.height*0.65); cropH=img.height-cropY; }
+  var scale=3, maxCanvasW=3000; if(img.width*scale>maxCanvasW) scale=maxCanvasW/img.width;
+  var canvas=document.createElement('canvas'); canvas.width=Math.floor(img.width*scale); canvas.height=Math.floor(cropH*scale);
+  var ctx=canvas.getContext('2d'); ctx.imageSmoothingEnabled=true; ctx.imageSmoothingQuality='high';
+  ctx.drawImage(img,0,cropY,img.width,cropH,0,0,canvas.width,canvas.height);
+  return {canvas:canvas,detection:detection};
+}
+function cloneCanvas(src){ var c=document.createElement('canvas'); c.width=src.width; c.height=src.height; c.getContext('2d').drawImage(src,0,0); return c; }
+function sharpenCanvas(canvas){
+  var ctx=canvas.getContext('2d'), img=ctx.getImageData(0,0,canvas.width,canvas.height), w=canvas.width,h=canvas.height;
+  var grey=toGrey(img.data), out=new Uint8ClampedArray(grey.length);
+  for(var y=0;y<h;y++) for(var x=0;x<w;x++){ var idx=y*w+x;
+    if(x===0||y===0||x===w-1||y===h-1){out[idx]=grey[idx];continue;}
+    var v=5*grey[idx]-grey[idx-1]-grey[idx+1]-grey[idx-w]-grey[idx+w]; out[idx]=v<0?0:(v>255?255:v); }
+  applyThreshold(img.data,out); ctx.putImageData(img,0,0);
+}
+function binarizeCanvas(canvas,mode){
+  var ctx=canvas.getContext('2d'), data=ctx.getImageData(0,0,canvas.width,canvas.height);
+  if(mode==='otsu'){ otsuBinarize(data.data); }
+  else if(mode==='adaptive'){ var win=Math.max(15,Math.floor(canvas.height/12)); if(win%2===0)win++; adaptiveBinarize(data.data,canvas.width,canvas.height,win,12); }
+  ctx.putImageData(data,0,0);
+}
+var workerPromise=null;
+function getOcrWorker(){ if(!workerPromise){ workerPromise=Tesseract.createWorker('mrz',1,{langPath:'{{ asset('assets/tessdata') }}'}); } return workerPromise; }
+function ocrImage(src,psm){ return getOcrWorker().then(function(w){ return w.setParameters({tessedit_pageseg_mode:String(psm)}).then(function(){return w.recognize(src);}).then(function(r){return r.data.text||'';}); }); }
+// Mirror of buildPasses() in checkin/host.html.twig: the detected band binarized
+// two ways + one whole-image raw pass. The backend votes across these reads.
+function buildPasses(prep,imgEl){
+  var passes=[];
+  if(prep.canvas){
+    passes.push({name:'band-adaptive',run:function(){var c=cloneCanvas(prep.canvas);sharpenCanvas(c);binarizeCanvas(c,'adaptive');return ocrImage(c,6);}});
+    passes.push({name:'band-otsu',run:function(){var c=cloneCanvas(prep.canvas);sharpenCanvas(c);binarizeCanvas(c,'otsu');return ocrImage(c,6);}});
+  }
+  passes.push({name:'full raw',run:function(){return ocrImage(imgEl,6);}});
+  return passes;
+}
+
+// ─── Locate-then-recrop (EXPERIMENTAL) ──────────────────────────────────────
+// Use tesseract's own line boxes to find the MRZ, then re-OCR a tight high-res
+// crop of just those lines. Line detection is what tesseract does well; a tight
+// crop removes the content bleed-in that prepends stray glyphs to the surname
+// ("BVLATUSEK" → "LATUSEK"). Anchors = lines with ≥2 '<' (name/filler rows);
+// the all-digit numeric MRZ row is pulled in via the digit-ratio test so the
+// block spans every MRZ line, not just the ones with fillers.
+function mrzClean(t){ return (t||'').toUpperCase().replace(/[^A-Z0-9<]/g,''); }
+function isAnchor(t){ var c=mrzClean(t); return c.length>=15 && (c.match(/</g)||[]).length>=2; }
+function isNumericMrz(t){ var c=mrzClean(t); if(c.length<14) return false; var d=(c.match(/[0-9]/g)||[]).length; return d/c.length>=0.45; }
+function locateMrzLines(canvas){
+  return getOcrWorker().then(function(w){ return w.setParameters({tessedit_pageseg_mode:'6'})
+    .then(function(){ return w.recognize(canvas,{},{blocks:true}); })
+    .then(function(r){ var L=[];
+      (r.data.blocks||[]).forEach(function(b){(b.paragraphs||[]).forEach(function(pp){(pp.lines||[]).forEach(function(ln){
+        if(isAnchor(ln.text)||isNumericMrz(ln.text)) L.push({b:ln.bbox}); });});});
+      return L; }); });
+}
+function bottomCluster(L){
+  if(L.length<2) return null;
+  L.sort(function(a,b){return a.b.y0-b.b.y0;});
+  var cl=[L[L.length-1]];
+  for(var i=L.length-2;i>=0;i--){ var lh=cl[0].b.y1-cl[0].b.y0, gap=cl[0].b.y0-L[i].b.y1;
+    if(gap<lh*1.6&&gap>-lh*0.5){ cl.unshift(L[i]); } else break; }
+  return cl.length>=2?cl:null;
+}
+function recropBlock(img,cl,sc){
+  var y0=cl[0].b.y0/sc, y1=cl[cl.length-1].b.y1/sc;
+  var xs0=cl.map(function(p){return p.b.x0/sc;}).sort(function(a,b){return a-b;});
+  var xs1=cl.map(function(p){return p.b.x1/sc;}).sort(function(a,b){return a-b;});
+  var x0=xs0[Math.floor(xs0.length/2)], x1=xs1[Math.floor(xs1.length/2)];
+  var padY=(y1-y0)*0.16, padX=(x1-x0)*0.02;
+  y0=Math.max(0,y0-padY); y1=Math.min(img.height,y1+padY); x0=Math.max(0,x0-padX); x1=Math.min(img.width,x1+padX);
+  var sw=x1-x0, s2=Math.min(4,3000/sw);
+  var bc=document.createElement('canvas'); bc.width=Math.floor(sw*s2); bc.height=Math.floor((y1-y0)*s2);
+  var bx=bc.getContext('2d'); bx.imageSmoothingEnabled=true; bx.imageSmoothingQuality='high';
+  bx.drawImage(img,x0,y0,sw,y1-y0,0,0,bc.width,bc.height); return bc;
+}
+function adaptWin(c){ return Math.max(15,Math.floor(c.width/100)); }
+function binAdaptW(c){ var win=adaptWin(c); if(win%2===0)win++; var ctx=c.getContext('2d'),d=ctx.getImageData(0,0,c.width,c.height); adaptiveBinarize(d.data,c.width,c.height,win,12); ctx.putImageData(d,0,0); }
+// Returns {data, confidence} or null. OCRs the tight crop two binarized ways and
+// votes them; both see the same tight pixels so the name stays consistent.
+function locateRecrop(img){
+  var sc=Math.min(1,2000/img.width);
+  var c=document.createElement('canvas'); c.width=Math.floor(img.width*sc); c.height=Math.floor(img.height*sc);
+  c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+  return locateMrzLines(c).then(function(L){
+    var cl=bottomCluster(L); if(!cl) return null;
+    var crop=recropBlock(img,cl,sc);
+    var texts=[];
+    return ['adaptive','otsu','grey'].reduce(function(ch,mode){
+      return ch.then(function(){
+        var cc=cloneCanvas(crop); sharpenCanvas(cc); if(mode==='adaptive')binAdaptW(cc); else if(mode==='otsu')binarizeCanvas(cc,'otsu');
+        return ocrImage(cc,6).then(function(t){ if(t&&t.trim())texts.push(t); }).catch(function(){});
+      });
+    },Promise.resolve()).then(function(){ return texts.length?parseConf(texts):null; });
+  });
+}
+
+// ─── Driver ─────────────────────────────────────────────────────────────────
+function loadImage(url){ return new Promise(function(res,rej){ var im=new Image(); im.crossOrigin='anonymous'; im.onload=function(){res(im);}; im.onerror=rej; im.src=url; }); }
+function parse(texts){
+  return fetch('{{ path('dev_mrz_parse') }}',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mrz_texts:texts})})
+    .then(function(r){ return r.ok?r.json():null; }).catch(function(){return null;});
+}
+function parseConf(texts){
+  return fetch('{{ path('dev_mrz_parse') }}',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mrz_texts:texts})})
+    .then(function(r){ return r.json().then(function(d){ return {confidence:d.confidence||0, data:r.ok?d:null}; }); }).catch(function(){return null;});
+}
+function norm(v){ return v==null?'':String(v).trim().toUpperCase(); }
+
+async function main(){
+  var files=Object.keys(GROUND_TRUTH);
+  var only=new URLSearchParams(location.search).get('only');
+  if(only){ var set=only.split(','); files=files.filter(function(f){return set.indexOf(f)>=0||set.indexOf(f.replace('.jpg',''))>=0;}); }
+  var hits={}, total=0, allOk=0; FIELDS.forEach(function(f){hits[f]=0;});
+  for(var i=0;i<files.length;i++){
+    var file=files[i], gt=GROUND_TRUTH[file];
+    statusEl.textContent='('+(i+1)+'/'+files.length+') '+file+' …';
+    var data=null, via='-';
+    try{
+      var img=await loadImage('{{ path('dev_mrz_corpus_image', {file: 'FILE'}) }}'.replace('FILE',file));
+      // Primary: locate-then-recrop. Accept only when checksum-solid (≥30), so a
+      // bad block falls through to the proven 3-pass pipeline rather than winning.
+      var lr=null; try{ lr=await locateRecrop(img); }catch(e){}
+      if(lr&&lr.data&&lr.confidence>=30){ data=lr.data; via='locate'; }
+      if(!data){
+        var prep=preprocessLoadedImage(img);
+        var passes=buildPasses(prep,img), texts=[];
+        for(var pi=0;pi<passes.length;pi++){ try{ var t=await passes[pi].run(); if(t&&t.trim())texts.push(t); }catch(e){} }
+        data=texts.length?await parse(texts):null; via=data?'3pass':'-';
+      }
+      window.__MRZ_RAW[file]={via:via,lrConf:lr?lr.confidence:0};
+    }catch(e){}
+    var row=document.createElement('tr'); var cells='<td>'+file+'</td>'; var rowOk=true;
+    FIELDS.forEach(function(f){
+      var exp=norm(gt[f]), act=norm(data?data[f]:'');
+      var match=exp===act; if(match)hits[f]++; else rowOk=false;
+      cells+='<td class="'+(match?'ok':'bad')+'">'+(match?'✓':(act||'—'))+'</td>';
+    });
+    total++; if(rowOk)allOk++;
+    cells+='<td class="'+(rowOk?'ok':'bad')+'">'+(rowOk?'OK':'FAIL')+'</td>';
+    row.innerHTML=cells; tbody.appendChild(row);
+  }
+  var perField={}; FIELDS.forEach(function(f){perField[f]=hits[f]+'/'+total;});
+  window.__MRZ_SUMMARY={allCorrect:allOk,total:total,perField:perField};
+  window.__MRZ_DONE=true;
+  statusEl.textContent='Hotovo.';
+  document.getElementById('summary').textContent='VŠE SPRÁVNĚ: '+allOk+' / '+total+'  |  '+FIELDS.map(function(f){return f+' '+perField[f];}).join('  ');
+}
+main();
+</script>
+</body>
+</html>

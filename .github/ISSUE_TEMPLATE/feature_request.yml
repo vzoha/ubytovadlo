@@ -1,0 +1,24 @@
+name: Návrh
+description: Navrhnout funkci nebo vylepšení
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problém / potřeba
+      description: Jaký reálný problém to řeší. Popiš potřebu, ne jen řešení.
+    validations:
+      required: true
+  - type: textarea
+    id: navrh
+    attributes:
+      label: Navrhované řešení
+    validations:
+      required: false
+  - type: textarea
+    id: kontext
+    attributes:
+      label: Kontext
+      description: Kterého kanálu/toku se týká (web/Booking/Airbnb, fakturace, DPH, check-in, …).
+    validations:
+      required: false

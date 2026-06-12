@@ -1,0 +1,279 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Přehled — {{ brand_name }}{% endblock %}
+
+{% block stylesheets %}
+    <style>
+        @keyframes ubyportGlow {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(var(--bs-danger-rgb), .5); }
+            50%      { box-shadow: 0 0 0 .35rem rgba(var(--bs-danger-rgb), 0); }
+        }
+        .ubyport-overdue { animation: ubyportGlow 1.8s ease-in-out infinite; }
+    </style>
+{% endblock %}
+
+{% set CZECH_MONTHS = ['','leden','únor','březen','duben','květen','červen','červenec','srpen','září','říjen','listopad','prosinec'] %}
+{# Index = výsledek date('w'): 0 = neděle, 1 = pondělí, ..., 6 = sobota. #}
+{% set CZECH_DAYS_SHORT = ['ne','po','út','st','čt','pá','so'] %}
+
+{% macro cz_day(d) -%}
+    {% set CZECH_DAYS_SHORT = ['ne','po','út','st','čt','pá','so'] -%}
+    {{ CZECH_DAYS_SHORT[d|date('w')] }}
+{%- endmacro %}
+
+{% macro days_label(n) -%}
+    {% if n == 0 %}dnes
+    {%- elseif n == 1 %}zítra
+    {%- elseif n == -1 %}včera
+    {%- elseif n > 0 %}za {{ n }} {% if n < 5 %}dny{% else %}dní{% endif %}
+    {%- else %}před {{ n * -1 }} {% if n > -5 %}dny{% else %}dny{% endif %}
+    {%- endif %}
+{%- endmacro %}
+
+{% block body %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">Přehled</h1>
+        <span class="text-muted small">{{ today|date('d. m. Y') }}</span>
+    </div>
+
+    <div class="row g-4">
+
+        {# === ÚKLID === #}
+        <div class="col-lg-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                    <strong>🧹 Úklid &amp; nadcházející pobyty</strong>
+                    <span class="badge bg-light text-success">{{ upcoming|length }}</span>
+                </div>
+                <div class="card-body p-0">
+                    {% if upcoming is empty %}
+                        <p class="text-muted m-3 mb-0">Žádný pobyt v nejbližších 30 dnech.</p>
+                    {% else %}
+                        <ul class="list-group list-group-flush">
+                            {% for row in upcoming %}
+                                {% set r = row.reservation %}
+                                {% set badge = {arrival: 'primary', departure: 'warning', in_progress: 'info'}[row.kind] %}
+                                {% set kindLabel = {arrival: 'příjezd', departure: 'odjezd', in_progress: 'probíhá → odjezd'}[row.kind] %}
+                                <li class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <div>
+                                                <span class="badge text-bg-{{ badge }} me-1">{{ kindLabel }}</span>
+                                                <strong>{{ row.date|date('d. m.') }} ({{ _self.cz_day(row.date) }})</strong>
+                                                <span class="text-muted small ms-1">{{ _self.days_label(row.daysUntil) }}</span>
+                                            </div>
+                                            <div class="small">
+                                                <a href="{{ path('reservation_detail', {id: r.id}) }}" class="text-decoration-none">
+                                                    {{ r.guestName ?? '(host nedoplněn)' }}
+                                                </a>
+                                                <span class="text-muted">· {{ r.channel.label }} · {{ r.guestsTotal }} os.</span>
+                                                {% if r.hasPet %}<span title="{{ r.petsNote ?? 'Se psem' }}">🐶</span>{% endif %}
+                                                {% if r.needsBabyCot %}<span title="Dětská postýlka">👶</span>{% endif %}
+                                            </div>
+                                        </div>
+                                        <span class="text-muted small">{{ r.checkIn|date('d. m.') }}–{{ r.checkOut ? r.checkOut|date('d. m.') : '?' }}</span>
+                                    </div>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        {# === DOPLNIT ÚDAJE === #}
+        <div class="col-lg-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
+                    <strong>📝 Doplnit údaje</strong>
+                    <span class="badge bg-light text-danger">{{ needsDetails|length }}</span>
+                </div>
+                <div class="card-body p-0">
+                    {% if needsDetails is empty %}
+                        <p class="text-muted m-3 mb-0">Žádná rezervace nečeká na doplnění.</p>
+                    {% else %}
+                        <ul class="list-group list-group-flush">
+                            {% for row in needsDetails %}
+                                {% set r = row.reservation %}
+                                <li class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <div>
+                                                <span class="badge text-bg-secondary me-1">{{ r.channel.label }}</span>
+                                                <strong>{{ r.checkIn|date('d. m. Y') }}</strong>
+                                                <span class="text-muted small ms-1">{{ _self.days_label(row.daysUntil) }}</span>
+                                            </div>
+                                            <div class="small text-muted">
+                                                {% if r.externalId %}#{{ r.externalId }}{% endif %}
+                                                {% if r.checkOut %} · {{ r.checkIn|date('d. m.') }}–{{ r.checkOut|date('d. m.') }}{% endif %}
+                                                {% if r.guestName %} · {{ r.guestName }}{% endif %}
+                                            </div>
+                                        </div>
+                                        <a href="{{ path('reservation_details', {id: r.id}) }}" class="btn btn-sm btn-danger">Doplnit</a>
+                                    </div>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        {# === FAKTURACE === #}
+        <div class="col-lg-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header text-white d-flex justify-content-between align-items-center" style="background:#fd7e14">
+                    <strong>🧾 Vystavit fakturu</strong>
+                    <span class="badge bg-light text-warning">{{ missingInvoices|length }}</span>
+                </div>
+                <div class="card-body p-0">
+                    {% if missingInvoices is empty %}
+                        <p class="text-muted m-3 mb-0">Vše vyfakturováno za tento a minulý měsíc.</p>
+                    {% else %}
+                        <ul class="list-group list-group-flush">
+                            {% for row in missingInvoices %}
+                                {% set r = row.reservation %}
+                                {% set missingLabel = {final: 'Doplatek (konečná)', full: 'Faktura', mode_unset: 'Určit režim', ota_during_stay: 'Faktura během OTA pobytu'}[row.missing] %}
+                                {% set missingBadge = {final: 'warning', full: 'warning', mode_unset: 'dark', ota_during_stay: 'info'}[row.missing] %}
+                                <li class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <div>
+                                                <span class="badge text-bg-{{ missingBadge }} me-1">{{ missingLabel }}</span>
+                                                {% if row.missing == 'ota_during_stay' %}
+                                                    <strong>{{ r.checkIn|date('d. m.') }}–{{ r.checkOut ? r.checkOut|date('d. m. Y') : '?' }}</strong>
+                                                    <span class="text-muted small ms-1">
+                                                        {% if r.checkIn > today %}za {{ (r.checkIn.diff(today).days) }} dní{% elseif r.checkOut and r.checkOut >= today %}probíhá{% else %}před {{ row.daysSinceCheckout }} dny{% endif %}
+                                                    </span>
+                                                {% else %}
+                                                    <strong>{{ r.checkOut|date('d. m. Y') }}</strong>
+                                                    <span class="text-muted small ms-1">odjezd {{ _self.days_label(row.daysSinceCheckout * -1) }}</span>
+                                                {% endif %}
+                                            </div>
+                                            <div class="small text-muted">
+                                                {{ r.channel.label }}
+                                                {% if r.billingMode %} · {{ r.billingMode.label }}{% endif %}
+                                                · {{ r.guestName ?? '(host)' }}
+                                                {% if r.priceTotal %} · {{ r.priceTotal|number_format(0, ',', ' ') }} {{ r.priceCurrency }}{% endif %}
+                                            </div>
+                                        </div>
+                                        <a href="{{ path('reservation_detail', {id: r.id}) }}" class="btn btn-sm btn-warning">Otevřít</a>
+                                    </div>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        {# === DPH === #}
+        <div class="col-lg-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <strong>💸 DPH (identifikovaná osoba)</strong>
+                    <a href="{{ path('vat_list') }}" class="badge bg-light text-primary text-decoration-none">Vše →</a>
+                </div>
+                <div class="card-body">
+                    {% if vat.pending is empty %}
+                        <div class="alert alert-success mb-3 py-2">
+                            <strong>Vše podáno.</strong> Žádné nedořešené období.
+                        </div>
+                    {% else %}
+                        {% set primary = vat.pending|first %}
+                        <div class="p-3 mb-3 rounded {{ primary.overdue ? 'bg-danger-subtle border border-danger' : 'bg-warning-subtle border border-warning' }}">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <div class="small text-uppercase fw-bold {{ primary.overdue ? 'text-danger' : 'text-warning-emphasis' }}">
+                                        {% if primary.overdue %}⚠ PO TERMÍNU — podat IHNED{% else %}K podání{% endif %}
+                                    </div>
+                                    <div class="fs-3 fw-bold">{{ CZECH_MONTHS[primary.month] }} {{ primary.year }}</div>
+                                    <div class="fs-5">{{ primary.vat|number_format(0, ',', ' ') }} Kč</div>
+                                    <div class="small text-muted">základ {{ primary.base|number_format(0, ',', ' ') }} Kč</div>
+                                </div>
+                                <div class="text-end">
+                                    <div class="text-muted small">Termín</div>
+                                    <div class="fw-bold">{{ primary.dueAt|date('d. m. Y') }}</div>
+                                    <div class="small {{ primary.overdue ? 'text-danger fw-bold' : '' }}">{{ _self.days_label(primary.daysToDue) }}</div>
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                {% if primary.missingBookingPdf %}<span class="badge text-bg-warning me-1">chybí Booking PDF</span>{% endif %}
+                                {% if primary.missingAirbnbStatement %}<span class="badge text-bg-warning me-1">chybí Airbnb statement</span>{% endif %}
+                                <a href="{{ path('vat_detail', {year: primary.year, month: '%02d'|format(primary.month)}) }}" class="btn btn-sm btn-primary float-end">Otevřít</a>
+                            </div>
+                        </div>
+
+                        {% if vat.pending|length > 1 %}
+                            <div class="text-muted small text-uppercase mb-1">Další nedořešená</div>
+                            <ul class="list-group list-group-flush mb-3">
+                                {% for p in vat.pending|slice(1) %}
+                                    <li class="list-group-item px-0 py-2">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                {% if p.overdue %}<span class="badge text-bg-danger me-1">PO TERMÍNU</span>{% endif %}
+                                                <a href="{{ path('vat_detail', {year: p.year, month: '%02d'|format(p.month)}) }}" class="text-decoration-none">
+                                                    <strong>{{ CZECH_MONTHS[p.month] }} {{ p.year }}</strong>
+                                                </a>
+                                                <span class="text-muted small ms-1">{{ p.vat|number_format(0, ',', ' ') }} Kč · termín {{ p.dueAt|date('d. m.') }}</span>
+                                                {% if p.missingBookingPdf %}<span class="badge text-bg-warning ms-1">chybí Booking PDF</span>{% endif %}
+                                                {% if p.missingAirbnbStatement %}<span class="badge text-bg-warning ms-1">chybí Airbnb statement</span>{% endif %}
+                                            </div>
+                                        </div>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    {% endif %}
+
+                    {# Průběžný měsíc — informativní pruh dole #}
+                    {% set c = vat.current %}
+                    <div class="d-flex justify-content-between align-items-center text-muted small border-top pt-2">
+                        <span>Probíhá <strong class="text-body">{{ CZECH_MONTHS[c.month] }} {{ c.year }}</strong> · zatím {{ c.vat|number_format(0, ',', ' ') }} Kč (základ {{ c.base|number_format(0, ',', ' ') }})</span>
+                        <span>podat do {{ c.dueAt|date('d. m.') }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# === UBYPORT === #}
+        {% if ubyport.toReport > 0 or ubyport.incomplete > 0 %}
+            <div class="col-12">
+                <a href="{{ path('ubyport_index') }}"
+                   class="card shadow-sm text-decoration-none text-body {{ ubyport.overdue > 0 ? 'border-danger ubyport-overdue' : '' }}">
+                    <div class="card-body d-flex justify-content-between align-items-center">
+                        <span>👮 <strong>Ubyport</strong> — hlášení cizinců</span>
+                        <span>
+                            {% if ubyport.overdue > 0 %}
+                                <span class="badge text-bg-danger">{{ ubyport.overdue }} po termínu</span>
+                            {% endif %}
+                            {% if ubyport.toReport > 0 %}
+                                <span class="badge text-bg-primary">{{ ubyport.toReport }} k nahlášení</span>
+                            {% endif %}
+                            {% if ubyport.incomplete > 0 %}
+                                <span class="badge text-bg-warning">{{ ubyport.incomplete }} neúplných</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                </a>
+            </div>
+        {% endif %}
+
+        {# === EKONOMIKA === #}
+        <div class="col-12">
+            <a href="{{ path('economics_overview') }}" class="card shadow-sm text-decoration-none text-body">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <span>📈 <strong>Ekonomika {{ economics.year }}</strong> — uskutečněno {{ economics.realized.count }} rezervací · {{ economics.realized.nights }} nocí</span>
+                    <span>
+                        <span class="text-muted small me-2">příjem {{ economics.realized.income|number_format(0, ',', ' ') }} Kč</span>
+                        <span class="badge {{ economics.realized.profit < 0 ? 'text-bg-danger' : 'text-bg-success' }}">zisk {{ economics.realized.profit|number_format(0, ',', ' ') }} Kč{% if economics.realized.hasEstimates %} *{% endif %}</span>
+                        {% if economics.expected.count > 0 %}
+                            <span class="badge text-bg-warning ms-1" title="{{ economics.expected.count }} plánovaných pobytů">výhled +{{ economics.expected.profit|number_format(0, ',', ' ') }} Kč</span>
+                        {% endif %}
+                    </span>
+                </div>
+            </a>
+        </div>
+
+    </div>
+{% endblock %}

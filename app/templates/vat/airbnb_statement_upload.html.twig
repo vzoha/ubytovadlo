@@ -1,0 +1,62 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Airbnb statement {{ '%04d-%02d'|format(year, month) }}{% endblock %}
+
+{% block body %}
+    <a href="{{ path('vat_detail', {year: year, month: '%02d'|format(month)}) }}" class="text-decoration-none small">← DPH za {{ '%04d-%02d'|format(year, month) }}</a>
+    <h1 class="h3 mt-1 mb-3">Nahrát Airbnb receipt za {{ '%04d-%02d'|format(year, month) }}</h1>
+
+    {% if existing is not empty %}
+        <div class="alert alert-info">
+            <strong>{{ existing|length }}</strong> už nahráno za toto období (Airbnb posílá receipt za každou rezervaci samostatně):
+            <ul class="mb-0 mt-1">
+                {% for s in existing %}
+                    <li>{{ s.periodFrom|date('d. m.') }}–{{ s.periodTo|date('d. m. Y') }} · {{ s.commissionCzk|number_format(2, ',', ' ') }} Kč{% if s.notes %} · {{ s.notes }}{% endif %}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
+    <div class="row">
+        <div class="col-md-7">
+            {{ form_start(form, {attr: {enctype: 'multipart/form-data'}}) }}
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">{{ form_row(form.periodFrom) }}</div>
+                            <div class="col-md-6">{{ form_row(form.periodTo) }}</div>
+                            <div class="col-12">{{ form_row(form.commissionCzk) }}</div>
+                            <div class="col-12">{{ form_row(form.pdf) }}</div>
+                            <div class="col-12">{{ form_row(form.notes) }}</div>
+                        </div>
+                        <div class="d-flex justify-content-between mt-3">
+                            <a href="{{ path('vat_detail', {year: year, month: '%02d'|format(month)}) }}" class="btn btn-outline-secondary">Zrušit</a>
+                            <button type="submit" class="btn btn-primary">Uložit</button>
+                        </div>
+                    </div>
+                </div>
+            {{ form_end(form) }}
+        </div>
+        <div class="col-md-5">
+            <div class="card bg-light">
+                <div class="card-body small">
+                    <h2 class="h6">Jak stáhnout PDF</h2>
+                    <ol class="ps-3 mb-2">
+                        <li>Otevři rezervaci na Airbnb:
+                            {% if airbnbStayCode %}
+                                <a href="https://www.airbnb.cz/hosting/stay/{{ airbnbStayCode }}" target="_blank" rel="noopener">airbnb.cz/hosting/stay/{{ airbnbStayCode }}</a>
+                            {% else %}
+                                <code>airbnb.cz/hosting/stay/&lt;kód&gt;</code>
+                            {% endif %}
+                        </li>
+                        <li>Dole najdi <strong>cenu</strong> a rozklikni ji.</li>
+                        <li>Otevři <strong>fakturu s PDF</strong>.</li>
+                        <li><strong>Vytisknout → uložit jako PDF</strong> a sem nahraj.</li>
+                    </ol>
+                    <p class="mb-2">Z dokladu pro DPH potřebuješ <strong>Servisní poplatek hostitele</strong> (host service fee, 3 % z platby po slevách).{% if not airbnbStayCode %} Zaokrouhlovat nemusíš, plněním je každý jednotlivý poplatek a my si to sečteme.{% endif %}</p>
+                    <p class="mb-0 text-muted">Tip: pokud je rezervace v cizí měně, převeď ji v dokladu na CZK svým ČNB kurzem ke dni výplaty.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

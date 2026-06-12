@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}{{ brand_name }} — automatizace{% endblock %}</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%22112%22>🏡</text></svg>">
+    <link href="{{ asset('assets/bootstrap.min.css') }}" rel="stylesheet">
+    {% block stylesheets %}{% endblock %}
+</head>
+<body class="bg-light">
+<nav class="navbar navbar-dark bg-dark mb-4">
+    <div class="container">
+        <a class="navbar-brand" href="{{ path('dashboard') }}">🏡 {{ brand_name }}</a>
+        <div class="d-flex align-items-center text-light small">
+            <a class="text-light me-3 text-decoration-none" href="{{ path('dashboard') }}">Přehled</a>
+            <a class="text-light me-3 text-decoration-none" href="{{ path('reservation_list') }}">Rezervace</a>
+            <a class="text-light me-3 text-decoration-none" href="{{ path('economics_overview') }}">Ekonomika</a>
+            <a class="text-light me-3 text-decoration-none" href="{{ path('vat_list') }}">DPH</a>
+            <a class="text-light me-3 text-decoration-none" href="{{ path('electricity_index') }}">Elektřina</a>
+            <a class="text-light me-3 text-decoration-none" href="{{ path('cleaning_index') }}">Úklid</a>
+            <a class="text-light me-3 text-decoration-none" href="{{ path('ubyport_index') }}">Ubyport</a>
+            <a class="text-light me-3 text-decoration-none" href="{{ path('accommodation_profile_edit') }}">Nastavení</a>
+            {% if app.user %}
+                <span class="me-3">{{ app.user.userIdentifier }}</span>
+                <a class="btn btn-sm btn-outline-light" href="{{ path('app_logout') }}">Odhlásit</a>
+            {% endif %}
+        </div>
+    </div>
+</nav>
+<main class="container pb-5">
+    {% for label, messages in app.flashes %}
+        {% for message in messages %}
+            <div class="alert alert-{{ label }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endfor %}
+    {% block body %}{% endblock %}
+</main>
+<footer class="container text-center text-muted small pb-4 pt-2 border-top">
+    Běží na <a href="{{ product_url }}" target="_blank" rel="noopener" class="text-decoration-none fw-semibold">{{ product_name }}</a>
+    — open-source automatizace rezervací pro malá ubytování.
+    © {{ "now"|date("Y") }} ·
+    <a href="{{ product_repo_url }}" target="_blank" rel="noopener" class="text-decoration-none">zdrojový kód</a>
+</footer>
+<script src="{{ asset('assets/bootstrap.bundle.min.js') }}"></script>
+{% block javascripts %}{% endblock %}
+</body>
+</html>

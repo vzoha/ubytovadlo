@@ -1,0 +1,156 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Ekonomika {{ year }} — {{ brand_name }}{% endblock %}
+
+{% block body %}
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h3 mb-0">Ekonomika {{ year }}</h1>
+        <div class="btn-group">
+            {% for y in years %}
+                <a href="{{ path('economics_overview', {year: y}) }}"
+                   class="btn btn-sm {{ y == year ? 'btn-primary' : 'btn-outline-primary' }}">{{ y }}</a>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        {% for label, s in {'Uskutečněno': realized, 'Očekáváno': expected, 'Celkem': total} %}
+            <div class="col-md-4">
+                <div class="card h-100 {{ label == 'Očekáváno' ? 'border-warning' : '' }}">
+                    <div class="card-header py-1 small {{ label == 'Očekáváno' ? 'text-warning-emphasis' : 'text-muted' }}">
+                        {{ label }} · {{ s.count }} rezervací · {{ s.nights }} nocí
+                    </div>
+                    <div class="card-body py-2">
+                        <dl class="row mb-0 small">
+                            <dt class="col-6 fw-normal text-muted">Příjem</dt>
+                            <dd class="col-6 text-end mb-1">{{ s.income|number_format(0, ',', ' ') }} Kč{% if s.hasEstimates %} *{% endif %}</dd>
+                            <dt class="col-6 fw-normal text-muted">Výdaje</dt>
+                            <dd class="col-6 text-end mb-1">{{ s.expenses|number_format(0, ',', ' ') }} Kč</dd>
+                            <dt class="col-6">Zisk</dt>
+                            <dd class="col-6 text-end fw-bold {{ s.profit < 0 ? 'text-danger' : 'text-success' }}">{{ s.profit|number_format(0, ',', ' ') }} Kč</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">Rezervace</div>
+        <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle mb-0 small">
+                <thead class="text-muted">
+                <tr>
+                    <th>Příjezd</th>
+                    <th class="text-end">Nocí</th>
+                    <th>Jméno</th>
+                    <th>Kanál</th>
+                    <th class="text-end">Příjem</th>
+                    <th class="text-end">Provize</th>
+                    <th class="text-end">DPH</th>
+                    <th class="text-end">Elektřina</th>
+                    <th class="text-end">Úklid</th>
+                    <th class="text-end">Rekreační</th>
+                    <th class="text-end">Výdaje</th>
+                    <th class="text-end">Zisk</th>
+                    <th class="text-end">Zisk/noc</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for r in reservations %}
+                    {% set p = profits[r.id] %}
+                    {% set is_expected = (r.checkOut ?? r.checkIn) > today %}
+                    <tr {% if is_expected %}class="text-muted"{% endif %}>
+                        <td>
+                            <a href="{{ path('reservation_detail', {id: r.id}) }}">{{ r.checkIn|date('j. n. Y') }}</a>
+                            {% if is_expected %}<span class="badge text-bg-warning ms-1">plán</span>{% endif %}
+                        </td>
+                        <td class="text-end">{{ p.nights }}</td>
+                        <td>{{ r.guestName ?? '—' }}</td>
+                        <td>{{ r.channel.label }}</td>
+                        <td class="text-end">
+                            {% if p.incomeCzk is not null %}
+                                {{ p.incomeCzk|number_format(0, ',', ' ') }}{% if p.incomeIsEstimate %} *{% endif %}
+                            {% else %}
+                                <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end text-muted">{{ p.commissionCzk|number_format(0, ',', ' ') }}</td>
+                        <td class="text-end text-muted">{{ p.vatCzk|number_format(0, ',', ' ') }}</td>
+                        <td class="text-end text-muted">
+                            {{ p.electricityCzk|number_format(0, ',', ' ') }}{% if p.missingElectricity %} <span title="chybí odečet">?</span>{% endif %}
+                        </td>
+                        <td class="text-end text-muted">
+                            {{ p.cleaningCzk|number_format(0, ',', ' ') }}{% if p.missingCleaning %} <span title="úklid nezadán">?</span>{% endif %}
+                        </td>
+                        <td class="text-end text-muted">{{ p.recreationFeeCzk|number_format(0, ',', ' ') }}</td>
+                        <td class="text-end">{{ p.expensesTotalCzk|number_format(0, ',', ' ') }}</td>
+                        <td class="text-end fw-bold {{ p.profitCzk is not null and p.profitCzk < 0 ? 'text-danger' : '' }}">
+                            {% if p.profitCzk is not null %}{{ p.profitCzk|number_format(0, ',', ' ') }}{% else %}<span class="text-muted fw-normal">—</span>{% endif %}
+                        </td>
+                        <td class="text-end text-muted">
+                            {% if p.profitPerNightCzk is not null %}{{ p.profitPerNightCzk|number_format(0, ',', ' ') }}{% else %}—{% endif %}
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="13" class="text-center text-muted py-3">Žádné rezervace v roce {{ year }}.</td></tr>
+                {% endfor %}
+                </tbody>
+                {% if reservations is not empty %}
+                    <tfoot class="border-top">
+                    {% for label, s in {'Uskutečněno': realized, 'Očekáváno': expected, 'Celkem': total} %}
+                        {% if s.count > 0 or label == 'Celkem' %}
+                            <tr class="{{ label == 'Celkem' ? 'fw-bold' : 'text-muted' }}">
+                                <td>{{ label }}</td>
+                                <td class="text-end">{{ s.nights }}</td>
+                                <td colspan="2">{{ s.count }} rezervací</td>
+                                <td class="text-end">{{ s.income|number_format(0, ',', ' ') }}</td>
+                                <td colspan="5"></td>
+                                <td class="text-end">{{ s.expenses|number_format(0, ',', ' ') }}</td>
+                                <td class="text-end {{ s.profit < 0 ? 'text-danger' : (label == 'Celkem' ? 'text-success' : '') }}">{{ s.profit|number_format(0, ',', ' ') }}</td>
+                                <td></td>
+                            </tr>
+                        {% endif %}
+                    {% endfor %}
+                    </tfoot>
+                {% endif %}
+            </table>
+        </div>
+        {% if total.hasEstimates %}
+            <div class="card-footer small text-muted">* příjem odhadem — Booking bez vystavené faktury, přepočet kurzem ČNB</div>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <div class="card-header">Souhrn dle kanálu <span class="small text-muted">(včetně plánovaných pobytů)</span></div>
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead class="small text-muted">
+                <tr>
+                    <th>Kanál</th>
+                    <th class="text-end">Rezervací</th>
+                    <th class="text-end">Nocí</th>
+                    <th class="text-end">Příjem</th>
+                    <th class="text-end">Výdaje</th>
+                    <th class="text-end">Zisk</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for channel in channels %}
+                    {% set s = byChannel[channel.value] ?? null %}
+                    {% if s %}
+                        <tr>
+                            <td>{{ channel.label }}</td>
+                            <td class="text-end">{{ s.count }}</td>
+                            <td class="text-end">{{ s.nights }}</td>
+                            <td class="text-end">{{ s.income|number_format(0, ',', ' ') }} Kč</td>
+                            <td class="text-end">{{ s.expenses|number_format(0, ',', ' ') }} Kč</td>
+                            <td class="text-end fw-bold {{ s.profit < 0 ? 'text-danger' : 'text-success' }}">{{ s.profit|number_format(0, ',', ' ') }} Kč</td>
+                        </tr>
+                    {% endif %}
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

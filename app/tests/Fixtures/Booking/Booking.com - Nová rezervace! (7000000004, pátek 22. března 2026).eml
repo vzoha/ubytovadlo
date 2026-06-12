@@ -1,0 +1,357 @@
+Return-Path: <bounces+29053625-a01c-info=example.com@sg.booking.com>
+Delivered-To: info@example.com
+Received: from o15.sg.booking.com (o15.sg.booking.com [167.89.15.148])	(using
+ TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)	 key-exchange
+ X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)	(No client
+ certificate requested)	by mail.mail.example.com (Postfix) with ESMTPS id 86355C0098
+	for <info@example.com>; Sun, 25 Jan 2026 18:10:15 +0100 (CET)
+Authentication-Results: mail.mail.example.com;	dkim=pass (2048-bit key; unprotected)
+ header.d=booking.com header.i=@booking.com header.b="OxJwSwiK";
+	dkim-atps=neutral
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=booking.com;
+	h=content-transfer-encoding:content-type:date:from:mime-version:subject:
+	reply-to:to:cc:content-type:date:from:subject:to;
+	s=s1; bh=2sa7SpIf82OV6nMIjZq7cpDlaTM8+FM5ajcT4Nh0T7Y=;
+	b=OxJwSwiKDchRenlS8CRDD7bVBUH9OrpjQfbnDeGxIZRD37Xsg1SQ146lIGtA71PN0PTi
+	DmAcdg/xdN29KvAHpJ5Zr6vWBSlYA/n9LIVQc2R75bEFRhnPpgNsOmg/ZAHJdC09pgwFEv
+	L6CFZFG7+H1jAaBKqodQ3LbJYLgJSJ2TS2BNaHdLge/6QXw3wqwMCVhDViACjzu0/7ewvz
+	2Hgz8e2r/t1M3hIw/jpNdBptenGa1/G6D7Z8lf8Uv++BSzPPWYuVkLYOzuXZCkQFnXRTUP
+	szkWu/8e8gD5jryF53IZs+tAHHhDESYwQriA9zAcgBXYdteibyF9HGlu7pM/1Wow==
+Received: by recvd-844dd9c595-8r8qh with SMTP id
+ recvd-844dd9c595-8r8qh-1-69764E74-5C	2026-01-25 17:10:12.685180602 +0000 UTC
+ m=+3351726.674710139
+Received: from MjkwNTM2MjU (unknown)
+	by geopod-ismtpd-canary-0 (SG)
+	with HTTP
+	id rf-j4-MOQweyXfUhKSlb0Q
+	Sun, 25 Jan 2026 17:10:12.632 +0000 (UTC)
+Content-Transfer-Encoding: quoted-printable
+Content-Type: text/html; charset=utf-8
+Date: Sun, 25 Jan 2026 17:10:12 +0000 (UTC)
+From: "Booking.com" <noreply@booking.com>
+Mime-Version: 1.0
+Message-ID: <rf-j4-MOQweyXfUhKSlb0Q@geopod-ismtpd-canary-0>
+Subject: Booking.com - =?utf-8?q?Nov=C3=A1_rezervace!_=287000000004=2C_p?=
+ =?utf-8?q?=C3=A1tek_22=2E_b=C5=99ezna?= 2026)
+Reply-To: noreply@booking.com
+X-SG-EID:  u001.bvUsTs6oSq3fe2HVoV7d/2jYF6PlogaJ75JMwd7q+8PQe4McCVCqxzNNy
+ =?utf-8?q?vj0F3U+P2x54/5eo08ohSXiPkxQP9XMcTU7bMJ5?==?utf-8?q?YdpZj2PytZ4SUa?=
+ =?utf-8?q?AsXqHu/sgyVlV3gMxE/K7j2AfaLAHjUdrFeL7HSLI7D3QRx+kfOa0aywWujkk5S8J?=
+ =?utf-8?q?BCPySIcBZHV+MSE4BBKwMxSei9BYyvM2aac2Ap?=sK5ba7B9VNIAstQxa8FHtA=
+X-SG-ID:  u001.SdBcvi+Evd/bQef8eZF3Bkj2SeQTDmnHLfXssiJAEVc8SdKzE+iSR56EJ
+ =?utf-8?q?WiArOQHEcMWas/ylPCi1yyE70tnTP3YN/mCPrH8?==?utf-8?q?d8IP2l8Bv8bFua?=
+ =?utf-8?q?5CV5NTRKg5cMZAPq7kgZMj9OZ2qxSo02dE3oPAbsGvFlOphqQ40MWAtti1z4lThke?=
+ =?utf-8?q?uHNjvVFxZGcu1NpixgQzwaZZreBq3X3doUvzST?=oVmmJyOGce2dpqMORLyuUY=
+To: info@example.com
+X-Entity-ID: u001.IpDiUfDbJmai/vr67JU2nw==
+X-Spam-Score: -10.199999993655
+X-Spamd-Bar: ----------
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/htm=
+l4/strict.dtd">
+<html xmlns:v=3D"urn:schemas-microsoft-com:vml">
+ <head>
+  <title>
+Booking.com -=20
+Nov=C3=A1 rezervace!
+(7000000004, p=C3=A1tek 22. b=C5=99ezna 2026)
+</title>
+  <link href=3D"https://r-xx.bstatic.com/static/img/favicon.ico" rel=3D"sho=
+rtcut icon" />
+ </head>
+ <body bgcolor=3D"#EEEEEE" leftmargin=3D"0" marginheight=3D"0" marginwidth=
+=3D"0" style=3D"background-color:#EEEEEE;padding:0;margin:0;font-family:Ope=
+n Sans,Helvetica Neue,Helvetica,Arial,sans-serif;font-size:13px;" topmargin=
+=3D"0" yahoo=3D"fix">
+  <style>
+.ReadMsgBody {width:100%;}
+.ExternalClass {width:100%;}
+.ExternalClass, .ExternalClass p, .ExternalClass span, .ExternalClass font,=
+ .ExternalClass td, .ExternalClass div {line-height:100%;}
+body {-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;}
+body {margin:0;padding:0;}
+body {width:100% !important;}
+table {border-spacing:0;}
+table td {border-collapse:collapse;}
+.yshortcuts a {border-bottom:none!important;}
+img {border:0 none;line-height:100%;outline:none;text-decoration:none;-ms-i=
+nterpolation-mode:bicubic;}
+a img {border:0 none;text-decoration:none;}
+.im-fix {display:block;}
+table td {border-collapse:collapse;}
+table {border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;}
+blockquote .hideforwarded, .WordSection1 .hideforwarded {width:0;max-height=
+:0;overflow:hidden;float:left;display:none;}
+blockquote .showforwarded, .WordSection1 .showforwarded {display:block!impo=
+rtant;width:auto!important;max-height:inherit!important;overflow:visible!im=
+portant;float:none!important;}
+.webkit{max-width: 600px;}
+/* Shim for old browsers, came from: https://www.w3.org/International/artic=
+les/inline-bidi-markup/#html5markup */
+.rtl .u-phone,
+.lang_is_rtl .u-phone {
+direction: ltr;
+unicode-bidi: -webkit-isolate;
+unicode-bidi: -moz-isolate;
+unicode-bidi: -ms-isolate;
+unicode-bidi: isolate;
+white-space: nowrap;
+}
+/* More details: https://www.w3.org/International/articles/inline-bidi-mark=
+up/#lrmrlm */
+.rtl .u-phone:after,
+.lang_is_rtl .u-phone:after {
+content: '\200f'
+}
+@media only screen and (min-width: 480px) and (max-width: 640px) {
+body[yahoo] .deviceWidth{width:95%!important;padding:0!important;}
+body[yahoo] .r-fw,body[yahoo] .t-fw{width:100%!important;padding:0!importan=
+t;}
+body[yahoo] img.t-fw,body[yahoo] img.r-fw{width:100%!important;height:auto!=
+important;}
+body[yahoo] .t-hide{width:0;display:none!important;}
+body[yahoo] .t-tile{width:33%!important;}
+body[yahoo] .t-50p{width:49%!important;padding:0!important;}
+body[yahoo] .t-nopad{padding:0!important;}
+body[yahoo] .t-stack{display:block!important;float:left;}
+body[yahoo] .t-auto-w{width:auto!important;}
+body[yahoo] .t-auto-h{height:auto!important;}
+body[yahoo] .g-tile-odd{float:left;display:block!important;width:49%!import=
+ant;padding-left:0!important;padding-right:0!important;}
+body[yahoo] .g-tile-even{float:right;display:block!important;width:49%!impo=
+rtant;padding-left:0!important;padding-right:0!important;}
+body[yahoo] .t-txt-xs{font-size:10px!important;}
+body[yahoo] .t-txt-s{font-size:12px!important;}
+body[yahoo] .t-txt-m{font-size:13!important;}
+body[yahoo] .t-txt-l{font-size:16px!important;}
+body[yahoo] .t-txt-xl{font-size:20px!important;}
+body[yahoo] .g-sd-banner{padding:16px!important;}
+}
+@media only screen and (max-width: 479px) {
+body[yahoo] .deviceWidth{width:95%!important;padding:0!important;}
+body[yahoo] .r-fw,body[yahoo] .m-fw{width:100%!important;padding:0!importan=
+t;}
+body[yahoo] img.m-fw,body[yahoo] img.r-fw{width:100%!important;height:auto!=
+important;}
+body[yahoo] .m-spc-v{height:4px!important;}
+body[yahoo] .m-g-divider-v{border-bottom:1px solid #E0E2ED;}
+body[yahoo] #similar-destinations .g-tile:last-child .m-g-divider-v{border:=
+0 none!important;}
+body[yahoo] .m-hide{width:0;display:none!important;}
+body[yahoo] .m-50p{width:49%!important;padding:0!important;}
+body[yahoo] .m-nopad{padding:0!important;}
+body[yahoo] .m-smallpad{padding-top:6px!important;padding-right:0!important=
+;padding-bottom:4px!important;padding-left:0!important;}
+body[yahoo] .m-pad-a{padding:8px!important;}
+body[yahoo] .m-pad-t{padding:0!important;padding-top:8px!important;}
+body[yahoo] .m-pad-b{padding:0!important;padding-bottom:8px!important;}
+body[yahoo] .m-pad-l{padding:0!important;padding-left:8px!important;}
+body[yahoo] .m-pad-r{padding:0!important;padding-right:8px!important;}
+body[yahoo] .m-pad-a-t{padding:8px!important;padding-top:0!important;}
+body[yahoo] .m-pad-a-b{padding:8px!important;padding-bottom:0!important;}
+body[yahoo] .m-pad-a-l{padding:8px!important;padding-left:0!important;}
+body[yahoo] .m-pad-a-r{padding:8px!important;padding-right:0!important;}
+body[yahoo] .m-stack{display:block!important;float:left!important;width:100=
+%!important;}
+body[yahoo] .m-auto-w{width:auto!important;}
+body[yahoo] .m-auto-h{height:auto!important;}
+body[yahoo] .m-txt-xl{font-size:20px!important;}
+body[yahoo] .m-txt-l{font-size:16px!important;}
+body[yahoo] .m-txt-m{font-size:13px!important;}
+body[yahoo] .m-txt-s{font-size:12px!important;}
+body[yahoo] .m-txt-xs{font-size:10px!important;}
+body[yahoo] .g-logo{width:144px!important;height:24px!important;}
+body[yahoo] .g-username{text-align:left!important;}
+body[yahoo] .g-sd-banner{padding:8px!important;}
+body[yahoo] .headerTxtWidth{width:85%!important;padding:0!important;}
+body[yahoo] .removeTri{display:none!important;}
+body[yahoo] .deviceWidth{width:95%!important;padding:0!important;}
+body[yahoo] .m-100p {width:100%!important;padding:0!important;}
+body{font-size: 15px !important;}
+*[class~=3Dresponsive_td] {display: block;width: 100%!important;}
+*[class~=3Dcenter_on_mobile] {text-align: center!important;}
+*[class~=3Dcenter_on_mobile] table {margin:0 auto;}
+}
+</style>
+  <table align=3D"center" bgcolor=3D"#EEEEEE" border=3D"0" cellpadding=3D"0=
+" cellspacing=3D"0" style=3D"background-color:#EEEEEE;" width=3D"100%">
+   <tr>
+    <td style=3D"padding:5px;" valign=3D"middle">
+     <table align=3D"center" border=3D"0" cellpadding=3D"0" cellspacing=3D"=
+0" class=3D"m-100p" style=3D"background-color:#fff0ce;border:1px solid #fed=
+25a;padding:10px;margin:10px auto;" width=3D"600">
+      <tr>
+       <td>
+        <table border=3D"0" cellpadding=3D"0" cellspacing=3D"0" width=3D"10=
+0%">
+         <tr>
+          <td style=3D"padding:10px;color:#1b2747;font-weight:600;font-size=
+:13px;line-height:14px;">Z bezpe=C4=8Dnostn=C3=ADch d=C5=AFvod=C5=AF pros=
+=C3=ADm zkontrolujte po p=C5=99ihl=C3=A1=C5=A1en=C3=AD zda Va=C5=A1e URL ad=
+resa vypad=C3=A1 n=C3=A1sledovn=C4=9B:<strong>https://admin.booking.com</st=
+rong>.</td>
+         </tr>
+        </table>
+       </td>
+      </tr>
+     </table>
+    </td>
+   </tr>
+  </table>
+  <table align=3D"center" bgcolor=3D"#EEEEEE" border=3D"0" cellpadding=3D"0=
+" cellspacing=3D"0" style=3D"background-color:#EEEEEE;" width=3D"100%">
+   <tr>
+    <td style=3D"padding:5px;" valign=3D"middle">
+     <table align=3D"center" border=3D"0" cellpadding=3D"0" cellspacing=3D"=
+0" class=3D"deviceWidth" style=3D"padding:10px;margin:0 auto;" width=3D"600=
+">
+      <tr>
+       <td valign=3D"top">
+        <table border=3D"0" cellpadding=3D"0" cellspacing=3D"0" style=3D"ma=
+rgin:0px;padding:0px;border:0px;" width=3D"100%">
+         <tr>
+          <td align=3D"left" class=3D"responsive_td center_on_mobile" style=
+=3D"vertical-align:middle;padding-bottom:5px;padding-left:10px" valign=3D"m=
+iddle"><img alt=3D"Booking.com" border=3D"0" height=3D"32" src=3D"https://r=
+-xx.bstatic.com/static/img/extranet_ng/logo.png" width=3D"198" /></td>
+          <td align=3D"right" class=3D"responsive_td center_on_mobile" styl=
+e=3D"font-size:14px;font-weight:normal;padding:0;margin:0;" valign=3D"middl=
+e">
+Vejminek Mal=C3=BD Statek <br />
+          </td>
+         </tr>
+        </table>
+       </td>
+      </tr>
+     </table>
+    </td>
+   </tr>
+  </table>
+  <table align=3D"center" bgcolor=3D"#EEEEEE" border=3D"0" cellpadding=3D"0=
+" cellspacing=3D"0" style=3D"background-color:#EEEEEE;" width=3D"100%">
+   <tr>
+    <td style=3D"padding:5px;" valign=3D"middle">
+     <table align=3D"center" bgcolor=3D"#FFFFFF" border=3D"0" cellpadding=
+=3D"0" cellspacing=3D"0" class=3D"m-100p" style=3D"background-color:#FFFFFF=
+;border:1px solid #dddddd;padding:10px;margin:10px auto;" width=3D"600">
+      <tr>
+       <td style=3D"padding:10px;">
+        <table width=3D"100%">
+         <tr>
+          <td><img height=3D"1" src=3D"https://secure.booking.com/email_ope=
+ned_tracking_pixel?lang=3Dcs&amp;aid=3D304142&amp;token=3D52616e646f6d49562=
+473646523287d6194114500090d2d1c1c1e72a27c4789bfc05201b95657904d4e6c03465003=
+c8c5e90e546f5613ec01579a5dfa2b512105cbb4f98390bee81bd2897374ce5b8b7c7ddd1d8=
+1abb861733622c690d75b0ea03e2f062d7954c6b7902234edc499f8056099ccad389688692a=
+10f2ebdf85501f7fe6c49663fbef5efa65fd354b712a63&amp;type=3Dconfirmation_hote=
+l" width=3D"1" />
+<img alt=3D"Booking.com online hotel reservations" src=3D"https://secure.bo=
+oking.com/nofax_tracking_pixel?res_id=3D7000000004" /></td>
+          <td align=3D"right">
+           <h4>
+Booking confirmation
+=E2=80=94
+7000000004
+<br />
+IATA/TIDS: PC029090
+</h4>
+          </td>
+         </tr>
+        </table>
+        <div style=3D"font-size: 14px; padding:10px;">
+         <table style=3D"text-align:left;">
+          <tr>
+           <td style=3D"padding-bottom:10px;">
+Pr=C3=A1v=C4=9B jste obdr=C5=BEel/a novou rezervaci provedenou p=C5=99es Bo=
+oking.com.
+</td>
+          </tr>
+          <tr>
+           <td style=3D"padding-bottom:10px;">
+S na=C5=A1=C3=AD bezplatnou aplikac=C3=AD Pulse pro partnery Booking.com z=
+=C3=ADsk=C3=A1te automatick=C3=A1 upozorn=C4=9Bn=C3=AD a snadno naleznete i=
+nformace o nov=C3=BDch rezervac=C3=ADch. <a href=3D"http://s.sg.booking.com=
+/ls/click?upn=3Du001.uVOzp9Djd6XD-2F9s2xy62qSOOzDMLTWWpzdp4v7j2TwMUJVlc-2BG=
+zO6aQus96jBPlZCoVvW5QtM5OQH7yoVOqXL1CfufFlK7D397ogUM84TTJDfkbi7syGPc1fE7f4p=
+jf0ZoAidZAefzk25eDoaMCNaq-2FmTNc2P5gI64Gnk2qxVHLVoLzVP6FdJW5cO2JnLnZHgHW5o9=
+DCMhJ9F9g4xSBCAQ-3D-3DxIg6_ORQo4qxQZ-2Fc9gkVAg0tvKcfhoVNN13UX2K3JHlMC-2FdJd=
+vJpWKFuvQivwr04c4XKowlEEOBb-2FencRQWq6cx-2BMBVfCuO3RzQjXBXXcWl3eXEhRslC2Ubw=
+EOoH-2FoPT-2Bp0mwHaQ-2B7W-2FjOr0ikzn0rBN1J6EdnL7szrBjAVVs-2Fj64MhcdpHqIlped=
+H-2FiFmmy9M6fh6BWQEA4mkfpGY92-2BHWrhPq-2BPzTVZDEMxi-2BmHIWLcjvKgkEZQv0t2WkX=
+VcIk3gqoLo34TB7H-2Bb66c88p-2FIKmft1dkTCeWWKb7p8mfIa5SV8ssCEaKv3BAbZxZ2LgksL=
+-2FeGA0ZOcZivIympN7bZhyTXsyuQHBY1D1aYkp9-2FQC5m6ZljknXxjJckV7vlfFSOjC3mA5Pj=
+66re7rLrU0lVuYG8gDIYJEXwGQZ0AejIXh-2BJLk-3D" target=3D"_blank">Zjistit v=C3=
+=ADce</a>.
+</td>
+          </tr>
+          <tr>
+           <td style=3D"padding-bottom:10px;">
+Pokud v=C3=BD=C5=A1e uveden=C3=BD odkaz nefunguje, m=C5=AF=C5=BEete tak=C3=
+=A9 zkop=C3=ADrovat n=C3=A1sleduj=C3=ADc=C3=AD odkaz a vlo=C5=BEit ho do vy=
+hled=C3=A1va=C4=8De:
+</td>
+          </tr>
+          <tr style=3D"word-break:break-all;padding-bottom:10px;">
+           <td style=3D"padding-bottom:10px;"><a href=3D"http://s.sg.bookin=
+g.com/ls/click?upn=3Du001.uVOzp9Djd6XD-2F9s2xy62qbt1Px7MjlgxT-2FrgeKjtqESwm=
+F2cMpPsctxNcqoMAhLEyauC-2Fy6h5FWMWcogj2uu8VrgKeNhB5cZ25b1K1s6P-2FLGUf7Xlkr-=
+2BRvLsOPAtd4SE0ihh8IBSsyzu89PIZ57Vn9diQdaXE7ulnnqI6Wb-2BpLJYz58wsfg6Kz6jWTP=
+IZaVX5kYUdRJnDPS4-2FZ5wC8ZbZeXpO4giLzRk6yjI2JU-2FAEru5AhmCI-2FwJ4n87FgbdYd4=
+VjgEmhDRtiU9p4G67IBXad4-2BnVpAps6InqqcULv6uUo-3DzUaB_ORQo4qxQZ-2Fc9gkVAg0tv=
+KcfhoVNN13UX2K3JHlMC-2FdJdvJpWKFuvQivwr04c4XKowlEEOBb-2FencRQWq6cx-2BMBVfCu=
+O3RzQjXBXXcWl3eXEhRslC2UbwEOoH-2FoPT-2Bp0mwHaQ-2B7W-2FjOr0ikzn0rBN1J6EdnL7s=
+zrBjAVVs-2Fj64MhcdpHqIlpedH-2FiFmmy9M6fhp2tlKFaxU-2BOxYD9E0VvlVkvmHO6LqrSLx=
+XTNOWZ3tFXv7X-2FSusTlkcXcdQuLDB6kHfkxyijXfGho0kkjYjWrregDkT8b9j8pjVPyszXO5V=
+9aXHKcBHwFRSKOE6xpLvXkz-2BHJiIKi41Bjss7t7XI5cuFgHgfq9yWQQUhXjQZsUINewJj3awP=
+FzmvZghmVpglUs414KypFRYcVi8fVqdgUqJtsakNkSDHRaokx8pkN3nY-3D" target=3D"_bla=
+nk">https://admin.booking.com/hotel/hoteladmin/extranet_ng/manage/booking.h=
+tml?res_id=3D7000000004&amp;hotel_id=3D10718270&amp;lang=3Dcs&amp;from_conf=
+irmation_email=3D1</a></td>
+          </tr>
+         </table>
+         <p>S pozdravem<p>
+T=C3=BDm Booking.com
+</div>
+       </td>
+      </tr>
+     </table>
+    </td>
+   </tr>
+  </table>
+  <table align=3D"center" bgcolor=3D"#EEEEEE" border=3D"0" cellpadding=3D"0=
+" cellspacing=3D"0" style=3D"background-color:#EEEEEE;" width=3D"100%">
+   <tr>
+    <td style=3D"padding:5px;" valign=3D"middle">
+     <table align=3D"center" border=3D"0" cellpadding=3D"0" cellspacing=3D"=
+0" class=3D"m-100p" style=3D"font-size:11px;color:#666666;padding:10px;marg=
+in:10px auto;" width=3D"600">
+      <tr>
+       <td style=3D"padding:3px;text-align:center;border-bottom:1px solid #=
+ddd;">
+        <p>Na tento e-mail pros=C3=ADm neodpov=C3=ADdejte. </td>
+      </tr>
+      <tr>
+       <td style=3D"padding:3px;text-align:center;border-bottom:1px solid #=
+dddddd;">
+        <p>
+Copyright =C2=A9 1996=E2=80=932026 Booking.com V=C5=A1echna pr=C3=A1va vyhr=
+azena.<br />
+       </td>
+      </tr>
+     </table>
+    </td>
+   </tr>
+  </table>
+ <img src=3D"http://s.sg.booking.com/wf/open?upn=3Du001.tWzt7fYwU0j6NxO3VNB=
+h-2FO5-2BXlKz8rQVzKiU89yalobjbZWQMdIwAtNaQAO2h6vL35vmSlDXtHpo0heUFGJgyxNXvZ=
+AIxrZzfw1QontqBQByWBZcqji-2FfzEzd3J3JiWN0SfdQ3UF7orZLTM76erOnf8RFKzBqJNsufA=
+nwlZz6l-2FwkPe7H5YXgtaFbkL0sTjZVvoMm9WMqK5LmZMvvaR9eC8rooizMfs98P4Ne73x72lB=
+xEibtJuWQ3bHeux4TOcKSc8x2y3jcgj2B-2B73PEjt2cDpTO3a-2FhedW-2BcpYaYatDqUh-2BN=
+yiXcW4ddAF-2FaA0m6ZpjIM-2B6r2o52kzE21y1Siz4xN2Db5fMOoZk3tHi66-2B0CfwuETHEGh=
+-2FdCfJ9njswoCRQbsH8xk5Y6xFRpw57ZxfPX-2FXBsZRafA335FO4EsV1c-3D" alt=3D"" wi=
+dth=3D"1" height=3D"1" border=3D"0" style=3D"height:1px !important;width:1p=
+x !important;border-width:0 !important;margin-top:0 !important;margin-botto=
+m:0 !important;margin-right:0 !important;margin-left:0 !important;padding-t=
+op:0 !important;padding-bottom:0 !important;padding-right:0 !important;padd=
+ing-left:0 !important;"/></body>
+</html>

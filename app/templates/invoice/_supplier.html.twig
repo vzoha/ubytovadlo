@@ -1,0 +1,23 @@
+<table class="supplier-inner"><tr>
+    <td class="s-text">
+        <div class="sect-label">Dodavatel</div>
+        <div class="strong-name">{{ issuer.name }}</div>
+        <div>{{ issuer.street }}</div>
+        <div>{{ issuer.zip }} {{ issuer.city }}</div>
+        <div>{{ issuer.country }}</div>
+        <br>
+        <div>IČO {{ issuer.ico }}</div>
+        <div>DIČ {{ issuer.dic }}</div>
+    </td>
+    <td class="s-logo">
+        {% if logoPath %}
+            <img class="logo" src="{{ logoPath }}" alt="{{ brand_name }}">
+        {% endif %}
+    </td>
+</tr></table>
+
+<br>
+<table class="kontakt"><tr><td>
+    <div class="sect-label">Kontakt</div>
+    <div>{{ issuer.name }}, {{ issuer.phone }}<br>{{ issuer.email }}<br>{{ issuer.web }}</div>
+</td></tr></table>

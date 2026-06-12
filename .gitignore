@@ -1,0 +1,19 @@
+# WordPress instalace — udržovaná zvlášť, není součástí tohoto repa
+/www/
+
+# Interní podklady (vzorky e-mailů, CSV evidence, atd.)
+/sources/
+
+# Privátní overlay a interní dokumentace — nepatří do veřejného repa
+/CLAUDE.local.md
+/docs/private/
+
+# Editor / OS junk
+.idea/
+.vscode/
+.DS_Store
+*.swp
+
+# Stažený obsah skillů (jako vendor/) — verze drží skills-lock.json
+/.agents/
+/.claude/

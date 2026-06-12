@@ -1,0 +1,61 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}DPH — měsíční přehled{% endblock %}
+
+{% block body %}
+    <h1 class="h3 mb-3">DPH — měsíční přehled</h1>
+    <p class="text-muted small">Reverse charge nad provizí OTA (identifikovaná osoba, §6h ZDPH). Sazba 21 %, bez nároku na odpočet. Lhůta podání + úhrady: 25. den následujícího měsíce.</p>
+
+    {% if months is empty %}
+        <div class="alert alert-info">Žádné rezervace s vyplněnou provizí ani Booking faktury.</div>
+    {% else %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                <tr>
+                    <th>Měsíc</th>
+                    <th class="text-end">Rezervací</th>
+                    <th class="text-end">Základ Kč</th>
+                    <th class="text-end">DPH Kč</th>
+                    <th>Doklady OTA</th>
+                    <th>Stav</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for s in months %}
+                    {% set key = '%04d-%02d'|format(s.year, s.month) %}
+                    <tr>
+                        <td><strong>{{ key }}</strong></td>
+                        <td class="text-end">{{ s.reservations|length }}</td>
+                        <td class="text-end">{{ s.sumBaseCzk|number_format(2, ',', ' ') }}</td>
+                        <td class="text-end"><strong>{{ s.sumVatCzk|number_format(2, ',', ' ') }}</strong></td>
+                        <td>
+                            {% if s.invoice %}
+                                <span class="badge text-bg-success" title="Booking faktura #{{ s.invoice.invoiceNumber }}">B ✓</span>
+                            {% elseif s.bookingReservationSum > 0 %}
+                                <span class="badge text-bg-warning" title="Booking rezervace existují, faktura ještě nepřišla">B ⌛</span>
+                            {% endif %}
+                            {% if s.airbnbStatements is not empty %}
+                                <span class="badge text-bg-success" title="{{ s.airbnbStatements|length }} Airbnb receipt(ů) nahráno">A ✓</span>
+                            {% elseif s.airbnbReservationSum > 0 %}
+                                <span class="badge text-bg-warning" title="Airbnb rezervace existují, receipt nenahraný">A ⌛</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if s.period and s.period.filedAt %}
+                                <span class="badge text-bg-secondary" title="{{ s.period.filedAt|date('d. m. Y H:i') }}">odesláno na FÚ</span>
+                            {% else %}
+                                <span class="badge text-bg-warning">do {{ s.filingDueAt|date('d. m. Y') }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            <a href="{{ path('vat_detail', {year: s.year, month: '%02d'|format(s.month)}) }}" class="btn btn-sm btn-outline-primary">Detail</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+{% endblock %}

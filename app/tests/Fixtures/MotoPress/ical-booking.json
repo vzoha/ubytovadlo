@@ -1,0 +1,17 @@
+{
+    "id": 1717,
+    "status": "confirmed",
+    "check_in_date": "2026-05-10",
+    "check_out_date": "2026-05-14",
+    "check_in_time": "16:00:00",
+    "check_out_time": "11:00:00",
+    "customer": {"first_name": "", "last_name": "", "email": ""},
+    "reserved_accommodations": [{"accommodation": 369, "adults": 4, "children": 0}],
+    "currency": "CZK",
+    "total_price": 0,
+    "imported": true,
+    "ical_description": "",
+    "ical_prodid": "-//admin.booking.com, b.v.//NONSGML v1.0//EN",
+    "ical_summary": "\"CLOSED - Not available\"",
+    "note": ""
+}

@@ -1,0 +1,101 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Tests\Invoice;
+
+use App\Entity\Reservation;
+use App\Enum\BillingMode;
+use App\Enum\Channel;
+use App\Enum\ReservationStatus;
+use App\Invoice\InvoiceNumber;
+use App\Invoice\InvoiceNumberAllocator;
+use App\Invoice\InvoicePdfRenderer;
+use App\Invoice\InvoiceService;
+use App\Invoice\IssuerProfile;
+use App\Invoice\SpaydGenerator;
+use App\Repository\InvoiceRepository;
+use App\Vat\CnbExchangeRateClient;
+use Doctrine\ORM\EntityManagerInterface;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
+use PHPUnit\Framework\TestCase;
+
+#[AllowMockObjectsWithoutExpectations]
+final class InvoiceServicePayoutTest extends TestCase
+{
+    private InvoiceService $service;
+
+    protected function setUp(): void
+    {
+        $em = $this->createMock(EntityManagerInterface::class);
+        $invoiceRepo = $this->createMock(InvoiceRepository::class);
+        $invoiceRepo->method('findFirstByReservationAndType')->willReturn(null);
+
+        $allocator = $this->createMock(InvoiceNumberAllocator::class);
+        $allocator->method('allocate')->willReturn(new InvoiceNumber(2026, 12));
+
+        $pdfRenderer = $this->createMock(InvoicePdfRenderer::class);
+        $pdfRenderer->method('renderToFile')->willReturn('/tmp/test-invoice.pdf');
+
+        $issuer = new IssuerProfile(
+            'Dodavatel',
+            'Ulice 1',
+            'Praha',
+            '11000',
+            'CZ',
+            '12345678',
+            'CZ12345678',
+            '+420',
+            'a@b.cz',
+            'web',
+            '123/0300',
+            'CZ00',
+        );
+
+        $this->service = new InvoiceService(
+            $em,
+            $invoiceRepo,
+            $allocator,
+            $pdfRenderer,
+            $this->createMock(SpaydGenerator::class),
+            $this->createMock(CnbExchangeRateClient::class),
+            $issuer,
+            '1000.00',
+        );
+    }
+
+    public function testAirbnbInvoiceIsPaidWhenPayoutAlreadyKnown(): void
+    {
+        $reservation = $this->airbnbReservation();
+        $reservation->setPayoutSentAt(new \DateTimeImmutable('2026-05-29'));
+
+        $invoice = $this->service->issueFull($reservation, new \DateTimeImmutable('2026-05-29'));
+
+        self::assertTrue($invoice->isPaid());
+        self::assertSame('2026-05-29', $invoice->getPaidAt()?->format('Y-m-d'));
+    }
+
+    public function testAirbnbInvoiceStaysUnpaidWithoutPayout(): void
+    {
+        $invoice = $this->service->issueFull($this->airbnbReservation(), new \DateTimeImmutable('2026-05-29'));
+
+        self::assertFalse($invoice->isPaid());
+        self::assertNull($invoice->getPaidAt());
+    }
+
+    private function airbnbReservation(): Reservation
+    {
+        $r = new Reservation(Channel::AIRBNB, new \DateTimeImmutable('2026-05-28'));
+        $r->setCheckOut(new \DateTimeImmutable('2026-05-30'));
+        $r->setGuestName('Eva Marková');
+        $r->setGuestStreet('Nějaká 1');
+        $r->setGuestCity('Praha');
+        $r->setGuestZip('11000');
+        $r->setStatus(ReservationStatus::CONFIRMED);
+        $r->setBillingMode(BillingMode::AIRBNB);
+        $r->setPriceTotal('3298.00');
+        $r->setPriceCurrency('CZK');
+
+        return $r;
+    }
+}

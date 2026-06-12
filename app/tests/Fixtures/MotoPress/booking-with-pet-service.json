@@ -1,0 +1,93 @@
+{
+  "id": 1720,
+  "status": "confirmed",
+  "date_created": "2026-03-31T10:02:38",
+  "date_created_utc": "2026-03-31T08:02:38",
+  "key": "booking_1720_69cb7f9e55dc40.03773992",
+  "check_in_date": "2026-07-10",
+  "check_out_date": "2026-07-17",
+  "check_in_time": "16:00:00",
+  "check_out_time": "11:00:00",
+  "customer": {
+    "first_name": "Test",
+    "last_name": "Hostsepsem",
+    "email": "test@example.cz",
+    "phone": "+420700000000",
+    "country": "CZ",
+    "state": "ČR",
+    "city": "Plzeň",
+    "zip": "32300",
+    "address1": "Kaprová 2"
+  },
+  "reserved_accommodations": [
+    {
+      "accommodation": 369,
+      "accommodation_type": 368,
+      "rate": 1601,
+      "adults": 3,
+      "children": 0,
+      "guest_name": "Test Hostsepsem",
+      "services": [
+        {
+          "id": 925,
+          "price": 700
+        }
+      ],
+      "accommodation_price_per_days": [
+        {
+          "date": "2026-07-10",
+          "price": 2142.857142857
+        },
+        {
+          "date": "2026-07-11",
+          "price": 2142.857142857
+        },
+        {
+          "date": "2026-07-12",
+          "price": 2142.857142857
+        },
+        {
+          "date": "2026-07-13",
+          "price": 2142.857142857
+        },
+        {
+          "date": "2026-07-14",
+          "price": 2142.857142857
+        },
+        {
+          "date": "2026-07-15",
+          "price": 2142.857142857
+        },
+        {
+          "date": "2026-07-16",
+          "price": 2142.857142857
+        }
+      ],
+      "fees": [],
+      "taxes": {
+        "accommodation": [],
+        "services": [],
+        "fees": []
+      },
+      "discount": 0
+    }
+  ],
+  "coupon_code": "",
+  "currency": "CZK",
+  "total_price": 15699.999999999,
+  "checkout_id": "5ea4ee141070425187237da443abafc7",
+  "payments": [
+    {
+      "id": 1722,
+      "status": "completed",
+      "amount": 1000,
+      "currency": "CZK"
+    }
+  ],
+  "imported": false,
+  "ical_description": "",
+  "ical_prodid": "",
+  "ical_summary": "",
+  "note": "",
+  "internal_notes": []
+}

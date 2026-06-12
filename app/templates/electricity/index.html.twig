@@ -1,0 +1,112 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Elektřina{% endblock %}
+
+{% block body %}
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h3 mb-0">Elektřina — odečty</h1>
+        <form method="post" action="{{ path('electricity_rebalance') }}">
+            <input type="hidden" name="_token" value="{{ csrf_token('electricity-rebalance') }}">
+            <button class="btn btn-outline-secondary btn-sm">Přepočítat alokaci</button>
+        </form>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-md-5">
+            <div class="card">
+                <div class="card-header">Nový odečet</div>
+                <div class="card-body">
+                    <form method="post" action="{{ path('electricity_create') }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('electricity-reading') }}">
+                        <div class="mb-2">
+                            <label class="form-label small mb-1">Datum odečtu</label>
+                            <input type="date" name="read_at" required class="form-control form-control-sm" value="{{ 'now'|date('Y-m-d') }}">
+                        </div>
+                        <div class="row g-2">
+                            <div class="col">
+                                <label class="form-label small mb-1">VT stav (kWh)</label>
+                                <input type="number" name="vt_meter" required min="0" class="form-control form-control-sm">
+                            </div>
+                            <div class="col">
+                                <label class="form-label small mb-1">NT stav (kWh)</label>
+                                <input type="number" name="nt_meter" required min="0" class="form-control form-control-sm">
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <label class="form-label small mb-1">Poznámka</label>
+                            <input type="text" name="note" class="form-control form-control-sm" placeholder="např. po pobytu Novák">
+                        </div>
+                        <button class="btn btn-primary btn-sm mt-3 w-100">Uložit odečet</button>
+                        <p class="text-muted small mb-0 mt-2">
+                            Po uložení se automaticky přepočítá alokace spotřeby na rezervace v intervalu.
+                        </p>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header">Tarify</div>
+                <div class="card-body p-0">
+                    <table class="table table-sm mb-0">
+                        <thead class="small text-muted">
+                        <tr><th>Platný od</th><th class="text-end">VT Kč/kWh</th><th class="text-end">NT Kč/kWh</th></tr>
+                        </thead>
+                        <tbody>
+                        {% for t in tariffs %}
+                            <tr>
+                                <td>{{ t.validFrom|date('d. m. Y') }}</td>
+                                <td class="text-end">{{ t.vtRate|number_format(2, ',', ' ') }}</td>
+                                <td class="text-end">{{ t.ntRate|number_format(2, ',', ' ') }}</td>
+                            </tr>
+                        {% else %}
+                            <tr><td colspan="3" class="text-muted small">Žádné tarify zatím nejsou.</td></tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-7">
+            <div class="card">
+                <div class="card-header">Historie odečtů ({{ readings|length }})</div>
+                <div class="card-body p-0">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead class="small text-muted">
+                        <tr>
+                            <th>Datum</th>
+                            <th class="text-end">VT</th>
+                            <th class="text-end">NT</th>
+                            <th>Poznámka</th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for r in readings %}
+                            <tr>
+                                <td>{{ r.readAt|date('d. m. Y') }}</td>
+                                <td class="text-end">{{ r.vtMeter|number_format(0, ',', ' ') }}</td>
+                                <td class="text-end">{{ r.ntMeter|number_format(0, ',', ' ') }}</td>
+                                <td class="small text-muted">{{ r.note ?? '' }}</td>
+                                <td class="text-end">
+                                    <form method="post" action="{{ path('electricity_delete', {id: r.id}) }}"
+                                          onsubmit="return confirm('Smazat odečet z {{ r.readAt|date('d. m. Y') }}?')">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('electricity-delete-' ~ r.id) }}">
+                                        <button class="btn btn-sm btn-link text-danger p-0">smazat</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr><td colspan="5" class="text-muted small p-3">Žádné odečty zatím nejsou.</td></tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a href="{{ path('dashboard') }}" class="btn btn-outline-secondary btn-sm">← Zpět na přehled</a>
+    </div>
+{% endblock %}
