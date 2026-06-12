@@ -22,6 +22,10 @@ Tak jsem si řekl, že to musí jít líp, a o víkendech se do toho pustil ([Vo
 - **Přehled příjmů a výdajů** — zisk na každou rezervaci (po odečtu elektřiny, úklidu, poplatků, provizí a DPH) na jednom dashboardu místo roztroušených tabulek.
 - **Online check‑in i pro cizince** — čeští hosté projdou bez vyplňování, u cizinců systém sebere doklady pro povinné hlášení (Ubyport) včetně naskenování pasu kamerou. Firemní údaje načte z IČO.
 
+| DPH z OTA provizí | Příjmy a výdaje |
+|---|---|
+| ![Měsíční přehled DPH reverse charge z provizí Booking/Airbnb pro identifikovanou osobu — základ, daň a stav podání](docs/screenshot-dph.png) | ![Ekonomika roku — zisk na každou rezervaci po odečtu nákladů a souhrn podle kanálu](docs/screenshot-ekonomika.png) |
+
 ## Pro koho je
 
 Pro malé ubytovatele — apartmán nebo chalupu — kteří prodávají přes více kanálů a nechtějí platit drahé zahraniční systémy ani trávit večery přepisováním dat. Zatím cílí na jednu ubytovací jednotku (podpora více jednotek je v plánu). Sedí hlavně českým provozovatelům: řeší **Ubyport, identifikovanou osobu, DPH z OTA provizí, QR Platbu i kurzy ČNB** — věci, které zahraniční channel managery neumí.
