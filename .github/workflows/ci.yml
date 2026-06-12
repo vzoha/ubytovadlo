@@ -53,6 +53,9 @@ jobs:
       - name: Install dependencies
         run: composer install --no-interaction --no-progress --prefer-dist
 
+      - name: Security audit (composer)
+        run: composer audit
+
       - name: Code style (php-cs-fixer)
         run: vendor/bin/php-cs-fixer fix --dry-run --diff
         env:
