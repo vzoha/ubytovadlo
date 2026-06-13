@@ -6,7 +6,7 @@
 
 ## Proč vzniklo
 
-S manželkou máme na statku ve Lništi u Trhových Svinů **Vejminek Malý Statek** — starou kamennou chalupu, kterou jsme zrekonstruovali a dnes ji pronajímáme (čtyři lůžka, psi vítáni). Hosté si u nás rezervují pobyt přes náš vlastní web, Booking, Airbnb i české eChalupy a CS chalupy, někdo platí hotově či převodem, jiný FKSP poukazem.
+S manželkou máme na statku ve Lništi u Trhových Svinů [**Vejminek Malý Statek**](https://www.malystatek.cz/) — starou kamennou chalupu, kterou jsme zrekonstruovali a dnes ji pronajímáme (čtyři lůžka, psi vítáni). Hosté si u nás rezervují pobyt přes náš vlastní web, Booking, Airbnb i české eChalupy a CS chalupy, někdo platí hotově či převodem, jiný FKSP poukazem.
 
 A v tom je ten háček: každý kanál si žije po svém. Přišla rezervace — a začal kolotoč. Opsat hosta z Bookingu do evidence, tytéž údaje pak ještě jednou do faktury, dopočítat kurz, nezapomenout na zálohu, na DPH z provize, na hlášení cizinců. Pak totéž z Airbnb, z webu, z eChalup. Pořád dokola a s nepříjemným pocitem, že se na něco zase zapomnělo.
 
@@ -22,9 +22,13 @@ Tak jsem si řekl, že to musí jít líp, a o víkendech se do toho pustil ([Vo
 - **Přehled příjmů a výdajů** — zisk na každou rezervaci (po odečtu elektřiny, úklidu, poplatků, provizí a DPH) na jednom dashboardu místo roztroušených tabulek.
 - **Online check‑in i pro cizince** — čeští hosté projdou bez vyplňování, u cizinců systém sebere doklady pro povinné hlášení (Ubyport) včetně naskenování pasu kamerou. Firemní údaje načte z IČO.
 
-| DPH z OTA provizí | Příjmy a výdaje |
+| DPH z OTA provizí | Online check‑in pro cizince |
 |---|---|
-| ![Měsíční přehled DPH reverse charge z provizí Booking/Airbnb pro identifikovanou osobu — základ, daň a stav podání](docs/screenshot-dph.png) | ![Ekonomika roku — zisk na každou rezervaci po odečtu nákladů a souhrn podle kanálu](docs/screenshot-ekonomika.png) |
+| ![Měsíční přehled DPH reverse charge z provizí Booking/Airbnb pro identifikovanou osobu — základ, daň a stav podání](docs/screenshot-dph.png) | ![Online check‑in — fakturační údaje, sběr dokladů jen u ubytovaných cizinců pro hlášení na Ubyport](docs/screenshot-checkin.png) |
+
+| Příjmy a výdaje | Faktura s QR platbou |
+|---|---|
+| ![Ekonomika roku — zisk na každou rezervaci po odečtu nákladů a souhrn podle kanálu](docs/screenshot-ekonomika.png) | ![Faktura v PDF — dodavatel a odběratel, QR Platba, variabilní symbol, odpočet zaplacené zálohy a celková částka k úhradě](docs/screenshot-faktura.png) |
 
 ## Pro koho je
 
