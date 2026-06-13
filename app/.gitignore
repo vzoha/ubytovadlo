@@ -18,3 +18,9 @@
 /.php-cs-fixer.php
 /.php-cs-fixer.cache
 ###< friendsofphp/php-cs-fixer ###
+
+###> ubytovadlo — logo instance ###
+# Logo na faktuře je per-instance (značka konkrétního ubytování), nepatří do veřejného repa.
+# Vlož vlastní /public/assets/logo.png — renderer ho použije, když soubor existuje (jinak fakturu bez loga).
+/public/assets/logo.png
+###< ubytovadlo — logo instance ###
