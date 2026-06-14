@@ -4,6 +4,23 @@ Všechny podstatné změny v tomto projektu se zaznamenávají sem.
 Formát vychází z [Keep a Changelog](https://keepachangelog.com/cs/1.1.0/),
 verzování dle [SemVer](https://semver.org/lang/cs/).
 
+## [Unreleased]
+
+### Přidáno
+
+- **Časová osa rezervace + CRM poznámky** — na detailu rezervace jeden chronologický
+  feed: systémové události (založení, faktura, check-in, výplata) + ruční typované
+  poznámky (poznámka/hovor/e-mail/zpráva/osobně) + naplánované akce (zpráva před
+  příjezdem/po pobytu, doplatková faktura, připomínka doplatku, Ubyport u cizinců)
+  s možností odložit/upravit/zrušit/spustit. Automatické akce zakládá idempotentní
+  plánovač (cron `app:actions:plan`), `app:actions:run` vyhodnocuje akce po termínu.
+- **Doplatek u ceny** — kolik hostovi zbývá doplatit (cena − zaplacené faktury).
+
+### Známá omezení
+
+- Odesílání zpráv hostům e-mailem zatím není v provozu — akce typu zpráva se jen
+  plánují a zobrazují (čeká na samostatnou funkci „Zprávy hostům").
+
 ## [0.1.0] — 2026-06-12
 
 První veřejné vydání. Ubytovadlo běží v reálném provozu; tohle je čistý

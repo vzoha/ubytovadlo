@@ -50,6 +50,18 @@ Cíl projektu: **rezervace v MotoPressu = jediný vstup**, vše ostatní (faktur
 
 **Jednorázové backfilly dat (CSV importy, ruční SQL na historických rezervacích, …) NEcommituj.** Provedou se jednou lokálně proti dev DB a na produkci se přenesou jako součást kompletního `mysqldump` při deployi. Audit-trail těchto skriptů můžeš nechat v `sources/` (gitignored), ale logika do `src/` ani migrace nepatří — backfill není schema change, je to obsah.
 
+## Proces vývoje nových funkcí
+
+Repo je **veřejné OSS** (FSL). Každá funkce projde tímhle, ať se nic nerozbije a neunikne tajemství:
+
+**1. Vývoj.** Kód v `app/`, schéma jen přes Doctrine migrace. Před commitem zelené: `vendor/bin/php-cs-fixer fix`, `vendor/bin/phpstan analyse` (L6), `vendor/bin/phpunit`. CI (`.github/workflows/ci.yml`) tohle zrcadlí — co projde lokálně, projde i tam.
+
+**2. Public vs. private — co NEcommitovat.** Tajemství (hesla, klíče, IMAP/MotoPress creds) **jen v `app/.env.local`** (gitignored), nikdy do kódu ani `.env`. Mimo repo (gitignored) patří: `/sources/` (vzorky e-mailů, CSV, backfilly), `/docs/private/` (interní runbooky, plány), `/CLAUDE.local.md` (identita instance), `public/assets/logo.png` (značka instance), `config/secrets/prod`, `/www/`. Per-instance věci řeš přes env/soubor s graceful fallbackem, ne natvrdo. Žádné reálné PII v kódu, testech ani fixtures (demo jména neutrální). Před commitem `git status` přečíst — vědět, co přidávám.
+
+**3. Release.** SemVer, anotované tagy `vX.Y.Z`. Do `CHANGELOG.md` přidat sekci verze (formát Keep a Changelog, česky: Přidáno/Změněno/Opraveno + odkaz na GitHub release). Tag + push + GitHub release. Drobné funkce se můžou kupit do příští verze — netagovat každý commit.
+
+**4. Deploy na produkci** (sdílený hosting, runbook `docs/deploy.md`): `git pull` → `composer install --no-dev --optimize-autoloader` → `composer deploy-www` → `bin/console doctrine:migrations:migrate --env=prod`. Nová funkce s cronem → doplnit cron úlohu (deploy.md §7). Po deployi smoke checklist (deploy.md §8). Konkrétní instance (doména, hosting, účet, creds) → `CLAUDE.local.md` + `docs/private/`.
+
 ## Architektura
 
 ```
