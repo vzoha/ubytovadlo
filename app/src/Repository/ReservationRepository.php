@@ -188,6 +188,28 @@ class ReservationRepository extends ServiceEntityRepository
     }
 
     /**
+     * Rezervace vhodné k naplánování akcí na časovou osu: doplněné (ne needs_details),
+     * nezrušené/nedokončené, jejichž pobyt ještě neskončil. Vstup pro app:actions:plan.
+     *
+     * @return Reservation[]
+     */
+    public function findForActionPlanning(\DateTimeImmutable $notEndedBefore): array
+    {
+        return $this->createQueryBuilder('r')
+            ->andWhere('COALESCE(r.checkOut, r.checkIn) >= :today')
+            ->andWhere('r.status NOT IN (:skip)')
+            ->setParameter('today', $notEndedBefore)
+            ->setParameter('skip', [
+                ReservationStatus::CANCELLED,
+                ReservationStatus::COMPLETED,
+                ReservationStatus::NEEDS_DETAILS,
+            ])
+            ->orderBy('r.checkIn', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
      * Rezervace pro roční ekonomický přehled — podle roku příjezdu, bez zrušených
      * a bez nedoplněných (needs_details nemá cenu ani hosta, řádek by byl prázdný).
      *

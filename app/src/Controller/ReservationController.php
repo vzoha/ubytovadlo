@@ -13,11 +13,18 @@ namespace App\Controller;
 
 use App\Booking\BookingExtranetParser;
 use App\Entity\Reservation;
+use App\Entity\ReservationAction;
+use App\Entity\ReservationNote;
+use App\Entity\User;
+use App\Enum\ActionOrigin;
+use App\Enum\ActionType;
 use App\Enum\BillingMode;
 use App\Enum\Channel;
 use App\Enum\CleaningType;
+use App\Enum\NoteType;
 use App\Enum\ReservationStatus;
 use App\Form\ReservationDetailsType;
+use App\Invoice\BalanceCalculator;
 use App\Profit\ReservationProfitCalculator;
 use App\Repository\CleaningRepository;
 use App\Repository\GuestDocumentRepository;
@@ -25,6 +32,8 @@ use App\Repository\InvoiceRepository;
 use App\Repository\ReservationRepository;
 use App\Service\Cleaning\CleaningPriceList;
 use App\Service\Electricity\ElectricityCostCalculator;
+use App\Timeline\ReservationActionPlanner;
+use App\Timeline\ReservationTimelineBuilder;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -42,6 +51,9 @@ class ReservationController extends AbstractController
         private readonly CleaningPriceList $cleaningPriceList,
         private readonly GuestDocumentRepository $guestDocuments,
         private readonly ReservationProfitCalculator $profitCalculator,
+        private readonly ReservationTimelineBuilder $timelineBuilder,
+        private readonly ReservationActionPlanner $actionPlanner,
+        private readonly BalanceCalculator $balanceCalculator,
     ) {
     }
 
@@ -86,6 +98,9 @@ class ReservationController extends AbstractController
             'cleaning_defaults' => $cleaningDefaults,
             'guest_documents' => $this->guestDocuments->findByReservation($reservation),
             'profit' => $this->profitCalculator->calculate($reservation),
+            'timeline' => $this->timelineBuilder->build($reservation),
+            'balance' => $this->balanceCalculator->forReservation($reservation),
+            'note_types' => NoteType::cases(),
         ]);
     }
 
@@ -145,6 +160,8 @@ class ReservationController extends AbstractController
             // Po manuální editaci dospělí/děti chráníme rozdělení před přepisem z MotoPress
             // (MotoPress posílá všechny jako dospělé, ruční split se ztratí při dalším syncu).
             $reservation->setGuestsSplitManually(true);
+            // Doplň automatické akce na časovou osu (idempotentní).
+            $this->actionPlanner->planFor($reservation);
             $this->em->flush();
             $this->addFlash('success', 'Údaje rezervace uloženy.');
 
@@ -209,5 +226,131 @@ class ReservationController extends AbstractController
         $this->addFlash('success', 'Check-in znovu otevřen — host může doplnit údaje.');
 
         return $this->redirectToRoute('reservation_detail', ['id' => $reservation->getId()]);
+    }
+
+    #[Route('/reservation/{id}/note', name: 'reservation_add_note', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function addNote(Reservation $reservation, Request $request): Response
+    {
+        if (!$this->isCsrfTokenValid('note-' . $reservation->getId(), (string) $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+
+        $body = trim((string) $request->request->get('body', ''));
+        if ($body === '') {
+            $this->addFlash('warning', 'Poznámka je prázdná.');
+
+            return $this->redirectToRoute('reservation_detail', ['id' => $reservation->getId()]);
+        }
+
+        $type = NoteType::tryFrom((string) $request->request->get('type', '')) ?? NoteType::POZNAMKA;
+        $note = new ReservationNote($reservation, $type, $body);
+
+        $occurredRaw = trim((string) $request->request->get('occurred_at', ''));
+        if ($occurredRaw !== '') {
+            try {
+                $note->setOccurredAt(new \DateTimeImmutable($occurredRaw));
+            } catch (\Throwable) {
+                $this->addFlash('warning', 'Neplatné datum — použit aktuální čas.');
+            }
+        }
+
+        $user = $this->getUser();
+        if ($user instanceof User) {
+            $note->setAuthor($user);
+        }
+
+        $this->em->persist($note);
+        $this->em->flush();
+        $this->addFlash('success', 'Poznámka přidána.');
+
+        return $this->redirectToRoute('reservation_detail', ['id' => $reservation->getId()]);
+    }
+
+    #[Route('/reservation/{id}/action', name: 'reservation_add_action', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function addAction(Reservation $reservation, Request $request): Response
+    {
+        if (!$this->isCsrfTokenValid('action-' . $reservation->getId(), (string) $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+
+        // Ručně lze přidat jen připomínku nebo ad-hoc zprávu hostovi.
+        $type = ActionType::tryFrom((string) $request->request->get('type', '')) ?? ActionType::CUSTOM_REMINDER;
+        if (!in_array($type, [ActionType::CUSTOM_REMINDER, ActionType::CUSTOM_MESSAGE], true)) {
+            $type = ActionType::CUSTOM_REMINDER;
+        }
+
+        $text = trim((string) $request->request->get('text', ''));
+        if ($text === '') {
+            $this->addFlash('warning', 'Vyplň text připomínky.');
+
+            return $this->redirectToRoute('reservation_detail', ['id' => $reservation->getId()]);
+        }
+
+        $whenRaw = trim((string) $request->request->get('scheduled_for', ''));
+        try {
+            $when = $whenRaw !== '' ? new \DateTimeImmutable($whenRaw) : new \DateTimeImmutable();
+        } catch (\Throwable) {
+            $this->addFlash('warning', 'Neplatné datum termínu.');
+
+            return $this->redirectToRoute('reservation_detail', ['id' => $reservation->getId()]);
+        }
+
+        $action = new ReservationAction($reservation, $type, $when, ActionOrigin::MANUAL);
+        $action->setPayload(['text' => $text]);
+        $this->em->persist($action);
+        $this->em->flush();
+        $this->addFlash('success', 'Akce naplánována.');
+
+        return $this->redirectToRoute('reservation_detail', ['id' => $reservation->getId()]);
+    }
+
+    #[Route('/reservation/action/{id}/reschedule', name: 'reservation_action_reschedule', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function rescheduleAction(ReservationAction $action, Request $request): Response
+    {
+        if (!$this->isCsrfTokenValid('action-edit-' . $action->getId(), (string) $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+
+        $whenRaw = trim((string) $request->request->get('scheduled_for', ''));
+        try {
+            $action->reschedule(new \DateTimeImmutable($whenRaw));
+        } catch (\Throwable) {
+            $this->addFlash('warning', 'Neplatné datum.');
+
+            return $this->redirectToRoute('reservation_detail', ['id' => $action->getReservation()->getId()]);
+        }
+
+        $this->em->flush();
+        $this->addFlash('success', 'Akce odložena.');
+
+        return $this->redirectToRoute('reservation_detail', ['id' => $action->getReservation()->getId()]);
+    }
+
+    #[Route('/reservation/action/{id}/cancel', name: 'reservation_action_cancel', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function cancelAction(ReservationAction $action, Request $request): Response
+    {
+        if (!$this->isCsrfTokenValid('action-edit-' . $action->getId(), (string) $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+
+        $action->cancel();
+        $this->em->flush();
+        $this->addFlash('success', 'Akce zrušena.');
+
+        return $this->redirectToRoute('reservation_detail', ['id' => $action->getReservation()->getId()]);
+    }
+
+    #[Route('/reservation/action/{id}/done', name: 'reservation_action_done', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function markActionDone(ReservationAction $action, Request $request): Response
+    {
+        if (!$this->isCsrfTokenValid('action-edit-' . $action->getId(), (string) $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+
+        $action->markDone('Vyřízeno ručně.');
+        $this->em->flush();
+        $this->addFlash('success', 'Akce označena jako hotová.');
+
+        return $this->redirectToRoute('reservation_detail', ['id' => $action->getReservation()->getId()]);
     }
 }

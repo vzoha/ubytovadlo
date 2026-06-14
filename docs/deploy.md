@@ -204,16 +204,21 @@ argumentů** (`crontab` v lshell není). Proto jsou v repu wrappery
 `app/cron/{imap-poll,motopress-sync}.php` (volají `_kernel.php`, který bootne
 kernel z `.env` a spustí console command).
 
-V panelu **Cron úlohy** založ dvě úlohy:
+V panelu **Cron úlohy** založ čtyři úlohy:
 
-| pole | imap | motopress |
-|---|---|---|
-| Soubor | `/src/app/cron/imap-poll.php` | `/src/app/cron/motopress-sync.php` |
-| Time / Memory limit | 300 s / 256 MB | 300 s / 256 MB |
-| Minuta | každých 15 min | každých 15 min |
-| Hodina/Den/Měsíc/Den v týdnu | Každý | Každý |
+| pole | imap | motopress | actions-plan | actions-run |
+|---|---|---|---|---|
+| Soubor | `/src/app/cron/imap-poll.php` | `/src/app/cron/motopress-sync.php` | `/src/app/cron/actions-plan.php` | `/src/app/cron/actions-run.php` |
+| Time / Memory limit | 300 s / 256 MB | 300 s / 256 MB | 300 s / 256 MB | 300 s / 256 MB |
+| Minuta | každých 15 min | každých 15 min | každých 15 min | každých 15 min |
+| Hodina/Den/Měsíc/Den v týdnu | Každý | Každý | Každý | Každý |
 
 (Cesta je relativní z úrovně `www`, proto `/src/app/...`.)
+
+`actions-plan` doplní automatické akce na časovou osu (pre-arrival/post-stay zprávy,
+doplatek, Ubyport u cizinců) i u rezervací potvrzených přes MotoPress sync;
+`actions-run` vyhodnotí akce, kterým nadešel čas (v MVP self-resolving připomínky —
+odeslání zpráv hostům čeká na roadmap bod „Zprávy hostům").
 
 **Ověření běhu:** hukot píše výstup do `~/_log/cron/<soubor>.php.log`:
 

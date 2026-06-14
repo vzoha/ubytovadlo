@@ -267,6 +267,20 @@
                             {% if reservation.priceTotal %}{{ reservation.priceTotal|number_format(2, ',', ' ') }} {{ reservation.priceCurrency }}{% else %}—{% endif %}
                         </dd>
 
+                        {% if balance %}
+                            <dt class="col-sm-6 text-muted">Zaplaceno</dt>
+                            <dd class="col-sm-6 text-end text-muted">{{ balance.paid|number_format(0, ',', ' ') }} Kč</dd>
+
+                            <dt class="col-sm-6 fw-bold">Zbývá doplatit</dt>
+                            <dd class="col-sm-6 text-end fw-bold {{ balance.settled ? 'text-success' : 'text-danger' }}">
+                                {% if balance.settled %}
+                                    0 Kč <span class="badge text-bg-success">uhrazeno</span>
+                                {% else %}
+                                    {{ balance.remaining|number_format(0, ',', ' ') }} Kč
+                                {% endif %}
+                            </dd>
+                        {% endif %}
+
                         <dt class="col-sm-6">Provize OTA</dt>
                         <dd class="col-sm-6 text-end">
                             {% if reservation.commissionAmount %}{{ reservation.commissionAmount|number_format(2, ',', ' ') }} {{ reservation.commissionCurrency }}{% else %}—{% endif %}
@@ -360,6 +374,8 @@
             {% endif %}
         </div>
     </div>
+
+    {{ include('reservation/_timeline.html.twig') }}
 
     {% set invoices = invoices ?? [] %}
     {% set has_deposit = false %}
