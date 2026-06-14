@@ -22,7 +22,7 @@ class InvoicePdfRenderer
 {
     public function __construct(
         private readonly Environment $twig,
-        private readonly IssuerProfile $issuer,
+        private readonly IssuerProfileProvider $issuerProvider,
         private readonly string $projectDir,
         private readonly PdfStorage $pdfStorage,
     ) {
@@ -34,10 +34,11 @@ class InvoicePdfRenderer
      */
     public function renderToFile(Invoice $invoice): string
     {
+        $issuer = $this->issuerProvider->current();
         $logoPath = $this->projectDir . '/public/assets/logo.png';
         $html = $this->twig->render('invoice/pdf.html.twig', [
             'invoice' => $invoice,
-            'issuer' => $this->issuer,
+            'issuer' => $issuer,
             'logoPath' => is_file($logoPath) ? $logoPath : null,
         ]);
 
@@ -59,7 +60,7 @@ class InvoicePdfRenderer
             'tempDir' => $this->projectDir . '/var/mpdf',
         ]);
         $mpdf->SetTitle('Faktura ' . $invoice->getNumber());
-        $mpdf->SetAuthor($this->issuer->name);
+        $mpdf->SetAuthor($issuer->name);
         $mpdf->SetHTMLHeader('');
         $mpdf->SetHTMLFooter('');
 

@@ -39,7 +39,7 @@ services:
         arguments:
             $seriesStarts: '%env(json:INVOICE_SERIES_STARTS)%'
 
-    App\Invoice\IssuerProfile:
+    App\Invoice\IssuerProfileProvider:
         arguments:
             $name: '%env(INVOICE_ISSUER_NAME)%'
             $street: '%env(INVOICE_ISSUER_STREET)%'

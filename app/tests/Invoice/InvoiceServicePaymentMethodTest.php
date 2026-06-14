@@ -19,9 +19,10 @@ use App\Invoice\InvoiceNumber;
 use App\Invoice\InvoiceNumberAllocator;
 use App\Invoice\InvoicePdfRenderer;
 use App\Invoice\InvoiceService;
-use App\Invoice\IssuerProfile;
+use App\Invoice\IssuerProfileProvider;
 use App\Invoice\SpaydGenerator;
 use App\Repository\InvoiceRepository;
+use App\Repository\SettingRepository;
 use App\Vat\CnbExchangeRateClient;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
@@ -47,7 +48,10 @@ final class InvoiceServicePaymentMethodTest extends TestCase
         $spayd = $this->createMock(SpaydGenerator::class);
         $spayd->method('generate')->willReturn('SPD*1.0*ACC:CZ00*AM:100.00*CC:CZK');
 
-        $issuer = new IssuerProfile(
+        $settings = $this->createMock(SettingRepository::class);
+        $settings->method('getString')->willReturn(null);
+        $issuerProvider = new IssuerProfileProvider(
+            $settings,
             'Dodavatel',
             'Ulice 1',
             'Praha',
@@ -69,7 +73,7 @@ final class InvoiceServicePaymentMethodTest extends TestCase
             $pdfRenderer,
             $spayd,
             $this->createMock(CnbExchangeRateClient::class),
-            $issuer,
+            $issuerProvider,
             '1000.00',
         );
     }

@@ -2,7 +2,7 @@ twig:
     file_name_pattern: '*.twig'
     form_themes: ['bootstrap_5_layout.html.twig']
     globals:
-        issuer: '@App\Invoice\IssuerProfile'
+        issuer: '@App\Invoice\IssuerProfileProvider'
         brand_name: '%env(APP_BRAND_NAME)%'
         product_name: 'Ubytovadlo'
         product_url: 'https://ubytovadlo.cz'

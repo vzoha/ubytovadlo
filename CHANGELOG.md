@@ -4,6 +4,16 @@ Všechny podstatné změny v tomto projektu se zaznamenávají sem.
 Formát vychází z [Keep a Changelog](https://keepachangelog.com/cs/1.1.0/),
 verzování dle [SemVer](https://semver.org/lang/cs/).
 
+## [Unreleased]
+
+### Přidáno
+
+- **Dodavatel na faktuře v nastavení aplikace** — fakturační identita (jméno,
+  adresa, IČO/DIČ, kontakt, číslo účtu, IBAN) se nastavuje v UI
+  `/nastaveni/dodavatel` a ukládá do DB (tabulka `setting`) místo editace `.env`.
+  Každá instance si dodavatele nastaví sama. `IssuerProfileProvider` s fallbackem
+  na `.env` (`INVOICE_ISSUER_*`) pro nenakonfigurované instance / vývoj.
+
 ## [0.2.1] — 2026-06-14
 
 ### Změněno

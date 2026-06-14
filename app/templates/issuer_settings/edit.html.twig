@@ -1,0 +1,72 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nastavení — dodavatel{% endblock %}
+
+{% block body %}
+    <h1 class="h3 mb-3">Nastavení</h1>
+
+    <ul class="nav nav-pills mb-4">
+        <li class="nav-item">
+            <a class="nav-link" href="{{ path('accommodation_profile_edit') }}">Ubytovací zařízení</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{{ path('cleaning_settings_edit') }}">Úklid</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link active" href="{{ path('issuer_settings_edit') }}">Dodavatel</a>
+        </li>
+    </ul>
+
+    <h2 class="h5 mb-2">Dodavatel na faktuře</h2>
+    <p class="text-muted small">
+        Tahle fakturační identita se tiskne jako dodavatel na všechny faktury (a plní
+        QR Platbu). Uloženo v databázi — žádná editace <code>.env</code>. Po změně se
+        nové faktury vystaví správně; u už vystavených přegeneruj PDF.
+    </p>
+
+    <div class="col-lg-8">
+        {{ form_start(form) }}
+            <div class="card mb-3">
+                <div class="card-header py-2 fw-semibold">Identita</div>
+                <div class="card-body">
+                    <div class="mb-3">{{ form_row(form.name) }}</div>
+                    <div class="mb-3">{{ form_row(form.street) }}</div>
+                    <div class="row g-3">
+                        <div class="col-md-4">{{ form_row(form.zip) }}</div>
+                        <div class="col-md-5">{{ form_row(form.city) }}</div>
+                        <div class="col-md-3">{{ form_row(form.country) }}</div>
+                    </div>
+                    <div class="row g-3 mt-0">
+                        <div class="col-md-6">{{ form_row(form.ico) }}</div>
+                        <div class="col-md-6">{{ form_row(form.dic) }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-header py-2 fw-semibold">Kontakt</div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">{{ form_row(form.phone) }}</div>
+                        <div class="col-md-4">{{ form_row(form.email) }}</div>
+                        <div class="col-md-4">{{ form_row(form.web) }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-header py-2 fw-semibold">Bankovní spojení</div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">{{ form_row(form.bankAccount) }}</div>
+                        <div class="col-md-6">{{ form_row(form.bankAccountIban) }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-end">
+                <button type="submit" class="btn btn-primary">Uložit</button>
+            </div>
+        {{ form_end(form) }}
+    </div>
+{% endblock %}

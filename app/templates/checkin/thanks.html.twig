@@ -6,7 +6,7 @@
             <div class="display-1 mb-3">🙏</div>
             <h1 class="h3 mb-2">Děkujeme!</h1>
             <p class="lead">Údaje jsme přijali. Těšíme se na vás {{ reservation.checkIn|date('d. m. Y') }}.</p>
-            {% set contact = issuer.web|default('')|replace({'https://': '', 'http://': ''})|trim('/') %}
+            {% set contact = issuer.current.web|default('')|replace({'https://': '', 'http://': ''})|trim('/') %}
             <p class="text-muted small">
                 Pokud potřebujete cokoliv upravit, kontaktujte nás{% if contact %} přímo na <strong>{{ contact }}</strong>{% endif %}.
             </p>

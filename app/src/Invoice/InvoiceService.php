@@ -44,7 +44,7 @@ class InvoiceService
         private readonly InvoicePdfRenderer $pdfRenderer,
         private readonly SpaydGenerator $spayd,
         private readonly CnbExchangeRateClient $cnb,
-        private readonly IssuerProfile $issuer,
+        private readonly IssuerProfileProvider $issuerProvider,
         private readonly string $invoiceDepositAmount,
     ) {
     }
@@ -213,14 +213,14 @@ class InvoiceService
     private function fillBankPayment(Invoice $invoice): void
     {
         $invoice->setPaymentMethod(self::PAYMENT_BANK);
-        $invoice->setBankAccount($this->issuer->bankAccount);
+        $invoice->setBankAccount($this->issuerProvider->current()->bankAccount);
         $this->refreshBankQr($invoice);
     }
 
     public function refreshBankQr(Invoice $invoice): void
     {
         $invoice->setQrPayload($this->spayd->generate(
-            $this->issuer->bankAccountIban,
+            $this->issuerProvider->current()->bankAccountIban,
             $invoice->getTotalAmount(),
             $invoice->getCurrency(),
             $invoice->getVariableSymbol(),
