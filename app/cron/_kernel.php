@@ -24,6 +24,8 @@ use Symfony\Component\Console\Output\StreamOutput;
 use Symfony\Component\Dotenv\Dotenv;
 
 $root = dirname(__DIR__);
+$projectDir = $root;
+require $root . '/config/tmpdir.php';
 require_once $root . '/vendor/autoload.php';
 (new Dotenv())->bootEnv($root . '/.env');
 

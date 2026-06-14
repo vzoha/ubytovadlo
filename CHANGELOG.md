@@ -11,7 +11,8 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 - **Deploy na sdílený hosting s nezapisovatelným `/tmp`** — `config/tmpdir.php`
   přesměruje `TMPDIR` na projektový `var/tmp`, když je systémový temp mimo
   open_basedir. Bez toho padal `cache:clear` (Symfony XliffUtils → `tempnam()`)
-  na PHP 8.5. Aktivuje se jen na postižených hostech, jinde no-op.
+  na PHP 8.5. Zapojeno do všech vstupních bodů (CLI, web, shim, cron bootstrap).
+  Aktivuje se jen na postižených hostech, jinde no-op.
 
 ## [0.2.0] — 2026-06-14
 
