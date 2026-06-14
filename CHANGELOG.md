@@ -4,6 +4,15 @@ Všechny podstatné změny v tomto projektu se zaznamenávají sem.
 Formát vychází z [Keep a Changelog](https://keepachangelog.com/cs/1.1.0/),
 verzování dle [SemVer](https://semver.org/lang/cs/).
 
+## [Unreleased]
+
+### Přidáno
+
+- **Ochrana importovaných faktur před regenerací** — `Invoice.pdfSource`
+  (`generated` / `external`). `app:invoice:regenerate-pdf` přeskakuje externí
+  (importované / ručně nahrané) PDF, která aplikace neumí reprodukovat; `--force`
+  vynutí přepis. Které faktury jsou externí = data instance (backfill), ne kód.
+
 ## [0.3.0] — 2026-06-14
 
 ### Přidáno

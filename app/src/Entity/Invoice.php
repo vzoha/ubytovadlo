@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use App\Enum\InvoiceType;
+use App\Enum\PdfSource;
 use App\Repository\InvoiceRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -120,6 +121,10 @@ class Invoice
     /** Cesta k uloženému PDF na disku (var/invoices/RRRR/RRRR###.pdf). */
     #[ORM\Column(length: 512, nullable: true)]
     private ?string $pdfPath = null;
+
+    /** Původ PDF — EXTERNAL (importované) se nepřegenerovává. */
+    #[ORM\Column(length: 16, enumType: PdfSource::class, options: ['default' => 'generated'])]
+    private PdfSource $pdfSource = PdfSource::GENERATED;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $notes = null;
@@ -465,6 +470,23 @@ class Invoice
         $this->pdfPath = $path;
 
         return $this;
+    }
+
+    public function getPdfSource(): PdfSource
+    {
+        return $this->pdfSource;
+    }
+
+    public function setPdfSource(PdfSource $pdfSource): self
+    {
+        $this->pdfSource = $pdfSource;
+
+        return $this;
+    }
+
+    public function isExternalPdf(): bool
+    {
+        return $this->pdfSource === PdfSource::EXTERNAL;
     }
 
     public function getNotes(): ?string

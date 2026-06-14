@@ -13,6 +13,8 @@ namespace App\Tests\Command;
 
 use App\Entity\AccommodationProfile;
 use App\Entity\GuestDocument;
+use App\Entity\Invoice;
+use App\Entity\InvoiceLine;
 use App\Entity\Reservation;
 use App\Enum\Channel;
 use App\Repository\GuestDocumentRepository;
@@ -34,6 +36,8 @@ final class UbyportExportCommandTest extends KernelTestCase
         $this->em = $container->get(EntityManagerInterface::class);
 
         $this->em->createQuery('DELETE FROM ' . GuestDocument::class . ' g')->execute();
+        $this->em->createQuery('DELETE FROM ' . InvoiceLine::class . ' l')->execute();
+        $this->em->createQuery('DELETE FROM ' . Invoice::class . ' i')->execute();
         $this->em->createQuery('DELETE FROM ' . Reservation::class . ' r')->execute();
         $this->em->createQuery('DELETE FROM ' . AccommodationProfile::class . ' p')->execute();
         $this->em->flush();

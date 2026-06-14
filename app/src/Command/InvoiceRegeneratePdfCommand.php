@@ -18,6 +18,7 @@ use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 #[AsCommand(name: 'app:invoice:regenerate-pdf', description: 'Přegeneruje PDF pro existující fakturu (nebo všechny pokud bez argumentu).')]
@@ -34,19 +35,32 @@ class InvoiceRegeneratePdfCommand extends Command
     protected function configure(): void
     {
         $this->addArgument('id', InputArgument::OPTIONAL, 'ID konkrétní faktury; prázdné = vše.');
+        $this->addOption('force', null, InputOption::VALUE_NONE, 'Přegeneruj i externí (importované) PDF — přepíše původní soubor.');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $id = $input->getArgument('id');
+        $force = (bool) $input->getOption('force');
         $invoices = $id !== null ? array_filter([$this->invoices->find((int) $id)]) : $this->invoices->findAll();
 
+        $regenerated = $skipped = 0;
         foreach ($invoices as $invoice) {
+            // Externí/importovaná PDF appka neumí reprodukovat — bez --force je nepřepisuj.
+            if ($invoice->isExternalPdf() && !$force) {
+                $output->writeln(sprintf('<comment>%s přeskočeno (externí PDF — nepřegenerovává se; --force pro vynucení)</comment>', $invoice->getNumber()));
+                $skipped++;
+                continue;
+            }
+
             $path = $this->renderer->renderToFile($invoice);
             $invoice->setPdfPath($path);
             $output->writeln(sprintf('%s → %s', $invoice->getNumber(), $path));
+            $regenerated++;
         }
         $this->em->flush();
+
+        $output->writeln(sprintf('Hotovo. přegenerováno=%d, přeskočeno=%d', $regenerated, $skipped));
 
         return Command::SUCCESS;
     }
