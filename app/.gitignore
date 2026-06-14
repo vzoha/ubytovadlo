@@ -1,3 +1,6 @@
+# Tajemství instance (hesla, IMAP/MotoPress creds, klíče) žijí JEN v .env.local —
+# nikdy do .env, kódu ani docs. .env drží jen neutrální defaulty pro vývoj.
+# Per-instance (ne tajné) hodnoty řeš env proměnnou s fallbackem, ne natvrdo.
 
 ###> symfony/framework-bundle ###
 /.env.local

@@ -1,12 +1,17 @@
+# Repo je veřejné OSS — tady je hranice public/private. Pravidlo „kam co" viz
+# CLAUDE.md → „Proces vývoje nových funkcí", krok 2. Tajemství (hesla, klíče)
+# NEpatří ani sem — ta žijí jen v app/.env.local (viz app/.gitignore).
+
 # WordPress instalace — udržovaná zvlášť, není součástí tohoto repa
 /www/
 
-# Interní podklady (vzorky e-mailů, CSV evidence, atd.)
+# Vzorky dat a backfilly (e-maily, CSV evidence, jednorázové SQL) — mohou
+# obsahovat reálná PII, do veřejného repa nepatří
 /sources/
 
-# Privátní overlay a interní dokumentace — nepatří do veřejného repa
-/CLAUDE.local.md
-/docs/private/
+# Privátní overlay a interní dokumentace — identita instance, runbooky, plány
+/CLAUDE.local.md          # kdo/co je tahle instance (doména, schránka, účty)
+/docs/private/            # interní runbooky a plány funkcí
 
 # Editor / OS junk
 .idea/
