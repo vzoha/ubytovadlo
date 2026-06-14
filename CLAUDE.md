@@ -54,7 +54,16 @@ Cíl projektu: **rezervace v MotoPressu = jediný vstup**, vše ostatní (faktur
 
 Repo je **veřejné OSS** (FSL). Každá funkce projde tímhle, ať se nic nerozbije a neunikne tajemství:
 
-**1. Vývoj.** Kód v `app/`, schéma jen přes Doctrine migrace. Před commitem zelené: `vendor/bin/php-cs-fixer fix`, `vendor/bin/phpstan analyse` (L6), `vendor/bin/phpunit`. CI (`.github/workflows/ci.yml`) tohle zrcadlí — co projde lokálně, projde i tam.
+**1. Vývoj — definition of done.** Kód v `app/`, schéma jen přes Doctrine migrace. U každé funkce:
+
+- **rozumné testy** — unit i funkční, ne jen happy path (hraniční stavy, idempotence, prázdné vstupy)
+- **demo fixtures** aktualizovat (`app:dev:import-fixtures` / seed), ať demo i screenshoty ukazují novou funkci na **neutrálních datech** (žádné reálné PII)
+- **revize kódu** přes `/code-review` — SOLID, clean code, DRY (žádná duplikace logiky, krátké metody, jasné názvy, jednotný styl s okolím)
+- **jen public do repa** (viz krok 2)
+- **mechanické kontroly zelené:** `docker compose exec app composer check` (= `cs:check` + PHPStan L6 + PHPUnit). CI (`.github/workflows/ci.yml`) to zrcadlí — co projde lokálně, projde i tam
+- záznam do `CHANGELOG.md` (sekce `[Unreleased]`)
+
+**Git hooky** (jednorázově po clonu): `git config core.hooksPath .githooks`. pre-commit hlídá únik privátních souborů/tajemství + style, pre-push pustí PHPStan + testy. Obejití `git commit/push --no-verify`.
 
 **2. Public vs. private — co NEcommitovat.** Tajemství (hesla, klíče, IMAP/MotoPress creds) **jen v `app/.env.local`** (gitignored), nikdy do kódu ani `.env`. Mimo repo (gitignored) patří: `/sources/` (vzorky e-mailů, CSV, backfilly), `/docs/private/` (interní runbooky, plány), `/CLAUDE.local.md` (identita instance), `public/assets/logo.png` (značka instance), `config/secrets/prod`, `/www/`. Per-instance věci řeš přes env/soubor s graceful fallbackem, ne natvrdo. Žádné reálné PII v kódu, testech ani fixtures (demo jména neutrální). Před commitem `git status` přečíst — vědět, co přidávám.
 

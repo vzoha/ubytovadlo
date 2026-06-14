@@ -1,0 +1,28 @@
+#!/bin/sh
+#
+# Ubytovadlo — pre-commit. Rychlé kontroly. Přeskočení: git commit --no-verify
+# Zapnutí hooků: git config core.hooksPath .githooks
+
+set -e
+
+# 1) Guard: privátní / per-instance soubory nesmí do veřejného repa
+#    (ani přes `git add -f`). Pravidlo „kam co" viz CLAUDE.md → Proces vývoje.
+staged=$(git diff --cached --name-only)
+if printf '%s\n' "$staged" | grep -qE '(^|/)\.env\.local|(^|/)\.env\.[^/]*\.local$|(^|/)CLAUDE\.local\.md$|^docs/private/|^sources/|(^|/)app/public/assets/logo\.png$'; then
+    echo "✗ Pokus o commit privátního souboru — patří mimo repo (viz .gitignore / CLAUDE.md)."
+    exit 1
+fi
+
+# 2) Hrubý sken na tajemství ve stagovaném obsahu (heslo/klíč s delší hodnotou).
+#    Falešný poplach? Ověř a případně obejdi `git commit --no-verify`.
+if git diff --cached -U0 -- '*.php' '*.yaml' '*.yml' '*.env' '*.md' \
+    | grep -nEi '^\+.*(password|passwd|secret|api[_-]?key|consumer_secret|token)["'\'' ]*[:=]["'\'' ]*[A-Za-z0-9/_+.-]{12,}' \
+    | grep -vEi 'example|changeme|your[_-]|placeholder|<|%env'; then
+    echo "✗ Možné tajemství ve stagovaném obsahu (viz výše). Tajemství patří jen do app/.env.local."
+    exit 1
+fi
+
+# 3) Code style — jen pokud běží dev kontejner (jinak doběhne CI).
+if docker compose ps --services --filter status=running 2>/dev/null | grep -qx app; then
+    docker compose exec -T app composer cs:check
+fi

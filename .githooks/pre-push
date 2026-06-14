@@ -1,0 +1,15 @@
+#!/bin/sh
+#
+# Ubytovadlo — pre-push. Plná statická analýza + testy před odesláním do public repa.
+# Přeskočení: git push --no-verify. Zapnutí hooků: git config core.hooksPath .githooks
+
+set -e
+
+if ! docker compose ps --services --filter status=running 2>/dev/null | grep -qx app; then
+    echo "⚠ Dev kontejner neběží (docker compose up -d) — přeskakuji phpstan/phpunit."
+    echo "  CI je doběhne, ale doporučeno pustit lokálně před pushem."
+    exit 0
+fi
+
+docker compose exec -T app composer stan
+docker compose exec -T app composer test

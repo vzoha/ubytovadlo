@@ -74,7 +74,23 @@
         "post-update-cmd": [
             "@auto-scripts"
         ],
-        "deploy-www": "@php deploy/shared-host/sync-www.php"
+        "deploy-www": "@php deploy/shared-host/sync-www.php",
+        "cs": "php-cs-fixer fix",
+        "cs:check": "php-cs-fixer fix --dry-run --diff",
+        "stan": "phpstan analyse --no-progress",
+        "test": "phpunit",
+        "check": [
+            "@cs:check",
+            "@stan",
+            "@test"
+        ]
+    },
+    "scripts-descriptions": {
+        "cs": "Srovná code style (php-cs-fixer fix)",
+        "cs:check": "Zkontroluje code style bez zápisu",
+        "stan": "Statická analýza (PHPStan)",
+        "test": "Spustí PHPUnit",
+        "check": "Vše mechanické před commitem/pushem: cs:check + stan + test"
     },
     "conflict": {
         "symfony/symfony": "*"
