@@ -62,9 +62,14 @@ final class ActionsRunCommandTest extends KernelTestCase
         self::assertNotNull($due->getExecutedAt());
     }
 
-    public function testGuestMessageActionStaysPlanned(): void
+    public function testGuestMessageInWindowStaysPlanned(): void
     {
-        $r = $this->reservation();
+        // Příjezd v budoucnu → pre-arrival zpráva je stále v okně → nechá se PLANNED
+        // (pošle se, až bude odesílač), i když je termín odeslání už po splatnosti.
+        $r = new Reservation(Channel::WEB, new \DateTimeImmutable('+5 days'));
+        $r->setCheckOut(new \DateTimeImmutable('+7 days'));
+        $r->setGuestName('Future Host');
+        $this->em->persist($r);
         $msg = new ReservationAction($r, ActionType::PRE_ARRIVAL_MESSAGE, new \DateTimeImmutable('-1 hour'));
         $this->em->persist($msg);
         $this->em->flush();
@@ -73,6 +78,21 @@ final class ActionsRunCommandTest extends KernelTestCase
 
         $this->em->refresh($msg);
         self::assertSame(ActionStatus::PLANNED, $msg->getStatus());
+    }
+
+    public function testStaleGuestMessageSkipped(): void
+    {
+        // Host už přijel → pre-arrival zpráva je po okně → SKIPPED (neposlat zpětně).
+        $r = $this->reservation();
+        $msg = new ReservationAction($r, ActionType::PRE_ARRIVAL_MESSAGE, new \DateTimeImmutable('-3 days'));
+        $this->em->persist($msg);
+        $this->em->flush();
+
+        $this->tester->execute([]);
+
+        $this->em->refresh($msg);
+        self::assertSame(ActionStatus::SKIPPED, $msg->getStatus());
+        self::assertNotNull($msg->getExecutedAt());
     }
 
     private function reservation(): Reservation

@@ -6,6 +6,13 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ## [Unreleased]
 
+### Změněno
+
+- **Okno platnosti zpráv hostům** — naplánovaná zpráva (pre-arrival/post-stay/
+  custom) se po vypršení okna označí `SKIPPED` místo věčného visení jako „po
+  termínu". Pre-arrival platí do příjezdu, post-stay do 3 dnů po odjezdu. Pojistka,
+  aby se po nasazení odesílání nikdy neodeslaly prošlé zprávy zpětně.
+
 ### Opraveno
 
 - **Deploy na sdílený hosting s nezapisovatelným `/tmp`** — `config/tmpdir.php`
