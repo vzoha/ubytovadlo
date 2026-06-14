@@ -34,7 +34,7 @@ jobs:
       DATABASE_URL: "mysql://app:app@127.0.0.1:3306/ubytovadlo?serverVersion=8.4&charset=utf8mb4"
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
