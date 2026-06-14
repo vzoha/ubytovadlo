@@ -4,6 +4,15 @@ Všechny podstatné změny v tomto projektu se zaznamenávají sem.
 Formát vychází z [Keep a Changelog](https://keepachangelog.com/cs/1.1.0/),
 verzování dle [SemVer](https://semver.org/lang/cs/).
 
+## [Unreleased]
+
+### Opraveno
+
+- **Deploy na sdílený hosting s nezapisovatelným `/tmp`** — `config/tmpdir.php`
+  přesměruje `TMPDIR` na projektový `var/tmp`, když je systémový temp mimo
+  open_basedir. Bez toho padal `cache:clear` (Symfony XliffUtils → `tempnam()`)
+  na PHP 8.5. Aktivuje se jen na postižených hostech, jinde no-op.
+
 ## [0.2.0] — 2026-06-14
 
 ### Přidáno

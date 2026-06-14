@@ -26,6 +26,9 @@ use App\Kernel;
 
 $appDir = getenv('DEPLOY_APP_DIR') ?: getenv('HUKOT_APP_DIR') ?: dirname(__DIR__) . '/src/app';
 
+$projectDir = $appDir;
+require $appDir . '/config/tmpdir.php';
+
 require_once $appDir . '/vendor/autoload_runtime.php';
 
 return static function (array $context) {

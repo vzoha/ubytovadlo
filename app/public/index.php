@@ -9,6 +9,9 @@
 
 use App\Kernel;
 
+$projectDir = dirname(__DIR__);
+require $projectDir . '/config/tmpdir.php';
+
 require_once dirname(__DIR__) . '/vendor/autoload_runtime.php';
 
 return static function (array $context) {
