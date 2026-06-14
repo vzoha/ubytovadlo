@@ -21,6 +21,13 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 - Odesílání zpráv hostům e-mailem zatím není v provozu — akce typu zpráva se jen
   plánují a zobrazují (čeká na samostatnou funkci „Zprávy hostům").
 
+## [0.1.1] — 2026-06-12
+
+### Zabezpečení
+
+- Aktualizace závislostí — oprava 33 security advisories (`composer update`),
+  sync `composer.lock` content-hashe s `composer.json`.
+
 ## [0.1.0] — 2026-06-12
 
 První veřejné vydání. Ubytovadlo běží v reálném provozu; tohle je čistý
@@ -54,4 +61,5 @@ iniciální snapshot vyčleněný z interního vývoje (bez přenosu git histori
 - iCal sanity sync (kontrola obsazenosti, detekce Airbnb storen) chybí.
 - Cílí zatím na jednu ubytovací jednotku (multi-unit je v plánu).
 
+[0.1.1]: https://github.com/vzoha/ubytovadlo/releases/tag/v0.1.1
 [0.1.0]: https://github.com/vzoha/ubytovadlo/releases/tag/v0.1.0
