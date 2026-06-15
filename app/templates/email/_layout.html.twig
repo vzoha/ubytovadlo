@@ -1,0 +1,69 @@
+{#
+    Master layout e-mailu hostovi. Table-based + inline styly kvůli kompatibilitě
+    s poštovními klienty. Logo/název je vycentrované ve velké bílé zóně nahoře
+    (logo tak sedí na bílém pozadí bez ohledu na barvu); barvu značky nese
+    plná barevná patička a akcent v odkazech/tlačítkách. body_html / footer_html
+    jsou už vyrenderovaný (a HTML-escapovaný) Markdown.
+#}
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light">
+    <title>{{ subject }}</title>
+    <style>
+        .email-body { font-size:15px; line-height:1.65; color:#27272a; }
+        .email-body p { margin:0 0 16px; }
+        .email-body > :first-child { margin-top:0; }
+        .email-body > :last-child { margin-bottom:0; }
+        .email-body ul, .email-body ol { margin:0 0 16px; padding-left:22px; }
+        .email-body li { margin:0 0 8px; }
+        .email-body a { color:{{ theme.accent }}; text-decoration:underline; }
+        .email-body h1, .email-body h2, .email-body h3 { margin:24px 0 12px; line-height:1.3; color:#18181b; font-weight:700; }
+        .email-body h1 { font-size:21px; }
+        .email-body h2 { font-size:18px; }
+        .email-body h3 { font-size:16px; }
+        .email-body blockquote { margin:0 0 16px; padding:2px 16px; border-left:3px solid {{ theme.accent }}; color:#52525b; }
+        .email-body hr { border:0; border-top:1px solid #e4e4e7; margin:24px 0; }
+        .email-body code { background:#f4f4f5; padding:1px 5px; border-radius:4px; font-size:13px; }
+        .email-footer { font-size:13px; line-height:1.6; color:rgba(255,255,255,0.82); }
+        .email-footer p { margin:0 0 6px; }
+        .email-footer p:last-child { margin-bottom:0; }
+        .email-footer a { color:#ffffff; text-decoration:underline; }
+    </style>
+</head>
+<body style="margin:0; padding:0; background-color:#eef0f3; -webkit-font-smoothing:antialiased;">
+    <div style="display:none; max-height:0; overflow:hidden; opacity:0;">{{ subject }}</div>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#eef0f3; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,Helvetica,sans-serif;">
+        <tr>
+            <td align="center" style="padding:32px 14px;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px; width:100%; background-color:#ffffff; border-radius:16px; overflow:hidden; box-shadow:0 1px 3px rgba(24,24,27,0.08), 0 10px 28px rgba(24,24,27,0.07);">
+                    <tr>
+                        <td align="center" style="padding:36px 32px 30px; border-bottom:1px solid #eef0f2;">
+                            {% if logo_src %}
+                                <img src="{{ logo_src }}" alt="{{ sender_name }}" width="92" style="width:92px; max-width:60%; height:auto; display:inline-block; border:0;">
+                            {% else %}
+                                <span style="color:{{ theme.primary }}; font-size:23px; font-weight:700; letter-spacing:0.2px;">{{ sender_name }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding:32px;">
+                            <div class="email-body">{{ body_html|raw }}</div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td align="center" style="background-color:{{ theme.primary }}; padding:26px 32px;">
+                            <div style="color:#ffffff; font-size:15px; font-weight:700; margin-bottom:{{ footer_html ? '8px' : '0' }};">{{ sender_name }}</div>
+                            {% if footer_html %}
+                                <div class="email-footer">{{ footer_html|raw }}</div>
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

@@ -1,0 +1,15 @@
+{# Sdílená sub-navigace nastavení. Parametr `active` = klíč aktivní záložky. #}
+{% set tabs = {
+    'accommodation': { label: 'Ubytovací zařízení', route: 'accommodation_profile_edit' },
+    'cleaning': { label: 'Úklid', route: 'cleaning_settings_edit' },
+    'issuer': { label: 'Dodavatel', route: 'issuer_settings_edit' },
+    'mail': { label: 'E-maily', route: 'mail_settings_edit' },
+    'messages': { label: 'Šablony zpráv', route: 'message_templates_index' },
+} %}
+<ul class="nav nav-pills mb-4">
+    {% for key, tab in tabs %}
+        <li class="nav-item">
+            <a class="nav-link {{ active == key ? 'active' : '' }}" href="{{ path(tab.route) }}">{{ tab.label }}</a>
+        </li>
+    {% endfor %}
+</ul>

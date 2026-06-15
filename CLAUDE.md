@@ -215,7 +215,7 @@ V `app/` běží Symfony 7.4 projekt s Doctrine + MySQL.
   - `VatPeriod` agregace + `filed_at` značka odeslání na FÚ
   - commandy `app:vat:recalculate`, `app:vat:reconcile`
 - **Fakturace hostům** — mPDF PDF generátor + SPAYD QR Platba, číselná řada `RRRR###` (start `2026012` navazuje na dosavadní číslování), 3 webové toky (`STANDARD_WITH_DEPOSIT`/`FKSP`/`ADMIN_BOOKING`) mapované z `payment.gateway_id`, OTA toky (Airbnb v CZK, Booking EUR→CZK přes ČNB). `BillingMode` na rezervaci, server-side guard proti duplicitnímu vystavení, snapshot odběratele/dodavatele do faktury. Commandy `app:invoice:smoke`, `app:invoice:regenerate-pdf`, `app:invoice:refresh-qr`.
-- **Časová osa rezervace + CRM poznámky** (`App\Timeline`) — na detailu rezervace jeden chronologický feed: odvozené systémové události (založení, faktura, check-in, výplata — neukládají se, skládá je `ReservationTimelineBuilder`) + ruční typované poznámky (`ReservationNote`: poznámka/hovor/e-mail/zpráva/osobně) + naplánované akce (`ReservationAction`) s tlačítky odložit/upravit/zrušit/spustit. Automatické akce (pre-arrival/post-stay zpráva, doplatková faktura, připomínka doplatku, Ubyport u cizinců) zakládá idempotentně `ReservationActionPlanner` (při potvrzení v UI + cron `app:actions:plan`). Cron `app:actions:run` vyhodnocuje akce, kterým nadešel čas — v MVP self-resolving připomínky (doplatek uhrazen / faktura vystavena / host nahlášen); **odeslání zpráv hostům e-mailem je až roadmap bod 4**. Doplatek (`App\Invoice\BalanceCalculator`, cena − zaplacené faktury, jen CZK) je i u ceny v kartě Finance. Plán: `docs/private/plan-timeline-crm.md`.
+- **Časová osa rezervace + CRM poznámky** (`App\Timeline`) — na detailu rezervace jeden chronologický feed: odvozené systémové události (založení, faktura, check-in, výplata — neukládají se, skládá je `ReservationTimelineBuilder`) + ruční typované poznámky (`ReservationNote`: poznámka/hovor/e-mail/zpráva/osobně) + naplánované akce (`ReservationAction`) s tlačítky odložit/upravit/zrušit/spustit. Automatické akce (pre-arrival/post-stay zpráva, doplatková faktura, připomínka doplatku, Ubyport u cizinců) zakládá idempotentně `ReservationActionPlanner` (při potvrzení v UI + cron `app:actions:plan`). Cron `app:actions:run` vyhodnocuje akce, kterým nadešel čas — self-resolving připomínky (doplatek uhrazen / faktura vystavena / host nahlášen) i **odeslání zpráv hostům e-mailem** (pre-arrival/post-stay/vlastní v okně platnosti, připomínka doplatku; viz `App\Mail`). Doplatek (`App\Invoice\BalanceCalculator`, cena − zaplacené faktury, jen CZK) je i u ceny v kartě Finance. Plán: `docs/private/plan-timeline-crm.md`.
 - **Ekonomika** (`App\Profit`) — zisk per rezervace dle vzorce: Zisk = Příjem − (elektřina + úklid + rekreační poplatek 15 Kč × dospělí × noci + provize + DPH z provize). Příjem: faktura (FULL, nebo FINAL+záloha) > cena v CZK > Booking EUR × uložený ČNB kurz (= odhad, značeno `*`); starší EUR faktury se přepočítávají kurzem. On-the-fly (`ReservationProfitCalculator`, batch bez N+1, žádné DB sloupce), sazba poplatku v Setting `recreation_fee.per_adult_night`. UI: `/ekonomika/{rok}` (tabulka jako CSV + souhrn dle kanálu), karta na detailu rezervace, souhrn na dashboardu — vše dělené na **uskutečněno vs. očekáváno** (budoucí pobyty bez elektřiny/reálného úklidu = jen výhled). Ověřeno proti CSV 2023–2026 (audit `sources/compare_ekonomika.php`): složky sedí na koruny; CSV 2023–2025 nezapočítávala DPH do výdajů — app ano, vědomě.
 
 **Klíčové cesty:**
@@ -236,7 +236,7 @@ docker compose exec app bin/console app:dev:import-fixtures        # demo data
 docker compose exec app vendor/bin/phpunit                          # testy
 ```
 
-**Co stále chybí:** odesílání faktur a zpráv hostům e‑mailem, iCal sync (sanity check obsazenosti / Airbnb cancellations).
+**Co stále chybí:** iCal sync (sanity check obsazenosti / Airbnb cancellations).
 
 **Produkce běží na sdíleném hostingu** (viz `docs/deploy.md`). Důsledek: **všechny změny DB schématu výhradně přes Doctrine migrace** — žádné `schema:update` ani ad-hoc SQL; produkce se aktualizuje `doctrine:migrations:migrate`.
 
@@ -247,7 +247,7 @@ docker compose exec app vendor/bin/phpunit                          # testy
 1. ~~**Login + security**~~ — ✅ hotové.
 2. ~~**Fakturace**~~ — ✅ hotové (mPDF, číselná řada, QR Platba, ČNB EUR→CZK, 5 toků). ARES doplnění firmy z IČO ✅ (check‑in billing). Chybí: automatický e‑mail s PDF hostovi.
 3. ~~**DPH modul**~~ — ✅ hotové (Booking PDF import, Airbnb manual upload, ČNB kurz, `VatPeriod`, reconciliation).
-4. **Zprávy hostům** — Twig šablony, plánovač přes Symfony Scheduler/Messenger, SMTP přes hosting.
+4. ~~**Zprávy hostům**~~ — ✅ hotové (nastavení e-mailů + barevné téma, editovatelné Markdown šablony s proměnnými, náhled + test, master layout; odeslání zapojeno do `app:actions:run` přes Symfony Mailer; faktura PDF e-mailem hostovi). Plán/stav: `docs/private/plan-zpravy-hostum.md`.
 5. ~~**MotoPress REST sync**~~ — ✅ hotové (`app:motopress:sync`).
 6. **iCal sync** — sanity check obsazenosti, detekce Airbnb cancellations.
 7. ~~**Deploy na sdílený hosting**~~ — ✅ hotové (viz `docs/deploy.md`; cron IMAP poller + MotoPress sync á 15 min).

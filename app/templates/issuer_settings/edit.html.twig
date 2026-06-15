@@ -5,23 +5,12 @@
 {% block body %}
     <h1 class="h3 mb-3">Nastavení</h1>
 
-    <ul class="nav nav-pills mb-4">
-        <li class="nav-item">
-            <a class="nav-link" href="{{ path('accommodation_profile_edit') }}">Ubytovací zařízení</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" href="{{ path('cleaning_settings_edit') }}">Úklid</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link active" href="{{ path('issuer_settings_edit') }}">Dodavatel</a>
-        </li>
-    </ul>
+    {{ include('settings/_nav.html.twig', { active: 'issuer' }) }}
 
     <h2 class="h5 mb-2">Dodavatel na faktuře</h2>
     <p class="text-muted small">
-        Tahle fakturační identita se tiskne jako dodavatel na všechny faktury (a plní
-        QR Platbu). Uloženo v databázi — žádná editace <code>.env</code>. Po změně se
-        nové faktury vystaví správně; u už vystavených přegeneruj PDF.
+        Tahle fakturační identita se tiskne jako dodavatel na všechny faktury a plní
+        QR Platbu. Po změně se nové faktury vystaví správně; u už vystavených přegeneruj PDF.
     </p>
 
     <div class="col-lg-8">

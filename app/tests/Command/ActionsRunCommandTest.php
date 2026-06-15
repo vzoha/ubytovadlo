@@ -11,14 +11,18 @@ declare(strict_types=1);
 
 namespace App\Tests\Command;
 
+use App\Entity\GuestMessage;
 use App\Entity\Invoice;
 use App\Entity\InvoiceLine;
+use App\Entity\MessageTemplate;
 use App\Entity\Reservation;
 use App\Entity\ReservationAction;
 use App\Enum\ActionStatus;
 use App\Enum\ActionType;
 use App\Enum\Channel;
 use App\Enum\InvoiceType;
+use App\Enum\MessageKind;
+use App\Mail\MessageTemplateDefaults;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -35,6 +39,8 @@ final class ActionsRunCommandTest extends KernelTestCase
         $container = static::getContainer();
         $this->em = $container->get(EntityManagerInterface::class);
 
+        $this->em->createQuery('DELETE FROM ' . GuestMessage::class . ' g')->execute();
+        $this->em->createQuery('DELETE FROM ' . MessageTemplate::class . ' t')->execute();
         $this->em->createQuery('DELETE FROM ' . ReservationAction::class . ' a')->execute();
         $this->em->createQuery('DELETE FROM ' . InvoiceLine::class . ' l')->execute();
         $this->em->createQuery('DELETE FROM ' . Invoice::class . ' i')->execute();
@@ -62,13 +68,17 @@ final class ActionsRunCommandTest extends KernelTestCase
         self::assertNotNull($due->getExecutedAt());
     }
 
-    public function testGuestMessageInWindowStaysPlanned(): void
+    public function testGuestMessageInWindowWithEmailIsSent(): void
     {
-        // Příjezd v budoucnu → pre-arrival zpráva je stále v okně → nechá se PLANNED
-        // (pošle se, až bude odesílač), i když je termín odeslání už po splatnosti.
+        // Příjezd v budoucnu → pre-arrival je v okně; host má e-mail → odešle se
+        // (null transport v testu „odeslání" potvrdí) a akce se označí DONE.
+        // Šablony jsou defaultně vypnuté, tahle musí být zapnutá, aby se odeslala.
+        $this->enableTemplate(MessageKind::PRE_ARRIVAL);
+
         $r = new Reservation(Channel::WEB, new \DateTimeImmutable('+5 days'));
         $r->setCheckOut(new \DateTimeImmutable('+7 days'));
         $r->setGuestName('Future Host');
+        $r->setGuestEmail('future@example.com');
         $this->em->persist($r);
         $msg = new ReservationAction($r, ActionType::PRE_ARRIVAL_MESSAGE, new \DateTimeImmutable('-1 hour'));
         $this->em->persist($msg);
@@ -77,7 +87,28 @@ final class ActionsRunCommandTest extends KernelTestCase
         $this->tester->execute([]);
 
         $this->em->refresh($msg);
-        self::assertSame(ActionStatus::PLANNED, $msg->getStatus());
+        self::assertSame(ActionStatus::DONE, $msg->getStatus());
+
+        $sent = $this->em->getRepository(GuestMessage::class)->findOneBy(['reservation' => $r]);
+        self::assertNotNull($sent);
+        self::assertSame('future@example.com', $sent->getToEmail());
+    }
+
+    public function testGuestMessageInWindowWithoutEmailSkipped(): void
+    {
+        // Stejné okno, ale host nemá e-mail → zprávu nelze poslat → SKIPPED.
+        $r = new Reservation(Channel::WEB, new \DateTimeImmutable('+5 days'));
+        $r->setCheckOut(new \DateTimeImmutable('+7 days'));
+        $r->setGuestName('No Email Host');
+        $this->em->persist($r);
+        $msg = new ReservationAction($r, ActionType::PRE_ARRIVAL_MESSAGE, new \DateTimeImmutable('-1 hour'));
+        $this->em->persist($msg);
+        $this->em->flush();
+
+        $this->tester->execute([]);
+
+        $this->em->refresh($msg);
+        self::assertSame(ActionStatus::SKIPPED, $msg->getStatus());
     }
 
     public function testStaleGuestMessageSkipped(): void
@@ -93,6 +124,14 @@ final class ActionsRunCommandTest extends KernelTestCase
         $this->em->refresh($msg);
         self::assertSame(ActionStatus::SKIPPED, $msg->getStatus());
         self::assertNotNull($msg->getExecutedAt());
+    }
+
+    private function enableTemplate(MessageKind $kind): void
+    {
+        $template = MessageTemplateDefaults::for($kind);
+        $template->setEnabled(true);
+        $this->em->persist($template);
+        $this->em->flush();
     }
 
     private function reservation(): Reservation

@@ -1,0 +1,90 @@
+{#
+  Znovupoužitelný Markdown editor nad nativní <textarea>.
+
+  Formátovací tlačítka řeší web component @github/markdown-toolbar-element
+  (md-* prvky), undo/redo a oddělovač jsou vlastní tlačítka obsloužená
+  markdown-editor.js. Editor pracuje nad nativní textareou, takže paleta
+  proměnných i server-side živý náhled fungují beze změny.
+
+  Použití:
+    {% import '_partials/markdown_editor.html.twig' as md %}
+    {{ md.toolbar(form.bodyMarkdown) }}   {# nad form_widget(form.bodyMarkdown) #}
+    ...
+    {% block javascripts %}{{ md.assets() }}{% endblock %}
+#}
+
+{% macro _svg(name) %}
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+        {%- if name == 'undo' -%}
+            <path fill-rule="evenodd" d="M8 3a5 5 0 1 1-4.546 2.914.5.5 0 0 0-.908-.417A6 6 0 1 0 8 2z"/><path d="M8 4.466V.534a.25.25 0 0 0-.41-.192L5.23 2.308a.25.25 0 0 0 0 .384l2.36 1.966A.25.25 0 0 0 8 4.466"/>
+        {%- elseif name == 'redo' -%}
+            <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2z"/><path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466"/>
+        {%- elseif name == 'bold' -%}
+            <path d="M8.21 13c2.106 0 3.412-1.087 3.412-2.823 0-1.306-.984-2.283-2.324-2.386v-.055a2.176 2.176 0 0 0 1.852-2.14c0-1.51-1.162-2.46-3.014-2.46H3.843V13zM5.908 4.674h1.696c.963 0 1.517.451 1.517 1.244 0 .834-.629 1.32-1.73 1.32H5.908V4.673zm0 6.788V8.598h1.73c1.217 0 1.88.492 1.88 1.415 0 .943-.643 1.449-1.832 1.449H5.908z"/>
+        {%- elseif name == 'italic' -%}
+            <path d="M7.991 11.674 9.53 4.455c.123-.595.246-.71 1.347-.807l.11-.52H7.211l-.11.52c1.06.096 1.128.212 1.005.807L6.57 11.674c-.123.595-.246.71-1.346.806l-.11.52h3.774l.11-.52c-1.06-.095-1.129-.211-1.006-.806z"/>
+        {%- elseif name == 'header' -%}
+            <path d="M7.648 13V3.722H6.3v3.94H1.85v-3.94H.5V13h1.35V8.752H6.3V13zM14 13V3.722h-1.353l-2.394 1.74V6.97l2.298-1.667h.046V13z"/>
+        {%- elseif name == 'link' -%}
+            <path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/>
+        {%- elseif name == 'list-ul' -%}
+            <path fill-rule="evenodd" d="M5 11.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m-3 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2m0 4a1 1 0 1 0 0-2 1 1 0 0 0 0 2m0 4a1 1 0 1 0 0-2 1 1 0 0 0 0 2"/>
+        {%- elseif name == 'list-ol' -%}
+            <path fill-rule="evenodd" d="M5 11.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5"/><path d="M1.713 11.865v-.474H2c.217 0 .363-.137.363-.317 0-.185-.158-.31-.361-.31-.223 0-.367.152-.373.31h-.59c.016-.467.373-.787.986-.787.588-.002.954.291.957.703a.595.595 0 0 1-.492.594v.033a.615.615 0 0 1 .569.631c.003.533-.502.8-1.051.8-.656 0-1-.37-1.008-.794h.582c.008.178.186.306.422.306.254 0 .424-.146.422-.368-.002-.214-.165-.34-.418-.34h-.276v-.471h.262c.206 0 .353-.123.353-.301 0-.182-.137-.29-.329-.29-.205 0-.33.117-.336.286h-.555zm1.945-1.5H1.5v-.467l.965-.957c.176-.18.243-.292.243-.422 0-.158-.121-.27-.302-.27a.286.286 0 0 0-.306.27H1.5c.013-.388.343-.692.95-.692.553 0 .918.282.918.696 0 .264-.137.45-.45.755l-.5.491v.033h1.04z"/>
+        {%- elseif name == 'quote' -%}
+            <path d="M12 12a1 1 0 0 0 1-1V8.558a1 1 0 0 0-1-1h-1.388q0-.527.062-1.054.093-.558.31-.992.217-.434.559-.683.34-.279.868-.279V3q-.868 0-1.52.372a3.3 3.3 0 0 0-1.085.992 4.9 4.9 0 0 0-.62 1.458A7.7 7.7 0 0 0 8.5 7.558V11a1 1 0 0 0 1 1zm-6 0a1 1 0 0 0 1-1V8.558a1 1 0 0 0-1-1H4.612q0-.527.062-1.054.094-.558.31-.992.217-.434.559-.683.342-.279.868-.279V3q-.868 0-1.52.372a3.3 3.3 0 0 0-1.085.992 4.9 4.9 0 0 0-.62 1.458A7.7 7.7 0 0 0 2.5 7.558V11a1 1 0 0 0 1 1z"/>
+        {%- elseif name == 'code' -%}
+            <path d="M5.854 4.854a.5.5 0 1 0-.708-.708l-3.5 3.5a.5.5 0 0 0 0 .708l3.5 3.5a.5.5 0 0 0 .708-.708L2.707 8zm4.292 0a.5.5 0 0 1 .708-.708l3.5 3.5a.5.5 0 0 1 0 .708l-3.5 3.5a.5.5 0 0 1-.708-.708L13.293 8z"/>
+        {%- elseif name == 'hr' -%}
+            <path fill-rule="evenodd" d="M2 8a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11A.5.5 0 0 1 2 8"/>
+        {%- elseif name == 'button' -%}
+            <rect x=".75" y="4.25" width="14.5" height="7.5" rx="3.75" fill="none" stroke="currentColor" stroke-width="1.3"/><rect x="4.5" y="7.4" width="7" height="1.2" rx=".6"/>
+        {%- endif -%}
+    </svg>
+{% endmacro %}
+
+{% macro toolbar(field, cta = false) %}
+    {% import _self as ed %}
+    {% set id = field.vars.id %}
+    <div class="btn-toolbar md-editor-toolbar gap-1" role="toolbar" aria-label="Formátování textu" data-md-for="{{ id }}">
+        <div class="btn-group btn-group-sm" role="group" aria-label="Historie">
+            <button type="button" class="btn btn-outline-secondary" data-md-action="undo" title="Zpět (Ctrl+Z)">{{ ed._svg('undo') }}</button>
+            <button type="button" class="btn btn-outline-secondary" data-md-action="redo" title="Vpřed (Ctrl+Shift+Z)">{{ ed._svg('redo') }}</button>
+        </div>
+        <markdown-toolbar for="{{ id }}" class="btn-group btn-group-sm" role="group" aria-label="Styl">
+            <md-bold class="btn btn-outline-secondary" title="Tučně (Ctrl+B)">{{ ed._svg('bold') }}</md-bold>
+            <md-italic class="btn btn-outline-secondary" title="Kurzíva (Ctrl+I)">{{ ed._svg('italic') }}</md-italic>
+            <md-header class="btn btn-outline-secondary" title="Nadpis">{{ ed._svg('header') }}</md-header>
+        </markdown-toolbar>
+        <markdown-toolbar for="{{ id }}" class="btn-group btn-group-sm" role="group" aria-label="Vložení">
+            <md-link class="btn btn-outline-secondary" title="Odkaz (Ctrl+K)">{{ ed._svg('link') }}</md-link>
+            <md-quote class="btn btn-outline-secondary" title="Citace">{{ ed._svg('quote') }}</md-quote>
+            <md-code class="btn btn-outline-secondary" title="Kód">{{ ed._svg('code') }}</md-code>
+        </markdown-toolbar>
+        <markdown-toolbar for="{{ id }}" class="btn-group btn-group-sm" role="group" aria-label="Seznamy">
+            <md-unordered-list class="btn btn-outline-secondary" title="Odrážky">{{ ed._svg('list-ul') }}</md-unordered-list>
+            <md-ordered-list class="btn btn-outline-secondary" title="Číslovaný seznam">{{ ed._svg('list-ol') }}</md-ordered-list>
+        </markdown-toolbar>
+        <div class="btn-group btn-group-sm" role="group" aria-label="Oddělovač">
+            <button type="button" class="btn btn-outline-secondary" data-md-insert="hr" title="Oddělovač">{{ ed._svg('hr') }}</button>
+        </div>
+        {% if cta %}
+            <div class="btn-group btn-group-sm" role="group" aria-label="Tlačítko">
+                <button type="button" class="btn btn-outline-secondary" data-md-insert="button" title="Tlačítko do e-mailu (CTA odkaz)">{{ ed._svg('button') }}</button>
+            </div>
+        {% endif %}
+    </div>
+{% endmacro %}
+
+{% macro assets() %}
+    <style>
+        .md-editor-toolbar { flex-wrap: wrap; background:#f8f9fa; border:1px solid #ced4da; border-bottom:0; border-radius:.375rem .375rem 0 0; padding:.3rem; }
+        .md-editor-toolbar + textarea { border-top-left-radius:0; border-top-right-radius:0; }
+        .md-editor-toolbar md-bold, .md-editor-toolbar md-italic, .md-editor-toolbar md-header,
+        .md-editor-toolbar md-link, .md-editor-toolbar md-quote, .md-editor-toolbar md-code,
+        .md-editor-toolbar md-unordered-list, .md-editor-toolbar md-ordered-list { display:inline-flex; align-items:center; cursor:pointer; }
+        .md-editor-toolbar .btn { display:inline-flex; align-items:center; }
+    </style>
+    <script type="module" src="{{ asset('assets/markdown-toolbar-element.js') }}"></script>
+    <script src="{{ asset('assets/markdown-editor.js') }}"></script>
+{% endmacro %}

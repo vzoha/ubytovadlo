@@ -10,8 +10,11 @@
 /sources/
 
 # Privátní overlay a interní dokumentace — identita instance, runbooky, plány
-/CLAUDE.local.md          # kdo/co je tahle instance (doména, schránka, účty)
-/docs/private/            # interní runbooky a plány funkcí
+# (.gitignore nezná inline komentáře — vzor musí být sám na řádku, jinak se neaplikuje)
+# kdo/co je tahle instance (doména, schránka, účty):
+/CLAUDE.local.md
+# interní runbooky a plány funkcí:
+/docs/private/
 
 # Editor / OS junk
 .idea/

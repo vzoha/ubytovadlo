@@ -4,6 +4,59 @@ Všechny podstatné změny v tomto projektu se zaznamenávají sem.
 Formát vychází z [Keep a Changelog](https://keepachangelog.com/cs/1.1.0/),
 verzování dle [SemVer](https://semver.org/lang/cs/).
 
+## [Unreleased]
+
+### Přidáno
+
+- **Markdown toolbar editoru** — nad tělem zprávy (`/nastaveni/zpravy/{kind}`)
+  i patičkou e-mailů (`/nastaveni/mail`) lišta s ikonami: zpět/vpřed (undo/redo),
+  tučně, kurzíva, nadpis, odkaz, citace, kód, odrážky, číslovaný seznam, oddělovač.
+  Formátování řeší web component `@github/markdown-toolbar-element` (27 kB, bez
+  závislostí, vendorováno, ESM modul), undo/redo a oddělovač `markdown-editor.js`.
+  Sdílený Twig partial `_partials/markdown_editor.html.twig`. Pracuje nad nativní
+  `<textarea>`, takže paleta proměnných i živý náhled fungují beze změny (úprava
+  dispatchne `input` event).
+- **CTA tlačítko do e-mailu** — v těle zprávy lze přes syntaxi `[[button:Text|odkaz]]`
+  (typicky `[[button:Dokončit check-in|{{ checkin_url }}]]`) vložit výrazné tlačítko;
+  vyrenderuje se jako **vycentrované** table-based tlačítko v barvě akcentu tématu
+  (kompatibilní s poštovními klienty). Vkládá ho i tlačítko v toolbaru editoru. Popisek i odkaz se HTML-escapují.
+  Ukázková rezervace pro náhled dostala check-in token, takže `{{ checkin_url }}` v náhledu
+  i testovacím odeslání vede na reálnou adresu. Výchozí šablona „Před příjezdem" používá
+  pro odkaz na online check-in právě toto tlačítko.
+- **Server-side náhled patičky** (`/nastaveni/mail`) — patička se v náhledu
+  vzhledu renderuje z Markdownu na serveru (`GuestMessageRenderer::renderFooterPreview`,
+  endpoint `mail_settings_footer_preview`), shodně se skutečným e-mailem a s dosazením
+  proměnných z ukázkové rezervace. Dřív se ukazovala jen jako prostý text.
+
+### Změněno
+
+- **Drobné úpravy popisů v nastavení** — odebrán nadbytečný popis u „Jméno odesílatele"
+  (opakoval label), z intro „Dodavatel na faktuře" vypuštěn vývojářský žargon o `.env`.
+  CTA tlačítko v náhledu nastavení e-mailů vycentrované.
+- **Šablony zpráv jsou nově defaultně s vypnutým odesíláním** (`enabled = false`).
+  Žádná zpráva hostům se neodešle, dokud konkrétní šablonu ručně nezapneš —
+  bezpečnější výchozí stav (nehrozí nechtěné automatické odeslání). Týká se nových
+  i dosud nenakonfigurovaných druhů zpráv; uložené šablony si svůj stav drží.
+- **Zprávy hostům e-mailem** (roadmap bod 4) — odesílání naplánovaných zpráv přes
+  Symfony Mailer (SMTP hostingu, `MAILER_DSN` v `.env.local`). Tři vrstvy:
+  - **Nastavení e-mailů** (`/nastaveni/mail`) — odesílatel, Reply-To, patička,
+    zobrazení loga a barevné téma (5 presetů + vlastní hexy). Klíče `mail.*`
+    v tabulce `setting`, `MailSettingsProvider` s fallbackem na dodavatele faktury.
+  - **Šablony zpráv** (`/nastaveni/zpravy`) — editovatelný předmět + tělo v Markdownu
+    s proměnnými (`{{ guest_first_name }}`, `{{ check_in }}`, `{{ balance_due }}`, …)
+    pro 5 druhů (před příjezdem, po pobytu, připomínka doplatku, faktura, vlastní).
+    Výchozí texty v kódu (`MessageTemplateDefaults`), DB drží jen override
+    (`message_template`). Paleta proměnných, **živý náhled** a **testovací odeslání**
+    na vlastní e-mail. Proměnné se dosazují bezpečně (whitelist, ne Twig nad textem).
+  - **Master layout** (`templates/email/_layout.html.twig`) — table-based HTML
+    s tématem; tělo (Markdown→HTML přes `league/commonmark`, `html_input: escape`)
+    a patička se vloží dovnitř, logo přes `cid`.
+  - Odeslání zapojeno do `app:actions:run`: pre-arrival / post-stay / vlastní zpráva
+    se v okně platnosti odešlou (jinak SKIPPED), připomínka doplatku pošle hostovi
+    jednu výzvu, dokud není uhrazeno. Audit + pojistka proti duplicitě v `guest_message`.
+  - **Faktura e-mailem** (roadmap bod 2, poslední kus) — tlačítko na detailu
+    rezervace odešle hostovi vystavenou fakturu v PDF příloze (druh zprávy `invoice`).
+
 ## [0.4.0] — 2026-06-14
 
 ### Přidáno

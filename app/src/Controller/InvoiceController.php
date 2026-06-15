@@ -13,8 +13,11 @@ namespace App\Controller;
 
 use App\Entity\Invoice;
 use App\Entity\Reservation;
+use App\Enum\GuestMessageStatus;
 use App\Enum\InvoiceType;
+use App\Enum\MessageKind;
 use App\Invoice\InvoiceService;
+use App\Mail\GuestMessageSender;
 use App\Repository\InvoiceRepository;
 use App\Storage\PdfStorage;
 use Doctrine\ORM\EntityManagerInterface;
@@ -32,6 +35,7 @@ class InvoiceController extends AbstractController
         private readonly InvoiceRepository $invoiceRepo,
         private readonly EntityManagerInterface $em,
         private readonly PdfStorage $pdfStorage,
+        private readonly GuestMessageSender $sender,
     ) {
     }
 
@@ -181,6 +185,43 @@ class InvoiceController extends AbstractController
         $date = \DateTimeImmutable::createFromFormat('!Y-m-d', $input);
 
         return $date === false ? null : $date;
+    }
+
+    #[Route('/invoice/{id}/send-email', name: 'invoice_send_email', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function sendEmail(Invoice $invoice, Request $request): Response
+    {
+        $this->assertCsrf($request, 'invoice-email-' . $invoice->getId());
+        $reservation = $invoice->getReservation();
+
+        if (!$this->sender->canSend($reservation)) {
+            $this->addFlash('danger', 'Rezervace nemá e-mail hosta — fakturu nelze odeslat.');
+
+            return $this->redirectToRoute('reservation_detail', ['id' => $reservation->getId()]);
+        }
+
+        $stored = $invoice->getPdfPath();
+        $path = $stored === null ? null : $this->pdfStorage->absolute($stored);
+        if ($path === null || !is_file($path)) {
+            // Šablona slibuje fakturu v příloze — bez PDF zprávu neposílej.
+            $this->addFlash('danger', sprintf('Faktura %s nemá vygenerované PDF — nejprve ho vytvoř.', $invoice->getNumber()));
+
+            return $this->redirectToRoute('reservation_detail', ['id' => $reservation->getId()]);
+        }
+
+        $message = $this->sender->send(
+            $reservation,
+            MessageKind::INVOICE,
+            ['invoice_number' => $invoice->getNumber()],
+            [$path],
+        );
+
+        if ($message->getStatus() === GuestMessageStatus::SENT) {
+            $this->addFlash('success', sprintf('Faktura %s odeslána hostovi na %s.', $invoice->getNumber(), $message->getToEmail()));
+        } else {
+            $this->addFlash('danger', 'Odeslání faktury selhalo: ' . (string) $message->getError());
+        }
+
+        return $this->redirectToRoute('reservation_detail', ['id' => $reservation->getId()]);
     }
 
     #[Route('/invoice/{id}/pdf', name: 'invoice_pdf', methods: ['GET'], requirements: ['id' => '\d+'])]

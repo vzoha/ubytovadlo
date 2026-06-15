@@ -1,0 +1,110 @@
+{% extends 'base.html.twig' %}
+
+{% import '_partials/markdown_editor.html.twig' as md %}
+
+{% block title %}Šablona — {{ kind.label }}{% endblock %}
+
+{% block body %}
+    <h1 class="h3 mb-3">Nastavení</h1>
+
+    {{ include('settings/_nav.html.twig', { active: 'messages' }) }}
+
+    <div class="d-flex align-items-center mb-3">
+        <a href="{{ path('message_templates_index') }}" class="btn btn-sm btn-outline-secondary me-3">← Zpět</a>
+        <div>
+            <h2 class="h5 mb-0">{{ kind.label }}</h2>
+            <div class="small text-muted">{{ kind.description }}</div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-6">
+            {{ form_start(form, { attr: { id: 'template-form' } }) }}
+                <div class="mb-3">{{ form_row(form.enabled) }}</div>
+                <div class="mb-3">{{ form_row(form.subject) }}</div>
+                <div class="mb-2">
+                    {{ form_label(form.bodyMarkdown) }}
+                    {{ md.toolbar(form.bodyMarkdown, true) }}
+                    {{ form_widget(form.bodyMarkdown) }}
+                    {{ form_help(form.bodyMarkdown) }}
+                    {{ form_errors(form.bodyMarkdown) }}
+                </div>
+
+                <div class="mb-3">
+                    <div class="small text-muted mb-1">Proměnné (klikni pro vložení do těla):</div>
+                    {% for name, desc in variables %}
+                        <button type="button" class="btn btn-sm btn-outline-secondary mb-1 js-var" data-var="{{ name }}" title="{{ desc }}">
+                            {{ '{{ ' ~ name ~ ' }}' }}
+                        </button>
+                    {% endfor %}
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Uložit</button>
+                    <button type="button" class="btn btn-outline-secondary" id="btn-refresh-preview">Obnovit náhled</button>
+                </div>
+            {{ form_end(form) }}
+
+            <hr class="my-4">
+
+            <form method="post" action="{{ path('message_templates_test', { kind: kind.value }) }}" class="row g-2 align-items-end">
+                <input type="hidden" name="_token" value="{{ csrf_token('message_template_test') }}">
+                <div class="col-sm-8">
+                    <label class="form-label small mb-1">Poslat test na e-mail</label>
+                    <input type="email" name="email" class="form-control form-control-sm" value="{{ testRecipient }}" required>
+                </div>
+                <div class="col-sm-4">
+                    <button type="submit" class="btn btn-sm btn-outline-primary w-100">Poslat test</button>
+                </div>
+                <div class="form-text">Odešle se ukázková zpráva s neutrálními daty.</div>
+            </form>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="small text-muted mb-1">Náhled</div>
+            <iframe id="preview" title="Náhled e-mailu" style="width:100%; height:640px; border:1px solid #dee2e6; border-radius:6px; background:#fff;"></iframe>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+{{ md.assets() }}
+<script>
+    (function () {
+        const form = document.getElementById('template-form');
+        const subject = form.querySelector('[name$="[subject]"]');
+        const body = form.querySelector('[name$="[bodyMarkdown]"]');
+        const iframe = document.getElementById('preview');
+        const previewUrl = {{ path('message_templates_preview', { kind: kind.value })|json_encode|raw }};
+
+        async function refresh() {
+            const data = new URLSearchParams({ subject: subject.value, body: body.value });
+            try {
+                const res = await fetch(previewUrl, { method: 'POST', body: data });
+                iframe.srcdoc = await res.text();
+            } catch (e) {
+                iframe.srcdoc = '<p style="font-family:sans-serif;color:#b00">Náhled se nepodařilo načíst.</p>';
+            }
+        }
+
+        let timer = null;
+        function schedule() { clearTimeout(timer); timer = setTimeout(refresh, 400); }
+
+        document.querySelectorAll('.js-var').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                const token = btn.textContent.trim();
+                const start = body.selectionStart, end = body.selectionEnd;
+                body.value = body.value.slice(0, start) + token + body.value.slice(end);
+                body.focus();
+                body.selectionStart = body.selectionEnd = start + token.length;
+                schedule();
+            });
+        });
+
+        subject.addEventListener('input', schedule);
+        body.addEventListener('input', schedule);
+        document.getElementById('btn-refresh-preview').addEventListener('click', refresh);
+        refresh();
+    })();
+</script>
+{% endblock %}

@@ -54,5 +54,14 @@ services:
             $bankAccount: '%env(INVOICE_BANK_ACCOUNT)%'
             $bankAccountIban: '%env(INVOICE_BANK_IBAN)%'
 
+    # Markdown → HTML pro těla e-mailů hostům. html_input: escape, ať se z
+    # uživatelského textu nedá vložit syrové HTML.
+    League\CommonMark\ConverterInterface:
+        class: League\CommonMark\CommonMarkConverter
+        arguments:
+            $config:
+                html_input: escape
+                allow_unsafe_links: false
+
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
