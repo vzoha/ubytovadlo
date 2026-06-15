@@ -6,6 +6,8 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ## [Unreleased]
 
+## [0.5.0] — 2026-06-15
+
 ### Přidáno
 
 - **Markdown toolbar editoru** — nad tělem zprávy (`/nastaveni/zpravy/{kind}`)
@@ -150,6 +152,7 @@ iniciální snapshot vyčleněný z interního vývoje (bez přenosu git histori
 - iCal sanity sync (kontrola obsazenosti, detekce Airbnb storen) chybí.
 - Cílí zatím na jednu ubytovací jednotku (multi-unit je v plánu).
 
+[0.5.0]: https://github.com/vzoha/ubytovadlo/releases/tag/v0.5.0
 [0.4.0]: https://github.com/vzoha/ubytovadlo/releases/tag/v0.4.0
 [0.3.0]: https://github.com/vzoha/ubytovadlo/releases/tag/v0.3.0
 [0.2.1]: https://github.com/vzoha/ubytovadlo/releases/tag/v0.2.1
