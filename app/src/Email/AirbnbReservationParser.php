@@ -19,15 +19,6 @@ class AirbnbReservationParser
     private const FROM_ADDRESS = 'automated@airbnb.com';
     private const SUBJECT_PATTERN = '/^Rezervace potvrzena\s*-\s*(?<name>.+?)\s+přijede\s+\d/u';
 
-    /**
-     * @param string $airbnbListingName Název Airbnb inzerátu tak, jak se objevuje v e-mailu
-     *                                  (kotví extrakci regionu hosta). Prázdné = region se nečte.
-     */
-    public function __construct(
-        private readonly string $airbnbListingName = '',
-    ) {
-    }
-
     public function supports(EmailMessage $email): bool
     {
         if ($email->fromAddress !== null
@@ -230,12 +221,12 @@ class AirbnbReservationParser
         if ($namePos === false) {
             return null;
         }
-        if ($this->airbnbListingName === '') {
-            return null;
-        }
         $window = mb_substr($text, $namePos, 400);
-        $listing = preg_quote($this->airbnbListingName, '/');
-        if (preg_match('/Totožnost ověřena(?:[^A-ZÁ-Ž\n]*?\d+\s+hodnocení)?\s+([A-ZÁ-Ž][^.\n]+?,\s*[A-ZÁ-Ž][^.\n]+?)\s+' . $listing . '/u', $window, $m)) {
+
+        // Region hosta ("Město/kraj, Země") stojí hned za značkou "Totožnost ověřena
+        // [· N hodnocení]". Kotvíme strukturou: region končí jednoslovnou zemí, za níž
+        // následuje název inzerátu — díky tomu nepotřebujeme znát jméno inzerátu předem.
+        if (preg_match('/Totožnost ověřena(?:[^A-ZÁ-Ž\n]*?\d+\s+hodnocení)?\s+([A-ZÁ-Ž][\p{L} ]{0,40}?,\s*[A-ZÁ-Ž]\p{Ll}+)(?=\s)/u', $window, $m)) {
             return trim($m[1]);
         }
 

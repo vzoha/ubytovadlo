@@ -37,6 +37,22 @@ class ReservationRepository extends ServiceEntityRepository
         return $this->findOneBy(['motopressExternalId' => $motopressExternalId]);
     }
 
+    /**
+     * Rezervace podle variabilního symbolu příchozí platby. Host u webové rezervace
+     * platí s VS = MotoPress booking ID, které držíme v motopressExternalId (a u web
+     * rezervací i v externalId). Vrací nejstarší shodu, kdyby byly obě stejné.
+     */
+    public function findByPaymentVariableSymbol(string $variableSymbol): ?Reservation
+    {
+        return $this->createQueryBuilder('r')
+            ->andWhere('r.motopressExternalId = :vs OR r.externalId = :vs')
+            ->setParameter('vs', $variableSymbol)
+            ->orderBy('r.id', 'ASC')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
     public function findByChannelAndCheckIn(Channel $channel, \DateTimeImmutable $checkIn): ?Reservation
     {
         return $this->createQueryBuilder('r')

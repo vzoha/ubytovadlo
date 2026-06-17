@@ -14,6 +14,7 @@ namespace App\Tests\Email;
 use App\Email\AirbnbPayoutParser;
 use App\Email\AirbnbReservationParser;
 use App\Email\BookingTriggerParser;
+use App\Email\CsPaymentParser;
 use App\Email\EmailDispatcher;
 use App\Email\EmailMessage;
 use App\Email\EmlReader;
@@ -22,6 +23,8 @@ use App\Entity\Reservation;
 use App\Enum\Channel;
 use App\Enum\EmailLogStatus;
 use App\Enum\ReservationStatus;
+use App\Payment\PaymentProcessor;
+use App\Payment\PaymentResult;
 use App\Repository\BookingMonthlyInvoiceRepository;
 use App\Repository\EmailLogRepository;
 use App\Repository\InvoiceRepository;
@@ -43,6 +46,7 @@ final class EmailDispatcherTest extends TestCase
     private EmailLogRepository&MockObject $emailLogs;
     private ReservationRepository&MockObject $reservations;
     private InvoiceRepository&MockObject $invoices;
+    private PaymentProcessor&MockObject $paymentProcessor;
     private EntityManagerInterface&MockObject $em;
     private EmailDispatcher $dispatcher;
     private EmlReader $reader;
@@ -52,6 +56,7 @@ final class EmailDispatcherTest extends TestCase
         $this->emailLogs = $this->createMock(EmailLogRepository::class);
         $this->reservations = $this->createMock(ReservationRepository::class);
         $this->invoices = $this->createMock(InvoiceRepository::class);
+        $this->paymentProcessor = $this->createMock(PaymentProcessor::class);
         $this->em = $this->createMock(EntityManagerInterface::class);
 
         // wrapInTransaction by default just runs the closure.
@@ -75,6 +80,8 @@ final class EmailDispatcherTest extends TestCase
             new AirbnbPayoutParser(),
             new BookingTriggerParser(),
             $bookingInvoiceImporter,
+            new CsPaymentParser(),
+            $this->paymentProcessor,
             $this->invoices,
             $this->em,
             new NullLogger(),
@@ -229,6 +236,38 @@ final class EmailDispatcherTest extends TestCase
         self::assertStringContainsString('HMMNOP56QR', (string) $log->getError());
     }
 
+    public function testRoutesCsPaymentToProcessorAndMarksProcessed(): void
+    {
+        $this->emailLogs->method('findByMessageId')->willReturn(null);
+        $this->em->expects(self::once())->method('persist');
+
+        $reservation = new Reservation(Channel::WEB, new \DateTimeImmutable('2026-07-10'));
+        $this->paymentProcessor->expects(self::once())
+            ->method('process')
+            ->willReturn(PaymentResult::matched($reservation));
+
+        $email = $this->reader->fromFile(__DIR__ . '/../Fixtures/CS/prisla-platba-zaloha.eml');
+        $log = $this->dispatcher->dispatch($email);
+
+        self::assertSame(EmailLogStatus::PROCESSED, $log->getStatus());
+        self::assertSame($reservation, $log->getReservation());
+    }
+
+    public function testMarksCsPaymentIgnoredWhenProcessorReturnsUnmatched(): void
+    {
+        $this->emailLogs->method('findByMessageId')->willReturn(null);
+
+        $this->paymentProcessor->expects(self::once())
+            ->method('process')
+            ->willReturn(PaymentResult::unmatched('Platba VS 9999 bez navázané rezervace.'));
+
+        $email = $this->reader->fromFile(__DIR__ . '/../Fixtures/CS/prisla-platba-zaloha.eml');
+        $log = $this->dispatcher->dispatch($email);
+
+        self::assertSame(EmailLogStatus::IGNORED, $log->getStatus());
+        self::assertStringContainsString('9999', (string) $log->getError());
+    }
+
     public function testRecordsErrorWhenParserThrows(): void
     {
         $airbnbParser = $this->createMock(AirbnbReservationParser::class);
@@ -251,6 +290,8 @@ final class EmailDispatcherTest extends TestCase
             new AirbnbPayoutParser(),
             new BookingTriggerParser(),
             $bookingInvoiceImporter,
+            new CsPaymentParser(),
+            $this->paymentProcessor,
             $this->invoices,
             $this->em,
             new NullLogger(),

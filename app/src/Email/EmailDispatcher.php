@@ -18,6 +18,7 @@ use App\Entity\EmailLog;
 use App\Entity\Reservation;
 use App\Enum\Channel;
 use App\Enum\ReservationStatus;
+use App\Payment\PaymentProcessor;
 use App\Repository\EmailLogRepository;
 use App\Repository\InvoiceRepository;
 use App\Repository\ReservationRepository;
@@ -35,6 +36,8 @@ class EmailDispatcher
         private readonly AirbnbPayoutParser $airbnbPayoutParser,
         private readonly BookingTriggerParser $bookingParser,
         private readonly BookingInvoiceImporter $bookingInvoiceImporter,
+        private readonly CsPaymentParser $csPaymentParser,
+        private readonly PaymentProcessor $paymentProcessor,
         private readonly InvoiceRepository $invoices,
         private readonly EntityManagerInterface $em,
         private readonly LoggerInterface $logger,
@@ -85,6 +88,13 @@ class EmailDispatcher
             } elseif ($this->bookingInvoiceImporter->supports($email)) {
                 $this->bookingInvoiceImporter->import($email, $log);
                 $log->markProcessed();
+            } elseif ($this->csPaymentParser->supports($email)) {
+                $result = $this->paymentProcessor->process($this->csPaymentParser->parse($email), $email);
+                if ($result->reservation !== null) {
+                    $log->markProcessed($result->reservation);
+                } else {
+                    $log->markIgnored($result->ignoredReason);
+                }
             } else {
                 $log->markIgnored('No parser matched');
             }

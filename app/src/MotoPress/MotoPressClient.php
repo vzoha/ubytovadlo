@@ -78,6 +78,16 @@ class MotoPressClient
     }
 
     /**
+     * Nastaví stav platby (např. "completed"). Vyžaduje API klíč s právem Write.
+     *
+     * @return array<string, mixed>
+     */
+    public function updatePaymentStatus(int $id, string $status): array
+    {
+        return $this->send('PUT', sprintf('/payments/%d', $id), ['status' => $status]);
+    }
+
+    /**
      * @param array<string, scalar|array<scalar>> $query
      *
      * @return list<array<string, mixed>>
@@ -156,6 +166,38 @@ class MotoPressClient
             $response = $this->httpClient->request($method, $url, [
                 'auth_basic' => [$this->motopressConsumerKey, $this->motopressConsumerSecret],
                 'query' => $query,
+                'headers' => ['Accept' => 'application/json'],
+                'timeout' => 30,
+            ]);
+            $status = $response->getStatusCode();
+            if ($status >= 400) {
+                throw new MotoPressApiException(sprintf('MotoPress API %s %s vratil HTTP %d: %s', $method, $path, $status, $response->getContent(false)));
+            }
+
+            $decoded = $response->toArray(false);
+        } catch (HttpExceptionInterface|TransportException $e) {
+            $this->logger->error('MotoPress API selhalo', ['method' => $method, 'path' => $path, 'error' => $e->getMessage()]);
+            throw new MotoPressApiException('MotoPress API request selhal: ' . $e->getMessage(), 0, $e);
+        }
+
+        return $decoded;
+    }
+
+    /**
+     * Zápis (PUT/POST) s JSON tělem.
+     *
+     * @param array<string, mixed> $payload
+     *
+     * @return array<string, mixed>
+     */
+    private function send(string $method, string $path, array $payload): array
+    {
+        $url = rtrim($this->motopressBaseUrl, '/') . self::API_PATH . $path;
+
+        try {
+            $response = $this->httpClient->request($method, $url, [
+                'auth_basic' => [$this->motopressConsumerKey, $this->motopressConsumerSecret],
+                'json' => $payload,
                 'headers' => ['Accept' => 'application/json'],
                 'timeout' => 30,
             ]);

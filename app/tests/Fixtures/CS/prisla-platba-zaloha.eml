@@ -1,0 +1,23 @@
+Date: Tue, 16 Jun 2026 13:36:06 +0200
+From: =?UTF-8?Q?=C4=8Cesk=C3=A1_spo=C5=99itelna?= <ceskasporitelna@csas.cz>
+To: automatizace@example.com
+Subject: =?utf-8?b?UMWZacWhbGEgcGxhdGJh?=
+Message-ID: <prisla-platba-zaloha@csas.cz>
+MIME-Version: 1.0
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+<!doctype html><html><body>
+<div><span>Dobrý den, pane Nováku,</span></div>
+<div><span>na účet </span><span>Jan Novák 123456789/0800 </span><span>právě dorazila platba ve výši </span><span>1&nbsp;000,00 Kč.</span></div>
+<div><span>Na účtu je nově k dispozici</span><span> 2&nbsp;684,21 Kč.</span></div>
+<div><span>Vaše Česká spořitelna</span></div>
+<div><span>Informace o transakci</span></div>
+<table><tr><td><div><span>Směr platby: </span><span>příchozí</span></div></td></tr>
+<tr><td><div><span>Číslo účtu: </span><span>123456789/0800</span></div></td></tr></table>
+<table><tr><td><div><span>Číslo účtu protistrany: </span><span>987654321/0100</span></div></td></tr></table>
+<table><tr><td><div><span>Částka v měně transakce: </span><span>1&nbsp;000,00 Kč</span></div></td></tr>
+<tr><td><div><span>Částka v měně účtu: </span><span>1&nbsp;000,00 Kč</span></div></td></tr></table>
+<table><tr><td><div><span>Variabilní symbol: </span><span>1234567</span></div></td></tr>
+<tr><td><div><span>Konstantní symbol: </span><span>0</span></div></td></tr></table>
+</body></html>

@@ -13,6 +13,8 @@ namespace App\Command;
 
 use App\Entity\ElectricityTariff;
 use App\Entity\GuestDocument;
+use App\Entity\Invoice;
+use App\Entity\Payment;
 use App\Entity\Reservation;
 use App\Entity\Setting;
 use App\Entity\User;
@@ -21,6 +23,7 @@ use App\Enum\Channel;
 use App\Enum\CleaningType;
 use App\Enum\DocumentType;
 use App\Enum\ElectricitySource;
+use App\Enum\PaymentSource;
 use App\Enum\ReservationStatus;
 use App\Invoice\InvoiceService;
 use App\Repository\CleaningRepository;
@@ -332,7 +335,9 @@ class DevSeedDemoCommand extends Command
             switch ($mode) {
                 case 'deposit_final':
                     $deposit = $this->invoices->issueDeposit($r, $r->getBookedAt());
-                    $this->invoices->markPaid($deposit, $r->getBookedAt()->modify('+3 days'));
+                    $paidAt = $r->getBookedAt()->modify('+3 days');
+                    $this->invoices->markPaid($deposit, $paidAt);
+                    $this->recordDepositPayment($r, $deposit, $s, $paidAt);
                     $final = $this->invoices->issueFinal($r, $deposit, $issuedAt);
                     if ($s['paid'] ?? true) {
                         $this->invoices->markPaid($final, $issuedAt->modify('+1 day'));
@@ -341,7 +346,9 @@ class DevSeedDemoCommand extends Command
 
                 case 'deposit_only':
                     $deposit = $this->invoices->issueDeposit($r, $r->getBookedAt());
-                    $this->invoices->markPaid($deposit, $r->getBookedAt()->modify('+3 days'));
+                    $paidAt = $r->getBookedAt()->modify('+3 days');
+                    $this->invoices->markPaid($deposit, $paidAt);
+                    $this->recordDepositPayment($r, $deposit, $s, $paidAt);
                     break;
 
                 case 'full':
@@ -356,6 +363,30 @@ class DevSeedDemoCommand extends Command
             // Faktura nesmí shodit celý seed (např. ČNB dočasně nedostupné u EUR).
             // Rezervace zůstane bez faktury — UI to korektně zobrazí jako "k vystavení".
         }
+    }
+
+    /**
+     * Zaeviduje příchozí platbu zálohy (jako by dorazila notifikace ČS) a naváže ji
+     * na zálohovou fakturu — demo nové funkce párování plateb na neutrálních datech.
+     *
+     * @param array<string, mixed> $s
+     */
+    private function recordDepositPayment(Reservation $r, Invoice $deposit, array $s, \DateTimeImmutable $receivedAt): void
+    {
+        $ext = (string) ($s['ext'] ?? '');
+        $payment = new Payment(
+            PaymentSource::CS_EMAIL,
+            $deposit->getTotalAmount(),
+            $deposit->getCurrency(),
+            $receivedAt,
+            sprintf('<demo-payment-%s@csas.cz>', $ext),
+        );
+        $payment->setVariableSymbol($ext);
+        $payment->setConstantSymbol('0');
+        $payment->setCounterpartyAccount('987654321/0100');
+        $payment->setReservation($r);
+        $payment->setInvoice($deposit);
+        $this->em->persist($payment);
     }
 
     /** @param array<string, mixed> $s */

@@ -6,6 +6,33 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ## [Unreleased]
 
+### Přidáno
+
+- **Párování příchozích plateb (notifikace ČS) → automatické vystavení faktury.**
+  IMAP poller nově zpracovává e-mail České spořitelny „Přišla platba"
+  (`App\Email\CsPaymentParser`): vytáhne částku, variabilní symbol, účet protistrany
+  a směr platby. `App\Payment\PaymentProcessor` platbu zaeviduje (nová entita
+  `Payment` jako source of truth „peníze dorazily", i pro nespárované platby) a
+  napáruje podle VS — buď na fakturu (VS = číslo faktury, host platil z QR), nebo
+  na rezervaci (VS = MotoPress booking ID). U webové klasiky (záloha + doplatek)
+  ve výši zálohy vystaví (chybí-li) a označí **zálohovou fakturu uhrazenou**,
+  doplní časovou osu. Vystavení přeskočí, pokud rezervaci chybí údaje hosta
+  (platba se přesto zaeviduje). Odpadá ruční potvrzování platby. Demo seed
+  zakládá ukázkové platby na neutrálních datech.
+- **Volitelný push stavu platby do MotoPressu.** Po spárování platby vyšle jádro
+  doménovou událost `PaymentSettledEvent`; konektor `MotoPressPaymentSyncListener`
+  na ni reaguje a přes REST API označí odpovídající platbu v MotoPressu jako
+  `completed` (MotoPress si rezervaci sám potvrdí). Zapíná se přepínačem
+  `MOTOPRESS_PUSH_PAYMENTS` (default vyp.; vyžaduje API klíč s právem Write).
+  Jádro o MotoPressu neví — instance bez něj listener nemá a událost zůstane bez
+  efektu. Selhání MotoPressu jen zaloguje, zpracování platby neshodí.
+
+### Změněno
+
+- **Region hosta z Airbnb e-mailu se extrahuje strukturálně** (region = „Město/kraj,
+  jednoslovná země" za značkou „Totožnost ověřena") — odpadá konfigurace
+  `AIRBNB_LISTING_NAME`, která je tím zrušena.
+
 ## [0.5.0] — 2026-06-15
 
 ### Přidáno

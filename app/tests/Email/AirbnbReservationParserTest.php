@@ -22,7 +22,7 @@ final class AirbnbReservationParserTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->parser = new AirbnbReservationParser('Vejminek');
+        $this->parser = new AirbnbReservationParser();
         $this->reader = new EmlReader();
     }
 

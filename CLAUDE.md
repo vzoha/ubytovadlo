@@ -197,7 +197,7 @@ V `app/` běží Symfony 7.4 projekt s Doctrine + MySQL.
 **Co MVP umí:**
 
 - **IMAP poller** `app:imap:poll` — čte automatizační schránku (viz `app/.env.local`), idempotentní podle Message-ID v `email_log`. Volby: `--all` (i SEEN), `--dry-run` (nemarkovat Seen).
-- **Airbnb parser** (`App\Email\AirbnbReservationParser`) — z HTML body Airbnb potvrzovacího e-mailu vytáhne potvrzující kód, jméno, region, příjezd/odjezd s časy, počet hostů (dospělí/děti/kojenci), cenu/noc, počet nocí, celkem, provizi Airbnb 3 %, čistou výplatu. Extrakce regionu se kotví na **název inzerátu z `AIRBNB_LISTING_NAME`** (konfigurovatelné; prázdné = region se přeskočí) — žádné natvrdo zadané jméno objektu.
+- **Airbnb parser** (`App\Email\AirbnbReservationParser`) — z HTML body Airbnb potvrzovacího e-mailu vytáhne potvrzující kód, jméno, region, příjezd/odjezd s časy, počet hostů (dospělí/děti/kojenci), cenu/noc, počet nocí, celkem, provizi Airbnb 3 %, čistou výplatu. Region hosta se extrahuje **strukturálně** (region = „Město/kraj, jednoslovná země" za značkou „Totožnost ověřena") — bez konfigurace názvu inzerátu.
 - **Booking trigger parser** — z předmětu vytáhne `res_id` + datum příjezdu (víc Booking neposkytuje), vytvoří rezervaci ve stavu `needs_details`.
 - **Dashboard** (Bootstrap 5, lokálně v `app/public/assets/`) — seznam s filtrem podle stavu, detail, formulář na doplnění adresy/firmy/IČO/DIČ.
 - **52 PHPUnit testů** zelených (jednotky + functional `VatControllerTest`).

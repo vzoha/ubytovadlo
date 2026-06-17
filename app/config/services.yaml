@@ -24,9 +24,9 @@ services:
             string $motopressBaseUrl: '%env(MOTOPRESS_BASE_URL)%'
             string $motopressConsumerKey: '%env(MOTOPRESS_CONSUMER_KEY)%'
             string $motopressConsumerSecret: '%env(MOTOPRESS_CONSUMER_SECRET)%'
-            string $airbnbListingName: '%env(AIRBNB_LISTING_NAME)%'
             array $motopressPetServiceIds: '%env(csv:MOTOPRESS_PET_SERVICE_IDS)%'
             array $motopressBabyCotServiceIds: '%env(csv:MOTOPRESS_BABY_COT_SERVICE_IDS)%'
+            bool $motopressPushPayments: '%env(bool:MOTOPRESS_PUSH_PAYMENTS)%'
             string $invoiceDepositAmount: '%env(INVOICE_DEPOSIT_AMOUNT)%'
             string $appEnv: '%kernel.environment%'
 

@@ -74,6 +74,15 @@ class InvoiceRepository extends ServiceEntityRepository
         return $byReservation;
     }
 
+    /**
+     * Faktura podle variabilního symbolu (= číslo faktury). Slouží ke spárování
+     * příchozí platby, když host platí přes QR/SPAYD z faktury.
+     */
+    public function findOneByVariableSymbol(string $variableSymbol): ?Invoice
+    {
+        return $this->findOneBy(['variableSymbol' => $variableSymbol]);
+    }
+
     public function findFirstByReservationAndType(Reservation $reservation, InvoiceType $type): ?Invoice
     {
         return $this->createQueryBuilder('i')
