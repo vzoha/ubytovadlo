@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Command;
 
+use App\Credential\CredentialProvider;
 use App\Email\EmailAttachment;
 use App\Email\EmailDispatcher;
 use App\Email\EmailMessage;
@@ -31,13 +32,7 @@ class ImapPollCommand extends Command
     public function __construct(
         private readonly EmailDispatcher $dispatcher,
         private readonly HtmlToTextConverter $htmlToText,
-        private readonly string $imapHost,
-        private readonly int $imapPort,
-        private readonly string $imapEncryption,
-        private readonly string $imapUsername,
-        #[\SensitiveParameter]
-        private readonly string $imapPassword,
-        private readonly string $imapFolder,
+        private readonly CredentialProvider $credentials,
     ) {
         parent::__construct();
     }
@@ -55,19 +50,20 @@ class ImapPollCommand extends Command
 
         $cm = new ClientManager();
         $client = $cm->make([
-            'host' => $this->imapHost,
-            'port' => $this->imapPort,
-            'encryption' => $this->imapEncryption,
+            'host' => $this->credentials->imapHost(),
+            'port' => $this->credentials->imapPort(),
+            'encryption' => $this->credentials->imapEncryption(),
             'validate_cert' => true,
-            'username' => $this->imapUsername,
-            'password' => $this->imapPassword,
+            'username' => $this->credentials->imapUsername(),
+            'password' => $this->credentials->imapPassword(),
             'protocol' => 'imap',
         ]);
         $client->connect();
 
-        $folder = $client->getFolderByPath($this->imapFolder);
+        $imapFolder = $this->credentials->imapFolder();
+        $folder = $client->getFolderByPath($imapFolder);
         if ($folder === null) {
-            $io->error("IMAP folder not found: {$this->imapFolder}");
+            $io->error("IMAP folder not found: {$imapFolder}");
 
             return Command::FAILURE;
         }
@@ -76,7 +72,7 @@ class ImapPollCommand extends Command
         $query = $input->getOption('all') ? $query->all() : $query->unseen();
         $messages = $query->get();
 
-        $io->writeln(sprintf('Found <info>%d</info> message(s) in %s', $messages->count(), $this->imapFolder));
+        $io->writeln(sprintf('Found <info>%d</info> message(s) in %s', $messages->count(), $imapFolder));
 
         $processed = $ignored = $errors = 0;
         $dryRun = $input->getOption('dry-run');

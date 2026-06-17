@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\MotoPress;
 
+use App\Credential\CredentialProvider;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpClient\Exception\TransportException;
 use Symfony\Contracts\HttpClient\Exception\HttpExceptionInterface;
@@ -29,9 +30,7 @@ class MotoPressClient
     public function __construct(
         private readonly HttpClientInterface $httpClient,
         private readonly LoggerInterface $logger,
-        private readonly string $motopressBaseUrl,
-        private readonly string $motopressConsumerKey,
-        private readonly string $motopressConsumerSecret,
+        private readonly CredentialProvider $credentials,
     ) {
     }
 
@@ -126,11 +125,11 @@ class MotoPressClient
      */
     private function fetchPage(string $path, array $query): array
     {
-        $url = rtrim($this->motopressBaseUrl, '/') . self::API_PATH . $path;
+        $url = rtrim($this->credentials->motopressBaseUrl(), '/') . self::API_PATH . $path;
 
         try {
             $response = $this->httpClient->request('GET', $url, [
-                'auth_basic' => [$this->motopressConsumerKey, $this->motopressConsumerSecret],
+                'auth_basic' => [$this->credentials->motopressConsumerKey(), $this->credentials->motopressConsumerSecret()],
                 'query' => $query,
                 'headers' => ['Accept' => 'application/json'],
                 'timeout' => 30,
@@ -160,11 +159,11 @@ class MotoPressClient
      */
     private function request(string $method, string $path, array $query = []): array
     {
-        $url = rtrim($this->motopressBaseUrl, '/') . self::API_PATH . $path;
+        $url = rtrim($this->credentials->motopressBaseUrl(), '/') . self::API_PATH . $path;
 
         try {
             $response = $this->httpClient->request($method, $url, [
-                'auth_basic' => [$this->motopressConsumerKey, $this->motopressConsumerSecret],
+                'auth_basic' => [$this->credentials->motopressConsumerKey(), $this->credentials->motopressConsumerSecret()],
                 'query' => $query,
                 'headers' => ['Accept' => 'application/json'],
                 'timeout' => 30,
@@ -192,11 +191,11 @@ class MotoPressClient
      */
     private function send(string $method, string $path, array $payload): array
     {
-        $url = rtrim($this->motopressBaseUrl, '/') . self::API_PATH . $path;
+        $url = rtrim($this->credentials->motopressBaseUrl(), '/') . self::API_PATH . $path;
 
         try {
             $response = $this->httpClient->request($method, $url, [
-                'auth_basic' => [$this->motopressConsumerKey, $this->motopressConsumerSecret],
+                'auth_basic' => [$this->credentials->motopressConsumerKey(), $this->credentials->motopressConsumerSecret()],
                 'json' => $payload,
                 'headers' => ['Accept' => 'application/json'],
                 'timeout' => 30,

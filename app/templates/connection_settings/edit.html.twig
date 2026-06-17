@@ -1,0 +1,64 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nastavení — připojení{% endblock %}
+
+{% block body %}
+    <h1 class="h3 mb-3">Nastavení</h1>
+
+    {{ include('settings/_nav.html.twig', { active: 'connection' }) }}
+
+    <h2 class="h5 mb-2">Připojení a přístupové údaje</h2>
+    <p class="text-muted small">
+        Údaje se ukládají <strong>šifrovaně</strong> v databázi (master klíč žije jen v env).
+        Hesla a klíče se nikdy nezobrazují zpět — prázdné pole = beze změny.
+        Dokud nejsou vyplněné, použijí se hodnoty z <code>.env</code>.
+    </p>
+
+    {% if not cipherReady %}
+        <div class="alert alert-warning">
+            Není nastaven <code>APP_CREDENTIALS_KEY</code> — uložení do databáze je vypnuté.
+            Vygeneruj klíč a vlož do <code>.env.local</code>:
+            <code>php -r "echo base64_encode(random_bytes(32)).PHP_EOL;"</code>
+        </div>
+    {% endif %}
+
+    <div class="col-lg-8">
+        {{ form_start(form) }}
+            <div class="card mb-3">
+                <div class="card-header py-2 fw-semibold">IMAP — automatizační schránka</div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">{{ form_row(form.imapHost) }}</div>
+                        <div class="col-md-3">{{ form_row(form.imapPort) }}</div>
+                        <div class="col-md-3">{{ form_row(form.imapEncryption) }}</div>
+                    </div>
+                    <div class="row g-3 mt-0">
+                        <div class="col-md-6">{{ form_row(form.imapUsername) }}</div>
+                        <div class="col-md-6">{{ form_row(form.imapFolder) }}</div>
+                    </div>
+                    <div class="mb-1">
+                        {{ form_row(form.imapPassword) }}
+                        {% if secretsSet.imapPassword %}<span class="badge text-bg-success">heslo nastaveno</span>{% else %}<span class="badge text-bg-secondary">heslo nenastaveno</span>{% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-header py-2 fw-semibold">MotoPress — REST API</div>
+                <div class="card-body">
+                    <div class="mb-3">{{ form_row(form.motopressBaseUrl) }}</div>
+                    <div class="mb-1">
+                        {{ form_row(form.motopressConsumerKey) }}
+                        {% if secretsSet.motopressConsumerKey %}<span class="badge text-bg-success">nastaveno</span>{% else %}<span class="badge text-bg-secondary">nenastaveno</span>{% endif %}
+                    </div>
+                    <div class="mb-1">
+                        {{ form_row(form.motopressConsumerSecret) }}
+                        {% if secretsSet.motopressConsumerSecret %}<span class="badge text-bg-success">nastaveno</span>{% else %}<span class="badge text-bg-secondary">nenastaveno</span>{% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn btn-primary">Uložit</button>
+        {{ form_end(form) }}
+    </div>
+{% endblock %}

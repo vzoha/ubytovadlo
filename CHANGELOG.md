@@ -27,6 +27,14 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
   Jádro o MotoPressu neví — instance bez něj listener nemá a událost zůstane bez
   efektu. Selhání MotoPressu jen zaloguje, zpracování platby neshodí.
 
+- **Přístupové údaje v UI místo .env (šifrovaně v DB).** Nová stránka
+  `/nastaveni/pripojeni` — IMAP schránka a MotoPress REST API se zadají v UI a uloží
+  **šifrovaně** v tabulce `credential` (libsodium secretbox; master klíč
+  `APP_CREDENTIALS_KEY` zůstává v env). `CredentialProvider` čte přednostně z DB,
+  fallback je `.env` (self-host/vývoj funguje beze změny). Tajemství se v UI nikdy
+  nezobrazují zpět (write-only, prázdné = beze změny). Připraveno na hostovaný/
+  multi-tenant provoz, kde si creds vyplní uživatel a nesmí do env.
+
 ### Změněno
 
 - **Region hosta z Airbnb e-mailu se extrahuje strukturálně** (region = „Město/kraj,
