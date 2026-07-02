@@ -101,14 +101,16 @@ final class AccountBalanceCalculatorTest extends KernelTestCase
         self::assertSame(1000, $this->calculator->balance($bank, $today));
     }
 
-    public function testUnassignedPaymentCountsOnDefaultBank(): void
+    public function testUnassignedPaymentIsNotCounted(): void
     {
+        // Nespárovaná platba (může být soukromý příjem) se do stavu účtu nepočítá,
+        // dokud ji uživatel ručně nespáruje s rezervací nebo nezaúčtuje.
         $bank = $this->persistAccount('Banka', AccountType::BANK, 0);
         $payment = new Payment(PaymentSource::CS_EMAIL, '1234.00', 'CZK', new \DateTimeImmutable('2026-02-01'), '<x@e>');
         $this->em->persist($payment);
         $this->em->flush();
 
-        self::assertSame(1234, $this->calculator->balance($bank));
+        self::assertSame(0, $this->calculator->balance($bank));
     }
 
     public function testMovementsBeforeOpeningDateAreIgnored(): void

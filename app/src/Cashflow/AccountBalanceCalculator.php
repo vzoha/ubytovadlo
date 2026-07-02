@@ -12,26 +12,25 @@ declare(strict_types=1);
 namespace App\Cashflow;
 
 use App\Entity\Account;
-use App\Enum\AccountType;
 use App\Enum\LedgerEntryType;
-use App\Repository\AccountRepository;
 use App\Repository\LedgerEntryRepository;
-use App\Repository\PaymentRepository;
 use App\Repository\ReservationReceiptRepository;
 
 /**
  * Očekávaný stav účtu k datu (v celých Kč):
- *   opening + přijaté platby (ReservationReceipt) + nepřiřazené bankovní kredity
- *   + příchozí převody − výdaje − odchozí převody ± korekce.
- * Nepřiřazené platby (bez rezervace) se počítají jen na výchozí bankovní účet.
+ *   opening + přijaté platby (ReservationReceipt) + příchozí převody
+ *   − výdaje − odchozí převody ± korekce.
+ *
+ * Nespárované příchozí platby (bez navázané rezervace) se ZÁMĚRNĚ nepočítají:
+ * na účet chodí i příjmy nesouvisející s pronájmem (soukromé, vklady), takže
+ * dokud platbu někdo ručně nespáruje s rezervací (→ ReservationReceipt) nebo
+ * nezaúčtuje ručně, do cashflow pronájmu nepatří. Zbytek srovná uzávěrka.
  */
 final class AccountBalanceCalculator
 {
     public function __construct(
         private readonly ReservationReceiptRepository $receipts,
         private readonly LedgerEntryRepository $ledger,
-        private readonly PaymentRepository $payments,
-        private readonly AccountRepository $accounts,
     ) {
     }
 
@@ -47,12 +46,6 @@ final class AccountBalanceCalculator
         // ne (caller předá upTo = dnes). Odhad vs. reálná částka gate neřídí.
         foreach ($this->receipts->findReceivedForAccount($account, $from, $upTo) as $receipt) {
             $balance += self::toKc($receipt->getAmountCzk());
-        }
-
-        if ($account->getType() === AccountType::BANK && $this->isDefaultBank($account)) {
-            foreach ($this->payments->findUnassignedCzk($from, $upTo) as $payment) {
-                $balance += self::toKc($payment->getAmount());
-            }
         }
 
         foreach ($this->ledger->findTouchingAccount($account, $from, $upTo) as $entry) {
@@ -75,11 +68,6 @@ final class AccountBalanceCalculator
                 default => 0,
             },
         };
-    }
-
-    private function isDefaultBank(Account $account): bool
-    {
-        return $this->accounts->findDefaultByType(AccountType::BANK)?->getId() === $account->getId();
     }
 
     private static function toKc(string $decimal): int
