@@ -49,7 +49,8 @@ final class AirbnbReservationParserTest extends TestCase
 
         self::assertSame(2000.0, $r->pricePerNight);
         self::assertSame(6, $r->nights);
-        self::assertSame(14000.0, $r->priceTotal);
+        // price_total = hrubá tržba hostitele (net 11 640 + provize 360), NE guest total 14 000.
+        self::assertSame(12000.0, $r->priceTotal);
         self::assertSame(360.0, $r->hostCommission);
         self::assertSame(11640.0, $r->netPayout);
         self::assertFalse($r->hasPet);
@@ -101,7 +102,8 @@ final class AirbnbReservationParserTest extends TestCase
 
         self::assertSame(1500.0, $r->pricePerNight);
         self::assertSame(4, $r->nights);
-        self::assertSame(7000.0, $r->priceTotal);
+        // price_total = hrubá tržba hostitele (net 5 820 + provize 180), NE guest total 7 000.
+        self::assertSame(6000.0, $r->priceTotal);
         self::assertSame(180.0, $r->hostCommission);
         self::assertSame(5820.0, $r->netPayout);
     }

@@ -153,7 +153,8 @@ final class EmailDispatcherTest extends TestCase
         self::assertSame('HMABCD12EF', $reservation->getExternalId());
         self::assertSame('Petr Novák', $reservation->getGuestName());
         self::assertSame(ReservationStatus::NEEDS_DETAILS, $reservation->getStatus());
-        self::assertSame('14000.00', $reservation->getPriceTotal());
+        // Hrubá tržba hostitele (net 11 640 + provize 360), NE guest total 14 000.
+        self::assertSame('12000.00', $reservation->getPriceTotal());
         self::assertContains($reservation, $persisted);
     }
 

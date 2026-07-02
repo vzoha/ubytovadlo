@@ -44,9 +44,14 @@ class AirbnbReservationParser
         [$checkOut, $checkOutTime] = $this->extractMomentLine($text, 'Odjezd', $reference, after: $checkIn);
         [$adult, $child, $infant] = $this->extractGuestCounts($text);
         [$pricePerNight, $nights, $subtotal] = $this->extractStayPricing($text);
-        $priceTotal = $this->extractAmount($text, '/Celkem\s*\(CZK\)\s*([\d\s\xc2\xa0]+,\d{2})/u');
         $hostCommission = $this->extractAmount($text, '/Servisní poplatek hostitele[^-]*-\s*([\d\s\xc2\xa0]+,\d{2})/u');
         $netPayout = $this->extractAmount($text, '/Vyděláš si\s+([\d\s\xc2\xa0]+,\d{2})/u');
+        // price_total = hrubá tržba hostitele (čistý výdělek + jeho servisní poplatek),
+        // NE guest total „Celkem (CZK)" — ten obsahuje i servisní poplatek hosta a daně,
+        // které si Airbnb bere od hosta a hostiteli nikdy nedojdou. Fallback: ubytování.
+        $priceTotal = $netPayout !== null && $hostCommission !== null
+            ? $netPayout + $hostCommission
+            : $subtotal;
         [$hasPet, $petsNote] = $this->detectPet($text);
 
         return new AirbnbParsedReservation(
@@ -62,7 +67,7 @@ class AirbnbReservationParser
             guestsInfant: $infant,
             pricePerNight: $pricePerNight,
             nights: $nights,
-            priceTotal: $priceTotal ?? $subtotal,
+            priceTotal: $priceTotal,
             hostCommission: $hostCommission,
             netPayout: $netPayout,
             hasPet: $hasPet,

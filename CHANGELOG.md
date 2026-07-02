@@ -48,6 +48,15 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
   storno-poplatek je reálný příjem (peníze přišly a nevrátily se); u zrušeného
   pobytu se nevede jen odhad budoucí OTA výplaty.
 
+### Opraveno
+
+- **Airbnb `price_total` = hrubá tržba hostitele, ne guest total.** Parser bral cenu
+  z „Celkem (CZK)" — jenže Airbnb tak označuje **částku zaplacenou hostem** (včetně
+  servisního poplatku hosta a daní, které jdou Airbnb a hostiteli nikdy nedojdou).
+  Nově bere **výdělkovou stranu** (čistý výdělek „Vyděláš si" + servisní poplatek
+  hostitele 3 %). Opravuje nadhodnocený Airbnb příjem v Cashflow i Ekonomice
+  (např. odhad 3 967 → reálných 3 298 Kč).
+
 - **Párování příchozích plateb (notifikace ČS) → automatické vystavení faktury.**
   IMAP poller nově zpracovává e-mail České spořitelny „Přišla platba"
   (`App\Email\CsPaymentParser`): vytáhne částku, variabilní symbol, účet protistrany
