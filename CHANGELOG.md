@@ -36,10 +36,11 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
   i očekávané výplaty (výhled); detail rezervace ukazuje rozpis dílčích plateb.
   Demo seed zakládá účty, výdaje, převod a uzávěrku na neutrálních datech.
 - **Cashflow UI — editace, filtr, měsíční souhrn, CSV export.** Pohyby (`LedgerEntry`)
-  i účty (`Account`) lze **upravit**, ne jen přidat/smazat. Přehled pohybů má
-  **filtr** (účet / typ / období) a **stránkování**. Nová stránka **měsíční souhrn**
-  (`/ucty/souhrn/{rok}`): přijaté platby proti výdajům (provozní vs. osobní odliv)
-  po měsících; **CSV export** filtrovaných pohybů.
+  i účty (`Account`) lze **upravit**, ne jen přidat/smazat. Přehled pohybů i tabulka
+  **přijatých příjmů** mají **stránkování** (nezávislé); pohyby navíc **filtr**
+  (účet / typ / období). Nová stránka **měsíční souhrn** (`/ucty/souhrn/{rok}`):
+  přijaté platby proti výdajům (provozní vs. osobní odliv) po měsících;
+  **CSV export** filtrovaných pohybů.
 
 - **Párování příchozích plateb (notifikace ČS) → automatické vystavení faktury.**
   IMAP poller nově zpracovává e-mail České spořitelny „Přišla platba"

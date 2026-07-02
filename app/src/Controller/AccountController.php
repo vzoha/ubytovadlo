@@ -79,11 +79,14 @@ class AccountController extends AbstractController
             ($page - 1) * self::PER_PAGE,
         );
 
+        $incomePage = max(1, $request->query->getInt('rpage', 1));
+        $incomeTotal = $this->receipts->countReceived($today);
+
         return $this->render('account/index.html.twig', [
             'cards' => $cards,
             'accounts' => $accounts,
             'recent' => $movements,
-            'incomes' => $this->receipts->findReceived($today, 20),
+            'incomes' => $this->receipts->findReceived($today, self::PER_PAGE, ($incomePage - 1) * self::PER_PAGE),
             'estimates' => $this->receipts->findExpected($today),
             'categories' => ExpenseCategory::cases(),
             'accountTypes' => AccountType::cases(),
@@ -92,6 +95,9 @@ class AccountController extends AbstractController
             'page' => $page,
             'pages' => max(1, (int) ceil($total / self::PER_PAGE)),
             'total' => $total,
+            'incomePage' => $incomePage,
+            'incomePages' => max(1, (int) ceil($incomeTotal / self::PER_PAGE)),
+            'incomeTotal' => $incomeTotal,
         ]);
     }
 

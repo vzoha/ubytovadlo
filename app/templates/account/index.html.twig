@@ -116,7 +116,7 @@
     </div>
 
     <div class="card mb-4">
-        <div class="card-header">Přijaté příjmy z rezervací <span class="small text-muted">(v stavu účtu)</span></div>
+        <div class="card-header">Přijaté příjmy z rezervací <span class="small text-muted">({{ incomeTotal }}, v stavu účtu)</span></div>
         <table class="table table-sm table-hover align-middle mb-0 small">
             <thead>
                 <tr><th>Přijato</th><th>Host</th><th>Kanál</th><th>Zdroj</th><th>Účet</th><th class="text-end">Částka</th></tr>
@@ -136,6 +136,15 @@
             {% endfor %}
             </tbody>
         </table>
+        {% if incomePages > 1 %}
+            <div class="card-footer d-flex justify-content-between align-items-center small">
+                <span class="text-muted">Strana {{ incomePage }} / {{ incomePages }}</span>
+                <div class="btn-group">
+                    {% if incomePage > 1 %}<a class="btn btn-sm btn-outline-secondary" href="{{ path('account_index', app.request.query.all|merge({rpage: incomePage - 1})) }}">← Novější</a>{% endif %}
+                    {% if incomePage < incomePages %}<a class="btn btn-sm btn-outline-secondary" href="{{ path('account_index', app.request.query.all|merge({rpage: incomePage + 1})) }}">Starší →</a>{% endif %}
+                </div>
+            </div>
+        {% endif %}
     </div>
 
     {% if estimates is not empty %}

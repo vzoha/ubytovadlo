@@ -14,11 +14,15 @@ namespace App\Tests\Controller;
 use App\Entity\Account;
 use App\Entity\BalanceStatement;
 use App\Entity\LedgerEntry;
+use App\Entity\Reservation;
 use App\Entity\ReservationReceipt;
 use App\Entity\User;
 use App\Enum\AccountType;
+use App\Enum\Channel;
 use App\Enum\ExpenseCategory;
+use App\Enum\IncomeSource;
 use App\Enum\LedgerEntryType;
+use App\Enum\ReceiptOrigin;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -192,5 +196,25 @@ final class AccountControllerTest extends WebTestCase
         $this->client->request('GET', '/ucty?from=2026-99-99&to=nesmysl');
 
         self::assertResponseIsSuccessful();
+    }
+
+    public function testReceivedIncomesArePaginated(): void
+    {
+        // Víc než jedna stránka přijatých příjmů → musí být paginace (dřív jen limit 20).
+        $reservation = new Reservation(Channel::WEB, new \DateTimeImmutable('2026-01-01'));
+        $reservation->setGuestName('Paginace Test');
+        $this->em->persist($reservation);
+        for ($i = 1; $i <= 25; $i++) {
+            $receipt = new ReservationReceipt($reservation, '100.00', IncomeSource::PAID_INVOICE, ReceiptOrigin::INVOICE, $i);
+            $receipt->setAccount($this->bank);
+            $receipt->setReceivedOn(new \DateTimeImmutable('2026-02-01'));
+            $this->em->persist($receipt);
+        }
+        $this->em->flush();
+
+        $this->client->request('GET', '/ucty');
+
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString('rpage=2', (string) $this->client->getResponse()->getContent());
     }
 }

@@ -58,7 +58,7 @@ class ReservationReceiptRepository extends ServiceEntityRepository
      *
      * @return ReservationReceipt[]
      */
-    public function findReceived(\DateTimeImmutable $today, int $limit = 30): array
+    public function findReceived(\DateTimeImmutable $today, int $limit = 30, int $offset = 0): array
     {
         return $this->createQueryBuilder('r')
             ->andWhere('r.receivedOn IS NOT NULL AND r.receivedOn <= :today')
@@ -66,8 +66,19 @@ class ReservationReceiptRepository extends ServiceEntityRepository
             ->orderBy('r.receivedOn', 'DESC')
             ->addOrderBy('r.id', 'DESC')
             ->setMaxResults($limit)
+            ->setFirstResult($offset)
             ->getQuery()
             ->getResult();
+    }
+
+    public function countReceived(\DateTimeImmutable $today): int
+    {
+        return (int) $this->createQueryBuilder('r')
+            ->select('COUNT(r.id)')
+            ->andWhere('r.receivedOn IS NOT NULL AND r.receivedOn <= :today')
+            ->setParameter('today', $today)
+            ->getQuery()
+            ->getSingleScalarResult();
     }
 
     /**
