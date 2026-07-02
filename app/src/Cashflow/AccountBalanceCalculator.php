@@ -42,12 +42,11 @@ final class AccountBalanceCalculator
         $from = $account->getOpeningDate();
         $balance = $account->getOpeningBalanceCzk();
 
-        // Do stavu účtu jen skutečně přijaté peníze; ESTIMATE je výhled (např. OTA
-        // před výplatou), realizuje se až reálným příjmem (výplata / zaplacená faktura).
+        // Příjmy s datem přijetí v okně [openingDate, upTo]. U OTA je received_on
+        // datum odjezdu → minulé pobyty se počítají (výplata už dorazila), budoucí
+        // ne (caller předá upTo = dnes). Odhad vs. reálná částka gate neřídí.
         foreach ($this->incomes->findReceivedForAccount($account, $from, $upTo) as $income) {
-            if ($income->getSource()->isRealized()) {
-                $balance += self::toKc($income->getAmountCzk());
-            }
+            $balance += self::toKc($income->getAmountCzk());
         }
 
         if ($account->getType() === AccountType::BANK && $this->isDefaultBank($account)) {

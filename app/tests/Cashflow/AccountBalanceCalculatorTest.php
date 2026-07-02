@@ -84,18 +84,20 @@ final class AccountBalanceCalculatorTest extends KernelTestCase
         self::assertSame(300, $this->calculator->balance($cash));
     }
 
-    public function testEstimateIncomeIsNotCounted(): void
+    public function testFutureIncomeNotInCurrentBalance(): void
     {
-        // ESTIMATE je výhled (např. OTA před výplatou) — do stavu účtu nepatří.
+        // Aktuální stav (upTo = dnes) nepočítá příjem s datem přijetí v budoucnu
+        // (např. OTA odhad u budoucího pobytu); minulý příjem se počítá.
         $bank = $this->persistAccount('Banka', AccountType::BANK, 1000);
         $reservation = $this->persistReservation();
-        $income = new ReservationIncome($reservation, '5000.00', IncomeSource::ESTIMATE);
-        $income->setAccount($bank);
-        $income->setReceivedOn(new \DateTimeImmutable('2026-03-15'));
-        $this->em->persist($income);
+        $future = new ReservationIncome($reservation, '5000.00', IncomeSource::ESTIMATE);
+        $future->setAccount($bank);
+        $future->setReceivedOn(new \DateTimeImmutable('2100-01-01'));
+        $this->em->persist($future);
         $this->em->flush();
 
-        self::assertSame(1000, $this->calculator->balance($bank));
+        $today = new \DateTimeImmutable('today');
+        self::assertSame(1000, $this->calculator->balance($bank, $today));
     }
 
     public function testUnassignedPaymentCountsOnDefaultBank(): void

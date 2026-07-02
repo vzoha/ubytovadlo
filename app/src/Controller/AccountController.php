@@ -49,13 +49,14 @@ class AccountController extends AbstractController
     #[Route('/ucty', name: 'account_index', methods: ['GET'])]
     public function index(): Response
     {
+        $today = new \DateTimeImmutable('today');
         $accounts = $this->accounts->findOrdered();
         $cards = [];
         foreach ($accounts as $account) {
             $latest = $this->statements->findLatestForAccount($account);
             $cards[] = [
                 'account' => $account,
-                'balance' => $this->balances->balance($account),
+                'balance' => $this->balances->balance($account, $today),
                 'verifiedAt' => $latest?->getStatementDate(),
             ];
         }
@@ -64,8 +65,8 @@ class AccountController extends AbstractController
             'cards' => $cards,
             'accounts' => $accounts,
             'recent' => \array_slice($this->ledger->findAllUpTo(), 0, 20),
-            'incomes' => $this->incomes->findRealizedOrdered(20),
-            'estimates' => $this->incomes->findEstimatesOrdered(),
+            'incomes' => $this->incomes->findReceived($today, 20),
+            'estimates' => $this->incomes->findExpected($today),
             'categories' => ExpenseCategory::cases(),
             'accountTypes' => AccountType::cases(),
         ]);
@@ -81,7 +82,7 @@ class AccountController extends AbstractController
 
         return $this->render('account/show.html.twig', [
             'account' => $account,
-            'balance' => $this->balances->balance($account),
+            'balance' => $this->balances->balance($account, new \DateTimeImmutable('today')),
             'movements' => $this->ledger->findTouchingAccount($account),
             'statements' => $statements,
         ]);

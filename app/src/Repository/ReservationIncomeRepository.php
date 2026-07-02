@@ -61,15 +61,15 @@ class ReservationIncomeRepository extends ServiceEntityRepository
     }
 
     /**
-     * Skutečně přijaté příjmy (ne odhad), od nejnovějších — pro přehled na /ucty.
+     * Už přijaté příjmy (datum přijetí ≤ dnes; u OTA = odjezd) — v stavu účtu.
      *
      * @return ReservationIncome[]
      */
-    public function findRealizedOrdered(int $limit = 30): array
+    public function findReceived(\DateTimeImmutable $today, int $limit = 30): array
     {
         return $this->createQueryBuilder('i')
-            ->andWhere('i.source != :est')
-            ->setParameter('est', \App\Enum\IncomeSource::ESTIMATE)
+            ->andWhere('i.receivedOn IS NOT NULL AND i.receivedOn <= :today')
+            ->setParameter('today', $today)
             ->orderBy('i.receivedOn', 'DESC')
             ->addOrderBy('i.id', 'DESC')
             ->setMaxResults($limit)
@@ -78,15 +78,15 @@ class ReservationIncomeRepository extends ServiceEntityRepository
     }
 
     /**
-     * Očekávané příjmy (odhad, např. OTA před výplatou) — výhled, mimo stav účtu.
+     * Očekávané příjmy (datum přijetí > dnes) — výhled, mimo stav účtu.
      *
      * @return ReservationIncome[]
      */
-    public function findEstimatesOrdered(): array
+    public function findExpected(\DateTimeImmutable $today): array
     {
         return $this->createQueryBuilder('i')
-            ->andWhere('i.source = :est')
-            ->setParameter('est', \App\Enum\IncomeSource::ESTIMATE)
+            ->andWhere('i.receivedOn IS NULL OR i.receivedOn > :today')
+            ->setParameter('today', $today)
             ->orderBy('i.receivedOn', 'ASC')
             ->getQuery()
             ->getResult();
