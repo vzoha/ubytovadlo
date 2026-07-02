@@ -33,8 +33,12 @@
                         <div class="col-md-6">
                             <label class="form-label small mb-0">Kategorie</label>
                             <select name="category" class="form-select form-select-sm">
-                                {% for c in categories %}
-                                    <option value="{{ c.value }}" {{ entry.category and c.value == entry.category.value ? 'selected' }}>{{ c.label }}</option>
+                                {% for grp in expenseGroups %}
+                                    <optgroup label="{{ grp.label }}">
+                                        {% for c in categories|filter(c => c.group.value == grp.value) %}
+                                            <option value="{{ c.value }}" {{ entry.category and c.value == entry.category.value ? 'selected' }}>{{ c.label }}</option>
+                                        {% endfor %}
+                                    </optgroup>
                                 {% endfor %}
                             </select>
                         </div>

@@ -63,7 +63,10 @@
                     <td>
                         {% if m.type.value == 'transfer' %}
                             {{ m.account.id == account.id ? '→ ' ~ (m.counterAccount ? m.counterAccount.name : '—') : '← ' ~ m.account.name }}
-                        {% elseif m.category %}{{ m.category.label }}{% endif %}
+                        {% elseif m.category %}
+                            {{ m.category.label }}
+                            {% if m.category.group.value == 'personal' %}<span class="badge text-bg-secondary">osobní</span>{% endif %}
+                        {% endif %}
                     </td>
                     <td class="text-end {{ effect < 0 ? 'text-danger' : 'text-success' }}">{{ effect|number_format(0, ',', ' ') }} Kč</td>
                     <td class="text-muted">{{ m.note }}</td>

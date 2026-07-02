@@ -44,6 +44,11 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 - **Nerezervační příjmy** (`LedgerEntryType::INCOME` — „ostatní příjem"): úroky
   z účtu, storno-poplatky, náhrady. Formulář na `/ucty`, vstupují do stavu účtu
   i do měsíčního souhrnu (ne do per-rezervačního zisku v Ekonomice).
+- **Kategorie výdajů — skupiny a lepší členění.** Výdaje rozdělené do skupin
+  **„Provoz ubytování"** vs **„Osobní a finanční"** (`ExpenseGroup`): dropdown je
+  seskupený (optgroup) a osobní odliv (splátka úvěru, výběr majitele) je v přehledu
+  vizuálně odlišený. Přibyly kategorie **úklid, spotřební materiál a drogerie,
+  pojištění**; popisky zpřesněny.
 - **Zrušená rezervace se zaplacenou fakturou vede příjem** — nevrácená záloha /
   storno-poplatek je reálný příjem (peníze přišly a nevrátily se); u zrušeného
   pobytu se nevede jen odhad budoucí OTA výplaty.

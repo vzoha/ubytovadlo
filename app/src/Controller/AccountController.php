@@ -19,6 +19,7 @@ use App\Entity\BalanceStatement;
 use App\Entity\LedgerEntry;
 use App\Enum\AccountType;
 use App\Enum\ExpenseCategory;
+use App\Enum\ExpenseGroup;
 use App\Enum\LedgerEntryType;
 use App\Repository\AccountRepository;
 use App\Repository\BalanceStatementRepository;
@@ -89,6 +90,7 @@ class AccountController extends AbstractController
             'incomes' => $this->receipts->findReceived($today, self::PER_PAGE, ($incomePage - 1) * self::PER_PAGE),
             'estimates' => $this->receipts->findExpected($today),
             'categories' => ExpenseCategory::cases(),
+            'expenseGroups' => ExpenseGroup::cases(),
             'accountTypes' => AccountType::cases(),
             'entryTypes' => LedgerEntryType::cases(),
             'filter' => $filter,
@@ -348,6 +350,7 @@ class AccountController extends AbstractController
             'entry' => $entry,
             'accounts' => $this->accounts->findOrdered(),
             'categories' => ExpenseCategory::cases(),
+            'expenseGroups' => ExpenseGroup::cases(),
         ]);
     }
 
