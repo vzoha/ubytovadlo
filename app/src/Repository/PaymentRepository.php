@@ -47,12 +47,15 @@ class PaymentRepository extends ServiceEntityRepository
      *
      * @return Payment[]
      */
-    public function findUnassignedCzk(?\DateTimeImmutable $upTo = null): array
+    public function findUnassignedCzk(?\DateTimeImmutable $from = null, ?\DateTimeImmutable $upTo = null): array
     {
         $qb = $this->createQueryBuilder('p')
             ->andWhere('p.reservation IS NULL')
             ->andWhere('p.currency = :czk')
             ->setParameter('czk', 'CZK');
+        if ($from !== null) {
+            $qb->andWhere('p.receivedAt >= :from')->setParameter('from', $from);
+        }
         if ($upTo !== null) {
             $qb->andWhere('p.receivedAt <= :upTo')->setParameter('upTo', $upTo);
         }

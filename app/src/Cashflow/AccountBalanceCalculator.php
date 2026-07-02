@@ -37,19 +37,22 @@ final class AccountBalanceCalculator
 
     public function balance(Account $account, ?\DateTimeImmutable $upTo = null): int
     {
+        // Počáteční stav je zůstatek k openingDate → počítáme jen pohyby od té doby;
+        // cokoliv staršího už je v počátečním stavu (a nesmí se odečíst znovu).
+        $from = $account->getOpeningDate();
         $balance = $account->getOpeningBalanceCzk();
 
-        foreach ($this->incomes->findReceivedForAccount($account, $upTo) as $income) {
+        foreach ($this->incomes->findReceivedForAccount($account, $from, $upTo) as $income) {
             $balance += self::toKc($income->getAmountCzk());
         }
 
         if ($account->getType() === AccountType::BANK && $this->isDefaultBank($account)) {
-            foreach ($this->payments->findUnassignedCzk($upTo) as $payment) {
+            foreach ($this->payments->findUnassignedCzk($from, $upTo) as $payment) {
                 $balance += self::toKc($payment->getAmount());
             }
         }
 
-        foreach ($this->ledger->findTouchingAccount($account, $upTo) as $entry) {
+        foreach ($this->ledger->findTouchingAccount($account, $from, $upTo) as $entry) {
             $balance += $this->ledgerEffect($account, $entry);
         }
 

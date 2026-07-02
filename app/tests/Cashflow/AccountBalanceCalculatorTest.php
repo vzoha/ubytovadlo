@@ -94,6 +94,18 @@ final class AccountBalanceCalculatorTest extends KernelTestCase
         self::assertSame(1234, $this->calculator->balance($bank));
     }
 
+    public function testMovementsBeforeOpeningDateAreIgnored(): void
+    {
+        // Počáteční stav je zůstatek k openingDate → starší pohyby už jsou v něm.
+        $bank = new Account('Banka', AccountType::BANK, 42693, new \DateTimeImmutable('2026-01-01'));
+        $this->em->persist($bank);
+        $this->persistEntry(LedgerEntryType::EXPENSE, 5000, $bank, '2025-11-10'); // před kotvou → ignorovat
+        $this->persistEntry(LedgerEntryType::EXPENSE, 60000, $bank, '2026-04-22'); // po kotvě → počítat
+        $this->em->flush();
+
+        self::assertSame(42693 - 60000, $this->calculator->balance($bank));
+    }
+
     public function testBalanceRespectsUpToDate(): void
     {
         $bank = $this->persistAccount('Banka', AccountType::BANK, 0);

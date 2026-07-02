@@ -32,13 +32,16 @@ class LedgerEntryRepository extends ServiceEntityRepository
      *
      * @return LedgerEntry[]
      */
-    public function findTouchingAccount(Account $account, ?\DateTimeImmutable $upTo = null): array
+    public function findTouchingAccount(Account $account, ?\DateTimeImmutable $from = null, ?\DateTimeImmutable $upTo = null): array
     {
         $qb = $this->createQueryBuilder('e')
             ->andWhere('e.account = :a OR e.counterAccount = :a')
             ->setParameter('a', $account)
             ->orderBy('e.occurredOn', 'DESC')
             ->addOrderBy('e.id', 'DESC');
+        if ($from !== null) {
+            $qb->andWhere('e.occurredOn >= :from')->setParameter('from', $from);
+        }
         if ($upTo !== null) {
             $qb->andWhere('e.occurredOn <= :upTo')->setParameter('upTo', $upTo);
         }

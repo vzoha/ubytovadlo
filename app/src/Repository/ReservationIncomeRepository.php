@@ -65,13 +65,17 @@ class ReservationIncomeRepository extends ServiceEntityRepository
      *
      * @return ReservationIncome[]
      */
-    public function findReceivedForAccount(Account $account, ?\DateTimeImmutable $upTo = null): array
+    public function findReceivedForAccount(Account $account, ?\DateTimeImmutable $from = null, ?\DateTimeImmutable $upTo = null): array
     {
         $qb = $this->createQueryBuilder('i')
             ->andWhere('i.account = :a')
+            ->andWhere('i.receivedOn IS NOT NULL')
             ->setParameter('a', $account);
+        if ($from !== null) {
+            $qb->andWhere('i.receivedOn >= :from')->setParameter('from', $from);
+        }
         if ($upTo !== null) {
-            $qb->andWhere('i.receivedOn IS NOT NULL AND i.receivedOn <= :upTo')->setParameter('upTo', $upTo);
+            $qb->andWhere('i.receivedOn <= :upTo')->setParameter('upTo', $upTo);
         }
 
         return $qb->getQuery()->getResult();
