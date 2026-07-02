@@ -64,6 +64,11 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 - **Region hosta z Airbnb e-mailu se extrahuje strukturálně** (region = „Město/kraj,
   jednoslovná země" za značkou „Totožnost ověřena") — odpadá konfigurace
   `AIRBNB_LISTING_NAME`, která je tím zrušena.
+- **`cache:clear` odebrán z composer `auto-scripts`** (post-install). Na PHP 8.5
+  hostu spouštěl composer warmup v subprocessu s nezapisovatelným temp direm →
+  `tempnam()` `E_NOTICE`, kterou symfony/translation 7.4.x nepotlačuje (fix až
+  Symfony 8), a warmup padal. Ruční `bin/console cache:clear` (čisté CLI) funguje;
+  je proto povinným krokem deploye (viz `docs/deploy.md`).
 
 ## [0.5.0] — 2026-06-15
 

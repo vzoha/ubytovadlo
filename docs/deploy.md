@@ -103,6 +103,12 @@ composer deploy-www
 php bin/console cache:clear --env=prod
 ```
 
+> `cache:clear` **není** v composer `auto-scripts` (post-install) — na PHP 8.5 host
+> spouští composer warmup v subprocessu s nezapisovatelným temp direm, `tempnam()`
+> spadne na `E_NOTICE` (symfony/translation 7.4.x ji nepotlačuje, fix až Symfony 8).
+> Ruční `php bin/console cache:clear --env=prod` (čisté CLI, temp dir `/srv/www/tmp`)
+> projde i na studené cache → je proto **povinný krok deploye**.
+
 ---
 
 ## 3. Přenos databáze
