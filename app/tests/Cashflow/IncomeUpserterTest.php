@@ -23,6 +23,7 @@ use App\Enum\AccountType;
 use App\Enum\Channel;
 use App\Enum\IncomeSource;
 use App\Enum\InvoiceType;
+use App\Enum\ReservationStatus;
 use App\Repository\ReservationIncomeRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -181,6 +182,22 @@ final class IncomeUpserterTest extends KernelTestCase
         self::assertSame('5080.00', $this->incomes->findForReservation($r)?->getAmountCzk());
     }
 
+    public function testCancelledReservationGetsNoIncome(): void
+    {
+        $r = $this->persistReservation(Channel::WEB, price: '3000.00');
+        $this->persistInvoice($r, InvoiceType::FULL, '3000.00', paid: true);
+        $this->em->flush();
+        $this->upserter->recompute($r);
+        self::assertNotNull($this->incomes->findForReservation($r));
+
+        // Storno → příjem se odstraní.
+        $r->setStatus(ReservationStatus::CANCELLED);
+        $this->em->flush();
+        $this->upserter->recompute($r);
+
+        self::assertNull($this->incomes->findForReservation($r));
+    }
+
     private function persistAccount(string $name, AccountType $type): Account
     {
         $account = new Account($name, $type, 0, new \DateTimeImmutable('2026-01-01'));
@@ -194,6 +211,7 @@ final class IncomeUpserterTest extends KernelTestCase
     {
         $r = new Reservation($channel, new \DateTimeImmutable('2026-03-10'));
         $r->setCheckOut(new \DateTimeImmutable('2026-03-12'));
+        $r->setStatus(ReservationStatus::CONFIRMED);
         $r->setGuestName('Test Host');
         $r->setGuestsAdult(2);
         if ($price !== null) {

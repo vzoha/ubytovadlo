@@ -19,6 +19,7 @@ use App\Enum\AccountType;
 use App\Enum\Channel;
 use App\Enum\IncomeSource;
 use App\Enum\InvoiceType;
+use App\Enum\ReservationStatus;
 use App\Repository\AccountRepository;
 use App\Repository\InvoiceRepository;
 use App\Repository\PaymentRepository;
@@ -53,6 +54,18 @@ class IncomeUpserter
     public function recompute(Reservation $reservation): void
     {
         $existing = $this->incomes->findForReservation($reservation);
+
+        // Zrušené a nedotažené (needs_details) rezervace nejsou příjem — případný
+        // dřívější záznam odstraníme.
+        if (\in_array($reservation->getStatus(), [ReservationStatus::CANCELLED, ReservationStatus::NEEDS_DETAILS], true)) {
+            if ($existing !== null) {
+                $this->em->remove($existing);
+                $this->em->flush();
+            }
+
+            return;
+        }
+
         if ($existing !== null && $existing->isManuallyOverridden()) {
             return;
         }

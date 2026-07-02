@@ -61,6 +61,38 @@ class ReservationIncomeRepository extends ServiceEntityRepository
     }
 
     /**
+     * Skutečně přijaté příjmy (ne odhad), od nejnovějších — pro přehled na /ucty.
+     *
+     * @return ReservationIncome[]
+     */
+    public function findRealizedOrdered(int $limit = 30): array
+    {
+        return $this->createQueryBuilder('i')
+            ->andWhere('i.source != :est')
+            ->setParameter('est', \App\Enum\IncomeSource::ESTIMATE)
+            ->orderBy('i.receivedOn', 'DESC')
+            ->addOrderBy('i.id', 'DESC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Očekávané příjmy (odhad, např. OTA před výplatou) — výhled, mimo stav účtu.
+     *
+     * @return ReservationIncome[]
+     */
+    public function findEstimatesOrdered(): array
+    {
+        return $this->createQueryBuilder('i')
+            ->andWhere('i.source = :est')
+            ->setParameter('est', \App\Enum\IncomeSource::ESTIMATE)
+            ->orderBy('i.receivedOn', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
      * Příjmy připsané na účet do daného data — pro výpočet zůstatku.
      *
      * @return ReservationIncome[]

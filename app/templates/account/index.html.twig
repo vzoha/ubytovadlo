@@ -82,6 +82,51 @@
         </table>
     </div>
 
+    <div class="card mb-4">
+        <div class="card-header">Přijaté příjmy z rezervací <span class="small text-muted">(v stavu účtu)</span></div>
+        <table class="table table-sm table-hover align-middle mb-0 small">
+            <thead>
+                <tr><th>Přijato</th><th>Host</th><th>Kanál</th><th>Zdroj</th><th>Účet</th><th class="text-end">Částka</th></tr>
+            </thead>
+            <tbody>
+            {% for i in incomes %}
+                <tr>
+                    <td>{{ i.receivedOn ? i.receivedOn|date('j. n. Y') : '—' }}</td>
+                    <td><a class="text-decoration-none" href="{{ path('reservation_detail', {id: i.reservation.id}) }}">{{ i.reservation.guestName ?? ('#' ~ i.reservation.id) }}</a></td>
+                    <td>{{ i.reservation.channel.value }}</td>
+                    <td><span class="badge text-bg-success">{{ i.source.label }}</span></td>
+                    <td>{{ i.account ? i.account.name : '—' }}</td>
+                    <td class="text-end text-success">{{ i.amountCzk|number_format(0, ',', ' ') }} Kč</td>
+                </tr>
+            {% else %}
+                <tr><td colspan="6" class="text-muted">Zatím žádné přijaté příjmy.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if estimates is not empty %}
+    <div class="card mb-4">
+        <div class="card-header">Očekávané výplaty <span class="small text-muted">(výhled — mimo stav účtu, dokud nedorazí)</span></div>
+        <table class="table table-sm align-middle mb-0 small">
+            <thead>
+                <tr><th>Pobyt do</th><th>Host</th><th>Kanál</th><th class="text-end">Odhad (net)</th><th></th></tr>
+            </thead>
+            <tbody>
+            {% for i in estimates %}
+                <tr>
+                    <td>{{ i.receivedOn ? i.receivedOn|date('j. n. Y') : '—' }}</td>
+                    <td><a class="text-decoration-none" href="{{ path('reservation_detail', {id: i.reservation.id}) }}">{{ i.reservation.guestName ?? ('#' ~ i.reservation.id) }}</a></td>
+                    <td>{{ i.reservation.channel.value }}</td>
+                    <td class="text-end text-muted">{{ i.amountCzk|number_format(0, ',', ' ') }} Kč</td>
+                    <td class="text-end"><a class="btn btn-sm btn-outline-primary py-0" href="{{ path('reservation_detail', {id: i.reservation.id}) }}">Zadat výplatu</a></td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
     <div class="card">
         <div class="card-header">Nový účet</div>
         <div class="card-body">

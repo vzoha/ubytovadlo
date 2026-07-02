@@ -28,9 +28,12 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
     formulář „Reálná výplata" na detailu rezervace. Ruční výplata příjem „zamkne".
   Priorita: OTA výplata > zaplacená faktura > bankovní kredit > odhad → stejná
   výplata (mail i bankovní kredit) se nikdy nezapočte dvakrát; funguje i bez
-  parsování bankovních notifikací. Stav bankovního účtu se plní z těchto příjmů +
-  nepřiřazených bankovních kreditů; uzávěrka zůstává autoritou nad odhady. Demo
-  seed zakládá účty, výdaje, převod a uzávěrku na neutrálních datech.
+  parsování bankovních notifikací. Do **stavu účtu** vstupují jen **skutečně
+  přijaté** příjmy (odhad = výhled, mimo zůstatek, dokud nedorazí reálná výplata);
+  **zrušené a nedotažené** rezervace se do příjmu nepočítají. `/ucty` zobrazuje
+  tabulky přijatých příjmů i očekávaných výplat (výhled). Stav účtu se plní z
+  přijatých příjmů + nepřiřazených bankovních kreditů; uzávěrka zůstává autoritou.
+  Demo seed zakládá účty, výdaje, převod a uzávěrku na neutrálních datech.
 
 - **Párování příchozích plateb (notifikace ČS) → automatické vystavení faktury.**
   IMAP poller nově zpracovává e-mail České spořitelny „Přišla platba"

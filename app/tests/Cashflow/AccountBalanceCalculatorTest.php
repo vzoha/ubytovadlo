@@ -84,6 +84,20 @@ final class AccountBalanceCalculatorTest extends KernelTestCase
         self::assertSame(300, $this->calculator->balance($cash));
     }
 
+    public function testEstimateIncomeIsNotCounted(): void
+    {
+        // ESTIMATE je výhled (např. OTA před výplatou) — do stavu účtu nepatří.
+        $bank = $this->persistAccount('Banka', AccountType::BANK, 1000);
+        $reservation = $this->persistReservation();
+        $income = new ReservationIncome($reservation, '5000.00', IncomeSource::ESTIMATE);
+        $income->setAccount($bank);
+        $income->setReceivedOn(new \DateTimeImmutable('2026-03-15'));
+        $this->em->persist($income);
+        $this->em->flush();
+
+        self::assertSame(1000, $this->calculator->balance($bank));
+    }
+
     public function testUnassignedPaymentCountsOnDefaultBank(): void
     {
         $bank = $this->persistAccount('Banka', AccountType::BANK, 0);

@@ -22,6 +22,7 @@ use App\Enum\LedgerEntryType;
 use App\Repository\AccountRepository;
 use App\Repository\BalanceStatementRepository;
 use App\Repository\LedgerEntryRepository;
+use App\Repository\ReservationIncomeRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -40,6 +41,7 @@ class AccountController extends AbstractController
         private readonly BalanceStatementRepository $statements,
         private readonly AccountBalanceCalculator $balances,
         private readonly BalanceStatementReconciler $reconciler,
+        private readonly ReservationIncomeRepository $incomes,
         private readonly EntityManagerInterface $em,
     ) {
     }
@@ -62,6 +64,8 @@ class AccountController extends AbstractController
             'cards' => $cards,
             'accounts' => $accounts,
             'recent' => \array_slice($this->ledger->findAllUpTo(), 0, 20),
+            'incomes' => $this->incomes->findRealizedOrdered(20),
+            'estimates' => $this->incomes->findEstimatesOrdered(),
             'categories' => ExpenseCategory::cases(),
             'accountTypes' => AccountType::cases(),
         ]);
