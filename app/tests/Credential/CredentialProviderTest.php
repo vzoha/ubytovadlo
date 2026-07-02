@@ -70,6 +70,41 @@ final class CredentialProviderTest extends TestCase
         self::assertTrue($state['secretsSet']['motopressConsumerSecret']);
     }
 
+    public function testSmtpDsnFromStoredCredentials(): void
+    {
+        $this->repo->method('getDecrypted')->willReturnMap([
+            ['smtp.host', 'mail.example.com'],
+            ['smtp.port', '465'],
+            ['smtp.encryption', 'ssl'],
+            ['smtp.username', 'me@example.com'],
+            ['smtp.password', 'p@ss:word'],
+        ]);
+
+        // ssl → schéma smtps, uživatel i heslo URL-enkódované
+        self::assertSame(
+            'smtps://me%40example.com:p%40ss%3Aword@mail.example.com:465',
+            $this->provider()->smtpDsn(),
+        );
+    }
+
+    public function testSmtpDsnDefaultsPortAndSchemeFromEncryption(): void
+    {
+        $this->repo->method('getDecrypted')->willReturnMap([
+            ['smtp.host', 'mail.example.com'],
+            ['smtp.encryption', 'tls'],
+        ]);
+
+        // tls → smtp (STARTTLS) na 587, bez uživatele = bez auth
+        self::assertSame('smtp://mail.example.com:587', $this->provider()->smtpDsn());
+    }
+
+    public function testSmtpDsnNullWhenHostMissing(): void
+    {
+        $this->repo->method('getDecrypted')->willReturn(null);
+
+        self::assertNull($this->provider()->smtpDsn());
+    }
+
     private function provider(): CredentialProvider
     {
         return new CredentialProvider(

@@ -8,6 +8,13 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Přidáno
 
+- **SMTP nastavení v UI místo `.env`.** Přihlašovací údaje odchozí pošty (host, port,
+  šifrování, uživatel, heslo) se zadávají v `/nastaveni/pripojeni` a ukládají
+  **šifrovaně** v credential store (stejně jako IMAP/MotoPress). `App\Mail\DbMailer`
+  dekoruje výchozí mailer a staví transport z DB (`CredentialProvider::smtpDsn()`),
+  s fallbackem na `MAILER_DSN` z prostředí, když v DB SMTP není. Krok k odstranění
+  `.env` konfigurace kvůli budoucímu SaaS — tajemství i konfigurace patří do nastavení.
+
 - **E-mailové notifikace ubytovateli.** Nová záložka nastavení `/nastaveni/notifikace`:
   jedna adresa příjemce a per-typ režim doručení — **okamžitě** (samostatný e-mail
   při nejbližším běhu), **denní souhrn** (jednou denně vše dohromady) nebo **vypnuto**.

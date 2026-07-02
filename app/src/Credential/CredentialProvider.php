@@ -32,6 +32,11 @@ final class CredentialProvider
         'motopressBaseUrl' => ['motopress.base_url', false],
         'motopressConsumerKey' => ['motopress.consumer_key', true],
         'motopressConsumerSecret' => ['motopress.consumer_secret', true],
+        'smtpHost' => ['smtp.host', false],
+        'smtpPort' => ['smtp.port', false],
+        'smtpEncryption' => ['smtp.encryption', false],
+        'smtpUsername' => ['smtp.username', false],
+        'smtpPassword' => ['smtp.password', true],
     ];
 
     /** @var array<string, string> env fallback hodnoty podle pole */
@@ -51,6 +56,14 @@ final class CredentialProvider
         string $motopressConsumerKey,
         #[\SensitiveParameter]
         string $motopressConsumerSecret,
+        // SMTP nemá per-pole env fallback (v env je jen celé MAILER_DSN) — když
+        // v DB nic není, vrátí prázdno a DbMailer padne zpět na MAILER_DSN.
+        string $smtpHost = '',
+        string $smtpPort = '',
+        string $smtpEncryption = '',
+        string $smtpUsername = '',
+        #[\SensitiveParameter]
+        string $smtpPassword = '',
     ) {
         $this->envFallback = [
             'imapHost' => $imapHost,
@@ -62,6 +75,11 @@ final class CredentialProvider
             'motopressBaseUrl' => $motopressBaseUrl,
             'motopressConsumerKey' => $motopressConsumerKey,
             'motopressConsumerSecret' => $motopressConsumerSecret,
+            'smtpHost' => $smtpHost,
+            'smtpPort' => $smtpPort,
+            'smtpEncryption' => $smtpEncryption,
+            'smtpUsername' => $smtpUsername,
+            'smtpPassword' => $smtpPassword,
         ];
     }
 
@@ -108,6 +126,64 @@ final class CredentialProvider
     public function motopressConsumerSecret(): string
     {
         return $this->get('motopressConsumerSecret');
+    }
+
+    public function smtpHost(): string
+    {
+        return $this->get('smtpHost');
+    }
+
+    public function smtpPort(): int
+    {
+        return (int) $this->get('smtpPort');
+    }
+
+    public function smtpEncryption(): string
+    {
+        return $this->get('smtpEncryption');
+    }
+
+    public function smtpUsername(): string
+    {
+        return $this->get('smtpUsername');
+    }
+
+    public function smtpPassword(): string
+    {
+        return $this->get('smtpPassword');
+    }
+
+    /**
+     * Symfony Mailer DSN z uložených SMTP údajů, nebo null když není nastaven host
+     * (pak se použije MAILER_DSN z prostředí). Šifrování volí schéma: ssl → smtps
+     * (implicitní TLS), tls → smtp se STARTTLS, žádné → smtp. Chybějící port se
+     * dopočítá z šifrování (465/587/25).
+     */
+    public function smtpDsn(): ?string
+    {
+        $host = trim($this->get('smtpHost'));
+        if ($host === '') {
+            return null;
+        }
+
+        $encryption = trim($this->get('smtpEncryption'));
+        $scheme = $encryption === 'ssl' ? 'smtps' : 'smtp';
+        $port = $this->smtpPort();
+        if ($port === 0) {
+            $port = match ($encryption) {
+                'ssl' => 465,
+                'tls' => 587,
+                default => 25,
+            };
+        }
+
+        $auth = '';
+        $user = trim($this->get('smtpUsername'));
+        if ($user !== '') {
+            $auth = rawurlencode($user) . ':' . rawurlencode($this->get('smtpPassword')) . '@';
+        }
+
+        return sprintf('%s://%s%s:%d', $scheme, $auth, $host, $port);
     }
 
     /**

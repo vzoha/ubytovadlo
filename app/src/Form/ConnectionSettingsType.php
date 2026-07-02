@@ -45,7 +45,16 @@ class ConnectionSettingsType extends AbstractType
             ->add('imapFolder', TextType::class, ['label' => 'Složka', 'required' => false, 'help' => 'Obvykle INBOX.'])
             ->add('motopressBaseUrl', TextType::class, ['label' => 'MotoPress URL', 'required' => false, 'help' => 'Adresa webu s pluginem, např. https://example.com'])
             ->add('motopressConsumerKey', PasswordType::class, ['label' => 'Consumer key', 'help' => 'Prázdné = beze změny.'] + $secret)
-            ->add('motopressConsumerSecret', PasswordType::class, ['label' => 'Consumer secret', 'help' => 'Prázdné = beze změny.'] + $secret);
+            ->add('motopressConsumerSecret', PasswordType::class, ['label' => 'Consumer secret', 'help' => 'Prázdné = beze změny.'] + $secret)
+            ->add('smtpHost', TextType::class, ['label' => 'SMTP server', 'required' => false, 'help' => 'Prázdné = použije se MAILER_DSN z prostředí.'])
+            ->add('smtpPort', IntegerType::class, ['label' => 'Port', 'required' => false, 'help' => 'Obvykle 465 (SSL) nebo 587 (TLS).'])
+            ->add('smtpEncryption', ChoiceType::class, [
+                'label' => 'Šifrování',
+                'required' => false,
+                'choices' => ['SSL' => 'ssl', 'TLS' => 'tls', 'Žádné' => ''],
+            ])
+            ->add('smtpUsername', TextType::class, ['label' => 'Uživatel', 'required' => false])
+            ->add('smtpPassword', PasswordType::class, ['label' => 'Heslo', 'help' => 'Prázdné = beze změny.'] + $secret);
     }
 
     public function configureOptions(OptionsResolver $resolver): void

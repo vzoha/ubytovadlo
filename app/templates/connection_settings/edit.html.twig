@@ -58,6 +58,28 @@
                 </div>
             </div>
 
+            <div class="card mb-3">
+                <div class="card-header py-2 fw-semibold">SMTP — odchozí e-maily</div>
+                <div class="card-body">
+                    <p class="text-muted small mb-3">
+                        Odesílání zpráv hostům, faktur a notifikací. Bez vyplnění se použije
+                        <code>MAILER_DSN</code> z prostředí (na produkci default <code>null://null</code> = neodesílá).
+                    </p>
+                    <div class="row g-3">
+                        <div class="col-md-6">{{ form_row(form.smtpHost) }}</div>
+                        <div class="col-md-3">{{ form_row(form.smtpPort) }}</div>
+                        <div class="col-md-3">{{ form_row(form.smtpEncryption) }}</div>
+                    </div>
+                    <div class="row g-3 mt-0">
+                        <div class="col-md-6">{{ form_row(form.smtpUsername) }}</div>
+                        <div class="col-md-6">
+                            {{ form_row(form.smtpPassword) }}
+                            {% if secretsSet.smtpPassword %}<span class="badge text-bg-success">heslo nastaveno</span>{% else %}<span class="badge text-bg-secondary">heslo nenastaveno</span>{% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <button class="btn btn-primary">Uložit</button>
         {{ form_end(form) }}
     </div>
