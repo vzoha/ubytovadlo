@@ -28,6 +28,9 @@ final class MessageVariableResolver
     private const VARIABLES = [
         'guest_name' => 'Celé jméno hosta',
         'guest_first_name' => 'Křestní jméno hosta',
+        'guest_first_name_vocative' => 'Křestní jméno hosta v 5. pádu (oslovení)',
+        'guest_last_name' => 'Příjmení hosta',
+        'guest_last_name_vocative' => 'Příjmení hosta v 5. pádu (oslovení)',
         'check_in' => 'Datum příjezdu',
         'check_in_time' => 'Čas příjezdu',
         'check_out' => 'Datum odjezdu',
@@ -52,6 +55,7 @@ final class MessageVariableResolver
         private readonly AccommodationProfileRepository $profiles,
         private readonly BalanceCalculator $balance,
         private readonly UrlGeneratorInterface $urlGenerator,
+        private readonly GuestVocative $vocative,
     ) {
     }
 
@@ -90,6 +94,9 @@ final class MessageVariableResolver
         $values = [
             'guest_name' => $reservation->getGuestName() ?? '',
             'guest_first_name' => $this->firstName($reservation->getGuestName()),
+            'guest_first_name_vocative' => $this->vocative->firstName($reservation->getGuestName()),
+            'guest_last_name' => $this->lastName($reservation->getGuestName()),
+            'guest_last_name_vocative' => $this->vocative->lastName($reservation->getGuestName()),
             'check_in' => $reservation->getCheckIn()->format('j. n. Y'),
             'check_in_time' => $this->time($reservation->getCheckInTime(), self::DEFAULT_CHECK_IN_TIME),
             'check_out' => $reservation->getCheckOut()?->format('j. n. Y') ?? '',
@@ -114,9 +121,23 @@ final class MessageVariableResolver
 
     private function firstName(?string $name): string
     {
-        $name = trim((string) $name);
+        $tokens = $this->nameTokens($name);
 
-        return $name === '' ? '' : explode(' ', $name)[0];
+        return $tokens[0] ?? '';
+    }
+
+    /** Příjmení = poslední slovo; jednoslovné jméno příjmení nemá. */
+    private function lastName(?string $name): string
+    {
+        $tokens = $this->nameTokens($name);
+
+        return \count($tokens) < 2 ? '' : (string) end($tokens);
+    }
+
+    /** @return list<string> */
+    private function nameTokens(?string $name): array
+    {
+        return array_values(array_filter(explode(' ', trim((string) $name)), static fn (string $t): bool => $t !== ''));
     }
 
     private function time(?\DateTimeImmutable $time, string $fallback): string

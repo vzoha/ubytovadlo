@@ -6,6 +6,16 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ## [Unreleased]
 
+### Přidáno
+
+- **Skloňování jmen v oslovení e-mailů (5. pád / vokativ).** Nové proměnné šablon
+  `{{ guest_first_name_vocative }}` (křestní jméno) a `{{ guest_last_name_vocative }}`
+  (příjmení) vracejí jméno hosta v 5. pádu, takže oslovení zní „Dobrý den, **Petře**,"
+  místo „Dobrý den Petr,", případně formálně „Vážený pane **Nováku**". Přibyla i
+  proměnná `{{ guest_last_name }}` (příjmení v 1. pádu). Výchozí šablony zpráv hostům
+  nově používají vokativ křestního jména. Postaveno na knihovně `granam/czech-vocative`;
+  prázdný vstup, jednoslovná i cizí jména jsou ošetřené (`App\Mail\GuestVocative`).
+
 ## [0.6.0] — 2026-07-02
 
 ### Přidáno

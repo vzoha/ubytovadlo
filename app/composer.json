@@ -12,6 +12,7 @@
         "doctrine/doctrine-bundle": "^3.2.4",
         "doctrine/doctrine-migrations-bundle": "^4.0",
         "doctrine/orm": "^3.6.7",
+        "granam/czech-vocative": "^2.2",
         "league/commonmark": "^2.8",
         "mpdf/mpdf": "^8.3.1",
         "mpdf/qrcode": "^1.2.2",

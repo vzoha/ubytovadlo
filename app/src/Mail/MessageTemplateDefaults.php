@@ -26,7 +26,7 @@ final class MessageTemplateDefaults
         'pre_arrival' => [
             'subject' => 'Těšíme se na vás — {{ accommodation_name }}, příjezd {{ check_in }}',
             'body' => <<<'MD'
-                Dobrý den {{ guest_first_name }},
+                Dobrý den, {{ guest_first_name_vocative }},
 
                 už se na vás těšíme! Připomínáme detaily vašeho pobytu:
 
@@ -45,7 +45,7 @@ final class MessageTemplateDefaults
         'post_stay' => [
             'subject' => 'Děkujeme za návštěvu — {{ accommodation_name }}',
             'body' => <<<'MD'
-                Dobrý den {{ guest_first_name }},
+                Dobrý den, {{ guest_first_name_vocative }},
 
                 děkujeme, že jste u nás strávili {{ nights }} nocí. Doufáme, že se vám pobyt líbil.
 
@@ -57,7 +57,7 @@ final class MessageTemplateDefaults
         'balance_reminder' => [
             'subject' => 'Doplatek za pobyt — {{ accommodation_name }}',
             'body' => <<<'MD'
-                Dobrý den {{ guest_first_name }},
+                Dobrý den, {{ guest_first_name_vocative }},
 
                 dovolujeme si připomenout doplatek za váš pobyt ve výši **{{ balance_due }}**.
 
@@ -69,7 +69,7 @@ final class MessageTemplateDefaults
         'invoice' => [
             'subject' => 'Faktura č. {{ invoice_number }} — {{ accommodation_name }}',
             'body' => <<<'MD'
-                Dobrý den {{ guest_first_name }},
+                Dobrý den, {{ guest_first_name_vocative }},
 
                 v příloze zasíláme fakturu č. {{ invoice_number }} za pobyt ({{ check_in }} — {{ check_out }}).
 
@@ -79,7 +79,7 @@ final class MessageTemplateDefaults
         'custom' => [
             'subject' => 'Zpráva — {{ accommodation_name }}',
             'body' => <<<'MD'
-                Dobrý den {{ guest_first_name }},
+                Dobrý den, {{ guest_first_name_vocative }},
 
 
                 MD,

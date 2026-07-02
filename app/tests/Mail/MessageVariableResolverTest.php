@@ -15,6 +15,7 @@ use App\Entity\Reservation;
 use App\Enum\Channel;
 use App\Invoice\BalanceCalculator;
 use App\Invoice\BalanceResult;
+use App\Mail\GuestVocative;
 use App\Mail\MessageVariableResolver;
 use App\Repository\AccommodationProfileRepository;
 use PHPUnit\Framework\TestCase;
@@ -33,6 +34,15 @@ final class MessageVariableResolverTest extends TestCase
         );
 
         self::assertSame('Ahoj Jan, příjezd 13. 4. 2026, 3 nocí. {{ neznama }}', $out);
+    }
+
+    public function testFirstNameVocativeDeclinesGreeting(): void
+    {
+        $resolver = $this->resolver(null);
+
+        $out = $resolver->render('Dobrý den, {{ guest_first_name_vocative }},', $this->reservation());
+
+        self::assertSame('Dobrý den, Jane,', $out);
     }
 
     public function testContextOverridesValue(): void
@@ -65,7 +75,7 @@ final class MessageVariableResolverTest extends TestCase
         $url = $this->createStub(UrlGeneratorInterface::class);
         $url->method('generate')->willReturn('https://example.test/checkin/abc');
 
-        return new MessageVariableResolver($profiles, $calc, $url);
+        return new MessageVariableResolver($profiles, $calc, $url, new GuestVocative());
     }
 
     private function reservation(): Reservation
