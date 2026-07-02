@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Profit;
 
+use App\Currency\CurrencyConverter;
 use App\Entity\Cleaning;
 use App\Entity\Invoice;
 use App\Entity\Reservation;
@@ -42,6 +43,7 @@ final class ReservationProfitCalculator
         private readonly CleaningRepository $cleanings,
         private readonly InvoiceRepository $invoices,
         private readonly SettingRepository $settings,
+        private readonly CurrencyConverter $converter,
     ) {
     }
 
@@ -152,19 +154,12 @@ final class ReservationProfitCalculator
         }
 
         // Jen záloha (nebo žádná faktura) → odhad z ceny rezervace.
-        $price = $r->getPriceTotal();
-        if ($price === null) {
-            return [null, false];
-        }
-        if ($r->getPriceCurrency() === 'CZK') {
-            return [$price, false];
-        }
-        $rate = $r->getVatCnbRate();
-        if ($rate === null) {
+        $czk = $this->converter->toCzk($r->getPriceTotal(), $r->getPriceCurrency(), $r->getVatCnbRate());
+        if ($czk === null) {
             return [null, false];
         }
 
-        return [bcmul($price, $rate, 2), true];
+        return [$czk, $r->getPriceCurrency() !== 'CZK'];
     }
 
     /**
@@ -176,15 +171,12 @@ final class ReservationProfitCalculator
      */
     private function invoiceTotalCzk(Reservation $r, Invoice $invoice): ?array
     {
-        if ($invoice->getCurrency() === 'CZK') {
-            return [$invoice->getTotalAmount(), false];
-        }
-        $rate = $invoice->getExchangeRate() ?? $r->getVatCnbRate();
-        if ($rate === null) {
+        $czk = $this->converter->toCzk($invoice->getTotalAmount(), $invoice->getCurrency(), $invoice->getExchangeRate() ?? $r->getVatCnbRate());
+        if ($czk === null) {
             return null;
         }
 
-        return [bcmul($invoice->getTotalAmount(), $rate, 2), true];
+        return [$czk, $invoice->getCurrency() !== 'CZK'];
     }
 
     private function resolveCommissionCzk(Reservation $r): string
@@ -197,11 +189,7 @@ final class ReservationProfitCalculator
         if ($commission === null) {
             return '0.00';
         }
-        if ($r->getCommissionCurrency() === 'CZK') {
-            return $commission;
-        }
-        $rate = $r->getVatCnbRate();
 
-        return $rate !== null ? bcmul($commission, $rate, 2) : '0.00';
+        return $this->converter->toCzk($commission, $r->getCommissionCurrency(), $r->getVatCnbRate()) ?? '0.00';
     }
 }

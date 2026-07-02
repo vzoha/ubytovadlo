@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Cashflow;
 
+use App\Currency\CurrencyConverter;
 use App\Entity\Account;
 use App\Entity\Invoice;
 use App\Entity\Reservation;
@@ -50,6 +51,7 @@ class IncomeUpserter
         private readonly PaymentRepository $payments,
         private readonly InvoiceRepository $invoices,
         private readonly AccountRepository $accounts,
+        private readonly CurrencyConverter $converter,
     ) {
     }
 
@@ -275,16 +277,7 @@ class IncomeUpserter
     /** Hrubá částka pobytu v CZK (cena hosta) — základ pro odhad OTA výplaty. */
     private function grossCzk(Reservation $reservation): ?string
     {
-        $price = $reservation->getPriceTotal();
-        if ($price === null) {
-            return null;
-        }
-        if ($reservation->getPriceCurrency() === 'CZK') {
-            return $price;
-        }
-        $rate = $reservation->getVatCnbRate();
-
-        return $rate !== null ? bcmul($price, $rate, 2) : null;
+        return $this->converter->toCzk($reservation->getPriceTotal(), $reservation->getPriceCurrency(), $reservation->getVatCnbRate());
     }
 
     /** Provize OTA v CZK (základ pro net). Bez známé provize = 0. */
@@ -297,23 +290,14 @@ class IncomeUpserter
         if ($commission === null) {
             return '0.00';
         }
-        if ($reservation->getCommissionCurrency() === 'CZK') {
-            return $commission;
-        }
-        $rate = $reservation->getVatCnbRate();
 
-        return $rate !== null ? bcmul($commission, $rate, 2) : '0.00';
+        return $this->converter->toCzk($commission, $reservation->getCommissionCurrency(), $reservation->getVatCnbRate()) ?? '0.00';
     }
 
     /** Částka faktury v CZK; EUR přes kurz faktury, fallback uložený ČNB kurz rezervace. */
     private function invoiceCzk(Reservation $reservation, Invoice $invoice): ?string
     {
-        if ($invoice->getCurrency() === 'CZK') {
-            return $invoice->getTotalAmount();
-        }
-        $rate = $invoice->getExchangeRate() ?? $reservation->getVatCnbRate();
-
-        return $rate !== null ? bcmul($invoice->getTotalAmount(), $rate, 2) : null;
+        return $this->converter->toCzk($invoice->getTotalAmount(), $invoice->getCurrency(), $invoice->getExchangeRate() ?? $reservation->getVatCnbRate());
     }
 
     private function accountForInvoice(Invoice $invoice): ?Account
