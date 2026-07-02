@@ -186,6 +186,27 @@ class AccountController extends AbstractController
         return $this->redirectToRoute('account_index');
     }
 
+    #[Route('/ucty/prijem', name: 'account_income_add', methods: ['POST'])]
+    public function addIncome(Request $request): Response
+    {
+        if (!$this->isCsrfTokenValid('account-income', (string) $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+
+        $entry = new LedgerEntry(
+            LedgerEntryType::INCOME,
+            $this->parseDate($request->request->get('occurred_on')),
+            $this->parseAmount($request->request->get('amount')),
+            $this->requireAccount($request->request->get('account')),
+        );
+        $entry->setNote($this->parseNote($request->request->get('note')));
+        $this->em->persist($entry);
+        $this->em->flush();
+        $this->addFlash('success', 'Příjem zapsán.');
+
+        return $this->redirectToRoute('account_index');
+    }
+
     #[Route('/ucty/prevod', name: 'account_transfer_add', methods: ['POST'])]
     public function addTransfer(Request $request): Response
     {

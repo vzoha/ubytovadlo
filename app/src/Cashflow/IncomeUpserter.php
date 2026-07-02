@@ -59,15 +59,26 @@ class IncomeUpserter
     {
         $existing = $this->receipts->findForReservation($reservation);
 
-        // Zrušené a nedotažené (needs_details) rezervace nejsou příjem — smažeme
-        // úplně vše, včetně ručních záznamů.
-        if (\in_array($reservation->getStatus(), [ReservationStatus::CANCELLED, ReservationStatus::NEEDS_DETAILS], true)) {
+        // Nedotažená rezervace (needs_details) ještě není příjem — smažeme vše.
+        if ($reservation->getStatus() === ReservationStatus::NEEDS_DETAILS) {
             $this->removeAll($existing);
 
             return;
         }
 
-        $this->sync($reservation, $existing, $this->resolveTargets($reservation, $existing));
+        $targets = $this->resolveTargets($reservation, $existing);
+
+        // Zrušená rezervace vede jen REÁLNĚ přijaté peníze (zaplacená faktura /
+        // bankovní platba = nevrácená záloha, storno-poplatek) — ne odhad budoucí
+        // výplaty, ta u zrušeného pobytu nedorazí.
+        if ($reservation->getStatus() === ReservationStatus::CANCELLED) {
+            $targets = array_values(array_filter(
+                $targets,
+                static fn (ReceiptTarget $t): bool => $t->source !== IncomeSource::ESTIMATE,
+            ));
+        }
+
+        $this->sync($reservation, $existing, $targets);
     }
 
     /**

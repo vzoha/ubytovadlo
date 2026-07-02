@@ -101,6 +101,17 @@ final class AccountBalanceCalculatorTest extends KernelTestCase
         self::assertSame(1000, $this->calculator->balance($bank, $today));
     }
 
+    public function testOtherIncomeIncreasesBalance(): void
+    {
+        // Nerezervační příjem (úroky, storno-poplatek) zvyšuje stav účtu.
+        $bank = $this->persistAccount('Banka', AccountType::BANK, 1000);
+        $entry = new LedgerEntry(LedgerEntryType::INCOME, new \DateTimeImmutable('2026-03-10'), 800, $bank);
+        $this->em->persist($entry);
+        $this->em->flush();
+
+        self::assertSame(1800, $this->calculator->balance($bank));
+    }
+
     public function testUnassignedPaymentIsNotCounted(): void
     {
         // Nespárovaná platba (může být soukromý příjem) se do stavu účtu nepočítá,

@@ -88,6 +88,24 @@ final class AccountControllerTest extends WebTestCase
         self::assertStringContainsString('700 Kč', $body);
     }
 
+    public function testAddIncomeUpdatesBalance(): void
+    {
+        $crawler = $this->client->request('GET', '/ucty');
+        $form = $crawler->filter('form[action="/ucty/prijem"]')->form();
+        $form['account'] = (string) $this->bank->getId();
+        $form['occurred_on'] = '2026-03-10';
+        $form['amount'] = '500';
+        $form['note'] = 'Úroky';
+        $this->client->submit($form);
+
+        self::assertResponseRedirects('/ucty');
+        $this->client->followRedirect();
+        $body = (string) $this->client->getResponse()->getContent();
+        self::assertStringContainsString('Příjem zapsán.', $body);
+        // 1000 + 500 = 1500
+        self::assertStringContainsString('1 500 Kč', $body);
+    }
+
     public function testAddStatementShowsDifference(): void
     {
         $crawler = $this->client->request('GET', '/ucty');

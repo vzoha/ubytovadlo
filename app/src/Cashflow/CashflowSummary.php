@@ -51,6 +51,11 @@ final class CashflowSummary
             $months[(int) $received->format('n')]['income'] += (int) round((float) $receipt->getAmountCzk());
         }
 
+        // Nerezervační příjmy (úroky, storno-poplatky) — do příjmu měsíce, kdy nastaly.
+        foreach ($this->ledger->findIncomeInYear($year) as $income) {
+            $months[(int) $income->getOccurredOn()->format('n')]['income'] += $income->getAmountCzk();
+        }
+
         foreach ($this->ledger->findExpensesInYear($year) as $expense) {
             if ($expense->getType() !== LedgerEntryType::EXPENSE) {
                 continue;

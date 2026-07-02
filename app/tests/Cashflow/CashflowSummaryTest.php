@@ -98,6 +98,19 @@ final class CashflowSummaryTest extends KernelTestCase
         self::assertSame(0, $result['totals']['nonOperating']);
     }
 
+    public function testOtherIncomeCountsInMonthlyIncome(): void
+    {
+        // Nerezervační příjem (úroky) se počítá do příjmu měsíce.
+        $entry = new LedgerEntry(LedgerEntryType::INCOME, new \DateTimeImmutable('2026-05-10'), 800, $this->bank);
+        $this->em->persist($entry);
+        $this->em->flush();
+
+        $result = $this->summary->forYear(2026);
+
+        self::assertSame(800, $result['months'][4]['income']); // květen
+        self::assertSame(800, $result['totals']['income']);
+    }
+
     private function persistReceipt(string $amount, string $receivedOn, int $originId): void
     {
         $receipt = new ReservationReceipt($this->reservation, $amount, IncomeSource::PAID_INVOICE, ReceiptOrigin::INVOICE, $originId);

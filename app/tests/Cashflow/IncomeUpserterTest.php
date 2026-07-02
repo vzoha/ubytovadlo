@@ -241,17 +241,34 @@ final class IncomeUpserterTest extends KernelTestCase
         self::assertCount(2, $this->receipts->findForReservation($r));
     }
 
-    public function testCancelledReservationGetsNoIncome(): void
+    public function testCancelledReservationWithPaidInvoiceKeepsIncome(): void
     {
+        // Zrušená rezervace se zaplacenou fakturou = nevrácená záloha / storno-poplatek
+        // → zůstává příjmem (peníze reálně přišly a nevrátily se).
         $r = $this->persistReservation(Channel::WEB, price: '3000.00');
-        $this->persistInvoice($r, InvoiceType::FULL, '3000.00', paid: true);
+        $this->persistInvoice($r, InvoiceType::DEPOSIT, '1000.00', paid: true, paidAt: '2026-03-31');
         $this->em->flush();
         $this->upserter->recompute($r);
         self::assertCount(1, $this->receipts->findForReservation($r));
 
-        // Storno → přijaté platby se odstraní.
         $r->setStatus(ReservationStatus::CANCELLED);
         $this->em->flush();
+        $this->upserter->recompute($r);
+
+        $receipts = $this->receipts->findForReservation($r);
+        self::assertCount(1, $receipts);
+        self::assertSame('1000.00', $receipts[0]->getAmountCzk());
+        self::assertSame('2026-03-31', $receipts[0]->getReceivedOn()?->format('Y-m-d'));
+    }
+
+    public function testCancelledOtaWithoutRealPayoutHasNoIncome(): void
+    {
+        // Zrušený OTA pobyt bez reálné výplaty = jen odhad → u storna se nevede.
+        $r = $this->persistReservation(Channel::AIRBNB, price: '5000.00');
+        $r->setCommissionAmount('150.00')->setCommissionCurrency('CZK');
+        $r->setStatus(ReservationStatus::CANCELLED);
+        $this->em->flush();
+
         $this->upserter->recompute($r);
 
         self::assertCount(0, $this->receipts->findForReservation($r));

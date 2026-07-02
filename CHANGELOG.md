@@ -41,6 +41,12 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
   (účet / typ / období). Nová stránka **měsíční souhrn** (`/ucty/souhrn/{rok}`):
   přijaté platby proti výdajům (provozní vs. osobní odliv) po měsících;
   **CSV export** filtrovaných pohybů.
+- **Nerezervační příjmy** (`LedgerEntryType::INCOME` — „ostatní příjem"): úroky
+  z účtu, storno-poplatky, náhrady. Formulář na `/ucty`, vstupují do stavu účtu
+  i do měsíčního souhrnu (ne do per-rezervačního zisku v Ekonomice).
+- **Zrušená rezervace se zaplacenou fakturou vede příjem** — nevrácená záloha /
+  storno-poplatek je reálný příjem (peníze přišly a nevrátily se); u zrušeného
+  pobytu se nevede jen odhad budoucí OTA výplaty.
 
 - **Párování příchozích plateb (notifikace ČS) → automatické vystavení faktury.**
   IMAP poller nově zpracovává e-mail České spořitelny „Přišla platba"

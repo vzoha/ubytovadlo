@@ -61,7 +61,7 @@ final class AccountBalanceCalculator
 
         return match ($entry->getType()) {
             LedgerEntryType::EXPENSE => -$entry->getAmountCzk(),
-            LedgerEntryType::ADJUSTMENT => $entry->getAmountCzk(),
+            LedgerEntryType::INCOME, LedgerEntryType::ADJUSTMENT => $entry->getAmountCzk(),
             LedgerEntryType::TRANSFER => match (true) {
                 $entry->getAccount()->getId() === $accountId => -$entry->getAmountCzk(),
                 $entry->getCounterAccount()?->getId() === $accountId => $entry->getAmountCzk(),

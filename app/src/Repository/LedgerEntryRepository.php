@@ -132,16 +132,31 @@ class LedgerEntryRepository extends ServiceEntityRepository
      */
     public function findExpensesInYear(int $year): array
     {
-        $from = new \DateTimeImmutable(sprintf('%04d-01-01', $year));
-        $to = new \DateTimeImmutable(sprintf('%04d-01-01', $year + 1));
+        return $this->findByTypeInYear(\App\Enum\LedgerEntryType::EXPENSE, $year);
+    }
 
+    /**
+     * Nerezervační příjmy (úroky, storno-poplatky…) v kalendářním roce — pro souhrn.
+     *
+     * @return LedgerEntry[]
+     */
+    public function findIncomeInYear(int $year): array
+    {
+        return $this->findByTypeInYear(\App\Enum\LedgerEntryType::INCOME, $year);
+    }
+
+    /**
+     * @return LedgerEntry[]
+     */
+    private function findByTypeInYear(\App\Enum\LedgerEntryType $type, int $year): array
+    {
         return $this->createQueryBuilder('e')
-            ->andWhere('e.type = :expense')
+            ->andWhere('e.type = :type')
             ->andWhere('e.occurredOn >= :from')
             ->andWhere('e.occurredOn < :to')
-            ->setParameter('expense', \App\Enum\LedgerEntryType::EXPENSE)
-            ->setParameter('from', $from)
-            ->setParameter('to', $to)
+            ->setParameter('type', $type)
+            ->setParameter('from', new \DateTimeImmutable(sprintf('%04d-01-01', $year)))
+            ->setParameter('to', new \DateTimeImmutable(sprintf('%04d-01-01', $year + 1)))
             ->orderBy('e.occurredOn', 'ASC')
             ->getQuery()
             ->getResult();
