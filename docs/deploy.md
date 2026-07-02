@@ -210,38 +210,35 @@ argumentů** (`crontab` v lshell není). Proto jsou v repu wrappery
 `app/cron/{imap-poll,motopress-sync}.php` (volají `_kernel.php`, který bootne
 kernel z `.env` a spustí console command).
 
-V panelu **Cron úlohy** založ tyto úlohy (čtyři základní + tři pro notifikace níže):
+V panelu **Cron úlohy** založ pět úloh (čtyři á 15 min + jeden denní):
 
-| pole | imap | motopress | actions-plan | actions-run |
+| pole | imap | motopress | actions-plan | process-due |
 |---|---|---|---|---|
-| Soubor | `/src/app/cron/imap-poll.php` | `/src/app/cron/motopress-sync.php` | `/src/app/cron/actions-plan.php` | `/src/app/cron/actions-run.php` |
+| Soubor | `/src/app/cron/imap-poll.php` | `/src/app/cron/motopress-sync.php` | `/src/app/cron/actions-plan.php` | `/src/app/cron/process-due.php` |
 | Time / Memory limit | 300 s / 256 MB | 300 s / 256 MB | 300 s / 256 MB | 300 s / 256 MB |
 | Minuta | každých 15 min | každých 15 min | každých 15 min | každých 15 min |
 | Hodina/Den/Měsíc/Den v týdnu | Každý | Každý | Každý | Každý |
 
+| pole | notifications-daily |
+|---|---|
+| Soubor | `/src/app/cron/notifications-daily.php` |
+| Time / Memory limit | 300 s / 256 MB |
+| Minuta | `0` |
+| Hodina | `7` (1× denně) |
+| Den/Měsíc/Den v týdnu | Každý |
+
 (Cesta je relativní z úrovně `www`, proto `/src/app/...`.)
 
 `actions-plan` doplní automatické akce na časovou osu (pre-arrival/post-stay zprávy,
-doplatek, Ubyport u cizinců) i u rezervací potvrzených přes MotoPress sync;
-`actions-run` vyhodnotí akce, kterým nadešel čas (v MVP self-resolving připomínky —
-odeslání zpráv hostům čeká na roadmap bod „Zprávy hostům").
-
-Pro **e-mailové notifikace ubytovateli** (`/nastaveni/notifikace`) přidej dvě úlohy:
-
-| pole | notifications-dispatch | notifications-daily |
-|---|---|---|
-| Soubor | `/src/app/cron/notifications-dispatch.php` | `/src/app/cron/notifications-daily.php` |
-| Time / Memory limit | 300 s / 256 MB | 300 s / 256 MB |
-| Minuta | každých 15 min | `0` |
-| Hodina | Každá | `7` (1× denně) |
-| Den/Měsíc/Den v týdnu | Každý | Každý |
-
-`notifications-dispatch` rozešle okamžité notifikace z fronty (á 15 min).
-`notifications-daily` běží jednou denně a dělá dvě věci: nejdřív `app:vat:remind`
-(sám se zkratuje mimo ~20. den, připomínku DPH založí jen za měsíc s přijatou
-provizí, idempotentně jednou za období), pak `app:notifications:digest` (sloučí
-nasbírané notifikace do denního souhrnu) — takže i DPH připomínka v režimu
-„souhrn" odejde týž den.
+doplatek, Ubyport u cizinců) i u rezervací potvrzených přes MotoPress sync.
+`process-due` (á 15 min) vyhodnotí akce, kterým nadešel čas (zprávy hostům,
+self-resolving připomínky, Ubyport) a hned pak rozešle **okamžité notifikace
+ubytovateli** z fronty — i ty, které během běhu vznikly (`app:actions:run` +
+`app:notifications:dispatch` v jednom).
+`notifications-daily` běží jednou denně: nejdřív `app:vat:remind` (sám se zkratuje
+mimo ~20. den, připomínku DPH založí jen za měsíc s přijatou provizí, idempotentně
+jednou za období), pak `app:notifications:digest` (denní souhrn nasbíraných
+notifikací) — takže i DPH připomínka v režimu „souhrn" odejde týž den.
 
 **Ověření běhu:** hukot píše výstup do `~/_log/cron/<soubor>.php.log`:
 
