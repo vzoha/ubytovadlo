@@ -36,6 +36,7 @@ enum ExpenseCategory: string
     // Osobní a finanční odliv
     case LOAN_PAYMENT = 'loan_payment';
     case OWNER_WITHDRAWAL = 'owner_withdrawal';
+    case PERSONAL_OTHER = 'personal_other';
 
     public function label(): string
     {
@@ -54,6 +55,7 @@ enum ExpenseCategory: string
             self::OTHER => 'Ostatní provozní',
             self::LOAN_PAYMENT => 'Splátka úvěru / hypotéky',
             self::OWNER_WITHDRAWAL => 'Osobní výběr / výplata majiteli',
+            self::PERSONAL_OTHER => 'Osobní – ostatní',
         };
     }
 
@@ -61,7 +63,7 @@ enum ExpenseCategory: string
     public function group(): ExpenseGroup
     {
         return match ($this) {
-            self::LOAN_PAYMENT, self::OWNER_WITHDRAWAL => ExpenseGroup::PERSONAL,
+            self::LOAN_PAYMENT, self::OWNER_WITHDRAWAL, self::PERSONAL_OTHER => ExpenseGroup::PERSONAL,
             default => ExpenseGroup::OPERATING,
         };
     }

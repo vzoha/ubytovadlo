@@ -48,7 +48,7 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
   **„Provoz ubytování"** vs **„Osobní a finanční"** (`ExpenseGroup`): dropdown je
   seskupený (optgroup) a osobní odliv (splátka úvěru, výběr majitele) je v přehledu
   vizuálně odlišený. Přibyly kategorie **úklid, spotřební materiál a drogerie,
-  pojištění**; popisky zpřesněny.
+  pojištění** a osobní **„ostatní"** (osobní nákupy mimo výběr/splátku); popisky zpřesněny.
 - **Zrušená rezervace se zaplacenou fakturou vede příjem** — nevrácená záloha /
   storno-poplatek je reálný příjem (peníze přišly a nevrátily se); u zrušeného
   pobytu se nevede jen odhad budoucí OTA výplaty.
