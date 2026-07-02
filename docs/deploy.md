@@ -210,7 +210,7 @@ argumentů** (`crontab` v lshell není). Proto jsou v repu wrappery
 `app/cron/{imap-poll,motopress-sync}.php` (volají `_kernel.php`, který bootne
 kernel z `.env` a spustí console command).
 
-V panelu **Cron úlohy** založ čtyři úlohy:
+V panelu **Cron úlohy** založ tyto úlohy (čtyři základní + tři pro notifikace níže):
 
 | pole | imap | motopress | actions-plan | actions-run |
 |---|---|---|---|---|
@@ -225,6 +225,23 @@ V panelu **Cron úlohy** založ čtyři úlohy:
 doplatek, Ubyport u cizinců) i u rezervací potvrzených přes MotoPress sync;
 `actions-run` vyhodnotí akce, kterým nadešel čas (v MVP self-resolving připomínky —
 odeslání zpráv hostům čeká na roadmap bod „Zprávy hostům").
+
+Pro **e-mailové notifikace ubytovateli** (`/nastaveni/notifikace`) přidej dvě úlohy:
+
+| pole | notifications-dispatch | notifications-daily |
+|---|---|---|
+| Soubor | `/src/app/cron/notifications-dispatch.php` | `/src/app/cron/notifications-daily.php` |
+| Time / Memory limit | 300 s / 256 MB | 300 s / 256 MB |
+| Minuta | každých 15 min | `0` |
+| Hodina | Každá | `7` (1× denně) |
+| Den/Měsíc/Den v týdnu | Každý | Každý |
+
+`notifications-dispatch` rozešle okamžité notifikace z fronty (á 15 min).
+`notifications-daily` běží jednou denně a dělá dvě věci: nejdřív `app:vat:remind`
+(sám se zkratuje mimo ~20. den, připomínku DPH založí jen za měsíc s přijatou
+provizí, idempotentně jednou za období), pak `app:notifications:digest` (sloučí
+nasbírané notifikace do denního souhrnu) — takže i DPH připomínka v režimu
+„souhrn" odejde týž den.
 
 **Ověření běhu:** hukot píše výstup do `~/_log/cron/<soubor>.php.log`:
 

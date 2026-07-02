@@ -13,6 +13,9 @@ namespace App\Command;
 
 use App\Email\EmailDispatcher;
 use App\Email\EmlReader;
+use App\Notification\OwnerNotificationSettingsProvider;
+use App\Repository\SettingRepository;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -25,6 +28,8 @@ class DevImportFixturesCommand extends Command
     public function __construct(
         private readonly EmailDispatcher $dispatcher,
         private readonly EmlReader $reader,
+        private readonly SettingRepository $settings,
+        private readonly EntityManagerInterface $em,
         private readonly string $projectDir,
     ) {
         parent::__construct();
@@ -33,6 +38,11 @@ class DevImportFixturesCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
+
+        // Neutrální příjemce notifikací, ať replay naplní i frontu notifikací
+        // a nastavovací stránka má v demu co ukázat.
+        $this->settings->set(OwnerNotificationSettingsProvider::RECIPIENT, 'majitel@example.com', 'Demo příjemce notifikací.');
+        $this->em->flush();
 
         $files = glob($this->projectDir . '/tests/Fixtures/{Airbnb,Booking}/*.eml', GLOB_BRACE) ?: [];
         if ($files === []) {

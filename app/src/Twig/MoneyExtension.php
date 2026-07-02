@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Twig;
 
+use App\Formatting\Money;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFilter;
 
@@ -29,10 +30,6 @@ class MoneyExtension extends AbstractExtension
      */
     public function money(float|int|string|null $amount, ?string $currency = 'CZK', int $decimals = 2): string
     {
-        $amount ??= 0;
-        $formatted = number_format((float) $amount, $decimals, ',', ' ');
-        $symbol = $currency === 'CZK' ? 'Kč' : (string) $currency;
-
-        return trim($formatted . ' ' . $symbol);
+        return Money::format($amount, $currency, $decimals);
     }
 }

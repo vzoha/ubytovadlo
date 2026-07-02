@@ -21,6 +21,7 @@ use App\Enum\AccountType;
 use App\Enum\ExpenseCategory;
 use App\Enum\ExpenseGroup;
 use App\Enum\LedgerEntryType;
+use App\Formatting\CzechCalendar;
 use App\Repository\AccountRepository;
 use App\Repository\BalanceStatementRepository;
 use App\Repository\LedgerEntryRepository;
@@ -111,7 +112,7 @@ class AccountController extends AbstractController
         return $this->render('account/summary.html.twig', [
             'year' => $year,
             'summary' => $summary->forYear($year),
-            'months' => ['leden', 'únor', 'březen', 'duben', 'květen', 'červen', 'červenec', 'srpen', 'září', 'říjen', 'listopad', 'prosinec'],
+            'months' => CzechCalendar::names(),
         ]);
     }
 

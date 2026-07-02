@@ -24,12 +24,15 @@ use App\Entity\Reservation;
 use App\Enum\Channel;
 use App\Enum\EmailLogStatus;
 use App\Enum\ReservationStatus;
+use App\Notification\OwnerNotificationSettingsProvider;
+use App\Notification\OwnerNotifier;
 use App\Payment\PaymentProcessor;
 use App\Payment\PaymentResult;
 use App\Repository\BookingMonthlyInvoiceRepository;
 use App\Repository\EmailLogRepository;
 use App\Repository\InvoiceRepository;
 use App\Repository\ReservationRepository;
+use App\Repository\SettingRepository;
 use App\Storage\PdfStorage;
 use App\Vat\BookingInvoiceImporter;
 use App\Vat\BookingInvoiceParser;
@@ -85,11 +88,24 @@ final class EmailDispatcherTest extends TestCase
             $this->paymentProcessor,
             $this->invoices,
             $this->createMock(IncomeUpserter::class),
+            $this->makeOwnerNotifier(),
             $this->em,
             new NullLogger(),
         );
 
         $this->reader = new EmlReader();
+    }
+
+    /**
+     * Reálný notifier bez nastaveného příjemce (getString → null) → notify()
+     * se zkratuje, takže nezasahuje do asserted persist/flush v testech.
+     */
+    private function makeOwnerNotifier(): OwnerNotifier
+    {
+        return new OwnerNotifier(
+            new OwnerNotificationSettingsProvider($this->createMock(SettingRepository::class)),
+            $this->em,
+        );
     }
 
     public function testReturnsExistingLogWhenMessageIdAlreadySeen(): void
@@ -297,6 +313,7 @@ final class EmailDispatcherTest extends TestCase
             $this->paymentProcessor,
             $this->invoices,
             $this->createMock(IncomeUpserter::class),
+            $this->makeOwnerNotifier(),
             $this->em,
             new NullLogger(),
         );

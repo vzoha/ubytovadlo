@@ -14,6 +14,8 @@ namespace App\MotoPress;
 use App\Entity\Reservation;
 use App\Enum\BillingMode;
 use App\Enum\Channel;
+use App\Enum\OwnerNotificationType;
+use App\Notification\OwnerNotifier;
 use App\Repository\ReservationRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
@@ -25,6 +27,7 @@ class MotoPressSync
         private readonly MotoPressBookingClassifier $classifier,
         private readonly MotoPressBookingMapper $mapper,
         private readonly ReservationRepository $reservations,
+        private readonly OwnerNotifier $notifier,
         private readonly EntityManagerInterface $em,
         private readonly LoggerInterface $logger,
     ) {
@@ -72,6 +75,7 @@ class MotoPressSync
             if ($isNew) {
                 if (!$dryRun) {
                     $this->em->persist($reservation);
+                    $this->notifier->notify(OwnerNotificationType::NEW_RESERVATION, $reservation);
                 }
                 $created++;
             } elseif ($before !== $this->snapshot($reservation)) {

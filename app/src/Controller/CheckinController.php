@@ -14,9 +14,11 @@ namespace App\Controller;
 use App\Ares\AresClient;
 use App\Entity\GuestDocument;
 use App\Entity\Reservation;
+use App\Enum\OwnerNotificationType;
 use App\Form\CheckinBillingType;
 use App\Form\GuestDocumentType;
 use App\Mrz\MrzParser;
+use App\Notification\OwnerNotifier;
 use App\Repository\GuestDocumentRepository;
 use App\Repository\NationalityRepository;
 use App\Repository\ReservationRepository;
@@ -42,6 +44,7 @@ class CheckinController extends AbstractController
         private readonly EntityManagerInterface $em,
         private readonly MrzParser $mrzParser,
         private readonly AresClient $ares,
+        private readonly OwnerNotifier $notifier,
     ) {
     }
 
@@ -156,6 +159,11 @@ class CheckinController extends AbstractController
 
         // Zahraniční hosty hlásíme na Ubyport; čistě česká skupina nevyplňuje nic,
         // takže dokončení s nula doklady je legitimní (host potvrdil „jen Češi").
+        // guardEditable() výše zaručuje, že jde o první dokončení (opakovaný POST
+        // skončí 404), takže notifikace odejde právě jednou.
+        $this->notifier->notify(OwnerNotificationType::CHECKIN_COMPLETED, $reservation, [
+            'documents' => \count($this->documents->findByReservation($reservation)),
+        ]);
         $reservation->markCheckinCompleted();
         $this->em->flush();
 

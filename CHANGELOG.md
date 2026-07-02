@@ -8,6 +8,17 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Přidáno
 
+- **E-mailové notifikace ubytovateli.** Nová záložka nastavení `/nastaveni/notifikace`:
+  jedna adresa příjemce a per-typ režim doručení — **okamžitě** (samostatný e-mail
+  při nejbližším běhu), **denní souhrn** (jednou denně vše dohromady) nebo **vypnuto**.
+  Typy: nová rezervace (web i OTA), přišla/spárovaná platba, host dokončil check-in,
+  selhání odeslání zprávy hostovi, připomínka DPH přiznání (~20. dne za měsíc s přijatou
+  provizí) a cizinec k nahlášení na Ubyport. Triggery jen zakládají záznam do fronty
+  (`PendingOwnerNotification`), doručení řeší cron: `app:notifications:dispatch`
+  (á 15 min, okamžité jednotlivě), `app:notifications:digest` (1× denně souhrn) a
+  `app:vat:remind` (denně, připomínku DPH zařadí do fronty). Odesílání sdílí layout
+  a barevné téma e-mailů hostům (nový `App\Mail\EmailLayoutRenderer`).
+
 - **Skloňování jmen v oslovení e-mailů (5. pád / vokativ).** Nové proměnné šablon
   `{{ guest_first_name_vocative }}` (křestní jméno) a `{{ guest_last_name_vocative }}`
   (příjmení) vracejí jméno hosta v 5. pádu, takže oslovení zní „Dobrý den, **Petře**,"

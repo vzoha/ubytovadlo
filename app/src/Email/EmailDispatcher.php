@@ -18,7 +18,9 @@ use App\Email\Dto\BookingTriggerData;
 use App\Entity\EmailLog;
 use App\Entity\Reservation;
 use App\Enum\Channel;
+use App\Enum\OwnerNotificationType;
 use App\Enum\ReservationStatus;
+use App\Notification\OwnerNotifier;
 use App\Payment\PaymentProcessor;
 use App\Repository\EmailLogRepository;
 use App\Repository\InvoiceRepository;
@@ -41,6 +43,7 @@ class EmailDispatcher
         private readonly PaymentProcessor $paymentProcessor,
         private readonly InvoiceRepository $invoices,
         private readonly IncomeUpserter $incomeUpserter,
+        private readonly OwnerNotifier $notifier,
         private readonly EntityManagerInterface $em,
         private readonly LoggerInterface $logger,
     ) {
@@ -123,6 +126,7 @@ class EmailDispatcher
         if ($isNew) {
             $reservation->setExternalId($data->confirmationCode);
             $this->em->persist($reservation);
+            $this->notifier->notify(OwnerNotificationType::NEW_RESERVATION, $reservation);
         }
 
         // Data z e-mailu aplikujeme jen na novou rezervaci nebo když ještě
@@ -208,6 +212,7 @@ class EmailDispatcher
         if ($isNew) {
             $reservation->setExternalId($data->reservationId);
             $this->em->persist($reservation);
+            $this->notifier->notify(OwnerNotificationType::NEW_RESERVATION, $reservation);
         }
 
         // Booking e-mail neobsahuje žádné údaje hosta — zůstává needs_details

@@ -17,9 +17,11 @@ use App\Enum\ActionType;
 use App\Enum\GuestMessageStatus;
 use App\Enum\InvoiceType;
 use App\Enum\MessageKind;
+use App\Enum\OwnerNotificationType;
 use App\Invoice\BalanceCalculator;
 use App\Mail\GuestMessageSender;
 use App\Mail\MessageTemplateProvider;
+use App\Notification\OwnerNotifier;
 use App\Repository\InvoiceRepository;
 
 /**
@@ -39,6 +41,7 @@ class ReservationActionExecutor
         private readonly BalanceCalculator $balance,
         private readonly GuestMessageSender $sender,
         private readonly MessageTemplateProvider $templates,
+        private readonly OwnerNotifier $notifier,
     ) {
     }
 
@@ -57,11 +60,7 @@ class ReservationActionExecutor
                 'Doplatková faktura vystavena.',
             ),
             ActionType::BALANCE_REMINDER => $this->handleBalanceReminder($action),
-            ActionType::UBYPORT_EXPORT => $this->resolveIf(
-                $action,
-                $reservation->getUbyportExportedAt() !== null,
-                'Host nahlášen na Ubyport.',
-            ),
+            ActionType::UBYPORT_EXPORT => $this->handleUbyport($action),
             ActionType::PRE_ARRIVAL_MESSAGE,
             ActionType::POST_STAY_MESSAGE,
             ActionType::CUSTOM_MESSAGE => $this->handleGuestMessage($action, $now),
@@ -123,7 +122,35 @@ class ReservationActionExecutor
     }
 
     /**
-     * Odešle zprávu a podle výsledku označí akci DONE/FAILED.
+     * Ubyport: nahlášeno → hotovo; jinak jednou upozorni ubytovatele, že cizinec
+     * čeká na nahlášení (guard přes payload, ať cron neupozorňuje opakovaně).
+     */
+    private function handleUbyport(ReservationAction $action): bool
+    {
+        if ($action->getReservation()->getUbyportExportedAt() !== null) {
+            $action->markDone('Host nahlášen na Ubyport.');
+
+            return true;
+        }
+
+        $payload = $action->getPayload() ?? [];
+        if (($payload['owner_notified'] ?? false) === true) {
+            return false;
+        }
+
+        // Guard nastavíme jen když se notifikace opravdu zařadila — jinak by při
+        // zatím nenastaveném příjemci upozornění „propadlo" a už se neopakovalo.
+        if (!$this->notifier->notify(OwnerNotificationType::UBYPORT_DUE, $action->getReservation())) {
+            return false;
+        }
+        $action->setPayload($payload + ['owner_notified' => true]);
+
+        return true;
+    }
+
+    /**
+     * Odešle zprávu a podle výsledku označí akci DONE/FAILED. Při selhání navíc
+     * upozorní ubytovatele (akce zůstane FAILED, takže se notifikace nespamuje).
      */
     private function dispatch(ReservationAction $action, MessageKind $kind, ?MessageTemplate $override): bool
     {
@@ -133,6 +160,10 @@ class ReservationActionExecutor
             $action->markDone(sprintf('Zpráva odeslána hostovi (%s).', $message->getToEmail()));
         } else {
             $action->markFailed('Odeslání selhalo: ' . (string) $message->getError());
+            $this->notifier->notify(OwnerNotificationType::GUEST_MESSAGE_FAILED, $action->getReservation(), [
+                'kind' => $kind->label(),
+                'error' => (string) $message->getError(),
+            ]);
         }
 
         return true;
