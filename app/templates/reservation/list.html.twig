@@ -3,6 +3,29 @@
 {% block title %}Rezervace{% endblock %}
 
 {% block body %}
+    <style>
+        .today-row > td {
+            background-color: #fff8e1 !important;
+            box-shadow: inset 4px 0 0 #f0a500;
+        }
+        .today-divider td {
+            border-top: 2px solid #f0a500;
+            padding: .25rem .5rem;
+        }
+        .today-divider .today-pill {
+            display: inline-block;
+            font-size: .7rem;
+            font-weight: 700;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+            color: #b06f00;
+            background: #fff3cd;
+            border: 1px solid #f0a500;
+            border-radius: 999px;
+            padding: .05rem .55rem;
+        }
+    </style>
+
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h1 class="h3 mb-0">Rezervace</h1>
         <div class="btn-group" role="group">
@@ -33,8 +56,18 @@
                 </tr>
                 </thead>
                 <tbody>
+                {% set today = 'now'|date('Y-m-d') %}
                 {% for r in reservations %}
-                    <tr>
+                    {% set checkIn = r.checkIn|date('Y-m-d') %}
+                    {% set checkOut = r.checkOut ? r.checkOut|date('Y-m-d') : checkIn %}
+                    {% set isActive = today >= checkIn and today <= checkOut %}
+                    {% set prevFuture = loop.first or reservations[loop.index0 - 1].checkIn|date('Y-m-d') > today %}
+                    {% if checkIn <= today and prevFuture %}
+                        <tr class="today-divider">
+                            <td colspan="7"><span class="today-pill">Dnes · {{ 'now'|date('d. m. Y') }}</span></td>
+                        </tr>
+                    {% endif %}
+                    <tr class="{{ isActive ? 'today-row' : '' }}">
                         <td>
                             {% set badge = {
                                 needs_details: 'warning',
@@ -49,8 +82,14 @@
                             {% endif %}
                         </td>
                         <td>{{ r.channel.label }}</td>
-                        <td>{{ r.checkIn|date('d. m. Y') }}</td>
-                        <td>{{ r.checkOut ? r.checkOut|date('d. m. Y') : '—' }}</td>
+                        <td>
+                            {{ r.checkIn|date('d. m. Y') }}
+                            {% if checkIn == today %}<span class="badge text-bg-warning ms-1">dnes</span>{% endif %}
+                        </td>
+                        <td>
+                            {{ r.checkOut ? r.checkOut|date('d. m. Y') : '—' }}
+                            {% if r.checkOut and checkOut == today %}<span class="badge text-bg-warning ms-1">dnes</span>{% endif %}
+                        </td>
                         <td>
                             {{ r.guestName ?? '(nedoplněno)' }}
                             {% if r.hasPet %}<span class="badge text-bg-warning ms-1" title="{{ r.petsNote ?? 'Host se psem' }}">🐶</span>{% endif %}
@@ -66,6 +105,11 @@
                         </td>
                     </tr>
                 {% endfor %}
+                {% if reservations|last.checkIn|date('Y-m-d') > today %}
+                    <tr class="today-divider">
+                        <td colspan="7"><span class="today-pill">Dnes · {{ 'now'|date('d. m. Y') }}</span></td>
+                    </tr>
+                {% endif %}
                 </tbody>
             </table>
         </div>

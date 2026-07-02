@@ -8,6 +8,11 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Přidáno
 
+- **Zvýraznění dneška v seznamu rezervací.** V `/rezervace` (řazeno podle příjezdu
+  sestupně) přibyl dělič **„Dnes"** mezi budoucí a probíhající/minulé rezervace,
+  zvýraznění řádku právě probíhajícího pobytu (dnešek mezi příjezdem a odjezdem)
+  a odznak „dnes" u příjezdu/odjezdu, který připadá na dnešní datum.
+
 - **Evidence účtů, výdajů a uzávěrek (cashflow modul).** Nová sekce `/ucty`:
   univerzální **účty** (banka / hotovost, uživatelsky definované; entita `Account`),
   **výdaje a převody** mezi vlastními účty v jednotném ledgeru (`LedgerEntry`:
