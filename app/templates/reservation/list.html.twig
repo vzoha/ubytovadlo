@@ -5,24 +5,43 @@
 {% block body %}
     <style>
         .today-row > td {
-            background-color: #fff8e1 !important;
-            box-shadow: inset 4px 0 0 #f0a500;
+            background-color: #fffdf3 !important;
         }
-        .today-divider td {
-            border-top: 2px solid #f0a500;
-            padding: .25rem .5rem;
+        .today-row > td:first-child {
+            box-shadow: inset 3px 0 0 #f59e0b;
+        }
+        .today-divider > td {
+            padding: 0;
+            border: 0;
+        }
+        .today-divider .today-line {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            padding: .15rem 0;
+        }
+        .today-divider .today-line::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(to right, #f59e0b, rgba(245, 158, 11, 0));
         }
         .today-divider .today-pill {
-            display: inline-block;
             font-size: .7rem;
-            font-weight: 700;
-            letter-spacing: .04em;
+            font-weight: 600;
+            letter-spacing: .03em;
             text-transform: uppercase;
-            color: #b06f00;
-            background: #fff3cd;
-            border: 1px solid #f0a500;
-            border-radius: 999px;
-            padding: .05rem .55rem;
+            color: #b45309;
+        }
+        .today-divider .today-pill::before {
+            content: "";
+            display: inline-block;
+            width: .45rem;
+            height: .45rem;
+            margin-right: .35rem;
+            border-radius: 50%;
+            background: #f59e0b;
+            vertical-align: middle;
         }
     </style>
 
@@ -64,7 +83,7 @@
                     {% set prevFuture = loop.first or reservations[loop.index0 - 1].checkIn|date('Y-m-d') > today %}
                     {% if checkIn <= today and prevFuture %}
                         <tr class="today-divider">
-                            <td colspan="7"><span class="today-pill">Dnes · {{ 'now'|date('d. m. Y') }}</span></td>
+                            <td colspan="7"><div class="today-line"><span class="today-pill">Dnes {{ 'now'|date('j. n. Y') }}</span></div></td>
                         </tr>
                     {% endif %}
                     <tr class="{{ isActive ? 'today-row' : '' }}">
