@@ -35,12 +35,16 @@ final readonly class TimelineItem
         public ?string $meta = null,
         public ?ReservationAction $action = null,
         public ?ActionStatus $status = null,
+        public bool $dateOnly = false,
     ) {
     }
 
-    public static function event(\DateTimeImmutable $at, string $icon, string $title, ?string $meta = null): self
+    /**
+     * @param bool $dateOnly událost nese jen datum (bez smysluplného času, např. faktura) → v UI skrýt čas
+     */
+    public static function event(\DateTimeImmutable $at, string $icon, string $title, ?string $meta = null, bool $dateOnly = false): self
     {
-        return new self($at, 'event', $icon, $title, null, $meta);
+        return new self($at, 'event', $icon, $title, null, $meta, dateOnly: $dateOnly);
     }
 
     public static function fromNote(ReservationNote $note): self

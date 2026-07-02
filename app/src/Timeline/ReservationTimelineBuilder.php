@@ -76,6 +76,7 @@ class ReservationTimelineBuilder
                 '🧾',
                 sprintf('Vystavena %s %s', mb_strtolower($invoice->getType()->label()), $invoice->getNumber()),
                 $amount,
+                dateOnly: true,
             );
             if ($invoice->getPaidAt() !== null) {
                 $items[] = TimelineItem::event(
@@ -83,6 +84,7 @@ class ReservationTimelineBuilder
                     '✅',
                     sprintf('Zaplacena faktura %s', $invoice->getNumber()),
                     $amount,
+                    dateOnly: true,
                 );
             }
         }

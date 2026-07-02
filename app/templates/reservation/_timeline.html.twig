@@ -82,7 +82,7 @@
                                         <span class="badge text-bg-danger">po termínu</span>
                                     {% endif %}
                                 </span>
-                                <span class="text-muted small text-nowrap ms-2">{{ item.at|date('d. m. Y H:i') }}</span>
+                                <span class="text-muted small text-nowrap ms-2">{{ item.at|date(item.dateOnly ? 'd. m. Y' : 'd. m. Y H:i') }}</span>
                             </div>
                             {% if item.body %}<div class="small">{{ item.body|nl2br }}</div>{% endif %}
                             {% if item.meta %}<div class="text-muted small">{{ item.meta }}</div>{% endif %}

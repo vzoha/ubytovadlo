@@ -96,6 +96,11 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Změněno
 
+- **Časová osa rezervace u faktura událostí skrývá čas.** Faktura eviduje jen
+  datum (pole `issuedAt`/`paidAt` jsou date-only), takže časová osa u „Vystavena
+  faktura" a „Zaplacena faktura" ukazovala zavádějící `00:00`. Nově se u těchto
+  událostí zobrazuje jen datum (`TimelineItem::event(dateOnly: true)`); ostatní
+  události s reálným časem beze změny.
 - **Region hosta z Airbnb e-mailu se extrahuje strukturálně** (region = „Město/kraj,
   jednoslovná země" za značkou „Totožnost ověřena") — odpadá konfigurace
   `AIRBNB_LISTING_NAME`, která je tím zrušena.
