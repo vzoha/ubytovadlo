@@ -110,7 +110,7 @@ class DevSeedDemoCommand extends Command
     private function wipe(SymfonyStyle $io): void
     {
         $tables = [
-            'reservation_income', 'balance_statement', 'ledger_entry', 'account',
+            'reservation_receipt', 'balance_statement', 'ledger_entry', 'account',
             'invoice_line', 'invoice', 'cleaning', 'guest_document', 'airbnb_statement',
             'booking_monthly_invoice', 'vat_period', 'electricity_reading', 'electricity_tariff',
             'payment', 'email_log', 'reservation', 'app_user', 'setting', 'accommodation_profile',
@@ -181,7 +181,7 @@ class DevSeedDemoCommand extends Command
     }
 
     /**
-     * Naplní reálně přijatý příjem per rezervace (ReservationIncome) — po vystavení
+     * Naplní reálně přijaté platby per rezervace (ReservationReceipt) — po vystavení
      * faktur a zaznamenání plateb/výplat, ať dashboard účtů ukazuje příjmy.
      *
      * @param Reservation[] $reservations
@@ -191,7 +191,7 @@ class DevSeedDemoCommand extends Command
         foreach ($reservations as $reservation) {
             $this->incomeUpserter->recompute($reservation);
         }
-        $io->writeln('  Příjmy rezervací dopočítány.');
+        $io->writeln('  Přijaté platby rezervací dopočítány.');
     }
 
     /**

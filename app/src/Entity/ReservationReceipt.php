@@ -12,27 +12,33 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use App\Enum\IncomeSource;
-use App\Repository\ReservationIncomeRepository;
+use App\Enum\ReceiptOrigin;
+use App\Repository\ReservationReceiptRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * Reálně přijatý příjem rezervace (jeden řádek na rezervaci). Upsertuje se dle
- * priority zdroje (IncomeSource): bankovní kredit > Airbnb výplata > zaplacená
- * faktura > odhad. `manuallyOverridden` zamkne ruční editaci proti auto-přepisu.
- * Airbnb částka je čistá výplata (net po provizi) = to, co reálně přistane na účtu.
+ * Dílčí reálně přijatá platba rezervace — jeden řádek na jednu platební událost
+ * (záloha, doplatek, OTA výplata, odhad). Na rozdíl od původního agregátu drží
+ * každá platba **vlastní datum přijetí**, takže záloha přijatá v jiném měsíci než
+ * doplatek se v měsíčním cashflow zaúčtuje správně.
+ *
+ * Upsertuje se dle původu (originType + originId): recompute přegeneruje
+ * automatické receipty (faktury/platby/odhad), ruční (`manuallyOverridden`)
+ * nechává být.
  */
-#[ORM\Entity(repositoryClass: ReservationIncomeRepository::class)]
-#[ORM\Table(name: 'reservation_income')]
-#[ORM\UniqueConstraint(name: 'uniq_income_reservation', columns: ['reservation_id'])]
-class ReservationIncome
+#[ORM\Entity(repositoryClass: ReservationReceiptRepository::class)]
+#[ORM\Table(name: 'reservation_receipt')]
+#[ORM\UniqueConstraint(name: 'uniq_receipt_origin', columns: ['reservation_id', 'origin_type', 'origin_id'])]
+#[ORM\Index(name: 'idx_receipt_received_on', columns: ['received_on'])]
+class ReservationReceipt
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\OneToOne(targetEntity: Reservation::class)]
+    #[ORM\ManyToOne(targetEntity: Reservation::class)]
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     private Reservation $reservation;
 
@@ -49,17 +55,26 @@ class ReservationIncome
     #[ORM\Column(length: 16, enumType: IncomeSource::class)]
     private IncomeSource $source;
 
+    #[ORM\Column(length: 16, enumType: ReceiptOrigin::class)]
+    private ReceiptOrigin $originType;
+
+    /** Id zdrojové faktury/platby, nebo 0 pro singletony (odhad/výplata/ruční). */
+    #[ORM\Column(type: Types::INTEGER)]
+    private int $originId = 0;
+
     #[ORM\Column(type: Types::BOOLEAN)]
     private bool $manuallyOverridden = false;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeImmutable $updatedAt;
 
-    public function __construct(Reservation $reservation, string $amountCzk, IncomeSource $source)
+    public function __construct(Reservation $reservation, string $amountCzk, IncomeSource $source, ReceiptOrigin $originType, int $originId = 0)
     {
         $this->reservation = $reservation;
         $this->amountCzk = $amountCzk;
         $this->source = $source;
+        $this->originType = $originType;
+        $this->originId = $originId;
         $this->updatedAt = new \DateTimeImmutable();
     }
 
@@ -120,6 +135,27 @@ class ReservationIncome
         $this->source = $source;
 
         return $this;
+    }
+
+    public function getOriginType(): ReceiptOrigin
+    {
+        return $this->originType;
+    }
+
+    public function getOriginId(): int
+    {
+        return $this->originId;
+    }
+
+    /** Idempotentní klíč původu — jediná autorita formátu, sdílená s ReceiptTarget. */
+    public function originKey(): string
+    {
+        return self::makeOriginKey($this->originType, $this->originId);
+    }
+
+    public static function makeOriginKey(ReceiptOrigin $originType, int $originId): string
+    {
+        return $originType->value . ':' . $originId;
     }
 
     public function isManuallyOverridden(): bool

@@ -18,13 +18,14 @@ use App\Entity\Invoice;
 use App\Entity\InvoiceLine;
 use App\Entity\Payment;
 use App\Entity\Reservation;
-use App\Entity\ReservationIncome;
+use App\Entity\ReservationReceipt;
 use App\Enum\AccountType;
 use App\Enum\Channel;
 use App\Enum\IncomeSource;
 use App\Enum\InvoiceType;
+use App\Enum\ReceiptOrigin;
 use App\Enum\ReservationStatus;
-use App\Repository\ReservationIncomeRepository;
+use App\Repository\ReservationReceiptRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
@@ -32,7 +33,7 @@ final class IncomeUpserterTest extends KernelTestCase
 {
     private EntityManagerInterface $em;
     private IncomeUpserter $upserter;
-    private ReservationIncomeRepository $incomes;
+    private ReservationReceiptRepository $receipts;
 
     protected function setUp(): void
     {
@@ -42,9 +43,9 @@ final class IncomeUpserterTest extends KernelTestCase
         \assert($em instanceof EntityManagerInterface);
         $this->em = $em;
         $this->upserter = $container->get(IncomeUpserter::class);
-        $this->incomes = $container->get(ReservationIncomeRepository::class);
+        $this->receipts = $container->get(ReservationReceiptRepository::class);
 
-        foreach ([ReservationIncome::class, Payment::class, Cleaning::class, InvoiceLine::class, Invoice::class, Reservation::class, Account::class] as $class) {
+        foreach ([ReservationReceipt::class, Payment::class, Cleaning::class, InvoiceLine::class, Invoice::class, Reservation::class, Account::class] as $class) {
             $this->em->createQuery('DELETE FROM ' . $class . ' e')->execute();
         }
         $this->persistAccount('Banka', AccountType::BANK);
@@ -62,23 +63,31 @@ final class IncomeUpserterTest extends KernelTestCase
 
         $this->upserter->recompute($r);
 
-        $income = $this->incomes->findForReservation($r);
-        self::assertNotNull($income);
-        self::assertSame(IncomeSource::PAID_INVOICE, $income->getSource());
-        self::assertSame('4455.00', $income->getAmountCzk());
-        self::assertSame('Banka', $income->getAccount()?->getName());
+        $receipts = $this->receipts->findForReservation($r);
+        self::assertCount(1, $receipts);
+        self::assertSame(IncomeSource::PAID_INVOICE, $receipts[0]->getSource());
+        self::assertSame(ReceiptOrigin::INVOICE, $receipts[0]->getOriginType());
+        self::assertSame('4455.00', $receipts[0]->getAmountCzk());
+        self::assertSame('Banka', $receipts[0]->getAccount()?->getName());
     }
 
-    public function testWebDepositPlusFinalSummed(): void
+    public function testWebDepositAndFinalAreSeparateReceiptsWithOwnDates(): void
     {
         $r = $this->persistReservation(Channel::WEB);
-        $this->persistInvoice($r, InvoiceType::DEPOSIT, '1000.00', paid: true);
-        $this->persistInvoice($r, InvoiceType::FINAL, '4000.00', paid: true);
+        // Záloha přijatá dřív (leden), doplatek při příjezdu (březen).
+        $this->persistInvoice($r, InvoiceType::DEPOSIT, '1000.00', paid: true, paidAt: '2026-01-18');
+        $this->persistInvoice($r, InvoiceType::FINAL, '4000.00', paid: true, paidAt: '2026-03-13');
         $this->em->flush();
 
         $this->upserter->recompute($r);
 
-        self::assertSame('5000.00', $this->incomes->findForReservation($r)?->getAmountCzk());
+        $receipts = $this->receipts->findForReservation($r);
+        self::assertCount(2, $receipts);
+        self::assertSame('5000.00', $this->sumFor($r));
+        // Každá platba nese vlastní měsíc přijetí — klíč pro měsíční cashflow.
+        $months = array_map(static fn (ReservationReceipt $x): string => (string) $x->getReceivedOn()?->format('Y-m'), $receipts);
+        sort($months);
+        self::assertSame(['2026-01', '2026-03'], $months);
     }
 
     public function testWebUnpaidInvoiceHasNoIncomeYet(): void
@@ -90,7 +99,22 @@ final class IncomeUpserterTest extends KernelTestCase
         $this->upserter->recompute($r);
 
         // Přímá objednávka: dokud host nezaplatí, na účtu nic není.
-        self::assertNull($this->incomes->findForReservation($r));
+        self::assertCount(0, $this->receipts->findForReservation($r));
+    }
+
+    public function testUnpaidFinalKeepsPaidDepositReceipt(): void
+    {
+        $r = $this->persistReservation(Channel::WEB);
+        $this->persistInvoice($r, InvoiceType::DEPOSIT, '1000.00', paid: true, paidAt: '2026-01-18');
+        $this->persistInvoice($r, InvoiceType::FINAL, '4000.00', paid: false);
+        $this->em->flush();
+
+        $this->upserter->recompute($r);
+
+        // Zaplacená je jen záloha → na účtu je zatím 1000, ne celá cena.
+        $receipts = $this->receipts->findForReservation($r);
+        self::assertCount(1, $receipts);
+        self::assertSame('1000.00', $receipts[0]->getAmountCzk());
     }
 
     public function testWebCashInvoiceGoesToCashAccount(): void
@@ -102,7 +126,7 @@ final class IncomeUpserterTest extends KernelTestCase
 
         $this->upserter->recompute($r);
 
-        self::assertSame('Hotovost', $this->incomes->findForReservation($r)?->getAccount()?->getName());
+        self::assertSame('Hotovost', $this->receipts->findForReservation($r)[0]->getAccount()?->getName());
     }
 
     public function testWebManualOverrideIsNotAutoUpdated(): void
@@ -112,14 +136,13 @@ final class IncomeUpserterTest extends KernelTestCase
         $this->em->flush();
         $this->upserter->recompute($r);
 
-        $income = $this->incomes->findForReservation($r);
-        self::assertNotNull($income);
-        $income->setAmountCzk('9999.00')->setManuallyOverridden(true);
+        $receipt = $this->receipts->findForReservation($r)[0];
+        $receipt->setAmountCzk('9999.00')->setManuallyOverridden(true);
         $this->em->flush();
 
         $this->upserter->recompute($r);
 
-        self::assertSame('9999.00', $this->incomes->findForReservation($r)?->getAmountCzk());
+        self::assertSame('9999.00', $this->receipts->findForReservation($r)[0]->getAmountCzk());
     }
 
     // --- OTA: odhad net (hrubá − provize), zpřesněný reálnou výplatou ---
@@ -132,54 +155,90 @@ final class IncomeUpserterTest extends KernelTestCase
 
         $this->upserter->recompute($r);
 
-        $income = $this->incomes->findForReservation($r);
-        self::assertNotNull($income);
-        self::assertSame(IncomeSource::ESTIMATE, $income->getSource());
-        self::assertFalse($income->getSource()->isRealized());
+        $receipts = $this->receipts->findForReservation($r);
+        self::assertCount(1, $receipts);
+        self::assertSame(IncomeSource::ESTIMATE, $receipts[0]->getSource());
+        self::assertSame(ReceiptOrigin::ESTIMATE, $receipts[0]->getOriginType());
+        self::assertFalse($receipts[0]->getSource()->isRealized());
         // net = 5000 − 150 provize
-        self::assertSame('4850.00', $income->getAmountCzk());
+        self::assertSame('4850.00', $receipts[0]->getAmountCzk());
     }
 
-    public function testAirbnbPayoutOverridesEstimate(): void
+    public function testAirbnbPayoutReplacesEstimate(): void
     {
         $r = $this->persistReservation(Channel::AIRBNB, price: '5000.00');
         $r->setCommissionAmount('150.00')->setCommissionCurrency('CZK');
         $this->em->flush();
         $this->upserter->recompute($r);
-        self::assertSame(IncomeSource::ESTIMATE, $this->incomes->findForReservation($r)?->getSource());
+        self::assertSame(IncomeSource::ESTIMATE, $this->receipts->findForReservation($r)[0]->getSource());
 
-        // Dorazí reálná výplata (net) → přepíše odhad.
+        // Dorazí reálná výplata (net) → nahradí odhad (žádná duplicita).
         $r->setPayoutAmount('4820.00');
         $r->setPayoutSentAt(new \DateTimeImmutable('2026-04-20'));
         $this->em->flush();
         $this->upserter->recompute($r);
 
-        $income = $this->incomes->findForReservation($r);
-        self::assertNotNull($income);
-        self::assertSame(IncomeSource::OTA_PAYOUT, $income->getSource());
-        self::assertTrue($income->getSource()->isRealized());
-        self::assertSame('4820.00', $income->getAmountCzk());
+        $receipts = $this->receipts->findForReservation($r);
+        self::assertCount(1, $receipts);
+        self::assertSame(IncomeSource::OTA_PAYOUT, $receipts[0]->getSource());
+        self::assertTrue($receipts[0]->getSource()->isRealized());
+        self::assertSame('4820.00', $receipts[0]->getAmountCzk());
     }
 
-    public function testManualPayoutOverridesEstimateAndLocks(): void
+    public function testManualPayoutReplacesEstimateAndLocks(): void
     {
         $r = $this->persistReservation(Channel::BOOKING, price: '6000.00');
         $r->setCommissionAmount('900.00')->setCommissionCurrency('CZK');
         $this->em->flush();
         $this->upserter->recompute($r);
-        self::assertSame('5100.00', $this->incomes->findForReservation($r)?->getAmountCzk());
+        self::assertSame('5100.00', $this->receipts->findForReservation($r)[0]->getAmountCzk());
 
-        // Ruční záznam reálné výplaty → přepíše odhad a zamkne.
+        // Ruční záznam reálné výplaty → nahradí odhad a zamkne.
         $this->upserter->recordManualPayout($r, '5080.00', new \DateTimeImmutable('2026-05-15'));
-        $income = $this->incomes->findForReservation($r);
-        self::assertNotNull($income);
-        self::assertSame(IncomeSource::OTA_PAYOUT, $income->getSource());
-        self::assertSame('5080.00', $income->getAmountCzk());
-        self::assertTrue($income->isManuallyOverridden());
+        $receipts = $this->receipts->findForReservation($r);
+        self::assertCount(1, $receipts);
+        self::assertSame(IncomeSource::OTA_PAYOUT, $receipts[0]->getSource());
+        self::assertSame(ReceiptOrigin::MANUAL, $receipts[0]->getOriginType());
+        self::assertSame('5080.00', $receipts[0]->getAmountCzk());
+        self::assertTrue($receipts[0]->isManuallyOverridden());
 
         // Auto-přepočet už ručně zadanou výplatu nemění.
         $this->upserter->recompute($r);
-        self::assertSame('5080.00', $this->incomes->findForReservation($r)?->getAmountCzk());
+        $receipts = $this->receipts->findForReservation($r);
+        self::assertCount(1, $receipts);
+        self::assertSame('5080.00', $receipts[0]->getAmountCzk());
+    }
+
+    public function testManualPayoutReplacesAllAutoReceipts(): void
+    {
+        // I kdyby rezervace měla auto receipt z faktury (INVOICE), ruční výplata
+        // je nahradí jediným MANUAL řádkem — žádný duplikát, stav účtu se nezdvojí.
+        $r = $this->persistReservation(Channel::BOOKING, price: '6000.00');
+        $this->persistInvoice($r, InvoiceType::FULL, '6000.00', paid: true);
+        $this->em->flush();
+        $this->upserter->recompute($r);
+
+        $this->upserter->recordManualPayout($r, '5800.00', new \DateTimeImmutable('2026-05-15'));
+
+        $receipts = $this->receipts->findForReservation($r);
+        self::assertCount(1, $receipts);
+        self::assertSame(ReceiptOrigin::MANUAL, $receipts[0]->getOriginType());
+        self::assertSame('5800.00', $receipts[0]->getAmountCzk());
+    }
+
+    public function testRecomputeIsIdempotent(): void
+    {
+        $r = $this->persistReservation(Channel::WEB);
+        $this->persistInvoice($r, InvoiceType::DEPOSIT, '1000.00', paid: true, paidAt: '2026-01-18');
+        $this->persistInvoice($r, InvoiceType::FINAL, '4000.00', paid: true, paidAt: '2026-03-13');
+        $this->em->flush();
+
+        $this->upserter->recompute($r);
+        $this->upserter->recompute($r);
+        $this->upserter->recompute($r);
+
+        // Opakovaný přepočet neduplikuje řádky.
+        self::assertCount(2, $this->receipts->findForReservation($r));
     }
 
     public function testCancelledReservationGetsNoIncome(): void
@@ -188,14 +247,24 @@ final class IncomeUpserterTest extends KernelTestCase
         $this->persistInvoice($r, InvoiceType::FULL, '3000.00', paid: true);
         $this->em->flush();
         $this->upserter->recompute($r);
-        self::assertNotNull($this->incomes->findForReservation($r));
+        self::assertCount(1, $this->receipts->findForReservation($r));
 
-        // Storno → příjem se odstraní.
+        // Storno → přijaté platby se odstraní.
         $r->setStatus(ReservationStatus::CANCELLED);
         $this->em->flush();
         $this->upserter->recompute($r);
 
-        self::assertNull($this->incomes->findForReservation($r));
+        self::assertCount(0, $this->receipts->findForReservation($r));
+    }
+
+    private function sumFor(Reservation $r): string
+    {
+        $sum = '0.00';
+        foreach ($this->receipts->findForReservation($r) as $receipt) {
+            $sum = bcadd($sum, $receipt->getAmountCzk(), 2);
+        }
+
+        return $sum;
     }
 
     private function persistAccount(string $name, AccountType $type): Account
@@ -223,7 +292,7 @@ final class IncomeUpserterTest extends KernelTestCase
         return $r;
     }
 
-    private function persistInvoice(Reservation $r, InvoiceType $type, string $total, bool $paid): Invoice
+    private function persistInvoice(Reservation $r, InvoiceType $type, string $total, bool $paid, ?string $paidAt = null): Invoice
     {
         static $seq = 0;
         $invoice = new Invoice(
@@ -236,7 +305,7 @@ final class IncomeUpserterTest extends KernelTestCase
         );
         $invoice->setTotalAmount($total);
         if ($paid) {
-            $invoice->setPaidAt(new \DateTimeImmutable('2026-03-13'));
+            $invoice->setPaidAt(new \DateTimeImmutable($paidAt ?? '2026-03-13'));
         }
         $this->em->persist($invoice);
 

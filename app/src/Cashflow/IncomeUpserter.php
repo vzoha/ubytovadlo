@@ -14,37 +14,39 @@ namespace App\Cashflow;
 use App\Entity\Account;
 use App\Entity\Invoice;
 use App\Entity\Reservation;
-use App\Entity\ReservationIncome;
+use App\Entity\ReservationReceipt;
 use App\Enum\AccountType;
 use App\Enum\Channel;
 use App\Enum\IncomeSource;
 use App\Enum\InvoiceType;
+use App\Enum\ReceiptOrigin;
 use App\Enum\ReservationStatus;
 use App\Repository\AccountRepository;
 use App\Repository\InvoiceRepository;
 use App\Repository\PaymentRepository;
-use App\Repository\ReservationIncomeRepository;
+use App\Repository\ReservationReceiptRepository;
 use Doctrine\ORM\EntityManagerInterface;
 
 /**
- * Udržuje reálně přijatý příjem rezervace (ReservationIncome) upsertem dle
- * priority zdroje. Rozlišuje kanál:
+ * Udržuje dílčí přijaté platby rezervace (ReservationReceipt) — jeden řádek na
+ * platební událost, každý s vlastním datem přijetí. Rozlišuje kanál:
  *
- * - **Přímá objednávka (web):** reálný příjem = zaplacená faktura / bankovní
- *   kredit. Nezaplaceno = na účtu zatím nic.
- * - **OTA (Airbnb/Booking):** faktura vystavená v průběhu pobytu je jen doklad;
- *   příjem se vede jako **odhad net (hrubá − provize)**, dokud nedorazí reálná
- *   výplata — Airbnb automaticky z výplatního mailu, jinak ručně
- *   (`recordManualPayout`) — která odhad přepíše.
+ * - **Přímá objednávka (web):** reálný příjem = **každá zaplacená faktura** (záloha
+ *   dřív, doplatek při příjezdu — dva řádky se svými daty), jinak spárované
+ *   bankovní platby. Nezaplaceno = na účtu zatím nic.
+ * - **OTA (Airbnb/Booking):** dokud nedorazí výplata, jeden řádek **odhadu net**
+ *   (hrubá − provize); po výplatě (Airbnb z mailu, jinak ručně) se nahradí
+ *   reálnou částkou.
  *
- * Jeden záznam na rezervaci → stejná výplata se nikdy nezapočte dvakrát. Ručně
- * zadaná výplata (`manuallyOverridden`) se auto-přepočtem nemění.
+ * Auto-receipty (faktury/platby/odhad) se při každém recompute synchronizují dle
+ * aktuálního stavu; ručně zadaná výplata (`manuallyOverridden`) zůstává a u OTA
+ * potlačí automatický odhad.
  */
 class IncomeUpserter
 {
     public function __construct(
         private readonly EntityManagerInterface $em,
-        private readonly ReservationIncomeRepository $incomes,
+        private readonly ReservationReceiptRepository $receipts,
         private readonly PaymentRepository $payments,
         private readonly InvoiceRepository $invoices,
         private readonly AccountRepository $accounts,
@@ -53,121 +55,149 @@ class IncomeUpserter
 
     public function recompute(Reservation $reservation): void
     {
-        $existing = $this->incomes->findForReservation($reservation);
+        $existing = $this->receipts->findForReservation($reservation);
 
-        // Zrušené a nedotažené (needs_details) rezervace nejsou příjem — případný
-        // dřívější záznam odstraníme.
+        // Zrušené a nedotažené (needs_details) rezervace nejsou příjem — smažeme
+        // úplně vše, včetně ručních záznamů.
         if (\in_array($reservation->getStatus(), [ReservationStatus::CANCELLED, ReservationStatus::NEEDS_DETAILS], true)) {
-            if ($existing !== null) {
-                $this->em->remove($existing);
-                $this->em->flush();
-            }
+            $this->removeAll($existing);
 
             return;
         }
 
-        if ($existing !== null && $existing->isManuallyOverridden()) {
-            return;
-        }
-
-        $candidate = $this->resolveCandidate($reservation);
-        if ($candidate === null) {
-            return;
-        }
-
-        $this->store($reservation, $existing, $candidate, manual: false);
+        $this->sync($reservation, $existing, $this->resolveTargets($reservation, $existing));
     }
 
     /**
-     * Ruční záznam reálné OTA výplaty — přepíše odhad a zamkne příjem proti
-     * dalšímu auto-přepočtu. Použije se pro Booking (payout mail nechodí) i pro
-     * Airbnb, když výplatu zadáváš ručně.
+     * Ruční záznam reálné OTA výplaty — přepíše odhad a zamkne se proti dalšímu
+     * auto-přepočtu. Použije se pro Booking (payout mail nechodí) i pro Airbnb,
+     * když výplatu zadáváš ručně.
      */
     public function recordManualPayout(Reservation $reservation, string $amountCzk, \DateTimeImmutable $receivedOn): void
     {
-        $existing = $this->incomes->findForReservation($reservation);
-        $candidate = new IncomeCandidate($amountCzk, IncomeSource::OTA_PAYOUT, $this->bankAccount(), $receivedOn);
-        $this->store($reservation, $existing, $candidate, manual: true);
-    }
+        $existing = $this->receipts->findForReservation($reservation);
 
-    private function store(Reservation $reservation, ?ReservationIncome $existing, IncomeCandidate $candidate, bool $manual): void
-    {
-        if ($existing === null) {
-            $income = new ReservationIncome($reservation, $candidate->amountCzk, $candidate->source);
-        } elseif ($manual || $candidate->source->priority() >= $existing->getSource()->priority()) {
-            $income = $existing;
-            $income->setAmountCzk($candidate->amountCzk);
-            $income->setSource($candidate->source);
-        } else {
-            return;
+        // Ruční výplata je konečná pravda o příjmu rezervace → nahrazuje veškeré
+        // automatické receipty (odhad, výplata i případné faktury), aby zůstal
+        // jediný řádek a stav účtu se nepřeúčtoval dvakrát.
+        foreach ($existing as $receipt) {
+            if (!$receipt->isManuallyOverridden()) {
+                $this->em->remove($receipt);
+            }
         }
 
-        $income->setAccount($candidate->account);
-        $income->setReceivedOn($candidate->receivedOn);
-        if ($manual) {
-            $income->setManuallyOverridden(true);
-        }
-        $this->em->persist($income);
+        $manual = $this->receipts->findOneByOrigin($reservation, ReceiptOrigin::MANUAL, 0)
+            ?? new ReservationReceipt($reservation, $amountCzk, IncomeSource::OTA_PAYOUT, ReceiptOrigin::MANUAL);
+        $manual->setAmountCzk($amountCzk);
+        $manual->setSource(IncomeSource::OTA_PAYOUT);
+        $manual->setAccount($this->bankAccount());
+        $manual->setReceivedOn($receivedOn);
+        $manual->setManuallyOverridden(true);
+        $this->em->persist($manual);
         $this->em->flush();
     }
 
-    private function resolveCandidate(Reservation $reservation): ?IncomeCandidate
+    /**
+     * Synchronizuje automatické receipty na cílový stav: smaže osiřelé (co už
+     * nemá zdroj) a založí/aktualizuje ostatní. Ruční záznamy nechává být.
+     *
+     * @param ReservationReceipt[] $existing
+     * @param ReceiptTarget[]      $targets
+     */
+    private function sync(Reservation $reservation, array $existing, array $targets): void
     {
-        return $this->isOta($reservation)
-            ? $this->resolveOta($reservation)
-            : $this->resolveDirect($reservation);
+        $byKey = [];
+        foreach ($existing as $receipt) {
+            $byKey[$receipt->originKey()] = $receipt;
+        }
+        $wanted = [];
+        foreach ($targets as $target) {
+            $wanted[$target->key()] = true;
+        }
+
+        foreach ($existing as $receipt) {
+            if ($receipt->isManuallyOverridden()) {
+                continue;
+            }
+            if (!isset($wanted[$receipt->originKey()])) {
+                $this->em->remove($receipt);
+            }
+        }
+
+        foreach ($targets as $target) {
+            $receipt = $byKey[$target->key()] ?? null;
+            if ($receipt === null) {
+                $receipt = new ReservationReceipt($reservation, $target->amountCzk, $target->source, $target->originType, $target->originId);
+            } elseif ($receipt->isManuallyOverridden()) {
+                continue;
+            } else {
+                $receipt->setAmountCzk($target->amountCzk);
+                $receipt->setSource($target->source);
+            }
+            $receipt->setAccount($target->account);
+            $receipt->setReceivedOn($target->receivedOn);
+            $this->em->persist($receipt);
+        }
+
+        $this->em->flush();
     }
 
-    /** OTA: reálná výplata (Airbnb parsovaná), jinak odhad net = hrubá − provize. */
-    private function resolveOta(Reservation $reservation): ?IncomeCandidate
+    /**
+     * @param ReservationReceipt[] $existing
+     *
+     * @return ReceiptTarget[]
+     */
+    private function resolveTargets(Reservation $reservation, array $existing): array
     {
+        return $this->isOta($reservation)
+            ? $this->otaTargets($reservation, $existing)
+            : $this->directTargets($reservation);
+    }
+
+    /**
+     * OTA: reálná výplata (Airbnb parsovaná), jinak odhad net = hrubá − provize.
+     * Ruční výplata (MANUAL) auto-větev potlačí.
+     *
+     * @param ReservationReceipt[] $existing
+     *
+     * @return ReceiptTarget[]
+     */
+    private function otaTargets(Reservation $reservation, array $existing): array
+    {
+        foreach ($existing as $receipt) {
+            if ($receipt->isManuallyOverridden()) {
+                return [];
+            }
+        }
+
         if ($reservation->getPayoutAmount() !== null) {
-            return new IncomeCandidate(
+            return [new ReceiptTarget(
+                ReceiptOrigin::PAYOUT,
+                0,
                 $reservation->getPayoutAmount(),
                 IncomeSource::OTA_PAYOUT,
                 $this->bankAccount(),
                 $reservation->getPayoutSentAt(),
-            );
+            )];
         }
 
         $gross = $this->grossCzk($reservation);
         if ($gross === null) {
-            return null;
+            return [];
         }
-        $commission = $this->commissionCzk($reservation);
-        $net = bcsub($gross, $commission, 2);
+        $net = bcsub($gross, $this->commissionCzk($reservation), 2);
 
-        return new IncomeCandidate($net, IncomeSource::ESTIMATE, $this->bankAccount(), $reservation->getCheckOut());
+        return [new ReceiptTarget(ReceiptOrigin::ESTIMATE, 0, $net, IncomeSource::ESTIMATE, $this->bankAccount(), $reservation->getCheckOut())];
     }
 
-    /** Přímá objednávka: reálný příjem = zaplacená faktura, jinak spárovaný bankovní kredit. */
-    private function resolveDirect(Reservation $reservation): ?IncomeCandidate
-    {
-        $paidInvoice = $this->resolvePaidInvoices($reservation);
-        if ($paidInvoice !== null) {
-            return $paidInvoice;
-        }
-
-        $sum = '0.00';
-        $latest = null;
-        foreach ($this->payments->findByReservation($reservation) as $payment) {
-            if ($payment->getCurrency() !== 'CZK') {
-                continue;
-            }
-            $sum = bcadd($sum, $payment->getAmount(), 2);
-            $date = $payment->getReceivedAt()->setTime(0, 0);
-            if ($latest === null || $date > $latest) {
-                $latest = $date;
-            }
-        }
-        if (bccomp($sum, '0.00', 2) > 0) {
-            return new IncomeCandidate($sum, IncomeSource::BANK_PAYMENT, $this->bankAccount(), $latest);
-        }
-
-        return null;
-    }
-
-    private function resolvePaidInvoices(Reservation $reservation): ?IncomeCandidate
+    /**
+     * Přímá objednávka: každá zaplacená faktura je dílčí příjem (FULL má
+     * přednost jako jediná; jinak záloha + konečná zvlášť). Bez zaplacené
+     * faktury spadneme na spárované bankovní platby.
+     *
+     * @return ReceiptTarget[]
+     */
+    private function directTargets(Reservation $reservation): array
     {
         $invoices = $this->invoices->findForReservation($reservation);
 
@@ -175,34 +205,66 @@ class IncomeUpserter
             if ($invoice->getType() === InvoiceType::FULL && $invoice->isPaid()) {
                 $amount = $this->invoiceCzk($reservation, $invoice);
                 if ($amount !== null) {
-                    return new IncomeCandidate($amount, IncomeSource::PAID_INVOICE, $this->accountForInvoice($invoice), $invoice->getPaidAt());
+                    return [$this->invoiceTarget($reservation, $invoice, $amount)];
                 }
             }
         }
 
-        $sum = '0.00';
-        $latestPaidAt = null;
-        $account = null;
+        $targets = [];
         foreach ($invoices as $invoice) {
             if (!$invoice->isPaid() || $invoice->getType() === InvoiceType::FULL) {
                 continue;
             }
             $amount = $this->invoiceCzk($reservation, $invoice);
-            if ($amount === null) {
-                continue;
-            }
-            $sum = bcadd($sum, $amount, 2);
-            $paidAt = $invoice->getPaidAt();
-            if ($paidAt !== null && ($latestPaidAt === null || $paidAt > $latestPaidAt)) {
-                $latestPaidAt = $paidAt;
-                $account = $this->accountForInvoice($invoice);
+            if ($amount !== null) {
+                $targets[] = $this->invoiceTarget($reservation, $invoice, $amount);
             }
         }
-        if (bccomp($sum, '0.00', 2) > 0) {
-            return new IncomeCandidate($sum, IncomeSource::PAID_INVOICE, $account ?? $this->bankAccount(), $latestPaidAt);
+        if ($targets !== []) {
+            return $targets;
         }
 
-        return null;
+        foreach ($this->payments->findByReservation($reservation) as $payment) {
+            if ($payment->getCurrency() !== 'CZK') {
+                continue;
+            }
+            $targets[] = new ReceiptTarget(
+                ReceiptOrigin::PAYMENT,
+                (int) $payment->getId(),
+                $payment->getAmount(),
+                IncomeSource::BANK_PAYMENT,
+                $this->bankAccount(),
+                $payment->getReceivedAt()->setTime(0, 0),
+            );
+        }
+
+        return $targets;
+    }
+
+    private function invoiceTarget(Reservation $reservation, Invoice $invoice, string $amountCzk): ReceiptTarget
+    {
+        return new ReceiptTarget(
+            ReceiptOrigin::INVOICE,
+            (int) $invoice->getId(),
+            $amountCzk,
+            IncomeSource::PAID_INVOICE,
+            $this->accountForInvoice($invoice),
+            $invoice->getPaidAt(),
+        );
+    }
+
+    /**
+     * @param ReservationReceipt[] $receipts
+     */
+    private function removeAll(array $receipts): void
+    {
+        if ($receipts === []) {
+            return;
+        }
+        foreach ($receipts as $receipt) {
+            $this->em->remove($receipt);
+        }
+        $this->em->flush();
     }
 
     private function isOta(Reservation $reservation): bool

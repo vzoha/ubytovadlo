@@ -20,12 +20,12 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
- * Přepočítá reálně přijatý příjem (ReservationIncome) u všech rezervací z jejich
- * aktuálních faktur/plateb/výplat. Idempotentní; ručně přepsané příjmy
+ * Přepočítá reálně přijaté platby (ReservationReceipt) u všech rezervací z jejich
+ * aktuálních faktur/plateb/výplat. Idempotentní; ručně přepsané výplaty
  * (manuallyOverridden) nechává být. Použití: hromadné dorovnání po nasazení
  * cashflow modulu nebo po změně příjmové logiky.
  */
-#[AsCommand(name: 'app:cashflow:recompute-incomes', description: 'Přepočítat příjem (ReservationIncome) u všech rezervací.')]
+#[AsCommand(name: 'app:cashflow:recompute-incomes', description: 'Přepočítat přijaté platby (ReservationReceipt) u všech rezervací.')]
 class RecomputeIncomeCommand extends Command
 {
     public function __construct(

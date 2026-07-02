@@ -14,9 +14,11 @@ namespace App\Tests\Controller;
 use App\Entity\Account;
 use App\Entity\BalanceStatement;
 use App\Entity\LedgerEntry;
-use App\Entity\ReservationIncome;
+use App\Entity\ReservationReceipt;
 use App\Entity\User;
 use App\Enum\AccountType;
+use App\Enum\ExpenseCategory;
+use App\Enum\LedgerEntryType;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -37,7 +39,7 @@ final class AccountControllerTest extends WebTestCase
         \assert($em instanceof EntityManagerInterface);
         $this->em = $em;
 
-        foreach ([ReservationIncome::class, LedgerEntry::class, BalanceStatement::class, Account::class, User::class] as $class) {
+        foreach ([ReservationReceipt::class, LedgerEntry::class, BalanceStatement::class, Account::class, User::class] as $class) {
             $this->em->createQuery('DELETE FROM ' . $class . ' e')->execute();
         }
 
@@ -107,5 +109,88 @@ final class AccountControllerTest extends WebTestCase
         ]);
 
         self::assertResponseStatusCodeSame(403);
+    }
+
+    public function testEditEntryUpdatesAmountAndCategory(): void
+    {
+        $entry = new LedgerEntry(LedgerEntryType::EXPENSE, new \DateTimeImmutable('2026-02-10'), 300, $this->bank);
+        $entry->setCategory(ExpenseCategory::MAINTENANCE);
+        $this->em->persist($entry);
+        $this->em->flush();
+
+        $crawler = $this->client->request('GET', '/ucty/pohyb/' . $entry->getId() . '/upravit');
+        self::assertResponseIsSuccessful();
+        $form = $crawler->filter('form')->form();
+        $form['amount'] = '450';
+        $form['category'] = 'laundry';
+        $form['note'] = 'Oprava';
+        $this->client->submit($form);
+
+        self::assertResponseRedirects('/ucty');
+        $this->em->clear();
+        $updated = $this->em->getRepository(LedgerEntry::class)->find($entry->getId());
+        self::assertNotNull($updated);
+        self::assertSame(450, $updated->getAmountCzk());
+        self::assertSame(ExpenseCategory::LAUNDRY, $updated->getCategory());
+    }
+
+    public function testEditAccountRenamesAndTogglesActive(): void
+    {
+        $crawler = $this->client->request('GET', '/ucty/' . $this->bank->getId() . '/upravit');
+        self::assertResponseIsSuccessful();
+        $form = $crawler->filter('form')->form();
+        $form['name'] = 'Přejmenovaný účet';
+        $this->client->submit($form);
+
+        self::assertResponseRedirects('/ucty/' . $this->bank->getId());
+        $this->em->clear();
+        $updated = $this->em->getRepository(Account::class)->find($this->bank->getId());
+        self::assertSame('Přejmenovaný účet', $updated?->getName());
+    }
+
+    public function testFilterByTypeLimitsMovements(): void
+    {
+        $expense = new LedgerEntry(LedgerEntryType::EXPENSE, new \DateTimeImmutable('2026-02-10'), 300, $this->bank);
+        $expense->setNote('VYDAJ-MARKER');
+        $adjustment = new LedgerEntry(LedgerEntryType::ADJUSTMENT, new \DateTimeImmutable('2026-02-11'), 50, $this->bank);
+        $adjustment->setNote('KOREKCE-MARKER');
+        $this->em->persist($expense);
+        $this->em->persist($adjustment);
+        $this->em->flush();
+
+        $this->client->request('GET', '/ucty?type=expense');
+        $body = (string) $this->client->getResponse()->getContent();
+        self::assertStringContainsString('VYDAJ-MARKER', $body);
+        self::assertStringNotContainsString('KOREKCE-MARKER', $body);
+    }
+
+    public function testCsvExportReturnsAttachment(): void
+    {
+        $entry = new LedgerEntry(LedgerEntryType::EXPENSE, new \DateTimeImmutable('2026-02-10'), 300, $this->bank);
+        $entry->setNote('CSV-RADEK');
+        $this->em->persist($entry);
+        $this->em->flush();
+
+        $this->client->request('GET', '/ucty/export.csv');
+
+        self::assertResponseIsSuccessful();
+        self::assertResponseHeaderSame('Content-Type', 'text/csv; charset=UTF-8');
+        self::assertStringContainsString('CSV-RADEK', (string) $this->client->getResponse()->getContent());
+    }
+
+    public function testMonthlySummaryRenders(): void
+    {
+        $this->client->request('GET', '/ucty/souhrn/2026');
+
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString('Měsíční souhrn cashflow 2026', (string) $this->client->getResponse()->getContent());
+    }
+
+    public function testInvalidFilterDateDoesNotCrash(): void
+    {
+        // Nevalidní datum z query nesmí shodit stránku (500) — filtr ho ignoruje.
+        $this->client->request('GET', '/ucty?from=2026-99-99&to=nesmysl');
+
+        self::assertResponseIsSuccessful();
     }
 }

@@ -291,14 +291,24 @@
                             {% if reservation.netPayout %}{{ reservation.netPayout|number_format(2, ',', ' ') }} {{ reservation.priceCurrency }}{% else %}—{% endif %}
                         </dd>
 
-                        <dt class="col-sm-6">Příjem na účtu</dt>
+                        <dt class="col-sm-6">Přijaté platby</dt>
                         <dd class="col-sm-6 text-end">
-                            {% if income %}
-                                {{ income.amountCzk|number_format(0, ',', ' ') }} Kč
-                                <span class="badge text-bg-{{ income.source.realized ? 'success' : 'secondary' }}">{{ income.source.label }}</span>
-                            {% else %}<span class="text-muted">—</span>{% endif %}
+                            {% if receipts is empty %}<span class="text-muted">—</span>{% endif %}
                         </dd>
                     </dl>
+                    {% if receipts is not empty %}
+                        <ul class="list-unstyled small mb-0">
+                            {% for r in receipts %}
+                                <li class="d-flex justify-content-between border-top py-1">
+                                    <span>
+                                        {{ r.receivedOn ? r.receivedOn|date('j. n. Y') : 'neznámé datum' }}
+                                        <span class="badge text-bg-{{ r.source.realized ? 'success' : 'secondary' }}">{{ r.source.label }}</span>
+                                    </span>
+                                    <span class="fw-semibold">{{ r.amountCzk|number_format(0, ',', ' ') }} Kč</span>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
 
                     {% if reservation.channel.value in ['airbnb', 'booking'] %}
                         <form method="post" action="{{ path('reservation_record_payout', {id: reservation.id}) }}" class="row g-2 align-items-end mt-2 border-top pt-2">

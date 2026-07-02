@@ -17,12 +17,13 @@ use App\Entity\BalanceStatement;
 use App\Entity\LedgerEntry;
 use App\Entity\Payment;
 use App\Entity\Reservation;
-use App\Entity\ReservationIncome;
+use App\Entity\ReservationReceipt;
 use App\Enum\AccountType;
 use App\Enum\Channel;
 use App\Enum\IncomeSource;
 use App\Enum\LedgerEntryType;
 use App\Enum\PaymentSource;
+use App\Enum\ReceiptOrigin;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
@@ -42,7 +43,7 @@ final class AccountBalanceCalculatorTest extends KernelTestCase
 
         // Reservation nemažeme — reziduální faktury/úklidy jiných testů drží FK;
         // pro výpočet zůstatku stačí čistá cashflow data a platby.
-        foreach ([ReservationIncome::class, LedgerEntry::class, BalanceStatement::class, Payment::class, Account::class] as $class) {
+        foreach ([ReservationReceipt::class, LedgerEntry::class, BalanceStatement::class, Payment::class, Account::class] as $class) {
             $this->em->createQuery('DELETE FROM ' . $class . ' e')->execute();
         }
     }
@@ -71,7 +72,7 @@ final class AccountBalanceCalculatorTest extends KernelTestCase
 
         // Příjem rezervace 700 na banku.
         $reservation = $this->persistReservation();
-        $income = new ReservationIncome($reservation, '700.00', IncomeSource::PAID_INVOICE);
+        $income = new ReservationReceipt($reservation, '700.00', IncomeSource::PAID_INVOICE, ReceiptOrigin::INVOICE, 1);
         $income->setAccount($bank);
         $income->setReceivedOn(new \DateTimeImmutable('2026-03-15'));
         $this->em->persist($income);
@@ -90,7 +91,7 @@ final class AccountBalanceCalculatorTest extends KernelTestCase
         // (např. OTA odhad u budoucího pobytu); minulý příjem se počítá.
         $bank = $this->persistAccount('Banka', AccountType::BANK, 1000);
         $reservation = $this->persistReservation();
-        $future = new ReservationIncome($reservation, '5000.00', IncomeSource::ESTIMATE);
+        $future = new ReservationReceipt($reservation, '5000.00', IncomeSource::ESTIMATE, ReceiptOrigin::ESTIMATE);
         $future->setAccount($bank);
         $future->setReceivedOn(new \DateTimeImmutable('2100-01-01'));
         $this->em->persist($future);

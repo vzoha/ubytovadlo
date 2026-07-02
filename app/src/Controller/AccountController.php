@@ -13,6 +13,7 @@ namespace App\Controller;
 
 use App\Cashflow\AccountBalanceCalculator;
 use App\Cashflow\BalanceStatementReconciler;
+use App\Cashflow\CashflowSummary;
 use App\Entity\Account;
 use App\Entity\BalanceStatement;
 use App\Entity\LedgerEntry;
@@ -22,7 +23,7 @@ use App\Enum\LedgerEntryType;
 use App\Repository\AccountRepository;
 use App\Repository\BalanceStatementRepository;
 use App\Repository\LedgerEntryRepository;
-use App\Repository\ReservationIncomeRepository;
+use App\Repository\ReservationReceiptRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -41,13 +42,18 @@ class AccountController extends AbstractController
         private readonly BalanceStatementRepository $statements,
         private readonly AccountBalanceCalculator $balances,
         private readonly BalanceStatementReconciler $reconciler,
-        private readonly ReservationIncomeRepository $incomes,
+        private readonly ReservationReceiptRepository $receipts,
         private readonly EntityManagerInterface $em,
     ) {
     }
 
+    private const PER_PAGE = 20;
+
+    /** Strop řádků CSV exportu — pojistka proti vyčerpání paměti na velké historii. */
+    private const CSV_MAX_ROWS = 100000;
+
     #[Route('/ucty', name: 'account_index', methods: ['GET'])]
-    public function index(): Response
+    public function index(Request $request): Response
     {
         $today = new \DateTimeImmutable('today');
         $accounts = $this->accounts->findOrdered();
@@ -61,14 +67,76 @@ class AccountController extends AbstractController
             ];
         }
 
+        $filter = $this->readFilter($request);
+        $page = max(1, $request->query->getInt('page', 1));
+        $total = $this->ledger->countFiltered($filter['account'], $filter['type'], $filter['from'], $filter['to']);
+        $movements = $this->ledger->findFiltered(
+            $filter['account'],
+            $filter['type'],
+            $filter['from'],
+            $filter['to'],
+            self::PER_PAGE,
+            ($page - 1) * self::PER_PAGE,
+        );
+
         return $this->render('account/index.html.twig', [
             'cards' => $cards,
             'accounts' => $accounts,
-            'recent' => \array_slice($this->ledger->findAllUpTo(), 0, 20),
-            'incomes' => $this->incomes->findReceived($today, 20),
-            'estimates' => $this->incomes->findExpected($today),
+            'recent' => $movements,
+            'incomes' => $this->receipts->findReceived($today, 20),
+            'estimates' => $this->receipts->findExpected($today),
             'categories' => ExpenseCategory::cases(),
             'accountTypes' => AccountType::cases(),
+            'entryTypes' => LedgerEntryType::cases(),
+            'filter' => $filter,
+            'page' => $page,
+            'pages' => max(1, (int) ceil($total / self::PER_PAGE)),
+            'total' => $total,
+        ]);
+    }
+
+    #[Route('/ucty/souhrn/{year}', name: 'account_summary', methods: ['GET'], requirements: ['year' => '\d{4}'], defaults: ['year' => null])]
+    public function summary(?int $year, CashflowSummary $summary): Response
+    {
+        $year ??= (int) (new \DateTimeImmutable('today'))->format('Y');
+
+        return $this->render('account/summary.html.twig', [
+            'year' => $year,
+            'summary' => $summary->forYear($year),
+            'months' => ['leden', 'únor', 'březen', 'duben', 'květen', 'červen', 'červenec', 'srpen', 'září', 'říjen', 'listopad', 'prosinec'],
+        ]);
+    }
+
+    #[Route('/ucty/export.csv', name: 'account_export_csv', methods: ['GET'])]
+    public function exportCsv(Request $request): Response
+    {
+        $filter = $this->readFilter($request);
+        $movements = $this->ledger->findFiltered($filter['account'], $filter['type'], $filter['from'], $filter['to'], self::CSV_MAX_ROWS, 0);
+
+        $rows = [['datum', 'typ', 'ucet', 'protistrana', 'kategorie', 'castka_czk', 'poznamka']];
+        foreach ($movements as $m) {
+            $rows[] = [
+                $m->getOccurredOn()->format('Y-m-d'),
+                $m->getType()->label(),
+                $m->getAccount()->getName(),
+                $m->getCounterAccount()?->getName() ?? '',
+                $m->getCategory()?->label() ?? '',
+                (string) $m->getAmountCzk(),
+                $m->getNote() ?? '',
+            ];
+        }
+
+        $csv = "\u{FEFF}" . implode("\n", array_map(
+            static fn (array $row): string => implode(';', array_map(
+                static fn (string $cell): string => '"' . str_replace('"', '""', $cell) . '"',
+                $row,
+            )),
+            $rows,
+        ));
+
+        return new Response($csv, Response::HTTP_OK, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="cashflow.csv"',
         ]);
     }
 
@@ -219,6 +287,107 @@ class AccountController extends AbstractController
         return $this->redirectToRoute('account_index');
     }
 
+    #[Route('/ucty/pohyb/{id}/upravit', name: 'account_entry_edit', methods: ['GET', 'POST'], requirements: ['id' => '\d+'])]
+    public function editEntry(LedgerEntry $entry, Request $request): Response
+    {
+        if ($request->isMethod('POST')) {
+            if (!$this->isCsrfTokenValid('account-entry-edit-' . $entry->getId(), (string) $request->request->get('_token'))) {
+                throw $this->createAccessDeniedException();
+            }
+
+            $entry->setOccurredOn($this->parseDate($request->request->get('occurred_on')));
+            $entry->setAmountCzk($this->parseAmount($request->request->get('amount')));
+            $entry->setNote($this->parseNote($request->request->get('note')));
+            $entry->setAccount($this->requireAccount($request->request->get('account')));
+            if ($entry->getType() === LedgerEntryType::EXPENSE) {
+                $entry->setCategory(ExpenseCategory::tryFrom((string) $request->request->get('category', '')) ?? ExpenseCategory::OTHER);
+            }
+            if ($entry->getType() === LedgerEntryType::TRANSFER) {
+                $to = $this->requireAccount($request->request->get('counter_account'));
+                if ($to->getId() === $entry->getAccount()->getId()) {
+                    $this->addFlash('danger', 'Převod musí být mezi dvěma různými účty.');
+
+                    return $this->redirectToRoute('account_entry_edit', ['id' => $entry->getId()]);
+                }
+                $entry->setCounterAccount($to);
+            }
+            $this->em->flush();
+            $this->addFlash('success', 'Pohyb upraven.');
+
+            return $this->redirectToRoute('account_index');
+        }
+
+        return $this->render('account/edit_entry.html.twig', [
+            'entry' => $entry,
+            'accounts' => $this->accounts->findOrdered(),
+            'categories' => ExpenseCategory::cases(),
+        ]);
+    }
+
+    #[Route('/ucty/{id}/upravit', name: 'account_edit', methods: ['GET', 'POST'], requirements: ['id' => '\d+'])]
+    public function editAccount(Account $account, Request $request): Response
+    {
+        if ($request->isMethod('POST')) {
+            if (!$this->isCsrfTokenValid('account-edit-' . $account->getId(), (string) $request->request->get('_token'))) {
+                throw $this->createAccessDeniedException();
+            }
+
+            $name = trim((string) $request->request->get('name'));
+            $type = AccountType::tryFrom((string) $request->request->get('type', ''));
+            if ($name === '' || $type === null) {
+                $this->addFlash('danger', 'Zadej název a typ účtu.');
+
+                return $this->redirectToRoute('account_edit', ['id' => $account->getId()]);
+            }
+
+            $account->setName($name);
+            $account->setType($type);
+            $account->setOpeningBalanceCzk($this->parseAmount($request->request->get('opening_balance')));
+            $account->setOpeningDate($this->parseDate($request->request->get('opening_date')));
+            $account->setActive($request->request->getBoolean('active'));
+            $account->setNote($this->parseNote($request->request->get('note')));
+            $this->em->flush();
+            $this->addFlash('success', 'Účet upraven.');
+
+            return $this->redirectToRoute('account_show', ['id' => $account->getId()]);
+        }
+
+        return $this->render('account/edit_account.html.twig', [
+            'account' => $account,
+            'accountTypes' => AccountType::cases(),
+        ]);
+    }
+
+    /**
+     * @return array{account: ?Account, type: ?LedgerEntryType, from: ?\DateTimeImmutable, to: ?\DateTimeImmutable}
+     */
+    private function readFilter(Request $request): array
+    {
+        $accountId = $request->query->get('account');
+        $from = trim((string) $request->query->get('from'));
+        $to = trim((string) $request->query->get('to'));
+
+        return [
+            'account' => \is_numeric($accountId) ? $this->accounts->find((int) $accountId) : null,
+            'type' => LedgerEntryType::tryFrom((string) $request->query->get('type', '')),
+            'from' => $this->parseDateOrNull($from),
+            'to' => $this->parseDateOrNull($to),
+        ];
+    }
+
+    /** Datum z uživatelského vstupu; nevalidní (např. `?from=2026-99-99`) → null místo 500. */
+    private function parseDateOrNull(string $raw): ?\DateTimeImmutable
+    {
+        if ($raw === '') {
+            return null;
+        }
+        try {
+            return new \DateTimeImmutable($raw);
+        } catch (\Exception) {
+            return null;
+        }
+    }
+
     private function requireAccount(mixed $id): Account
     {
         $account = \is_numeric($id) ? $this->accounts->find((int) $id) : null;
@@ -231,9 +400,7 @@ class AccountController extends AbstractController
 
     private function parseDate(mixed $value): \DateTimeImmutable
     {
-        $raw = trim((string) $value);
-
-        return $raw !== '' ? new \DateTimeImmutable($raw) : new \DateTimeImmutable('today');
+        return $this->parseDateOrNull(trim((string) $value)) ?? new \DateTimeImmutable('today');
     }
 
     private function parseAmount(mixed $value): int

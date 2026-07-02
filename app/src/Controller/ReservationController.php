@@ -30,7 +30,7 @@ use App\Profit\ReservationProfitCalculator;
 use App\Repository\CleaningRepository;
 use App\Repository\GuestDocumentRepository;
 use App\Repository\InvoiceRepository;
-use App\Repository\ReservationIncomeRepository;
+use App\Repository\ReservationReceiptRepository;
 use App\Repository\ReservationRepository;
 use App\Service\Cleaning\CleaningPriceList;
 use App\Service\Electricity\ElectricityCostCalculator;
@@ -57,7 +57,7 @@ class ReservationController extends AbstractController
         private readonly ReservationActionPlanner $actionPlanner,
         private readonly BalanceCalculator $balanceCalculator,
         private readonly IncomeUpserter $incomeUpserter,
-        private readonly ReservationIncomeRepository $incomes,
+        private readonly ReservationReceiptRepository $receipts,
     ) {
     }
 
@@ -102,7 +102,7 @@ class ReservationController extends AbstractController
             'cleaning_defaults' => $cleaningDefaults,
             'guest_documents' => $this->guestDocuments->findByReservation($reservation),
             'profit' => $this->profitCalculator->calculate($reservation),
-            'income' => $this->incomes->findForReservation($reservation),
+            'receipts' => $this->receipts->findForReservation($reservation),
             'timeline' => $this->timelineBuilder->build($reservation),
             'balance' => $this->balanceCalculator->forReservation($reservation),
             'note_types' => NoteType::cases(),
@@ -159,6 +159,14 @@ class ReservationController extends AbstractController
             throw $this->createAccessDeniedException();
         }
 
+        // Ruční výplata je OTA koncept (Airbnb/Booking) — u web rezervace host platí
+        // přímo a příjem se drží z faktur, ne z výplaty.
+        if (!\in_array($reservation->getChannel(), [Channel::AIRBNB, Channel::BOOKING], true)) {
+            $this->addFlash('warning', 'Reálná výplata se zadává jen u OTA rezervací (Airbnb/Booking).');
+
+            return $this->redirectToRoute('reservation_detail', ['id' => $reservation->getId()]);
+        }
+
         $amount = number_format((float) str_replace([' ', ','], ['', '.'], (string) $request->request->get('amount')), 2, '.', '');
         if ((float) $amount <= 0) {
             $this->addFlash('warning', 'Zadej částku výplaty.');
@@ -166,8 +174,12 @@ class ReservationController extends AbstractController
             return $this->redirectToRoute('reservation_detail', ['id' => $reservation->getId()]);
         }
 
-        $dateRaw = trim((string) $request->request->get('received_on', ''));
-        $receivedOn = $dateRaw !== '' ? new \DateTimeImmutable($dateRaw) : new \DateTimeImmutable('today');
+        try {
+            $dateRaw = trim((string) $request->request->get('received_on', ''));
+            $receivedOn = $dateRaw !== '' ? new \DateTimeImmutable($dateRaw) : new \DateTimeImmutable('today');
+        } catch (\Exception) {
+            $receivedOn = new \DateTimeImmutable('today');
+        }
         $this->incomeUpserter->recordManualPayout($reservation, $amount, $receivedOn);
         $this->addFlash('success', 'Výplata zaznamenána — příjem rezervace zpřesněn.');
 

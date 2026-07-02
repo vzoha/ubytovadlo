@@ -68,6 +68,64 @@ class LedgerEntryRepository extends ServiceEntityRepository
     }
 
     /**
+     * Filtrované pohyby pro přehled na /ucty — dle účtu (zdroj i protistrana),
+     * typu a období, s limitem/offsetem pro stránkování. Seřazené od nejnovějších.
+     *
+     * @return LedgerEntry[]
+     */
+    public function findFiltered(
+        ?Account $account = null,
+        ?\App\Enum\LedgerEntryType $type = null,
+        ?\DateTimeImmutable $from = null,
+        ?\DateTimeImmutable $to = null,
+        int $limit = 20,
+        int $offset = 0,
+    ): array {
+        return $this->filterQuery($account, $type, $from, $to)
+            ->orderBy('e.occurredOn', 'DESC')
+            ->addOrderBy('e.id', 'DESC')
+            ->setMaxResults($limit)
+            ->setFirstResult($offset)
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function countFiltered(
+        ?Account $account = null,
+        ?\App\Enum\LedgerEntryType $type = null,
+        ?\DateTimeImmutable $from = null,
+        ?\DateTimeImmutable $to = null,
+    ): int {
+        return (int) $this->filterQuery($account, $type, $from, $to)
+            ->select('COUNT(e.id)')
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    private function filterQuery(
+        ?Account $account,
+        ?\App\Enum\LedgerEntryType $type,
+        ?\DateTimeImmutable $from,
+        ?\DateTimeImmutable $to,
+    ): \Doctrine\ORM\QueryBuilder {
+        $qb = $this->createQueryBuilder('e');
+        if ($account !== null) {
+            $qb->andWhere('e.account = :a OR e.counterAccount = :a')->setParameter('a', $account);
+        }
+        if ($type !== null) {
+            $qb->andWhere('e.type = :type')->setParameter('type', $type);
+        }
+        if ($from !== null) {
+            $qb->andWhere('e.occurredOn >= :from')->setParameter('from', $from);
+        }
+        if ($to !== null) {
+            $qb->andWhere('e.occurredOn <= :to')->setParameter('to', $to);
+        }
+
+        return $qb;
+    }
+
+    /**
      * Výdaje v kalendářním roce — pro blok „Obecné výdaje" v Ekonomice.
      *
      * @return LedgerEntry[]

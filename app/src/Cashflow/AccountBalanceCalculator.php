@@ -17,18 +17,18 @@ use App\Enum\LedgerEntryType;
 use App\Repository\AccountRepository;
 use App\Repository\LedgerEntryRepository;
 use App\Repository\PaymentRepository;
-use App\Repository\ReservationIncomeRepository;
+use App\Repository\ReservationReceiptRepository;
 
 /**
  * Očekávaný stav účtu k datu (v celých Kč):
- *   opening + příjmy (ReservationIncome) + nepřiřazené bankovní kredity
+ *   opening + přijaté platby (ReservationReceipt) + nepřiřazené bankovní kredity
  *   + příchozí převody − výdaje − odchozí převody ± korekce.
  * Nepřiřazené platby (bez rezervace) se počítají jen na výchozí bankovní účet.
  */
 final class AccountBalanceCalculator
 {
     public function __construct(
-        private readonly ReservationIncomeRepository $incomes,
+        private readonly ReservationReceiptRepository $receipts,
         private readonly LedgerEntryRepository $ledger,
         private readonly PaymentRepository $payments,
         private readonly AccountRepository $accounts,
@@ -42,11 +42,11 @@ final class AccountBalanceCalculator
         $from = $account->getOpeningDate();
         $balance = $account->getOpeningBalanceCzk();
 
-        // Příjmy s datem přijetí v okně [openingDate, upTo]. U OTA je received_on
+        // Platby s datem přijetí v okně [openingDate, upTo]. U OTA je received_on
         // datum odjezdu → minulé pobyty se počítají (výplata už dorazila), budoucí
         // ne (caller předá upTo = dnes). Odhad vs. reálná částka gate neřídí.
-        foreach ($this->incomes->findReceivedForAccount($account, $from, $upTo) as $income) {
-            $balance += self::toKc($income->getAmountCzk());
+        foreach ($this->receipts->findReceivedForAccount($account, $from, $upTo) as $receipt) {
+            $balance += self::toKc($receipt->getAmountCzk());
         }
 
         if ($account->getType() === AccountType::BANK && $this->isDefaultBank($account)) {

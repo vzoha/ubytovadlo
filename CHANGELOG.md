@@ -17,23 +17,29 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
   s rozlišením provozních (jdou do Ekonomiky) a nevýdělkových (splátka úvěru, osobní
   výběr — jen snižují stav účtu). Ekonomika (`/ekonomika`) nově ukazuje samostatný
   blok **„Obecné výdaje"** (provozní kategorie), mimo per-rezervační zisk.
-- **Reálně přijatý příjem per rezervace (`ReservationIncome`).** Jeden záznam na
-  rezervaci, upsertovaný podle priority zdroje s rozlišením kanálu:
-  - **Přímá objednávka (web):** reálný příjem = **zaplacená faktura** (host platí
-    přímo); dokud host nezaplatí, na účtu nic není. Napojeno na `InvoiceService::markPaid`
-    a spárování platby (`PaymentSettledEvent`).
+- **Reálně přijaté platby per rezervace (`ReservationReceipt`).** **Dílčí platby** —
+  víc řádků na rezervaci, každý s **vlastním datem přijetí**, upsertované podle
+  původu (`originType` + `originId`) s rozlišením kanálu:
+  - **Přímá objednávka (web):** reálný příjem = **každá zaplacená faktura** — u web
+    klasiky **záloha** (přichází dřív, typicky jiný měsíc) a **doplatek** (při
+    příjezdu) jako dva samostatné řádky se svými daty, takže měsíční cashflow sedí;
+    jinak spárované bankovní platby. Dokud host nezaplatí, na účtu nic není.
+    Napojeno na `InvoiceService::markPaid` a spárování platby (`PaymentSettledEvent`).
   - **Airbnb / Booking:** faktura vystavená v průběhu pobytu je jen doklad; příjem
-    se vede jako **odhad net (hrubá − provize)** a **zpřesní se reálnou výplatou** —
+    se vede jako **odhad net (hrubá − provize)** a **nahradí se reálnou výplatou** —
     Airbnb automaticky z výplatního mailu, u Bookingu (a obecně) **ručně** přes
-    formulář „Reálná výplata" na detailu rezervace. Ruční výplata příjem „zamkne".
-  Priorita: OTA výplata > zaplacená faktura > bankovní kredit > odhad → stejná
-  výplata (mail i bankovní kredit) se nikdy nezapočte dvakrát; funguje i bez
-  parsování bankovních notifikací. Do **stavu účtu** vstupují jen **skutečně
-  přijaté** příjmy (odhad = výhled, mimo zůstatek, dokud nedorazí reálná výplata);
-  **zrušené a nedotažené** rezervace se do příjmu nepočítají. `/ucty` zobrazuje
-  tabulky přijatých příjmů i očekávaných výplat (výhled). Stav účtu se plní z
-  přijatých příjmů + nepřiřazených bankovních kreditů; uzávěrka zůstává autoritou.
+    formulář „Reálná výplata" na detailu rezervace. Ruční výplata odhad „zamkne".
+  Idempotentní přepočet (`app:cashflow:recompute-incomes`) auto-platby synchronizuje,
+  ruční nechává být → stejná platba se nikdy nezapočte dvakrát. Do **stavu účtu**
+  vstupují jen **skutečně přijaté** platby (odhad = výhled, mimo zůstatek);
+  **zrušené a nedotažené** rezervace se nepočítají. `/ucty` zobrazuje přijaté platby
+  i očekávané výplaty (výhled); detail rezervace ukazuje rozpis dílčích plateb.
   Demo seed zakládá účty, výdaje, převod a uzávěrku na neutrálních datech.
+- **Cashflow UI — editace, filtr, měsíční souhrn, CSV export.** Pohyby (`LedgerEntry`)
+  i účty (`Account`) lze **upravit**, ne jen přidat/smazat. Přehled pohybů má
+  **filtr** (účet / typ / období) a **stránkování**. Nová stránka **měsíční souhrn**
+  (`/ucty/souhrn/{rok}`): přijaté platby proti výdajům (provozní vs. osobní odliv)
+  po měsících; **CSV export** filtrovaných pohybů.
 
 - **Párování příchozích plateb (notifikace ČS) → automatické vystavení faktury.**
   IMAP poller nově zpracovává e-mail České spořitelny „Přišla platba"

@@ -6,6 +6,9 @@
     {% import _self as f %}
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h1 class="h4 mb-0">Účty a cashflow</h1>
+        <div>
+            <a class="btn btn-sm btn-outline-secondary" href="{{ path('account_summary') }}">Měsíční souhrn</a>
+        </div>
     </div>
 
     <div class="row g-3 mb-4">
@@ -46,7 +49,27 @@
     </div>
 
     <div class="card mb-4">
-        <div class="card-header">Poslední pohyby</div>
+        <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <span>Pohyby <span class="small text-muted">({{ total }})</span></span>
+            <form method="get" action="{{ path('account_index') }}" class="row row-cols-auto g-1 align-items-end small">
+                <div class="col">
+                    <select name="account" class="form-select form-select-sm">
+                        <option value="">Všechny účty</option>
+                        {% for a in accounts %}<option value="{{ a.id }}" {{ filter.account and a.id == filter.account.id ? 'selected' }}>{{ a.name }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="col">
+                    <select name="type" class="form-select form-select-sm">
+                        <option value="">Vše</option>
+                        {% for t in entryTypes %}<option value="{{ t.value }}" {{ filter.type and t.value == filter.type.value ? 'selected' }}>{{ t.label }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="col"><input type="date" name="from" value="{{ filter.from ? filter.from|date('Y-m-d') }}" class="form-control form-control-sm"></div>
+                <div class="col"><input type="date" name="to" value="{{ filter.to ? filter.to|date('Y-m-d') }}" class="form-control form-control-sm"></div>
+                <div class="col"><button class="btn btn-sm btn-outline-secondary">Filtrovat</button></div>
+                <div class="col"><a class="btn btn-sm btn-outline-primary" href="{{ path('account_export_csv', app.request.query.all|filter((v, k) => k != 'page')) }}">CSV</a></div>
+            </form>
+        </div>
         <table class="table table-sm table-hover align-middle mb-0 small">
             <thead>
                 <tr>
@@ -68,8 +91,9 @@
                         {{ m.amountCzk|number_format(0, ',', ' ') }} Kč
                     </td>
                     <td class="text-muted">{{ m.note }}</td>
-                    <td class="text-end">
-                        <form method="post" action="{{ path('account_expense_delete', {id: m.id}) }}" onsubmit="return confirm('Smazat pohyb?')">
+                    <td class="text-end text-nowrap">
+                        <a class="btn btn-sm btn-outline-secondary py-0" href="{{ path('account_entry_edit', {id: m.id}) }}">✎</a>
+                        <form method="post" action="{{ path('account_expense_delete', {id: m.id}) }}" class="d-inline" onsubmit="return confirm('Smazat pohyb?')">
                             <input type="hidden" name="_token" value="{{ csrf_token('account-entry-delete-' ~ m.id) }}">
                             <button class="btn btn-sm btn-outline-danger py-0">×</button>
                         </form>
@@ -80,6 +104,15 @@
             {% endfor %}
             </tbody>
         </table>
+        {% if pages > 1 %}
+            <div class="card-footer d-flex justify-content-between align-items-center small">
+                <span class="text-muted">Strana {{ page }} / {{ pages }}</span>
+                <div class="btn-group">
+                    {% if page > 1 %}<a class="btn btn-sm btn-outline-secondary" href="{{ path('account_index', app.request.query.all|merge({page: page - 1})) }}">← Novější</a>{% endif %}
+                    {% if page < pages %}<a class="btn btn-sm btn-outline-secondary" href="{{ path('account_index', app.request.query.all|merge({page: page + 1})) }}">Starší →</a>{% endif %}
+                </div>
+            </div>
+        {% endif %}
     </div>
 
     <div class="card mb-4">
