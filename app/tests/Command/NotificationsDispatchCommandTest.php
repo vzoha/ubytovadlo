@@ -85,6 +85,15 @@ final class NotificationsDispatchCommandTest extends KernelTestCase
         self::assertStringContainsString('nic k odeslání', $tester->getDisplay());
     }
 
+    public function testTestCommandSendsToConfiguredRecipient(): void
+    {
+        // Příjemce je nastaven v setUp → test projde přes (null) transport bez chyby.
+        $tester = $this->runCommand('app:notifications:test');
+
+        self::assertSame(0, $tester->getStatusCode());
+        self::assertStringContainsString('odeslána', $tester->getDisplay());
+    }
+
     public function testDigestWithoutRecipientSkipsWithoutCrashOrLoss(): void
     {
         $item = $this->enqueue(OwnerNotificationType::CHECKIN_COMPLETED, OwnerNotificationMode::DIGEST);

@@ -46,9 +46,15 @@ final class OwnerNotificationSender
         $this->dispatch($this->renderer->renderDigest($notifications));
     }
 
-    private function dispatch(RenderedMessage $rendered): void
+    /** Pošle ukázkovou notifikaci — ověření, že SMTP i doručování fungují. */
+    public function sendTest(?string $to = null): void
     {
-        $recipient = $this->settings->recipient();
+        $this->dispatch($this->renderer->renderTest(), $to);
+    }
+
+    private function dispatch(RenderedMessage $rendered, ?string $to = null): void
+    {
+        $recipient = $to ?? $this->settings->recipient();
         if ($recipient === null) {
             throw new \RuntimeException('Není nastavena adresa příjemce notifikací.');
         }

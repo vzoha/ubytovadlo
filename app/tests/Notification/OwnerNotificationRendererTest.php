@@ -105,6 +105,15 @@ final class OwnerNotificationRendererTest extends KernelTestCase
         self::assertStringContainsString('Otevřít rezervaci: http', $rendered->text);
     }
 
+    public function testRenderTestProducesMessage(): void
+    {
+        $rendered = $this->renderer->renderTest();
+
+        self::assertStringContainsString('Testovací', $rendered->subject);
+        self::assertStringContainsString('SMTP', $rendered->text);
+        self::assertStringContainsString('<html', $rendered->html);
+    }
+
     /** @param array<string, mixed> $payload */
     private function notification(OwnerNotificationType $type, ?Reservation $reservation, array $payload = []): PendingOwnerNotification
     {

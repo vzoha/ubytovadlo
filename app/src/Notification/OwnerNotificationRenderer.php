@@ -45,6 +45,16 @@ final class OwnerNotificationRenderer
         );
     }
 
+    /** Ukázková notifikace pro ověření odesílání (SMTP). */
+    public function renderTest(): RenderedMessage
+    {
+        $subject = 'Testovací notifikace z Ubytovadla';
+        $body = "Tohle je **testovací notifikace ubytovateli**.\n\n"
+            . 'Pokud ti dorazila, odesílání e-mailů (SMTP) i notifikace fungují.';
+
+        return new RenderedMessage($subject, $this->layout->render($subject, $body), $this->layout->bodyToText($body));
+    }
+
     /**
      * Sloučí víc notifikací do jednoho denního souhrnu.
      *

@@ -24,7 +24,8 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
   (`PendingOwnerNotification`), doručení řeší cron: `app:notifications:dispatch`
   (á 15 min, okamžité jednotlivě), `app:notifications:digest` (1× denně souhrn) a
   `app:vat:remind` (denně, připomínku DPH zařadí do fronty). Odesílání sdílí layout
-  a barevné téma e-mailů hostům (nový `App\Mail\EmailLayoutRenderer`).
+  a barevné téma e-mailů hostům (nový `App\Mail\EmailLayoutRenderer`). Ověření
+  doručování: `app:notifications:test` pošle testovací notifikaci na příjemce.
 
 - **Skloňování jmen v oslovení e-mailů (5. pád / vokativ).** Nové proměnné šablon
   `{{ guest_first_name_vocative }}` (křestní jméno) a `{{ guest_last_name_vocative }}`
