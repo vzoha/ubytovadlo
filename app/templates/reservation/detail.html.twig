@@ -290,7 +290,32 @@
                         <dd class="col-sm-6 text-end fw-bold">
                             {% if reservation.netPayout %}{{ reservation.netPayout|number_format(2, ',', ' ') }} {{ reservation.priceCurrency }}{% else %}—{% endif %}
                         </dd>
+
+                        <dt class="col-sm-6">Příjem na účtu</dt>
+                        <dd class="col-sm-6 text-end">
+                            {% if income %}
+                                {{ income.amountCzk|number_format(0, ',', ' ') }} Kč
+                                <span class="badge text-bg-{{ income.source.realized ? 'success' : 'secondary' }}">{{ income.source.label }}</span>
+                            {% else %}<span class="text-muted">—</span>{% endif %}
+                        </dd>
                     </dl>
+
+                    {% if reservation.channel.value in ['airbnb', 'booking'] %}
+                        <form method="post" action="{{ path('reservation_record_payout', {id: reservation.id}) }}" class="row g-2 align-items-end mt-2 border-top pt-2">
+                            <input type="hidden" name="_token" value="{{ csrf_token('payout-' ~ reservation.id) }}">
+                            <div class="col-5">
+                                <label class="form-label small mb-0">Reálná výplata (Kč)</label>
+                                <input name="amount" type="number" step="1" class="form-control form-control-sm" required>
+                            </div>
+                            <div class="col-4">
+                                <label class="form-label small mb-0">Datum</label>
+                                <input name="received_on" type="date" class="form-control form-control-sm">
+                            </div>
+                            <div class="col-3">
+                                <button class="btn btn-sm btn-outline-primary w-100">Zapsat</button>
+                            </div>
+                        </form>
+                    {% endif %}
                 </div>
             </div>
 

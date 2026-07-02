@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Invoice;
 
+use App\Cashflow\IncomeUpserter;
 use App\Entity\Reservation;
 use App\Enum\BillingMode;
 use App\Enum\Channel;
@@ -71,6 +72,7 @@ final class InvoiceServicePayoutTest extends TestCase
             $this->createMock(SpaydGenerator::class),
             $this->createMock(CnbExchangeRateClient::class),
             $issuerProvider,
+            $this->createMock(IncomeUpserter::class),
             '1000.00',
         );
     }

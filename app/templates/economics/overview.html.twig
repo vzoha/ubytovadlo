@@ -153,4 +153,30 @@
             </table>
         </div>
     </div>
+
+    <div class="card mt-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span>Obecné výdaje <span class="small text-muted">(provozní, mimo pobyty)</span></span>
+            <a href="{{ path('account_index') }}" class="btn btn-sm btn-outline-secondary">Účty a výdaje</a>
+        </div>
+        {% if generalExpenses.byCategory is empty %}
+            <div class="card-body text-muted small mb-0">Za rok {{ year }} nejsou zapsané žádné provozní výdaje.</div>
+        {% else %}
+            <table class="table table-sm align-middle mb-0">
+                <tbody>
+                {% for row in generalExpenses.byCategory %}
+                    <tr>
+                        <td>{{ row.label }}</td>
+                        <td class="text-end">{{ row.total|number_format(0, ',', ' ') }} Kč</td>
+                    </tr>
+                {% endfor %}
+                    <tr class="fw-bold border-top">
+                        <td>Celkem</td>
+                        <td class="text-end">{{ generalExpenses.total|number_format(0, ',', ' ') }} Kč</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="card-footer small text-muted">Splátky úvěru a osobní výběry se do provozní ekonomiky nezapočítávají.</div>
+        {% endif %}
+    </div>
 {% endblock %}

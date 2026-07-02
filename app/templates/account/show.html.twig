@@ -1,0 +1,76 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ account.name }} — {{ brand_name }}{% endblock %}
+
+{% block body %}
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <a href="{{ path('account_index') }}" class="text-decoration-none small">← Účty</a>
+            <h1 class="h4 mb-0">{{ account.name }} <span class="badge text-bg-light">{{ account.type.label }}</span></h1>
+        </div>
+        <div class="text-end">
+            <div class="small text-muted">Aktuální stav</div>
+            <div class="fs-4 fw-bold {{ balance < 0 ? 'text-danger' : '' }}">{{ balance|number_format(0, ',', ' ') }} Kč</div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">Uzávěrky</div>
+        <table class="table table-sm align-middle mb-0 small">
+            <thead>
+                <tr><th>K datu</th><th class="text-end">Očekáváno</th><th class="text-end">Reálně</th><th class="text-end">Rozdíl</th><th></th></tr>
+            </thead>
+            <tbody>
+            {% for row in statements %}
+                <tr>
+                    <td>{{ row.statement.statementDate|date('j. n. Y') }}</td>
+                    <td class="text-end">{{ row.expected|number_format(0, ',', ' ') }}</td>
+                    <td class="text-end">{{ row.actual|number_format(0, ',', ' ') }}</td>
+                    <td class="text-end fw-semibold {{ row.difference != 0 ? 'text-danger' : 'text-success' }}">
+                        {{ row.difference|number_format(0, ',', ' ') }}
+                    </td>
+                    <td class="text-end">
+                        {% if row.difference != 0 %}
+                            <form method="post" action="{{ path('account_statement_correction', {id: row.statement.id}) }}"
+                                  onsubmit="return confirm('Založit korekci na {{ row.difference }} Kč?')">
+                                <input type="hidden" name="_token" value="{{ csrf_token('account-correction-' ~ row.statement.id) }}">
+                                <button class="btn btn-sm btn-outline-primary py-0">Srovnat korekcí</button>
+                            </form>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% else %}
+                <tr><td colspan="5" class="text-muted">Žádná uzávěrka.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card">
+        <div class="card-header">Pohyby na účtu</div>
+        <table class="table table-sm table-hover align-middle mb-0 small">
+            <thead>
+                <tr><th>Datum</th><th>Typ</th><th>Kategorie / protistrana</th><th class="text-end">Dopad</th><th>Poznámka</th></tr>
+            </thead>
+            <tbody>
+            {% for m in movements %}
+                {% set outgoing = m.type.value == 'expense' or (m.type.value == 'transfer' and m.account.id == account.id) %}
+                {% set effect = m.type.value == 'adjustment' ? m.amountCzk : (outgoing ? -m.amountCzk : m.amountCzk) %}
+                <tr>
+                    <td>{{ m.occurredOn|date('j. n. Y') }}</td>
+                    <td>{{ m.type.label }}</td>
+                    <td>
+                        {% if m.type.value == 'transfer' %}
+                            {{ m.account.id == account.id ? '→ ' ~ (m.counterAccount ? m.counterAccount.name : '—') : '← ' ~ m.account.name }}
+                        {% elseif m.category %}{{ m.category.label }}{% endif %}
+                    </td>
+                    <td class="text-end {{ effect < 0 ? 'text-danger' : 'text-success' }}">{{ effect|number_format(0, ',', ' ') }} Kč</td>
+                    <td class="text-muted">{{ m.note }}</td>
+                </tr>
+            {% else %}
+                <tr><td colspan="5" class="text-muted">Žádné pohyby.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

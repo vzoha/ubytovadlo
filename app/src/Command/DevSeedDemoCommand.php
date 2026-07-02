@@ -11,18 +11,25 @@ declare(strict_types=1);
 
 namespace App\Command;
 
+use App\Cashflow\IncomeUpserter;
+use App\Entity\Account;
+use App\Entity\BalanceStatement;
 use App\Entity\ElectricityTariff;
 use App\Entity\GuestDocument;
 use App\Entity\Invoice;
+use App\Entity\LedgerEntry;
 use App\Entity\Payment;
 use App\Entity\Reservation;
 use App\Entity\Setting;
 use App\Entity\User;
 use App\Entity\VatPeriod;
+use App\Enum\AccountType;
 use App\Enum\Channel;
 use App\Enum\CleaningType;
 use App\Enum\DocumentType;
 use App\Enum\ElectricitySource;
+use App\Enum\ExpenseCategory;
+use App\Enum\LedgerEntryType;
 use App\Enum\PaymentSource;
 use App\Enum\ReservationStatus;
 use App\Invoice\InvoiceService;
@@ -60,6 +67,7 @@ class DevSeedDemoCommand extends Command
         private readonly Connection $connection,
         private readonly InvoiceService $invoices,
         private readonly CleaningRepository $cleanings,
+        private readonly IncomeUpserter $incomeUpserter,
         private readonly UserPasswordHasherInterface $hasher,
         private readonly string $appEnv,
     ) {
@@ -88,7 +96,9 @@ class DevSeedDemoCommand extends Command
         $this->wipe($io);
 
         $this->seedSupport($input, $io);
+        $this->seedAccounts($io);
         $reservations = $this->seedReservations($io);
+        $this->seedReservationIncomes($reservations, $io);
         $this->seedVatPeriods($io);
 
         $io->success(sprintf('Hotovo. Naseedováno %d rezervací + faktury, úklidy, elektřina, DPH.', count($reservations)));
@@ -100,9 +110,10 @@ class DevSeedDemoCommand extends Command
     private function wipe(SymfonyStyle $io): void
     {
         $tables = [
+            'reservation_income', 'balance_statement', 'ledger_entry', 'account',
             'invoice_line', 'invoice', 'cleaning', 'guest_document', 'airbnb_statement',
             'booking_monthly_invoice', 'vat_period', 'electricity_reading', 'electricity_tariff',
-            'email_log', 'reservation', 'app_user', 'setting', 'accommodation_profile',
+            'payment', 'email_log', 'reservation', 'app_user', 'setting', 'accommodation_profile',
         ];
         $this->connection->executeStatement('SET FOREIGN_KEY_CHECKS = 0');
         foreach ($tables as $table) {
@@ -131,6 +142,56 @@ class DevSeedDemoCommand extends Command
 
         $this->em->flush();
         $io->writeln('  Uživatel, tarif a nastavení vytvořeny.');
+    }
+
+    /** Demo účty + pár neutrálních výdajů, převod a uzávěrka (žádné reálné PII). */
+    private function seedAccounts(SymfonyStyle $io): void
+    {
+        $bank = new Account('Bankovní účet', AccountType::BANK, 42000, new \DateTimeImmutable('2026-01-01'));
+        $cash = new Account('Hotovost', AccountType::CASH, 3000, new \DateTimeImmutable('2026-01-01'));
+        $cash->setSortOrder(1);
+        $this->em->persist($bank);
+        $this->em->persist($cash);
+
+        $expenses = [
+            ['2026-02-10', 3000, ExpenseCategory::MAINTENANCE, 'Revize kotle'],
+            ['2026-03-05', 1300, ExpenseCategory::EQUIPMENT, 'Vysavač'],
+            ['2026-03-20', 965, ExpenseCategory::LAUNDRY, 'Nová prostěradla'],
+            ['2026-04-14', 600, ExpenseCategory::MUNICIPAL, 'Poplatek obci'],
+            ['2026-04-22', 60000, ExpenseCategory::LOAN_PAYMENT, 'Splátka hypotéky'],
+        ];
+        foreach ($expenses as [$date, $amount, $category, $note]) {
+            $entry = new LedgerEntry(LedgerEntryType::EXPENSE, new \DateTimeImmutable($date), $amount, $bank);
+            $entry->setCategory($category);
+            $entry->setNote($note);
+            $this->em->persist($entry);
+        }
+
+        $transfer = new LedgerEntry(LedgerEntryType::TRANSFER, new \DateTimeImmutable('2026-04-30'), 2000, $cash);
+        $transfer->setCounterAccount($bank);
+        $transfer->setNote('Vklad hotovosti na účet');
+        $this->em->persist($transfer);
+
+        $statement = new BalanceStatement($bank, new \DateTimeImmutable('2026-05-01'), 55000);
+        $statement->setNote('Kontrola stavu účtu');
+        $this->em->persist($statement);
+
+        $this->em->flush();
+        $io->writeln('  Účty, výdaje, převod a uzávěrka vytvořeny.');
+    }
+
+    /**
+     * Naplní reálně přijatý příjem per rezervace (ReservationIncome) — po vystavení
+     * faktur a zaznamenání plateb/výplat, ať dashboard účtů ukazuje příjmy.
+     *
+     * @param Reservation[] $reservations
+     */
+    private function seedReservationIncomes(array $reservations, SymfonyStyle $io): void
+    {
+        foreach ($reservations as $reservation) {
+            $this->incomeUpserter->recompute($reservation);
+        }
+        $io->writeln('  Příjmy rezervací dopočítány.');
     }
 
     /**

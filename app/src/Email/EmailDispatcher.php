@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Email;
 
+use App\Cashflow\IncomeUpserter;
 use App\Email\Dto\AirbnbParsedReservation;
 use App\Email\Dto\AirbnbPayoutData;
 use App\Email\Dto\BookingTriggerData;
@@ -39,6 +40,7 @@ class EmailDispatcher
         private readonly CsPaymentParser $csPaymentParser,
         private readonly PaymentProcessor $paymentProcessor,
         private readonly InvoiceRepository $invoices,
+        private readonly IncomeUpserter $incomeUpserter,
         private readonly EntityManagerInterface $em,
         private readonly LoggerInterface $logger,
     ) {
@@ -190,6 +192,9 @@ class EmailDispatcher
                 $invoice->setPaidAt($data->payoutSentAt);
             }
         }
+
+        // Výplata (net po provizi) je reálný příjem na účet — přepočítej ReservationIncome.
+        $this->incomeUpserter->recompute($reservation);
 
         return $reservation;
     }

@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Email;
 
+use App\Cashflow\IncomeUpserter;
 use App\Email\AirbnbPayoutParser;
 use App\Email\AirbnbReservationParser;
 use App\Email\BookingTriggerParser;
@@ -83,6 +84,7 @@ final class EmailDispatcherTest extends TestCase
             new CsPaymentParser(),
             $this->paymentProcessor,
             $this->invoices,
+            $this->createMock(IncomeUpserter::class),
             $this->em,
             new NullLogger(),
         );
@@ -293,6 +295,7 @@ final class EmailDispatcherTest extends TestCase
             new CsPaymentParser(),
             $this->paymentProcessor,
             $this->invoices,
+            $this->createMock(IncomeUpserter::class),
             $this->em,
             new NullLogger(),
         );

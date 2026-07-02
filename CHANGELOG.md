@@ -8,6 +8,30 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Přidáno
 
+- **Evidence účtů, výdajů a uzávěrek (cashflow modul).** Nová sekce `/ucty`:
+  univerzální **účty** (banka / hotovost, uživatelsky definované; entita `Account`),
+  **výdaje a převody** mezi vlastními účty v jednotném ledgeru (`LedgerEntry`:
+  výdaj / převod / korekce), a **uzávěrky** (`BalanceStatement`) — ruční snapshot
+  reálného stavu účtu, ke kterému systém dopočítá **očekávaný stav** a ukáže rozdíl;
+  rozdíl lze jedním klikem srovnat korekcí. Výdaje mají kategorie (`ExpenseCategory`)
+  s rozlišením provozních (jdou do Ekonomiky) a nevýdělkových (splátka úvěru, osobní
+  výběr — jen snižují stav účtu). Ekonomika (`/ekonomika`) nově ukazuje samostatný
+  blok **„Obecné výdaje"** (provozní kategorie), mimo per-rezervační zisk.
+- **Reálně přijatý příjem per rezervace (`ReservationIncome`).** Jeden záznam na
+  rezervaci, upsertovaný podle priority zdroje s rozlišením kanálu:
+  - **Přímá objednávka (web):** reálný příjem = **zaplacená faktura** (host platí
+    přímo); dokud host nezaplatí, na účtu nic není. Napojeno na `InvoiceService::markPaid`
+    a spárování platby (`PaymentSettledEvent`).
+  - **Airbnb / Booking:** faktura vystavená v průběhu pobytu je jen doklad; příjem
+    se vede jako **odhad net (hrubá − provize)** a **zpřesní se reálnou výplatou** —
+    Airbnb automaticky z výplatního mailu, u Bookingu (a obecně) **ručně** přes
+    formulář „Reálná výplata" na detailu rezervace. Ruční výplata příjem „zamkne".
+  Priorita: OTA výplata > zaplacená faktura > bankovní kredit > odhad → stejná
+  výplata (mail i bankovní kredit) se nikdy nezapočte dvakrát; funguje i bez
+  parsování bankovních notifikací. Stav bankovního účtu se plní z těchto příjmů +
+  nepřiřazených bankovních kreditů; uzávěrka zůstává autoritou nad odhady. Demo
+  seed zakládá účty, výdaje, převod a uzávěrku na neutrálních datech.
+
 - **Párování příchozích plateb (notifikace ČS) → automatické vystavení faktury.**
   IMAP poller nově zpracovává e-mail České spořitelny „Přišla platba"
   (`App\Email\CsPaymentParser`): vytáhne částku, variabilní symbol, účet protistrany

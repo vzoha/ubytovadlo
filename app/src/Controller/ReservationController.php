@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Booking\BookingExtranetParser;
+use App\Cashflow\IncomeUpserter;
 use App\Entity\Reservation;
 use App\Entity\ReservationAction;
 use App\Entity\ReservationNote;
@@ -29,6 +30,7 @@ use App\Profit\ReservationProfitCalculator;
 use App\Repository\CleaningRepository;
 use App\Repository\GuestDocumentRepository;
 use App\Repository\InvoiceRepository;
+use App\Repository\ReservationIncomeRepository;
 use App\Repository\ReservationRepository;
 use App\Service\Cleaning\CleaningPriceList;
 use App\Service\Electricity\ElectricityCostCalculator;
@@ -54,6 +56,8 @@ class ReservationController extends AbstractController
         private readonly ReservationTimelineBuilder $timelineBuilder,
         private readonly ReservationActionPlanner $actionPlanner,
         private readonly BalanceCalculator $balanceCalculator,
+        private readonly IncomeUpserter $incomeUpserter,
+        private readonly ReservationIncomeRepository $incomes,
     ) {
     }
 
@@ -98,6 +102,7 @@ class ReservationController extends AbstractController
             'cleaning_defaults' => $cleaningDefaults,
             'guest_documents' => $this->guestDocuments->findByReservation($reservation),
             'profit' => $this->profitCalculator->calculate($reservation),
+            'income' => $this->incomes->findForReservation($reservation),
             'timeline' => $this->timelineBuilder->build($reservation),
             'balance' => $this->balanceCalculator->forReservation($reservation),
             'note_types' => NoteType::cases(),
@@ -143,6 +148,28 @@ class ReservationController extends AbstractController
 
         $this->em->flush();
         $this->addFlash('success', 'Úklid uložen.');
+
+        return $this->redirectToRoute('reservation_detail', ['id' => $reservation->getId()]);
+    }
+
+    #[Route('/reservation/{id}/payout', name: 'reservation_record_payout', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function recordPayout(Reservation $reservation, Request $request): Response
+    {
+        if (!$this->isCsrfTokenValid('payout-' . $reservation->getId(), (string) $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+
+        $amount = number_format((float) str_replace([' ', ','], ['', '.'], (string) $request->request->get('amount')), 2, '.', '');
+        if ((float) $amount <= 0) {
+            $this->addFlash('warning', 'Zadej částku výplaty.');
+
+            return $this->redirectToRoute('reservation_detail', ['id' => $reservation->getId()]);
+        }
+
+        $dateRaw = trim((string) $request->request->get('received_on', ''));
+        $receivedOn = $dateRaw !== '' ? new \DateTimeImmutable($dateRaw) : new \DateTimeImmutable('today');
+        $this->incomeUpserter->recordManualPayout($reservation, $amount, $receivedOn);
+        $this->addFlash('success', 'Výplata zaznamenána — příjem rezervace zpřesněn.');
 
         return $this->redirectToRoute('reservation_detail', ['id' => $reservation->getId()]);
     }

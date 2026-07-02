@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace App\Profit;
 
 use App\Entity\Reservation;
+use App\Repository\LedgerEntryRepository;
 use App\Repository\ReservationRepository;
 
 /**
@@ -21,12 +22,14 @@ use App\Repository\ReservationRepository;
  * je jen výhled a nesmí se míchat do reálných čísel.
  *
  * @phpstan-type Summary array{count: int, nights: int, income: string, expenses: string, profit: string, hasEstimates: bool}
+ * @phpstan-type GeneralExpenses array{total: int, byCategory: array<string, array{label: string, total: int}>}
  */
 final class YearEconomicsBuilder
 {
     public function __construct(
         private readonly ReservationRepository $reservations,
         private readonly ReservationProfitCalculator $profitCalculator,
+        private readonly LedgerEntryRepository $ledger,
     ) {
     }
 
@@ -38,6 +41,7 @@ final class YearEconomicsBuilder
      *     expected: Summary,
      *     total: Summary,
      *     byChannel: array<string, Summary>,
+     *     generalExpenses: GeneralExpenses,
      * }
      */
     public function build(int $year, \DateTimeImmutable $today): array
@@ -71,7 +75,31 @@ final class YearEconomicsBuilder
             'expected' => $expected,
             'total' => $total,
             'byChannel' => $byChannel,
+            'generalExpenses' => $this->generalExpenses($year),
         ];
+    }
+
+    /**
+     * Provozní nerezervační výdaje roku po kategoriích. Finanční/osobní odliv
+     * (splátka úvěru, výběr majitele) se do provozní ekonomiky nezapočítává.
+     *
+     * @phpstan-return GeneralExpenses
+     */
+    private function generalExpenses(int $year): array
+    {
+        $total = 0;
+        $byCategory = [];
+        foreach ($this->ledger->findExpensesInYear($year) as $entry) {
+            $category = $entry->getCategory();
+            if ($category === null || !$category->isOperating()) {
+                continue;
+            }
+            $byCategory[$category->value] ??= ['label' => $category->label(), 'total' => 0];
+            $byCategory[$category->value]['total'] += $entry->getAmountCzk();
+            $total += $entry->getAmountCzk();
+        }
+
+        return ['total' => $total, 'byCategory' => $byCategory];
     }
 
     /** Pobyt je uskutečněný, jakmile proběhl odjezd. Probíhající pobyt patří do očekávaných. */

@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Invoice;
 
+use App\Cashflow\IncomeUpserter;
 use App\Entity\Invoice;
 use App\Entity\InvoiceLine;
 use App\Entity\Reservation;
@@ -45,6 +46,7 @@ class InvoiceService
         private readonly SpaydGenerator $spayd,
         private readonly CnbExchangeRateClient $cnb,
         private readonly IssuerProfileProvider $issuerProvider,
+        private readonly IncomeUpserter $incomeUpserter,
         private readonly string $invoiceDepositAmount,
     ) {
     }
@@ -135,6 +137,10 @@ class InvoiceService
         $path = $this->pdfRenderer->renderToFile($invoice);
         $invoice->setPdfPath($path);
         $this->em->flush();
+
+        // Úhrada faktury může změnit reálný příjem rezervace (u přímé objednávky
+        // je to reálný příjem, u OTA aspoň zpřesní odhad).
+        $this->incomeUpserter->recompute($invoice->getReservation());
     }
 
     public function regeneratePdf(Invoice $invoice): void
