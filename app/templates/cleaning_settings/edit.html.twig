@@ -7,14 +7,14 @@
 
     {{ include('settings/_nav.html.twig', { active: 'cleaning' }) }}
 
-    <h2 class="h5 mb-2">Typy úklidu — názvy a ceník</h2>
+    <h2 class="h5 mb-2">Úklid</h2>
     <p class="text-muted small">
         Pro každý typ úklidu nastav konkrétní název (např. jméno uklízečky) a ceník.
         Cena se účtuje podle počtu hostů: do prahu včetně platí nižší, nad práh vyšší.
         Stejná cena v obou polích = paušál. Název nech prázdný pro výchozí obecný.
     </p>
 
-    <div class="col-lg-9">
+    <div class="col-lg-8">
         {{ form_start(form) }}
             {% for type in types %}
                 <div class="card mb-3">

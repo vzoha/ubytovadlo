@@ -80,7 +80,9 @@
                 </div>
             </div>
 
-            <button class="btn btn-primary">Uložit</button>
+            <div class="d-flex justify-content-end">
+                <button type="submit" class="btn btn-primary">Uložit</button>
+            </div>
         {{ form_end(form) }}
 
         <hr class="my-4">
@@ -100,7 +102,9 @@
                     <div class="mt-2">{{ form_row(mappingForm.pushPayments) }}</div>
                 </div>
             </div>
-            <button class="btn btn-primary">Uložit</button>
+            <div class="d-flex justify-content-end">
+                <button type="submit" class="btn btn-primary">Uložit</button>
+            </div>
         {{ form_end(mappingForm) }}
     </div>
 {% endblock %}

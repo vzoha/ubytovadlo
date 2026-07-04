@@ -59,6 +59,13 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
   nově používají vokativ křestního jména. Postaveno na knihovně `granam/czech-vocative`;
   prázdný vstup, jednoslovná i cizí jména jsou ošetřené (`App\Mail\GuestVocative`).
 
+### Změněno
+
+- **Sjednocený vzhled stránek nastavení.** Všechny záložky `/nastaveni/*` mají stejnou
+  šířku obsahu, tlačítko **Uložit** vpravo pod kartou a nadpisy sladěné s názvy záložek
+  („Úklid", „Notifikace ubytovateli"). Editace šablony zprávy běží v kartě jako ostatní
+  stránky. Popis záložky **E-maily** odkazuje na SMTP přístup v záložce **Připojení**.
+
 ## [0.6.0] — 2026-07-02
 
 ### Přidáno

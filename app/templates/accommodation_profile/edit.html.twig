@@ -19,34 +19,33 @@
         <div class="alert alert-warning">Profil ještě nebyl vyplněn. Po uložení bude možné generovat UNL exporty.</div>
     {% endif %}
 
-    <div class="row">
-        <div class="col-lg-8">
-            {{ form_start(form) }}
-                <div class="card">
-                    <div class="card-body">
-                        <div class="row g-3">
-                            <div class="col-md-6">{{ form_row(form.idub) }}</div>
-                            <div class="col-md-6">{{ form_row(form.kod) }}</div>
-                            <div class="col-12">{{ form_row(form.nazev) }}</div>
-                            <div class="col-12">{{ form_row(form.spojeni) }}</div>
-                        </div>
-                        <hr>
-                        <h2 class="h6 text-muted mb-3">Adresa</h2>
-                        <div class="row g-3">
-                            <div class="col-md-6">{{ form_row(form.okres) }}</div>
-                            <div class="col-md-6">{{ form_row(form.obec) }}</div>
-                            <div class="col-md-6">{{ form_row(form.castObce) }}</div>
-                            <div class="col-md-6">{{ form_row(form.ulice) }}</div>
-                            <div class="col-md-3">{{ form_row(form.cp) }}</div>
-                            <div class="col-md-3">{{ form_row(form.co) }}</div>
-                            <div class="col-md-6">{{ form_row(form.psc) }}</div>
-                        </div>
-                        <div class="d-flex justify-content-end mt-3">
-                            <button type="submit" class="btn btn-primary">Uložit</button>
-                        </div>
+    <div class="col-lg-8">
+        {{ form_start(form) }}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">{{ form_row(form.idub) }}</div>
+                        <div class="col-md-6">{{ form_row(form.kod) }}</div>
+                        <div class="col-12">{{ form_row(form.nazev) }}</div>
+                        <div class="col-12">{{ form_row(form.spojeni) }}</div>
+                    </div>
+                    <hr>
+                    <h2 class="h6 text-muted mb-3">Adresa</h2>
+                    <div class="row g-3">
+                        <div class="col-md-6">{{ form_row(form.okres) }}</div>
+                        <div class="col-md-6">{{ form_row(form.obec) }}</div>
+                        <div class="col-md-6">{{ form_row(form.castObce) }}</div>
+                        <div class="col-md-6">{{ form_row(form.ulice) }}</div>
+                        <div class="col-md-3">{{ form_row(form.cp) }}</div>
+                        <div class="col-md-3">{{ form_row(form.co) }}</div>
+                        <div class="col-md-6">{{ form_row(form.psc) }}</div>
                     </div>
                 </div>
-            {{ form_end(form) }}
-        </div>
+            </div>
+
+            <div class="d-flex justify-content-end">
+                <button type="submit" class="btn btn-primary">Uložit</button>
+            </div>
+        {{ form_end(form) }}
     </div>
 {% endblock %}
