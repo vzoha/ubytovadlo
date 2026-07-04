@@ -40,6 +40,11 @@ services:
         arguments:
             $seriesStarts: '%env(json:INVOICE_SERIES_STARTS)%'
 
+    App\Config\InstanceSettings:
+        arguments:
+            $brandNameFallback: '%env(APP_BRAND_NAME)%'
+            $baseUrlFallback: '%env(DEFAULT_URI)%'
+
     App\Invoice\IssuerProfileProvider:
         arguments:
             $name: '%env(INVOICE_ISSUER_NAME)%'

@@ -8,6 +8,13 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Přidáno
 
+- **Obecné nastavení instance v UI.** Záložka `/nastaveni/obecne`: **název instance**
+  (brand — hlavička, titulky, faktury) a **veřejná adresa aplikace** (pro odkazy
+  v e-mailech odeslaných z cronu). Ukládá se do DB (`Setting`), env `APP_BRAND_NAME`
+  a `DEFAULT_URI` slouží jako fallback. Twig global `brand_name` čte hodnotu při
+  renderu (`App\Config\BrandName`); odkazy v CLI/cron mailech berou adresu ze
+  nastavení přes `RouterContextConsoleSubscriber`.
+
 - **SMTP nastavení v UI místo `.env`.** Přihlašovací údaje odchozí pošty (host, port,
   šifrování, uživatel, heslo) se zadávají v `/nastaveni/pripojeni` a ukládají
   **šifrovaně** v credential store (stejně jako IMAP/MotoPress). `App\Mail\DbMailer`
