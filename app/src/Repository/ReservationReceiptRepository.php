@@ -14,6 +14,7 @@ namespace App\Repository;
 use App\Entity\Account;
 use App\Entity\Reservation;
 use App\Entity\ReservationReceipt;
+use App\Enum\IncomeSource;
 use App\Enum\ReceiptOrigin;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
@@ -42,6 +43,37 @@ class ReservationReceiptRepository extends ServiceEntityRepository
             ->addOrderBy('r.id', 'DESC')
             ->getQuery()
             ->getResult();
+    }
+
+    /**
+     * Součet částek daného zdroje po rezervacích (dávkově, bez N+1).
+     *
+     * @param int[] $reservationIds
+     *
+     * @return array<int, float> reservationId => součet CZK
+     */
+    public function sumBySourceForReservations(IncomeSource $source, array $reservationIds): array
+    {
+        if ($reservationIds === []) {
+            return [];
+        }
+
+        $rows = $this->createQueryBuilder('r')
+            ->select('IDENTITY(r.reservation) AS rid', 'SUM(r.amountCzk) AS total')
+            ->andWhere('r.reservation IN (:ids)')
+            ->andWhere('r.source = :source')
+            ->setParameter('ids', $reservationIds)
+            ->setParameter('source', $source)
+            ->groupBy('r.reservation')
+            ->getQuery()
+            ->getResult();
+
+        $out = [];
+        foreach ($rows as $row) {
+            $out[(int) $row['rid']] = (float) $row['total'];
+        }
+
+        return $out;
     }
 
     public function findOneByOrigin(Reservation $reservation, ReceiptOrigin $originType, int $originId): ?ReservationReceipt

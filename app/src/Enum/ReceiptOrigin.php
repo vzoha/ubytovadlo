@@ -17,7 +17,8 @@ namespace App\Enum;
  * ze které receipt vznikl, takže recompute jej přepíše místo duplikace.
  *
  * `INVOICE`/`PAYMENT` nesou id zdroje (může jich být víc na rezervaci — záloha
- * i doplatek); `PAYOUT`/`ESTIMATE`/`MANUAL` jsou singletony (originId = 0).
+ * i doplatek); `MANUAL_PAYMENT` nese pořadové číslo ruční platby (host může
+ * platit víc splátkami); `PAYOUT`/`ESTIMATE`/`MANUAL` jsou singletony (originId = 0).
  */
 enum ReceiptOrigin: string
 {
@@ -26,10 +27,11 @@ enum ReceiptOrigin: string
     case PAYOUT = 'payout';
     case ESTIMATE = 'estimate';
     case MANUAL = 'manual';
+    case MANUAL_PAYMENT = 'manual_payment';
 
-    /** Ruční záznam chráněný proti auto-přepočtu (ruční OTA výplata). */
+    /** Ruční záznam chráněný proti auto-přepočtu (OTA výplata i platba hosta). */
     public function isManual(): bool
     {
-        return $this === self::MANUAL;
+        return $this === self::MANUAL || $this === self::MANUAL_PAYMENT;
     }
 }

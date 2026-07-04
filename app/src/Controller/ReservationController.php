@@ -16,6 +16,7 @@ use App\Cashflow\IncomeUpserter;
 use App\Entity\Reservation;
 use App\Entity\ReservationAction;
 use App\Entity\ReservationNote;
+use App\Entity\ReservationReceipt;
 use App\Entity\User;
 use App\Enum\ActionOrigin;
 use App\Enum\ActionType;
@@ -23,10 +24,12 @@ use App\Enum\BillingMode;
 use App\Enum\Channel;
 use App\Enum\CleaningType;
 use App\Enum\NoteType;
+use App\Enum\ReceiptOrigin;
 use App\Enum\ReservationStatus;
 use App\Form\ReservationDetailsType;
 use App\Form\ReservationManualType;
 use App\Invoice\BalanceCalculator;
+use App\Invoice\PaymentStatusResolver;
 use App\Profit\ReservationProfitCalculator;
 use App\Repository\CleaningRepository;
 use App\Repository\GuestDocumentRepository;
@@ -60,6 +63,7 @@ class ReservationController extends AbstractController
         private readonly BalanceCalculator $balanceCalculator,
         private readonly IncomeUpserter $incomeUpserter,
         private readonly ReservationReceiptRepository $receipts,
+        private readonly PaymentStatusResolver $paymentStatusResolver,
     ) {
     }
 
@@ -76,6 +80,7 @@ class ReservationController extends AbstractController
             'reservations' => $reservations,
             'currentStatus' => $status,
             'statuses' => ReservationStatus::cases(),
+            'payment_statuses' => $this->paymentStatusResolver->batch($reservations),
         ]);
     }
 
@@ -228,6 +233,60 @@ class ReservationController extends AbstractController
         $this->addFlash('success', 'Výplata zaznamenána — příjem rezervace zpřesněn.');
 
         return $this->redirectToRoute('reservation_detail', ['id' => $reservation->getId()]);
+    }
+
+    #[Route('/reservation/{id}/payment', name: 'reservation_record_payment', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function recordPayment(Reservation $reservation, Request $request): Response
+    {
+        if (!$this->isCsrfTokenValid('payment-' . $reservation->getId(), (string) $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+
+        // Ruční platba hosta je web/přímý koncept — u OTA platí host platformě
+        // a reálné peníze řeší „Reálná výplata".
+        if (\in_array($reservation->getChannel(), [Channel::AIRBNB, Channel::BOOKING], true)) {
+            $this->addFlash('warning', 'U OTA rezervací zadej reálnou výplatu, ne platbu hosta.');
+
+            return $this->redirectToRoute('reservation_detail', ['id' => $reservation->getId()]);
+        }
+
+        $amount = number_format((float) str_replace([' ', ','], ['', '.'], (string) $request->request->get('amount')), 2, '.', '');
+        if ((float) $amount <= 0) {
+            $this->addFlash('warning', 'Zadej částku platby.');
+
+            return $this->redirectToRoute('reservation_detail', ['id' => $reservation->getId()]);
+        }
+
+        try {
+            $dateRaw = trim((string) $request->request->get('received_on', ''));
+            $receivedOn = $dateRaw !== '' ? new \DateTimeImmutable($dateRaw) : new \DateTimeImmutable('today');
+        } catch (\Exception) {
+            $receivedOn = new \DateTimeImmutable('today');
+        }
+
+        $this->incomeUpserter->recordManualPayment($reservation, $amount, $receivedOn);
+        $this->addFlash('success', 'Platba zaznamenána.');
+
+        return $this->redirectToRoute('reservation_detail', ['id' => $reservation->getId()]);
+    }
+
+    #[Route('/reservation/payment/{id}/delete', name: 'reservation_delete_payment', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function deletePayment(ReservationReceipt $receipt, Request $request): Response
+    {
+        if (!$this->isCsrfTokenValid('payment-delete-' . $receipt->getId(), (string) $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+
+        if ($receipt->getOriginType() !== ReceiptOrigin::MANUAL_PAYMENT) {
+            throw $this->createNotFoundException();
+        }
+
+        $reservationId = $receipt->getReservation()->getId();
+        $this->em->remove($receipt);
+        $this->em->flush();
+        $this->addFlash('success', 'Platba smazána.');
+
+        return $this->redirectToRoute('reservation_detail', ['id' => $reservationId]);
     }
 
     #[Route('/reservation/{id}/details', name: 'reservation_details', methods: ['GET', 'POST'], requirements: ['id' => '\d+'])]

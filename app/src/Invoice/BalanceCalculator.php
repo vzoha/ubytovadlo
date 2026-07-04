@@ -13,17 +13,21 @@ namespace App\Invoice;
 
 use App\Entity\Reservation;
 use App\Enum\BillingMode;
+use App\Enum\IncomeSource;
 use App\Repository\InvoiceRepository;
+use App\Repository\ReservationReceiptRepository;
 
 /**
- * Kolik hostovi zbývá doplatit = cena − součet zaplacených faktur.
- * Bez DB sloupce, čistě dopočet z faktur. Smysl dává jen u CZK ceny a fakturovaných
+ * Kolik hostovi zbývá doplatit = cena − (zaplacené faktury + ruční platby).
+ * Bez DB sloupce, čistě dopočet. Smysl dává jen u CZK ceny a fakturovaných
  * režimů (Booking v EUR vs. faktury v CZK by se nesčítaly — tam vrací null).
  */
 class BalanceCalculator
 {
-    public function __construct(private readonly InvoiceRepository $invoices)
-    {
+    public function __construct(
+        private readonly InvoiceRepository $invoices,
+        private readonly ReservationReceiptRepository $receipts,
+    ) {
     }
 
     public function forReservation(Reservation $reservation): ?BalanceResult
@@ -43,6 +47,12 @@ class BalanceCalculator
         foreach ($this->invoices->findForReservation($reservation) as $invoice) {
             if ($invoice->isPaid() && $invoice->getCurrency() === 'CZK') {
                 $paid += (float) $invoice->getTotalAmount();
+            }
+        }
+        // Ruční platby (hotovost, převod, záloha bez faktury) — reálné peníze mimo fakturu.
+        foreach ($this->receipts->findForReservation($reservation) as $receipt) {
+            if ($receipt->getSource() === IncomeSource::MANUAL_PAYMENT) {
+                $paid += (float) $receipt->getAmountCzk();
             }
         }
 

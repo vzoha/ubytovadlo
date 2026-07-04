@@ -42,6 +42,39 @@ class InvoiceRepository extends ServiceEntityRepository
     }
 
     /**
+     * Součet zaplacených faktur v Kč po rezervacích (dávkově, bez N+1).
+     * Jen CZK faktury — EUR (Booking) se s Kč cenou nesčítá.
+     *
+     * @param int[] $reservationIds
+     *
+     * @return array<int, float> reservationId => součet CZK
+     */
+    public function sumPaidCzkByReservations(array $reservationIds): array
+    {
+        if ($reservationIds === []) {
+            return [];
+        }
+
+        $rows = $this->createQueryBuilder('i')
+            ->select('IDENTITY(i.reservation) AS rid', 'SUM(i.totalAmount) AS total')
+            ->andWhere('i.reservation IN (:ids)')
+            ->andWhere('i.paidAt IS NOT NULL')
+            ->andWhere('i.currency = :czk')
+            ->setParameter('ids', $reservationIds)
+            ->setParameter('czk', 'CZK')
+            ->groupBy('i.reservation')
+            ->getQuery()
+            ->getResult();
+
+        $out = [];
+        foreach ($rows as $row) {
+            $out[(int) $row['rid']] = (float) $row['total'];
+        }
+
+        return $out;
+    }
+
+    /**
      * Batch načtení faktur pro výpočet ekonomiky — jedna query místo N+1,
      * s eager-fetch zálohové parent faktury (konečná + záloha = celý příjem).
      *

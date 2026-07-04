@@ -14,9 +14,13 @@ namespace App\Tests\Invoice;
 use App\Entity\Invoice;
 use App\Entity\InvoiceLine;
 use App\Entity\Reservation;
+use App\Entity\ReservationReceipt;
 use App\Enum\BillingMode;
 use App\Enum\Channel;
+use App\Enum\IncomeSource;
 use App\Enum\InvoiceType;
+use App\Enum\PaymentStatus;
+use App\Enum\ReceiptOrigin;
 use App\Invoice\BalanceCalculator;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -33,6 +37,7 @@ final class BalanceCalculatorTest extends KernelTestCase
         $this->em = $container->get(EntityManagerInterface::class);
         $this->calc = $container->get(BalanceCalculator::class);
 
+        $this->em->createQuery('DELETE FROM ' . ReservationReceipt::class . ' r')->execute();
         $this->em->createQuery('DELETE FROM ' . InvoiceLine::class . ' l')->execute();
         $this->em->createQuery('DELETE FROM ' . Invoice::class . ' i')->execute();
         $this->em->createQuery('DELETE FROM ' . Reservation::class . ' r')->execute();
@@ -81,6 +86,53 @@ final class BalanceCalculatorTest extends KernelTestCase
         $this->em->flush();
 
         self::assertNull($this->calc->forReservation($r));
+    }
+
+    public function testManualPaymentCountsTowardPaid(): void
+    {
+        $r = $this->reservation('5000.00', 'CZK');
+        $this->manualPayment($r, '2000.00');
+        $this->em->flush();
+
+        $balance = $this->calc->forReservation($r);
+
+        self::assertNotNull($balance);
+        self::assertSame(2000.0, $balance->paid);
+        self::assertSame(3000.0, $balance->remaining);
+        self::assertSame(PaymentStatus::PARTIAL, $balance->status());
+    }
+
+    public function testManualPaymentAndInvoiceSettle(): void
+    {
+        $r = $this->reservation('5000.00', 'CZK');
+        $this->manualPayment($r, '1000.00');
+        $this->paidInvoice($r, InvoiceType::FINAL, '4000.00');
+        $this->em->flush();
+
+        $balance = $this->calc->forReservation($r);
+
+        self::assertNotNull($balance);
+        self::assertSame(5000.0, $balance->paid);
+        self::assertTrue($balance->isSettled());
+        self::assertSame(PaymentStatus::PAID, $balance->status());
+    }
+
+    public function testUnpaidStatusWithoutPayment(): void
+    {
+        $r = $this->reservation('3000.00', 'CZK');
+        $this->em->flush();
+
+        $balance = $this->calc->forReservation($r);
+
+        self::assertNotNull($balance);
+        self::assertSame(PaymentStatus::UNPAID, $balance->status());
+    }
+
+    private function manualPayment(Reservation $r, string $amount): void
+    {
+        $receipt = new ReservationReceipt($r, $amount, IncomeSource::MANUAL_PAYMENT, ReceiptOrigin::MANUAL_PAYMENT, 1);
+        $receipt->setManuallyOverridden(true);
+        $this->em->persist($receipt);
     }
 
     private function reservation(string $price, string $currency): Reservation

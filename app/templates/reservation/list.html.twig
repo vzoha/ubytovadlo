@@ -74,6 +74,7 @@
                     <th>Odjezd</th>
                     <th>Host</th>
                     <th class="text-end">Cena</th>
+                    <th>Platba</th>
                     <th></th>
                 </tr>
                 </thead>
@@ -86,7 +87,7 @@
                     {% set prevFuture = loop.first or reservations[loop.index0 - 1].checkIn|date('Y-m-d') > today %}
                     {% if checkIn <= today and prevFuture %}
                         <tr class="today-divider">
-                            <td colspan="7"><div class="today-line"><span class="today-pill">Dnes {{ 'now'|date('j. n. Y') }}</span></div></td>
+                            <td colspan="8"><div class="today-line"><span class="today-pill">Dnes {{ 'now'|date('j. n. Y') }}</span></div></td>
                         </tr>
                     {% endif %}
                     <tr class="{{ isActive ? 'today-row' : '' }}">
@@ -122,6 +123,10 @@
                                 {{ r.priceTotal|number_format(0, ',', ' ') }} {{ r.priceCurrency }}
                             {% else %}—{% endif %}
                         </td>
+                        <td>
+                            {% set ps = payment_statuses[r.id] ?? null %}
+                            {% if ps %}<span class="badge text-bg-{{ ps.badge }}">{{ ps.label }}</span>{% else %}<span class="text-muted">—</span>{% endif %}
+                        </td>
                         <td class="text-end">
                             <a href="{{ path('reservation_detail', {id: r.id}) }}" class="btn btn-sm btn-outline-primary">Detail</a>
                         </td>
@@ -129,7 +134,7 @@
                 {% endfor %}
                 {% if reservations|last.checkIn|date('Y-m-d') > today %}
                     <tr class="today-divider">
-                        <td colspan="7"><span class="today-pill">Dnes · {{ 'now'|date('d. m. Y') }}</span></td>
+                        <td colspan="8"><span class="today-pill">Dnes · {{ 'now'|date('d. m. Y') }}</span></td>
                     </tr>
                 {% endif %}
                 </tbody>

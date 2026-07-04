@@ -90,6 +90,40 @@ final class IncomeUpserterTest extends KernelTestCase
         self::assertSame(['2026-01', '2026-03'], $months);
     }
 
+    public function testRecordManualPaymentCreatesProtectedReceipt(): void
+    {
+        $r = $this->persistReservation(Channel::DIRECT, '5000.00');
+        $this->em->flush();
+
+        $this->upserter->recordManualPayment($r, '2000.00', new \DateTimeImmutable('2026-03-05'));
+
+        $receipts = $this->receipts->findForReservation($r);
+        self::assertCount(1, $receipts);
+        self::assertSame(IncomeSource::MANUAL_PAYMENT, $receipts[0]->getSource());
+        self::assertSame(ReceiptOrigin::MANUAL_PAYMENT, $receipts[0]->getOriginType());
+        self::assertTrue($receipts[0]->isManuallyOverridden());
+        self::assertSame('2000.00', $receipts[0]->getAmountCzk());
+    }
+
+    public function testManualPaymentsAccumulateAndSurviveRecompute(): void
+    {
+        $r = $this->persistReservation(Channel::DIRECT, '5000.00');
+        $this->em->flush();
+
+        $this->upserter->recordManualPayment($r, '1000.00', new \DateTimeImmutable('2026-03-01'));
+        $this->upserter->recordManualPayment($r, '1500.00', new \DateTimeImmutable('2026-03-05'));
+        // Přepočet nesmí ruční platby smazat (jsou chráněné).
+        $this->upserter->recompute($r);
+
+        $receipts = $this->receipts->findForReservation($r);
+        self::assertCount(2, $receipts);
+        self::assertSame('2500.00', $this->sumFor($r));
+        // Distinktní pořadová čísla → obě platby přežijí (unique origin key).
+        $ids = array_map(static fn (ReservationReceipt $x): int => $x->getOriginId(), $receipts);
+        sort($ids);
+        self::assertSame([1, 2], $ids);
+    }
+
     public function testWebUnpaidInvoiceHasNoIncomeYet(): void
     {
         $r = $this->persistReservation(Channel::WEB, price: '3000.00');

@@ -217,6 +217,13 @@ class DevSeedDemoCommand extends Command
             $this->issueInvoices($reservation, $specs[$i]);
         }
 
+        // Ruční platby hosta (hotovost/převod bez faktury).
+        foreach ($created as $i => $reservation) {
+            if (isset($specs[$i]['manualPayment'])) {
+                $this->incomeUpserter->recordManualPayment($reservation, (string) $specs[$i]['manualPayment'], $reservation->getCheckIn()->modify('-7 days'));
+            }
+        }
+
         $io->writeln(sprintf('  %d rezervací + faktury vystaveny.', count($created)));
 
         return $created;
@@ -552,7 +559,9 @@ class DevSeedDemoCommand extends Command
                 'email' => 'marie.dvorakova@email.cz', 'phone' => '+420 604 111 222',
                 'street' => 'Lipová 5', 'city' => 'Tábor', 'zip' => '39001',
                 'adults' => 2, 'children' => 1, 'price' => '5400.00', 'acq' => 'doporučení',
-                'vtKwh' => 24, 'ntKwh' => 15, 'clean' => [CleaningType::CLEANER, 700, 700], 'inv' => 'full',
+                'vtKwh' => 24, 'ntKwh' => 15, 'clean' => [CleaningType::CLEANER, 700, 700],
+                // Přímý host poslal zálohu bez faktury → zaznamenaná ruční platba (částečně uhrazeno).
+                'inv' => 'none', 'manualPayment' => '3000.00',
             ],
             [
                 'channel' => Channel::AIRBNB, 'billing' => \App\Enum\BillingMode::AIRBNB,

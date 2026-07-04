@@ -111,6 +111,30 @@ class IncomeUpserter
     }
 
     /**
+     * Ručně zaznamenaná platba hosta (hotovost, převod, záloha bez faktury) u
+     * přímé/web rezervace. Přidává se vedle případných faktur — host může platit
+     * víc splátkami — a je chráněná proti auto-přepočtu. Reálný příjem do cashflow.
+     */
+    public function recordManualPayment(Reservation $reservation, string $amountCzk, \DateTimeImmutable $receivedOn): ReservationReceipt
+    {
+        $nextId = 1;
+        foreach ($this->receipts->findForReservation($reservation) as $receipt) {
+            if ($receipt->getOriginType() === ReceiptOrigin::MANUAL_PAYMENT) {
+                $nextId = max($nextId, $receipt->getOriginId() + 1);
+            }
+        }
+
+        $payment = new ReservationReceipt($reservation, $amountCzk, IncomeSource::MANUAL_PAYMENT, ReceiptOrigin::MANUAL_PAYMENT, $nextId);
+        $payment->setAccount($this->bankAccount());
+        $payment->setReceivedOn($receivedOn);
+        $payment->setManuallyOverridden(true);
+        $this->em->persist($payment);
+        $this->em->flush();
+
+        return $payment;
+    }
+
+    /**
      * Synchronizuje automatické receipty na cílový stav: smaže osiřelé (co už
      * nemá zdroj) a založí/aktualizuje ostatní. Ruční záznamy nechává být.
      *

@@ -8,6 +8,13 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Přidáno
 
+- **Stav platby a ruční platby.** Rezervace (web i přímá) má na detailu i v seznamu
+  štítek **Nezaplaceno / Částečně / Zaplaceno** (spočítaný z ceny, zaplacených
+  faktur a ručních plateb). Na detailu v kartě Finance jde **zaznamenat platbu
+  hosta** (částka + datum) — hotovost, převod nebo záloha bez faktury, nezávisle
+  na MotoPressu. Platba se započítá do „Zaplaceno / Zbývá doplatit" i do přehledu
+  příjmů a jde smazat. U OTA rezervací zůstává „Reálná výplata".
+
 - **Export obsazenosti (iCal).** Na stránce **Připojení** je adresa kalendáře se
   všemi rezervacemi jako obsazenými termíny — vloží se do Booking i Airbnb
   extranetu jako import kalendáře, takže OTA neprodá termín obsazený jiným

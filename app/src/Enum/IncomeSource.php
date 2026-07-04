@@ -25,6 +25,7 @@ enum IncomeSource: string
 {
     case OTA_PAYOUT = 'ota_payout';
     case PAID_INVOICE = 'paid_invoice';
+    case MANUAL_PAYMENT = 'manual_payment';
     case BANK_PAYMENT = 'bank_payment';
     case ESTIMATE = 'estimate';
 
@@ -33,6 +34,7 @@ enum IncomeSource: string
         return match ($this) {
             self::OTA_PAYOUT => 'OTA výplata',
             self::PAID_INVOICE => 'Zaplacená faktura',
+            self::MANUAL_PAYMENT => 'Ruční platba',
             self::BANK_PAYMENT => 'Bankovní platba',
             self::ESTIMATE => 'Odhad',
         };
@@ -47,6 +49,7 @@ enum IncomeSource: string
     {
         return match ($this) {
             self::OTA_PAYOUT => 40,
+            self::MANUAL_PAYMENT => 35,
             self::PAID_INVOICE => 30,
             self::BANK_PAYMENT => 20,
             self::ESTIMATE => 10,
