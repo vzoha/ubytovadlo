@@ -94,5 +94,21 @@
                 <button type="submit" class="btn btn-primary">Uložit</button>
             </div>
         {{ form_end(form) }}
+
+        <div class="card mb-3">
+            <div class="card-header py-2 fw-semibold">Export obsazenosti (iCal)</div>
+            <div class="card-body">
+                <p class="text-muted small mb-3">
+                    Adresa kalendáře se všemi rezervacemi jako obsazenými termíny. Vlož ji
+                    v Booking i Airbnb extranetu do <em>importu kalendáře</em> — OTA pak
+                    neprodá termín obsazený jiným kanálem, webem ani přímou rezervací.
+                    Ven jde jen „obsazeno", žádné údaje hosta.
+                </p>
+                <div class="input-group">
+                    <input type="text" class="form-control font-monospace small" id="ical-feed-url" value="{{ icalFeedUrl }}" readonly>
+                    <button type="button" class="btn btn-outline-secondary" onclick="navigator.clipboard.writeText(document.getElementById('ical-feed-url').value)">Kopírovat</button>
+                </div>
+            </div>
+        </div>
     </div>
 {% endblock %}

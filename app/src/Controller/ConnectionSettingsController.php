@@ -14,6 +14,7 @@ namespace App\Controller;
 use App\Credential\CredentialCipher;
 use App\Credential\CredentialProvider;
 use App\Form\ConnectionSettingsType;
+use App\Ical\IcalFeedToken;
 use App\MotoPress\MotoPressSettings;
 use App\Repository\CredentialRepository;
 use App\Repository\SettingRepository;
@@ -22,6 +23,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 class ConnectionSettingsController extends AbstractController
 {
@@ -32,6 +34,7 @@ class ConnectionSettingsController extends AbstractController
         private readonly MotoPressSettings $motopress,
         private readonly SettingRepository $settings,
         private readonly EntityManagerInterface $em,
+        private readonly IcalFeedToken $icalFeedToken,
     ) {
     }
 
@@ -70,10 +73,17 @@ class ConnectionSettingsController extends AbstractController
             return $this->redirectToRoute('connection_settings_edit');
         }
 
+        $icalFeedUrl = $this->generateUrl(
+            'ical_feed',
+            ['token' => $this->icalFeedToken->getOrCreate()],
+            UrlGeneratorInterface::ABSOLUTE_URL,
+        );
+
         return $this->render('connection_settings/edit.html.twig', [
             'form' => $form->createView(),
             'secretsSet' => $state['secretsSet'],
             'cipherReady' => $this->cipher->isReady(),
+            'icalFeedUrl' => $icalFeedUrl,
         ]);
     }
 

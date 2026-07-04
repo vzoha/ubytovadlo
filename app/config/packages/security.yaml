@@ -27,6 +27,7 @@ security:
     access_control:
         - { path: ^/login, roles: PUBLIC_ACCESS }
         - { path: ^/checkin, roles: PUBLIC_ACCESS }
+        - { path: ^/ical, roles: PUBLIC_ACCESS }
         - { path: ^/dev/mrz, roles: PUBLIC_ACCESS }
         - { path: ^/, roles: ROLE_USER }
 

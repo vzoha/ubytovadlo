@@ -266,4 +266,23 @@ class ReservationRepository extends ServiceEntityRepository
 
         return array_reverse(range($min, $max));
     }
+
+    /**
+     * Rezervace blokující kapacitu pro iCal export obsazenosti — vše nezrušené,
+     * jehož pobyt končí od `$from` dál (probíhající i budoucí). Skryté detaily
+     * (needs_details) blokují taky — dokud rezervaci nezrušíme, termín je obsazený.
+     *
+     * @return Reservation[]
+     */
+    public function findForAvailabilityExport(\DateTimeImmutable $from): array
+    {
+        return $this->createQueryBuilder('r')
+            ->andWhere('r.status != :cancelled')
+            ->andWhere('COALESCE(r.checkOut, r.checkIn) >= :from')
+            ->setParameter('cancelled', ReservationStatus::CANCELLED)
+            ->setParameter('from', $from)
+            ->orderBy('r.checkIn', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
 }

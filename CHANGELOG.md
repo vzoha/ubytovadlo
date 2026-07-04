@@ -8,6 +8,12 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Přidáno
 
+- **Export obsazenosti (iCal).** Na stránce **Připojení** je adresa kalendáře se
+  všemi rezervacemi jako obsazenými termíny — vloží se do Booking i Airbnb
+  extranetu jako import kalendáře, takže OTA neprodá termín obsazený jiným
+  kanálem, webem ani přímou rezervací. Feed je veřejný přes neuhodnutelný token
+  v adrese a nese jen „obsazeno" (žádné údaje hosta). Zrušené rezervace vynechává.
+
 - **Ruční přidání rezervace.** Na seznamu rezervací tlačítko **Nová rezervace**
   otevře formulář pro přímého hosta (telefon, e-mail, osobně) — termín, cena,
   fakturační režim a údaje hosta na jednom místě, bez potřeby webu či OTA. Uloží
