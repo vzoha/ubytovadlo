@@ -22,6 +22,7 @@ use App\Repository\BookingMonthlyInvoiceRepository;
 use App\Repository\InvoiceRepository;
 use App\Repository\ReservationRepository;
 use App\Repository\VatPeriodRepository;
+use App\Setup\SetupChecklist;
 use App\Ubyport\UbyportQueue;
 use App\Ubyport\UbyportRow;
 use App\Vat\VatMonthCalculator;
@@ -49,6 +50,7 @@ class DashboardController extends AbstractController
         private readonly VatMonthCalculator $vatCalculator,
         private readonly UbyportQueue $ubyportQueue,
         private readonly YearEconomicsBuilder $economicsBuilder,
+        private readonly SetupChecklist $setupChecklist,
     ) {
     }
 
@@ -65,6 +67,8 @@ class DashboardController extends AbstractController
             'vat' => $this->buildVat($today),
             'ubyport' => $this->buildUbyport($today),
             'economics' => $this->buildEconomics($today),
+            'setupPending' => $this->setupChecklist->pending(),
+            'setupDismissedCount' => $this->setupChecklist->dismissedCount(),
         ]);
     }
 

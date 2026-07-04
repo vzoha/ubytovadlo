@@ -36,6 +36,42 @@
         <span class="text-muted small">{{ today|date('d. m. Y') }}</span>
     </div>
 
+    {% if setupPending is not empty or setupDismissedCount > 0 %}
+        <div class="card shadow-sm mb-4 border-primary-subtle">
+            <div class="card-header bg-primary-subtle d-flex justify-content-between align-items-center">
+                <strong>⚙️ Co ještě nastavit</strong>
+                {% if setupPending is not empty %}<span class="badge bg-primary">{{ setupPending|length }}</span>{% endif %}
+            </div>
+            {% if setupPending is not empty %}
+                <ul class="list-group list-group-flush">
+                    {% for item in setupPending %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center gap-3">
+                            <div class="me-auto">
+                                <div class="fw-semibold">{{ item.label }}</div>
+                                <div class="small text-muted">{{ item.description }}</div>
+                            </div>
+                            <a href="{{ path(item.route) }}" class="btn btn-sm btn-primary flex-shrink-0">Nastavit</a>
+                            <form method="post" action="{{ path('setup_checklist_dismiss', { key: item.key }) }}" class="flex-shrink-0">
+                                <input type="hidden" name="_token" value="{{ csrf_token('setup_checklist') }}">
+                                <button type="submit" class="btn btn-sm btn-link text-muted text-decoration-none" title="Skrýt — tuhle věc nepoužívám">Nepoužívám</button>
+                            </form>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <div class="card-body text-muted small mb-0">Vše potřebné je nastavené nebo skryté.</div>
+            {% endif %}
+            {% if setupDismissedCount > 0 %}
+                <div class="card-footer bg-transparent text-end">
+                    <form method="post" action="{{ path('setup_checklist_restore') }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('setup_checklist') }}">
+                        <button type="submit" class="btn btn-sm btn-link text-muted text-decoration-none">Zobrazit skryté ({{ setupDismissedCount }})</button>
+                    </form>
+                </div>
+            {% endif %}
+        </div>
+    {% endif %}
+
     <div class="row g-4">
 
         {# === ÚKLID === #}

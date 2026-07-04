@@ -8,6 +8,15 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Přidáno
 
+- **Checklist „co ještě nastavit" na dashboardu.** Onboarding karta na přehledu
+  ukazuje, co je vhodné doplnit (název a adresa aplikace, dodavatel na faktuře,
+  odchozí e-maily, SMTP, automatizační schránka, napojení na web, ubytovací
+  zařízení). Každá položka má tlačítko **Nastavit** (vede rovnou na příslušnou
+  záložku) nebo **Nepoužívám** (skryje ji). Nastavené i skryté položky zmizí;
+  skryté jde vrátit odkazem **Zobrazit skryté**. Přístupy (SMTP, IMAP, MotoPress)
+  se berou za nastavené, jen když je provozovatel uložil v UI. Karta se ukáže,
+  jen když je co řešit.
+
 - **Nastavení chování MotoPressu v UI.** Na stránce **Připojení** sekce „MotoPress —
   chování": ID služeb pro „host se psem" a „dětskou postýlku" (čárkami oddělený
   seznam) a přepínač, zda posílat potvrzené platby zpět do MotoPressu. Ukládá se do
