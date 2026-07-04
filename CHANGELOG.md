@@ -6,6 +6,14 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ## [Unreleased]
 
+### Změněno
+
+- **MotoPress je volitelný konektor, autoritou je Ubytovadlo.** Import rezervací
+  z webu jde na Připojení vypnout (přepínačem „Importovat rezervace z MotoPressu");
+  bez vyplněných přístupů se sync tiše přeskočí. Novou rezervaci import naplní
+  celou, ale u **existující** rezervace už jen doplní prázdná pole, srovná termín
+  a promítne zrušení — ručně upravené jméno, cenu ani stav nepřepíše.
+
 ### Přidáno
 
 - **Stav platby a ruční platby.** Rezervace (web i přímá) má na detailu i v seznamu

@@ -15,6 +15,7 @@ use App\Repository\SettingRepository;
 
 /**
  * Chování napojení na MotoPress, které se liší instanci od instance:
+ *  - zda je konektor zapnutý (import rezervací),
  *  - ID služeb značících „host se psem" a „host chce dětskou postýlku",
  *  - zda posílat potvrzené platby zpět do MotoPressu.
  *
@@ -24,6 +25,7 @@ use App\Repository\SettingRepository;
  */
 final class MotoPressSettings
 {
+    public const KEY_ENABLED = 'motopress.enabled';
     public const KEY_PET = 'motopress.pet_service_ids';
     public const KEY_BABY_COT = 'motopress.baby_cot_service_ids';
     public const KEY_PUSH = 'motopress.push_payments';
@@ -38,6 +40,15 @@ final class MotoPressSettings
         private readonly array $babyCotFallback = [],
         private readonly bool $pushFallback = false,
     ) {
+    }
+
+    /**
+     * Zapnul provozovatel import? Default zapnuto — reálný běh navíc vyžaduje
+     * vyplněné přístupy (kontroluje command). Vypnutím se konektor umlčí i s creds.
+     */
+    public function enabled(): bool
+    {
+        return $this->settings->getString(self::KEY_ENABLED) !== '0';
     }
 
     /** @return list<int> */
@@ -68,11 +79,12 @@ final class MotoPressSettings
     /**
      * Hodnoty pro předvyplnění formuláře (ID jako čárkami oddělený seznam).
      *
-     * @return array{petServiceIds: string, babyCotServiceIds: string, pushPayments: bool}
+     * @return array{motopressEnabled: bool, petServiceIds: string, babyCotServiceIds: string, pushPayments: bool}
      */
     public function currentValues(): array
     {
         return [
+            'motopressEnabled' => $this->enabled(),
             'petServiceIds' => implode(', ', $this->petServiceIds()),
             'babyCotServiceIds' => implode(', ', $this->babyCotServiceIds()),
             'pushPayments' => $this->pushPayments(),

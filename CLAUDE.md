@@ -185,7 +185,7 @@ Tohle není volitelný modul — bez něj se obejde jen, dokud finanční úřad
 - **Subdoména** pro aplikaci na sdíleném hostingu — ověřit, že tarif povolí samostatnou DocumentRoot a samostatnou MySQL DB.
 - **Číselná řada faktur**: navázat na dosavadní číslování, nebo začít novou řadu (po dohodě s účetní)?
 - **Booking/Airbnb měsíční vyúčtování**: kam přesně chodí, v jakém formátu (PDF s tabulkou? CSV?), jestli jsou v IMAPu mezi vzorky.
-- **Two-way sync MotoPress ↔ naše DB**: dnes je sync jednosměrný (MotoPress = source of truth pro web, ruční edity webových rezervací v naší DB se při dalším syncu přepíšou; pole jako `billing_mode`, `motopress_payment_gateway`, `has_pet=true`, `needs_baby_cot=true` jsou chráněná). V budoucnu zvážit obousměrný sync — buď zámky per pole (`manually_edited_fields` JSON), nebo push změn zpět do MotoPress REST API.
+- **MotoPress jako konektor (autorita = Ubytovadlo)**: import je jednosměrný a **volitelný** (přepínač „Importovat rezervace z MotoPressu" na Připojení + `MotoPressSettings::enabled`; command přeskočí i bez vyplněných přístupů). **Novou** rezervaci sync naimportuje celou; u **existující** rezervace už jen doplní prázdná pole, aktualizuje datumy (obsazenost) a promítne storno — ruční edity (jméno, cena, stav) nepřepisuje. Jediný zápisový směr do MotoPressu je push stavu platby (`MotoPressPaymentSyncListener`, gated `push_payments`). V budoucnu zvážit skutečný obousměrný sync (push změn zpět do REST API).
 
 ## Glosář
 

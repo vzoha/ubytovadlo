@@ -48,6 +48,7 @@ class ConnectionSettingsController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             // Chování MotoPressu (Setting) nešifrujeme — uloží se i bez klíče.
             $this->saveMapping(
+                (bool) $form->get('motopressEnabled')->getData(),
                 $form->get('petServiceIds')->getData(),
                 $form->get('babyCotServiceIds')->getData(),
                 (bool) $form->get('pushPayments')->getData(),
@@ -87,8 +88,9 @@ class ConnectionSettingsController extends AbstractController
         ]);
     }
 
-    private function saveMapping(?string $petIds, ?string $babyCotIds, bool $push): void
+    private function saveMapping(bool $enabled, ?string $petIds, ?string $babyCotIds, bool $push): void
     {
+        $this->settings->set(MotoPressSettings::KEY_ENABLED, $enabled ? '1' : '0', 'MotoPress: importovat rezervace.');
         // Vstup normalizujeme přes parseIds, ať se uloží čistý seznam ID.
         $this->settings->set(MotoPressSettings::KEY_PET, implode(',', MotoPressSettings::parseIds((string) $petIds)), 'MotoPress: ID služeb „pes".');
         $this->settings->set(MotoPressSettings::KEY_BABY_COT, implode(',', MotoPressSettings::parseIds((string) $babyCotIds)), 'MotoPress: ID služeb „dětská postýlka".');

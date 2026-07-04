@@ -219,6 +219,49 @@ final class MotoPressBookingMapperTest extends TestCase
         self::assertSame(ReservationStatus::NEEDS_DETAILS, $reservation->getStatus());
     }
 
+    // --- Existující rezervace (isNew=false): MotoPress už jen konektor, nepřepisuje ---
+
+    public function testExistingReservationKeepsOwnerEditedFields(): void
+    {
+        $mapper = new MotoPressBookingMapper([925]);
+        $reservation = new Reservation(Channel::WEB, new \DateTimeImmutable('2026-08-01'));
+        // Majitelka ručně upravila jméno a cenu.
+        $reservation->setGuestName('Ručně Opravený')->setPriceTotal('9999.00');
+        $reservation->setStatus(ReservationStatus::IN_PROGRESS);
+
+        $mapper->applyWebBooking($reservation, [
+            'status' => 'confirmed',
+            'check_in_date' => '2026-08-02',
+            'check_out_date' => '2026-08-06',
+            'customer' => ['first_name' => 'MotoPress', 'last_name' => 'Přepis', 'email' => 'novy@web.cz'],
+            'total_price' => 5000,
+        ], isNew: false);
+
+        // Ruční hodnoty zůstávají.
+        self::assertSame('Ručně Opravený', $reservation->getGuestName());
+        self::assertSame('9999.00', $reservation->getPriceTotal());
+        self::assertSame(ReservationStatus::IN_PROGRESS, $reservation->getStatus());
+        // Prázdné pole se doplní.
+        self::assertSame('novy@web.cz', $reservation->getGuestEmail());
+        // Datumy (obsazenost) se aktualizují.
+        self::assertSame('2026-08-02', $reservation->getCheckIn()->format('Y-m-d'));
+        self::assertSame('2026-08-06', $reservation->getCheckOut()?->format('Y-m-d'));
+    }
+
+    public function testExistingReservationPropagatesCancellation(): void
+    {
+        $mapper = new MotoPressBookingMapper([925]);
+        $reservation = new Reservation(Channel::WEB, new \DateTimeImmutable('2026-08-01'));
+        $reservation->setStatus(ReservationStatus::CONFIRMED);
+
+        $mapper->applyWebBooking($reservation, [
+            'status' => 'cancelled',
+            'check_in_date' => '2026-08-01',
+        ], isNew: false);
+
+        self::assertSame(ReservationStatus::CANCELLED, $reservation->getStatus());
+    }
+
     /**
      * @return array<string, mixed>
      */

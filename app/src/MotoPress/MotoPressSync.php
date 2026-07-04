@@ -70,7 +70,7 @@ class MotoPressSync
             $isNew = $reservation->getId() === null;
             $before = $isNew ? null : $this->snapshot($reservation);
 
-            $this->apply($reservation, $classified, $mphbId, $data);
+            $this->apply($reservation, $classified, $mphbId, $data, $isNew);
 
             if ($isNew) {
                 if (!$dryRun) {
@@ -153,10 +153,12 @@ class MotoPressSync
     /**
      * @param array<string, mixed> $data
      */
-    private function apply(Reservation $reservation, ClassifiedBooking $classified, string $mphbId, array $data): void
+    private function apply(Reservation $reservation, ClassifiedBooking $classified, string $mphbId, array $data, bool $isNew): void
     {
         if ($classified->kind === MotoPressBookingKind::WEB) {
-            $this->mapper->applyWebBooking($reservation, $data);
+            // Nová rezervace = plný import; existující jen doplní prázdná pole + datumy
+            // + storno (Ubytovadlo je autorita, MotoPress už jen konektor).
+            $this->mapper->applyWebBooking($reservation, $data, $isNew);
             $reservation->setMotopressExternalId($mphbId);
             $this->applyWebBillingMode($reservation, $data);
 

@@ -118,6 +118,14 @@ final class CredentialProvider
         return $this->get('motopressBaseUrl');
     }
 
+    /** Konektor je nakonfigurovaný, když má adresu webu i oba API klíče. */
+    public function motopressConfigured(): bool
+    {
+        return $this->motopressBaseUrl() !== ''
+            && $this->motopressConsumerKey() !== ''
+            && $this->motopressConsumerSecret() !== '';
+    }
+
     public function motopressConsumerKey(): string
     {
         return $this->get('motopressConsumerKey');

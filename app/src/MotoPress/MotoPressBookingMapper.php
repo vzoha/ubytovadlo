@@ -19,7 +19,9 @@ use App\Reservation\GuestRequestKeywords;
  * Mapuje MotoPress booking JSON na Reservation entitu.
  *
  * Dva rezimy:
- *  - applyWebBooking: realny prodej z webu, prepise vse vcetne customer dat
+ *  - applyWebBooking: realny prodej z webu. Pri zakladani ($isNew) naplni vse;
+ *    u uz existujici rezervace jen DOPLNI prazdna pole + datumy + storno —
+ *    Ubytovadlo je autorita, MotoPress uz jen konektor (nikdy neprepise data hosta).
  *  - applyIcalBlock: pouze obsazenost (data, motopressExternalId), nikdy neprepisuje host data ani cenu
  *
  * @phpstan-type MphbBooking array<string, mixed>
@@ -62,25 +64,34 @@ class MotoPressBookingMapper
 
     /**
      * @param MphbBooking $data
+     * @param bool        $isNew zakladame novou rezervaci (naplni vse), nebo jen dotahujeme
+     *                           existujici (doplni prazdna pole + datumy + storno)
      */
-    public function applyWebBooking(Reservation $reservation, array $data): void
+    public function applyWebBooking(Reservation $reservation, array $data, bool $isNew = true): void
     {
+        // Datumy (obsazenost) bereme z MotoPressu vzdy — host je muze na webu zmenit.
         $this->applyDates($reservation, $data);
         $bookedAt = $this->parseBookedAt($data);
-        if ($bookedAt !== null) {
+        if ($bookedAt !== null && ($isNew || $reservation->getBookedAt() === null)) {
             $reservation->setBookedAt($bookedAt);
         }
-        $reservation->setStatus($this->mapStatus($data['status'] ?? null));
+        // Stav: pri zalozeni mapujeme plne; u existujici jen storno (zbytek rizne Ubytovadlo).
+        $status = $this->mapStatus($data['status'] ?? null);
+        if ($isNew) {
+            $reservation->setStatus($status);
+        } elseif ($status === ReservationStatus::CANCELLED) {
+            $reservation->setStatus(ReservationStatus::CANCELLED);
+        }
 
         $customer = is_array($data['customer'] ?? null) ? $data['customer'] : [];
         $name = trim(($customer['first_name'] ?? '') . ' ' . ($customer['last_name'] ?? ''));
-        if ($name !== '') {
+        if ($name !== '' && $this->fill($isNew, $reservation->getGuestName())) {
             $reservation->setGuestName($name);
         }
-        if (!empty($customer['email'])) {
+        if (!empty($customer['email']) && $this->fill($isNew, $reservation->getGuestEmail())) {
             $reservation->setGuestEmail((string) $customer['email']);
         }
-        if (!empty($customer['phone'])) {
+        if (!empty($customer['phone']) && $this->fill($isNew, $reservation->getGuestPhone())) {
             $reservation->setGuestPhone((string) $customer['phone']);
         }
 
@@ -89,27 +100,27 @@ class MotoPressBookingMapper
         if ($address2 !== '') {
             $street = $street !== '' ? $street . ' ' . $address2 : $address2;
         }
-        if ($street !== '') {
+        if ($street !== '' && $this->fill($isNew, $reservation->getGuestStreet())) {
             $reservation->setGuestStreet($street);
         }
         $city = trim((string) ($customer['city'] ?? ''));
-        if ($city !== '') {
+        if ($city !== '' && $this->fill($isNew, $reservation->getGuestCity())) {
             $reservation->setGuestCity($city);
         }
         $zip = trim((string) ($customer['zip'] ?? ''));
-        if ($zip !== '') {
+        if ($zip !== '' && $this->fill($isNew, $reservation->getGuestZip())) {
             $reservation->setGuestZip($this->normalizeZip($zip));
         }
         $country = trim((string) ($customer['country'] ?? ''));
-        if ($country !== '') {
+        if ($country !== '' && $this->fill($isNew, $reservation->getGuestCountry())) {
             $reservation->setGuestCountry($country);
         }
 
         $accommodations = is_array($data['reserved_accommodations'] ?? null) ? $data['reserved_accommodations'] : [];
         [$adults, $children] = $this->sumGuests($accommodations);
         // MotoPress neumí rozlišit děti od dospělých — pokud majitelka split opravila ručně,
-        // další sync ho nepřepíše.
-        if (!$reservation->isGuestsSplitManually()) {
+        // další sync ho nepřepíše. U existující rezervace počty nedotahujeme (drží je Ubytovadlo).
+        if ($isNew && !$reservation->isGuestsSplitManually()) {
             if ($adults > 0) {
                 $reservation->setGuestsAdult($adults);
             }
@@ -118,9 +129,14 @@ class MotoPressBookingMapper
             }
         }
 
-        if (isset($data['total_price'])) {
+        if (isset($data['total_price']) && $this->fill($isNew, $reservation->getPriceTotal())) {
             $reservation->setPriceTotal(number_format((float) $data['total_price'], 2, '.', ''));
             $reservation->setPriceCurrency(is_string($data['currency'] ?? null) && $data['currency'] !== '' ? (string) $data['currency'] : 'CZK');
+        }
+
+        // Služby a poznámka jen při zakládání — jednou dotažené drží Ubytovadlo.
+        if (!$isNew) {
+            return;
         }
 
         $topLevelServices = is_array($data['services'] ?? null) ? $data['services'] : [];
@@ -147,6 +163,12 @@ class MotoPressBookingMapper
                 $reservation->setNeedsBabyCot(true);
             }
         }
+    }
+
+    /** Doplnit pole? Ano při zakládání, nebo když je stávající hodnota prázdná. */
+    private function fill(bool $isNew, ?string $current): bool
+    {
+        return $isNew || $current === null || $current === '';
     }
 
     /**

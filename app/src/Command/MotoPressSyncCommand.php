@@ -11,8 +11,10 @@ declare(strict_types=1);
 
 namespace App\Command;
 
+use App\Credential\CredentialProvider;
 use App\MotoPress\MotoPressApiException;
 use App\MotoPress\MotoPressClient;
+use App\MotoPress\MotoPressSettings;
 use App\MotoPress\MotoPressSync;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -27,6 +29,8 @@ class MotoPressSyncCommand extends Command
     public function __construct(
         private readonly MotoPressSync $sync,
         private readonly MotoPressClient $client,
+        private readonly MotoPressSettings $settings,
+        private readonly CredentialProvider $credentials,
     ) {
         parent::__construct();
     }
@@ -59,6 +63,17 @@ class MotoPressSyncCommand extends Command
                 $io->section(sprintf('MotoPress booking #%d', $id));
                 $output->writeln(json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '');
             }
+
+            return Command::SUCCESS;
+        }
+
+        if (!$this->settings->enabled()) {
+            $io->warning('MotoPress konektor je vypnutý — sync přeskočen.');
+
+            return Command::SUCCESS;
+        }
+        if (!$this->credentials->motopressConfigured()) {
+            $io->warning('MotoPress nemá vyplněné přístupy (URL + API klíče) — sync přeskočen.');
 
             return Command::SUCCESS;
         }
