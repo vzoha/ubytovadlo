@@ -22,7 +22,9 @@ use App\Enum\ActionType;
 use App\Enum\Channel;
 use App\Enum\InvoiceType;
 use App\Enum\MessageKind;
+use App\Mail\MailSettingsProvider;
 use App\Mail\MessageTemplateDefaults;
+use App\Repository\SettingRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -45,6 +47,10 @@ final class ActionsRunCommandTest extends KernelTestCase
         $this->em->createQuery('DELETE FROM ' . InvoiceLine::class . ' l')->execute();
         $this->em->createQuery('DELETE FROM ' . Invoice::class . ' i')->execute();
         $this->em->createQuery('DELETE FROM ' . Reservation::class . ' r')->execute();
+
+        // Odchozí adresa odesílatele — bez ní nemá zpráva hostovi platné From.
+        $container->get(SettingRepository::class)->set(MailSettingsProvider::SENDER_EMAIL, 'odesilatel@example.cz');
+        $this->em->flush();
 
         $application = new Application(self::$kernel);
         $this->tester = new CommandTester($application->find('app:actions:run'));

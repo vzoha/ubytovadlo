@@ -71,6 +71,11 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
   a ukládají se jedním tlačítkem. Stránka Připojení je členěná po systémech: IMAP
   schránka, MotoPress, SMTP.
 
+- **Dodavatel faktury bez předvyplněné falešné identity.** Výchozí hodnoty dodavatele
+  a bankovního spojení (`.env`) jsou prázdné — profil se vyplňuje v UI
+  **Fakturace**. Dokud není vyplněný, faktury ani odchozí e-maily nepoužijí žádnou
+  náhradní identitu (odesílatel zpráv hostům čerpá jméno/e-mail právě odtud).
+
 ## [0.6.0] — 2026-07-02
 
 ### Přidáno

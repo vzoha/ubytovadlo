@@ -17,6 +17,7 @@ use App\Entity\Setting;
 use App\Enum\Channel;
 use App\Enum\OwnerNotificationMode;
 use App\Enum\OwnerNotificationType;
+use App\Mail\MailSettingsProvider;
 use App\Notification\OwnerNotificationSettingsProvider;
 use App\Repository\SettingRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -37,7 +38,10 @@ final class NotificationsDispatchCommandTest extends KernelTestCase
 
         $this->em->createQuery('DELETE FROM ' . PendingOwnerNotification::class . ' n')->execute();
         $this->em->createQuery('DELETE FROM ' . Setting::class . " s WHERE s.key = '" . OwnerNotificationSettingsProvider::RECIPIENT . "'")->execute();
-        $container->get(SettingRepository::class)->set(OwnerNotificationSettingsProvider::RECIPIENT, 'ja@example.cz');
+        $settings = $container->get(SettingRepository::class);
+        $settings->set(OwnerNotificationSettingsProvider::RECIPIENT, 'ja@example.cz');
+        // Odchozí adresa odesílatele — bez ní nemá e-mail platné From.
+        $settings->set(MailSettingsProvider::SENDER_EMAIL, 'odesilatel@example.cz');
         $this->em->flush();
 
         $this->application = new Application(self::$kernel);
