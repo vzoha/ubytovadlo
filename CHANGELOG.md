@@ -8,6 +8,12 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Přidáno
 
+- **Ruční přidání rezervace.** Na seznamu rezervací tlačítko **Nová rezervace**
+  otevře formulář pro přímého hosta (telefon, e-mail, osobně) — termín, cena,
+  fakturační režim a údaje hosta na jednom místě, bez potřeby webu či OTA. Uloží
+  se jako potvrzená rezervace kanálu **Přímá** a rovnou naplánuje akce na časové
+  ose. Vše ostatní (faktura, zprávy) se dořeší z detailu jako u ostatních rezervací.
+
 - **Checklist „co ještě nastavit" na dashboardu.** Onboarding karta na přehledu
   ukazuje, co je vhodné doplnit (název a adresa aplikace, dodavatel na faktuře,
   odchozí e-maily, SMTP, automatizační schránka, napojení na web, ubytovací

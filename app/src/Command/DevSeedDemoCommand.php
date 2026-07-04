@@ -240,7 +240,7 @@ class DevSeedDemoCommand extends Command
         if (isset($s['gateway'])) {
             $r->setMotopressPaymentGateway($s['gateway']);
             $r->setMotopressExternalId('mphb-' . $s['ext']);
-        } else {
+        } elseif (isset($s['ext'])) {
             $r->setExternalId($s['ext']);
         }
 
@@ -307,7 +307,7 @@ class DevSeedDemoCommand extends Command
     /** @param array<string, mixed> $s */
     private function applyOtaCommissionAndVat(Reservation $r, array $s): void
     {
-        if (($s['needsDetails'] ?? false) || $r->getChannel() === Channel::WEB) {
+        if (($s['needsDetails'] ?? false) || !\in_array($r->getChannel(), [Channel::BOOKING, Channel::AIRBNB], true)) {
             return;
         }
         $duzp = new \DateTimeImmutable($s['in']);
@@ -545,6 +545,14 @@ class DevSeedDemoCommand extends Command
                 'email' => 'petr.z@email.cz', 'street' => 'Nádražní 8', 'city' => 'České Budějovice', 'zip' => '37001',
                 'adults' => 2, 'children' => 2, 'price' => '0.00', 'acq' => 'rodina', 'vtKwh' => 26, 'ntKwh' => 16,
                 'clean' => [CleaningType::OWNER, 700, 0], 'inv' => 'none',
+            ],
+            [
+                'channel' => Channel::DIRECT, 'billing' => \App\Enum\BillingMode::ADMIN_BOOKING,
+                'in' => '2026-03-02', 'out' => '2026-03-05', 'name' => 'Marie Dvořáková',
+                'email' => 'marie.dvorakova@email.cz', 'phone' => '+420 604 111 222',
+                'street' => 'Lipová 5', 'city' => 'Tábor', 'zip' => '39001',
+                'adults' => 2, 'children' => 1, 'price' => '5400.00', 'acq' => 'doporučení',
+                'vtKwh' => 24, 'ntKwh' => 15, 'clean' => [CleaningType::CLEANER, 700, 700], 'inv' => 'full',
             ],
             [
                 'channel' => Channel::AIRBNB, 'billing' => \App\Enum\BillingMode::AIRBNB,

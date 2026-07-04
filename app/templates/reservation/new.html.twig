@@ -1,0 +1,61 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nová rezervace{% endblock %}
+
+{% block body %}
+    <h1 class="h3 mb-1">Nová rezervace</h1>
+    <p class="text-muted">Přímý host — telefon, e-mail nebo osobně. Vyplň, co víš; zbytek (adresa, faktura, zprávy) jde doplnit z detailu.</p>
+
+    {{ form_start(form, {attr: {novalidate: 'novalidate'}}) }}
+    <div class="row g-3">
+        <div class="col-md-12"><h6 class="text-muted mb-0">Rezervace</h6></div>
+        <div class="col-md-6">{{ form_row(form.guestName) }}</div>
+        <div class="col-md-3">{{ form_row(form.checkIn) }}</div>
+        <div class="col-md-3">{{ form_row(form.checkOut) }}</div>
+        <div class="col-md-3">{{ form_row(form.guestsAdult) }}</div>
+        <div class="col-md-3">{{ form_row(form.guestsChild) }}</div>
+
+        <div class="col-md-12"><hr><h6 class="text-muted mb-0">Cena a fakturace</h6></div>
+        <div class="col-md-4">{{ form_row(form.priceTotal) }}</div>
+        <div class="col-md-8">{{ form_row(form.billingMode) }}</div>
+
+        <div class="col-md-12"><hr><h6 class="text-muted mb-0">Kontakt</h6></div>
+        <div class="col-md-6">{{ form_row(form.guestEmail) }}</div>
+        <div class="col-md-6">{{ form_row(form.guestPhone) }}</div>
+
+        <div class="col-md-12"><hr><h6 class="text-muted mb-0">Fakturační adresa <span class="fw-normal">(pro fakturu; lze doplnit později)</span></h6></div>
+        <div class="col-md-6">{{ form_row(form.guestStreet) }}</div>
+        <div class="col-md-2">{{ form_row(form.guestZip) }}</div>
+        <div class="col-md-4">{{ form_row(form.guestCity) }}</div>
+        <div class="col-md-4">{{ form_row(form.guestCountry) }}</div>
+
+        <div class="col-md-12"><hr><h6 class="text-muted mb-0">Firma <span class="fw-normal">(pokud chce host fakturovat na firmu)</span></h6></div>
+        <div class="col-md-6">{{ form_row(form.guestCompanyName) }}</div>
+        <div class="col-md-3">{{ form_row(form.guestIco) }}</div>
+        <div class="col-md-3">{{ form_row(form.guestDic) }}</div>
+
+        <div class="col-md-12"><hr><h6 class="text-muted mb-0">Doplňky</h6></div>
+        <div class="col-md-3 d-flex align-items-center">{{ form_row(form.hasPet) }}</div>
+        <div class="col-md-9">{{ form_row(form.petsNote) }}</div>
+        <div class="col-md-12 d-flex align-items-center">{{ form_row(form.needsBabyCot) }}</div>
+        <div class="col-md-12">{{ form_row(form.notes) }}</div>
+        <div class="col-md-12">{{ form_row(form.acquisitionSource) }}</div>
+    </div>
+    <datalist id="acquisition-sources">
+        <option value="Booking">
+        <option value="Airbnb">
+        <option value="Web">
+        <option value="Facebook">
+        <option value="Návrat">
+        <option value="E-chalupy">
+        <option value="CS-chalupy">
+        <option value="Kudyznudy">
+        <option value="Doporučení">
+        <option value="Neznámo">
+    </datalist>
+    <div class="mt-3 d-flex gap-2">
+        <button type="submit" class="btn btn-primary">Přidat rezervaci</button>
+        <a href="{{ path('reservation_list') }}" class="btn btn-outline-secondary">Zrušit</a>
+    </div>
+    {{ form_end(form) }}
+{% endblock %}

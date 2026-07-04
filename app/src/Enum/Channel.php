@@ -16,6 +16,8 @@ enum Channel: string
     case WEB = 'web';
     case BOOKING = 'booking';
     case AIRBNB = 'airbnb';
+    /** Přímá rezervace zadaná ručně (telefon, e-mail, osobně) — bez OTA ani webového funnelu. */
+    case DIRECT = 'direct';
 
     public function label(): string
     {
@@ -23,6 +25,7 @@ enum Channel: string
             self::WEB => 'Web',
             self::BOOKING => 'Booking.com',
             self::AIRBNB => 'Airbnb',
+            self::DIRECT => 'Přímá',
         };
     }
 }

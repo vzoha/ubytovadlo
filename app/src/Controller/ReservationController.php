@@ -25,6 +25,7 @@ use App\Enum\CleaningType;
 use App\Enum\NoteType;
 use App\Enum\ReservationStatus;
 use App\Form\ReservationDetailsType;
+use App\Form\ReservationManualType;
 use App\Invoice\BalanceCalculator;
 use App\Profit\ReservationProfitCalculator;
 use App\Repository\CleaningRepository;
@@ -38,6 +39,7 @@ use App\Timeline\ReservationActionPlanner;
 use App\Timeline\ReservationTimelineBuilder;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Form\FormError;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -75,6 +77,48 @@ class ReservationController extends AbstractController
             'currentStatus' => $status,
             'statuses' => ReservationStatus::cases(),
         ]);
+    }
+
+    #[Route('/rezervace/nova', name: 'reservation_new', methods: ['GET', 'POST'])]
+    public function new(Request $request): Response
+    {
+        $reservation = new Reservation(Channel::DIRECT, new \DateTimeImmutable('today'));
+        $reservation->setGuestCountry('CZ');
+        $form = $this->createForm(ReservationManualType::class, $reservation);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $checkOut = $reservation->getCheckOut();
+            if ($checkOut !== null && $checkOut <= $reservation->getCheckIn()) {
+                $form->get('checkOut')->addError(new FormError('Odjezd musí být po příjezdu.'));
+            } else {
+                $reservation->setPriceTotal($this->normalizePrice($reservation->getPriceTotal()));
+                // Ruční zadání = autorita nad rozdělením hostů (žádný sync to nepřepíše).
+                $reservation->setGuestsSplitManually(true);
+                $reservation->setStatus(ReservationStatus::CONFIRMED);
+                $this->em->persist($reservation);
+                $this->em->flush();
+                // Plánovač dohledává existující akce podle rezervace → potřebuje její ID.
+                $this->actionPlanner->planFor($reservation);
+                $this->em->flush();
+                $this->addFlash('success', 'Rezervace přidána.');
+
+                return $this->redirectToRoute('reservation_detail', ['id' => $reservation->getId()]);
+            }
+        }
+
+        return $this->render('reservation/new.html.twig', [
+            'form' => $form->createView(),
+        ]);
+    }
+
+    private function normalizePrice(?string $raw): ?string
+    {
+        if ($raw === null || trim($raw) === '') {
+            return null;
+        }
+
+        return number_format((float) str_replace([' ', ','], ['', '.'], $raw), 2, '.', '');
     }
 
     #[Route('/reservation/{id}', name: 'reservation_detail', methods: ['GET'], requirements: ['id' => '\d+'])]
