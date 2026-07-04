@@ -8,6 +8,16 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Přidáno
 
+- **Číselná řada faktur v UI.** V záložce nastavení **Fakturace** (dodavatel +
+  bankovní spojení + číselná řada) lze nastavit **formát čísla faktury** a **příští
+  pořadové číslo**. Formát používá proměnné `{RRRR}`/`{RR}` (rok) a `{NNN}` (pořadí,
+  počet písmen = počet cifer) plus libovolný pevný text a oddělovače — např.
+  `FA-{RRRR}-{NNN}` → `FA-2026-012`. Pořadové číslo se drží ve vlastním sloupci
+  (`invoice.series_sequence`), takže na formátu nezáleží při alokaci ani při čtení
+  nejvyššího čísla; variabilní symbol zůstává číselný nezávisle na formátu. Formát,
+  navázání řady i příští číslo se ukládají do DB (`invoice.number_format`,
+  `invoice.series_starts`), env `INVOICE_SERIES_STARTS` je fallback.
+
 - **Obecné nastavení instance v UI.** Záložka `/nastaveni/obecne`: **název instance**
   (brand — hlavička, titulky, faktury) a **veřejná adresa aplikace** (pro odkazy
   v e-mailech odeslaných z cronu). Ukládá se do DB (`Setting`), env `APP_BRAND_NAME`

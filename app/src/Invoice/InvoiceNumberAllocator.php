@@ -20,7 +20,7 @@ use Doctrine\ORM\EntityManagerInterface;
  *
  * Pravidla:
  *  - Pořadové číslo se resetuje každý rok.
- *  - V daném roce může být start ofsetnut přes seriesStarts (např. v 2026 začínáme od 12,
+ *  - V daném roce může být start ofsetnut přes InvoiceSeriesConfig (např. v 2026 začínáme od 12,
  *    protože 2026001-2026011 byly vystaveny historicky v původní fakturaci).
  *  - Použita SERIALIZABLE transakce + SELECT FOR UPDATE, aby paralelní vystavení
  *    nevyrobilo kolizní čísla. Sdílený hosting cron běh = málokdy paralelně, ale
@@ -28,14 +28,10 @@ use Doctrine\ORM\EntityManagerInterface;
  */
 class InvoiceNumberAllocator
 {
-    /**
-     * @param array<int, int> $seriesStarts mapuje rok → minimální pořadové číslo. Např. [2026 => 12] znamená,
-     *                                      že první alokované číslo v 2026 bude 2026012.
-     */
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly InvoiceRepository $invoices,
-        private readonly array $seriesStarts = [],
+        private readonly InvoiceSeriesConfig $seriesConfig,
     ) {
     }
 
@@ -48,7 +44,7 @@ class InvoiceNumberAllocator
             $conn->executeQuery('SELECT MAX(series_year) FROM invoice WHERE series_year = ? FOR UPDATE', [$year]);
 
             $highest = $this->invoices->findHighestSequenceInYear($year);
-            $minStart = $this->seriesStarts[$year] ?? 1;
+            $minStart = $this->seriesConfig->startForYear($year);
             $nextSeq = max($highest + 1, $minStart);
 
             return new InvoiceNumber($year, $nextSeq);

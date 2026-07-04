@@ -18,6 +18,7 @@ use App\Enum\Channel;
 use App\Enum\ReservationStatus;
 use App\Invoice\InvoiceNumber;
 use App\Invoice\InvoiceNumberAllocator;
+use App\Invoice\InvoiceNumberFormat;
 use App\Invoice\InvoicePdfRenderer;
 use App\Invoice\InvoiceService;
 use App\Invoice\IssuerProfileProvider;
@@ -42,6 +43,8 @@ final class InvoiceServicePayoutTest extends TestCase
 
         $allocator = $this->createMock(InvoiceNumberAllocator::class);
         $allocator->method('allocate')->willReturn(new InvoiceNumber(2026, 12));
+
+        $numberFormat = new InvoiceNumberFormat($this->createMock(SettingRepository::class));
 
         $pdfRenderer = $this->createMock(InvoicePdfRenderer::class);
         $pdfRenderer->method('renderToFile')->willReturn('/tmp/test-invoice.pdf');
@@ -68,6 +71,7 @@ final class InvoiceServicePayoutTest extends TestCase
             $em,
             $invoiceRepo,
             $allocator,
+            $numberFormat,
             $pdfRenderer,
             $this->createMock(SpaydGenerator::class),
             $this->createMock(CnbExchangeRateClient::class),

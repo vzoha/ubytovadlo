@@ -42,6 +42,7 @@ class InvoiceService
         private readonly EntityManagerInterface $em,
         private readonly InvoiceRepository $invoiceRepo,
         private readonly InvoiceNumberAllocator $allocator,
+        private readonly InvoiceNumberFormat $numberFormat,
         private readonly InvoicePdfRenderer $pdfRenderer,
         private readonly SpaydGenerator $spayd,
         private readonly CnbExchangeRateClient $cnb,
@@ -157,7 +158,10 @@ class InvoiceService
         \DateTimeImmutable $dueAt,
     ): Invoice {
         $number = $this->allocator->allocate($issuedAt);
-        $invoice = new Invoice($number->formatted(), $number->year, $type, $reservation, $issuedAt, $dueAt);
+        $display = $this->numberFormat->format($number->year, $number->sequence);
+        $invoice = new Invoice($display, $number->year, $number->sequence, $type, $reservation, $issuedAt, $dueAt);
+        // Variabilní symbol drží číselný tvar (rok+pořadí) nezávisle na formátu čísla —
+        // banka i QR Platba ho potřebují číselný.
         $invoice->setVariableSymbol($number->formatted());
         $invoice->setCurrency('CZK');
         $this->copyCustomerSnapshot($reservation, $invoice);

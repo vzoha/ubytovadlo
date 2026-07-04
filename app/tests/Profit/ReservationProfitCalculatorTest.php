@@ -204,9 +204,11 @@ class ReservationProfitCalculatorTest extends KernelTestCase
     private function makeInvoice(Reservation $r, InvoiceType $type, string $totalAmount): Invoice
     {
         static $seq = 0;
+        $n = ++$seq + 900;
         $invoice = new Invoice(
-            sprintf('2026%03d', ++$seq + 900),
+            sprintf('2026%03d', $n),
             2026,
+            $n,
             $type,
             $r,
             new \DateTimeImmutable('2026-01-15'),

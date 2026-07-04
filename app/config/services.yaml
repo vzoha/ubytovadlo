@@ -36,9 +36,9 @@ services:
     App\:
         resource: '../src/'
 
-    App\Invoice\InvoiceNumberAllocator:
+    App\Invoice\InvoiceSeriesConfig:
         arguments:
-            $seriesStarts: '%env(json:INVOICE_SERIES_STARTS)%'
+            $envFallback: '%env(json:INVOICE_SERIES_STARTS)%'
 
     App\Config\InstanceSettings:
         arguments:

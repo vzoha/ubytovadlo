@@ -67,4 +67,40 @@ final class IssuerSettingsControllerTest extends WebTestCase
         self::assertSame('Malý Statek Lniště', $issuer->name);
         self::assertSame('87654321', $issuer->ico);
     }
+
+    public function testNumberingFormSavesFormatAndNextNumber(): void
+    {
+        $year = (int) date('Y');
+
+        $crawler = $this->client->request('GET', '/nastaveni/dodavatel');
+        self::assertResponseIsSuccessful();
+
+        // Druhé tlačítko „Uložit" patří formuláři číselné řady.
+        $form = $crawler->selectButton('Uložit')->eq(1)->form();
+        $form['numbering_settings[format]'] = 'FA-{RRRR}-{NNN}';
+        $form['numbering_settings[nextNumber]'] = '20';
+        $this->client->submit($form);
+
+        self::assertResponseRedirects('/nastaveni/dodavatel');
+
+        $settings = static::getContainer()->get(SettingRepository::class);
+        self::assertSame('FA-{RRRR}-{NNN}', $settings->getString('invoice.number_format'));
+
+        $map = json_decode((string) $settings->getString('invoice.series_starts'), true, 512, JSON_THROW_ON_ERROR);
+        self::assertSame(20, $map[(string) $year]);
+    }
+
+    public function testNumberingFormRejectsInvalidFormat(): void
+    {
+        $crawler = $this->client->request('GET', '/nastaveni/dodavatel');
+
+        $form = $crawler->selectButton('Uložit')->eq(1)->form();
+        $form['numbering_settings[format]'] = '{NNN}'; // chybí rok
+        $this->client->submit($form);
+
+        // Neplatný formát → stránka se překreslí s chybou, nic se neuloží.
+        self::assertResponseIsSuccessful();
+        $settings = static::getContainer()->get(SettingRepository::class);
+        self::assertNull($settings->getString('invoice.number_format'));
+    }
 }

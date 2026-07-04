@@ -53,7 +53,7 @@ final class ActionsRunCommandTest extends KernelTestCase
     public function testIssueFinalInvoiceActionResolvesWhenInvoiceExists(): void
     {
         $r = $this->reservation();
-        $invoice = new Invoice('2026777', 2026, InvoiceType::FINAL, $r, new \DateTimeImmutable(), new \DateTimeImmutable('+14 days'));
+        $invoice = new Invoice('2026777', 2026, 777, InvoiceType::FINAL, $r, new \DateTimeImmutable(), new \DateTimeImmutable('+14 days'));
         $invoice->setTotalAmount('3000.00');
         $this->em->persist($invoice);
 

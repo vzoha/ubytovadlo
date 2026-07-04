@@ -96,7 +96,8 @@ final class BalanceCalculatorTest extends KernelTestCase
 
     private function paidInvoice(Reservation $r, InvoiceType $type, string $amount): void
     {
-        $inv = new Invoice('2026' . random_int(100, 999), 2026, $type, $r, new \DateTimeImmutable(), new \DateTimeImmutable('+14 days'));
+        $seq = random_int(100, 999);
+        $inv = new Invoice('2026' . $seq, 2026, $seq, $type, $r, new \DateTimeImmutable(), new \DateTimeImmutable('+14 days'));
         $inv->setTotalAmount($amount)->setCurrency('CZK')->setPaidAt(new \DateTimeImmutable());
         $this->em->persist($inv);
     }

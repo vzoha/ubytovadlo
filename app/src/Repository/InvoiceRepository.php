@@ -133,25 +133,13 @@ class InvoiceRepository extends ServiceEntityRepository
      */
     public function findHighestSequenceInYear(int $year): int
     {
-        $prefix = sprintf('%04d', $year);
-        $result = $this->createQueryBuilder('i')
-            ->select('i.number')
+        $max = $this->createQueryBuilder('i')
+            ->select('MAX(i.seriesSequence)')
             ->andWhere('i.seriesYear = :year')
-            ->andWhere('LENGTH(i.number) = 7')
-            ->andWhere('i.number LIKE :prefix')
             ->setParameter('year', $year)
-            ->setParameter('prefix', $prefix . '%')
-            ->orderBy('i.number', 'DESC')
-            ->setMaxResults(1)
             ->getQuery()
-            ->getOneOrNullResult();
+            ->getSingleScalarResult();
 
-        if ($result === null) {
-            return 0;
-        }
-
-        $seq = substr((string) $result['number'], strlen($prefix));
-
-        return ctype_digit($seq) ? (int) $seq : 0;
+        return $max === null ? 0 : (int) $max;
     }
 }

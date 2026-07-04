@@ -312,9 +312,11 @@ final class IncomeUpserterTest extends KernelTestCase
     private function persistInvoice(Reservation $r, InvoiceType $type, string $total, bool $paid, ?string $paidAt = null): Invoice
     {
         static $seq = 0;
+        $n = ++$seq + 800;
         $invoice = new Invoice(
-            sprintf('2026%03d', ++$seq + 800),
+            sprintf('2026%03d', $n),
             2026,
+            $n,
             $type,
             $r,
             new \DateTimeImmutable('2026-01-15'),

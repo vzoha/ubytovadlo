@@ -1,6 +1,6 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Nastavení — dodavatel{% endblock %}
+{% block title %}Nastavení — fakturace{% endblock %}
 
 {% block body %}
     <h1 class="h3 mb-3">Nastavení</h1>
@@ -57,5 +57,29 @@
                 <button type="submit" class="btn btn-primary">Uložit</button>
             </div>
         {{ form_end(form) }}
+    </div>
+
+    <hr class="my-4">
+
+    <h2 class="h5 mb-2">Číselná řada</h2>
+    <p class="text-muted small">
+        Formát čísla faktury a navázání na dosavadní číslování. Aktuální formát dá
+        například <code>{{ example }}</code>. Variabilní symbol pro platbu zůstává
+        číselný nezávisle na formátu.
+    </p>
+
+    <div class="col-lg-8">
+        {{ form_start(numberingForm) }}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="mb-3">{{ form_row(numberingForm.format) }}</div>
+                    <div class="mb-3 col-md-6">{{ form_row(numberingForm.nextNumber) }}</div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-end">
+                <button type="submit" class="btn btn-primary">Uložit</button>
+            </div>
+        {{ form_end(numberingForm) }}
     </div>
 {% endblock %}

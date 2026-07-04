@@ -31,12 +31,16 @@ class Invoice
     #[ORM\Column]
     private ?int $id = null;
 
-    /** Pravidla: RRRR### (např. 2026012). Unikátní napříč všemi roky. */
-    #[ORM\Column(length: 16)]
+    /** Zobrazované číslo dle nastaveného formátu (výchozí RRRR###, např. 2026012). Unikátní. */
+    #[ORM\Column(length: 32)]
     private string $number;
 
     #[ORM\Column(name: 'series_year', type: Types::SMALLINT)]
     private int $seriesYear;
+
+    /** Pořadové číslo v rámci roku (nezávislé na formátu čísla) — základ pro alokaci a číselnou řadu. */
+    #[ORM\Column(name: 'series_sequence', type: Types::SMALLINT)]
+    private int $seriesSequence;
 
     #[ORM\Column(length: 16, enumType: InvoiceType::class)]
     private InvoiceType $type;
@@ -140,6 +144,7 @@ class Invoice
     public function __construct(
         string $number,
         int $seriesYear,
+        int $seriesSequence,
         InvoiceType $type,
         Reservation $reservation,
         \DateTimeImmutable $issuedAt,
@@ -147,6 +152,7 @@ class Invoice
     ) {
         $this->number = $number;
         $this->seriesYear = $seriesYear;
+        $this->seriesSequence = $seriesSequence;
         $this->type = $type;
         $this->reservation = $reservation;
         $this->issuedAt = $issuedAt;
@@ -169,6 +175,11 @@ class Invoice
     public function getSeriesYear(): int
     {
         return $this->seriesYear;
+    }
+
+    public function getSeriesSequence(): int
+    {
+        return $this->seriesSequence;
     }
 
     public function getType(): InvoiceType

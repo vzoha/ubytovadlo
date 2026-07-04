@@ -61,7 +61,7 @@ final class InvoiceRegeneratePdfCommandTest extends KernelTestCase
         $r->setGuestName('Legacy Host');
         $this->em->persist($r);
 
-        $invoice = new Invoice('2025030', 2025, InvoiceType::DEPOSIT, $r, new \DateTimeImmutable('2025-05-10'), new \DateTimeImmutable('2025-05-20'));
+        $invoice = new Invoice('2025030', 2025, 30, InvoiceType::DEPOSIT, $r, new \DateTimeImmutable('2025-05-10'), new \DateTimeImmutable('2025-05-20'));
         $invoice->setTotalAmount('1000.00');
         $invoice->setPdfPath('var/invoices/2025/2025030.pdf');
         $invoice->setPdfSource(PdfSource::EXTERNAL);

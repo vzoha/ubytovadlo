@@ -136,6 +136,7 @@ final class DashboardControllerTest extends WebTestCase
         $invoice = new Invoice(
             number: '2026999',
             seriesYear: 2026,
+            seriesSequence: 999,
             type: InvoiceType::FULL,
             reservation: $r,
             issuedAt: $today,
