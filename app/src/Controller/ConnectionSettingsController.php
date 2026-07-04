@@ -14,7 +14,10 @@ namespace App\Controller;
 use App\Credential\CredentialCipher;
 use App\Credential\CredentialProvider;
 use App\Form\ConnectionSettingsType;
+use App\Form\MotoPressMappingType;
+use App\MotoPress\MotoPressSettings;
 use App\Repository\CredentialRepository;
+use App\Repository\SettingRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -27,6 +30,8 @@ class ConnectionSettingsController extends AbstractController
         private readonly CredentialProvider $provider,
         private readonly CredentialRepository $credentials,
         private readonly CredentialCipher $cipher,
+        private readonly MotoPressSettings $motopress,
+        private readonly SettingRepository $settings,
         private readonly EntityManagerInterface $em,
     ) {
     }
@@ -59,10 +64,29 @@ class ConnectionSettingsController extends AbstractController
             return $this->redirectToRoute('connection_settings_edit');
         }
 
+        $mappingForm = $this->createForm(MotoPressMappingType::class, $this->motopress->currentValues());
+        $mappingForm->handleRequest($request);
+        if ($mappingForm->isSubmitted() && $mappingForm->isValid()) {
+            $this->saveMapping($mappingForm->get('petServiceIds')->getData(), $mappingForm->get('babyCotServiceIds')->getData(), (bool) $mappingForm->get('pushPayments')->getData());
+            $this->addFlash('success', 'Nastavení MotoPressu uloženo.');
+
+            return $this->redirectToRoute('connection_settings_edit');
+        }
+
         return $this->render('connection_settings/edit.html.twig', [
             'form' => $form->createView(),
+            'mappingForm' => $mappingForm->createView(),
             'secretsSet' => $state['secretsSet'],
             'cipherReady' => $this->cipher->isReady(),
         ]);
+    }
+
+    private function saveMapping(?string $petIds, ?string $babyCotIds, bool $push): void
+    {
+        // Vstup normalizujeme přes parseIds, ať se uloží čistý seznam ID.
+        $this->settings->set(MotoPressSettings::KEY_PET, implode(',', MotoPressSettings::parseIds((string) $petIds)), 'MotoPress: ID služeb „pes".');
+        $this->settings->set(MotoPressSettings::KEY_BABY_COT, implode(',', MotoPressSettings::parseIds((string) $babyCotIds)), 'MotoPress: ID služeb „dětská postýlka".');
+        $this->settings->set(MotoPressSettings::KEY_PUSH, $push ? '1' : '0', 'MotoPress: posílat platby zpět.');
+        $this->em->flush();
     }
 }

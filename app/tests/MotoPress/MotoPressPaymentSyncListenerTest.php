@@ -18,7 +18,9 @@ use App\Enum\PaymentSource;
 use App\MotoPress\MotoPressApiException;
 use App\MotoPress\MotoPressClient;
 use App\MotoPress\MotoPressPaymentSyncListener;
+use App\MotoPress\MotoPressSettings;
 use App\Payment\Event\PaymentSettledEvent;
+use App\Repository\SettingRepository;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -79,7 +81,12 @@ final class MotoPressPaymentSyncListenerTest extends TestCase
 
     private function listener(bool $enabled): MotoPressPaymentSyncListener
     {
-        return new MotoPressPaymentSyncListener($this->client, new NullLogger(), $enabled);
+        // Setting prázdný → provider vrátí push flag z fallbacku ($enabled).
+        $settings = $this->createMock(SettingRepository::class);
+        $settings->method('getString')->willReturn(null);
+        $motopress = new MotoPressSettings($settings, [], [], $enabled);
+
+        return new MotoPressPaymentSyncListener($this->client, new NullLogger(), $motopress);
     }
 
     private function payment(?string $bookingId): Payment

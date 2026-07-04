@@ -31,13 +31,13 @@ class MotoPressPaymentSyncListener
     public function __construct(
         private readonly MotoPressClient $client,
         private readonly LoggerInterface $logger,
-        private readonly bool $motopressPushPayments,
+        private readonly MotoPressSettings $settings,
     ) {
     }
 
     public function __invoke(PaymentSettledEvent $event): void
     {
-        if (!$this->motopressPushPayments) {
+        if (!$this->settings->pushPayments()) {
             return;
         }
 

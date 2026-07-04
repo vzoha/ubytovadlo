@@ -82,5 +82,25 @@
 
             <button class="btn btn-primary">Uložit</button>
         {{ form_end(form) }}
+
+        <hr class="my-4">
+
+        <h2 class="h5 mb-2">MotoPress — chování</h2>
+        <p class="text-muted small">
+            Které MotoPress služby znamenají psa nebo dětskou postýlku a jestli
+            posílat potvrzené platby zpět do MotoPressu.
+        </p>
+        {{ form_start(mappingForm) }}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">{{ form_row(mappingForm.petServiceIds) }}</div>
+                        <div class="col-md-6">{{ form_row(mappingForm.babyCotServiceIds) }}</div>
+                    </div>
+                    <div class="mt-2">{{ form_row(mappingForm.pushPayments) }}</div>
+                </div>
+            </div>
+            <button class="btn btn-primary">Uložit</button>
+        {{ form_end(mappingForm) }}
     </div>
 {% endblock %}

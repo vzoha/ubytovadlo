@@ -8,6 +8,13 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Přidáno
 
+- **Nastavení chování MotoPressu v UI.** Na stránce **Připojení** sekce „MotoPress —
+  chování": ID služeb pro „host se psem" a „dětskou postýlku" (čárkami oddělený
+  seznam) a přepínač, zda posílat potvrzené platby zpět do MotoPressu. Ukládá se do
+  DB (`Setting`), env `MOTOPRESS_PET_SERVICE_IDS` / `MOTOPRESS_BABY_COT_SERVICE_IDS`
+  / `MOTOPRESS_PUSH_PAYMENTS` slouží jako fallback. Zdroj nastavení je `MotoPressSettings`
+  (mapper i push listener ho čtou přes něj).
+
 - **Číselná řada faktur v UI.** V záložce nastavení **Fakturace** (dodavatel +
   bankovní spojení + číselná řada) lze nastavit **formát čísla faktury** a **příští
   pořadové číslo**. Formát používá proměnné `{RRRR}`/`{RR}` (rok) a `{NNN}` (pořadí,

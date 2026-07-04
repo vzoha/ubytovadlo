@@ -24,9 +24,6 @@ services:
             string $motopressBaseUrl: '%env(MOTOPRESS_BASE_URL)%'
             string $motopressConsumerKey: '%env(MOTOPRESS_CONSUMER_KEY)%'
             string $motopressConsumerSecret: '%env(MOTOPRESS_CONSUMER_SECRET)%'
-            array $motopressPetServiceIds: '%env(csv:MOTOPRESS_PET_SERVICE_IDS)%'
-            array $motopressBabyCotServiceIds: '%env(csv:MOTOPRESS_BABY_COT_SERVICE_IDS)%'
-            bool $motopressPushPayments: '%env(bool:MOTOPRESS_PUSH_PAYMENTS)%'
             string $invoiceDepositAmount: '%env(INVOICE_DEPOSIT_AMOUNT)%'
             string $appCredentialsKey: '%env(APP_CREDENTIALS_KEY)%'
             string $appEnv: '%kernel.environment%'
@@ -44,6 +41,15 @@ services:
         arguments:
             $brandNameFallback: '%env(APP_BRAND_NAME)%'
             $baseUrlFallback: '%env(DEFAULT_URI)%'
+
+    App\MotoPress\MotoPressSettings:
+        arguments:
+            $petFallback: '%env(csv:MOTOPRESS_PET_SERVICE_IDS)%'
+            $babyCotFallback: '%env(csv:MOTOPRESS_BABY_COT_SERVICE_IDS)%'
+            $pushFallback: '%env(bool:MOTOPRESS_PUSH_PAYMENTS)%'
+
+    App\MotoPress\MotoPressBookingMapper:
+        factory: ['@App\MotoPress\MotoPressSettings', 'createMapper']
 
     App\Invoice\IssuerProfileProvider:
         arguments:
