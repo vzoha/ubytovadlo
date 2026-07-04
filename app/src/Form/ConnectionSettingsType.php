@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace App\Form;
 
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\PasswordType;
@@ -20,8 +21,9 @@ use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
- * Přístupové údaje připojení (IMAP, MotoPress). Pole odpovídají
- * CredentialProvider::FIELDS, mapování + šifrování řeší controller.
+ * Nastavení připojení: přístupové údaje (IMAP, MotoPress REST, SMTP) i chování
+ * MotoPressu (mapování služeb, push plateb). Údaje odpovídají CredentialProvider::FIELDS
+ * (šifrují se), chování se ukládá do Setting — obojí řeší controller.
  * Tajemství (hesla, klíče) jsou write-only: prázdné = beze změny.
  *
  * @extends AbstractType<mixed>
@@ -46,6 +48,20 @@ class ConnectionSettingsType extends AbstractType
             ->add('motopressBaseUrl', TextType::class, ['label' => 'MotoPress URL', 'required' => false, 'help' => 'Adresa webu s pluginem, např. https://example.com'])
             ->add('motopressConsumerKey', PasswordType::class, ['label' => 'Consumer key', 'help' => 'Prázdné = beze změny.'] + $secret)
             ->add('motopressConsumerSecret', PasswordType::class, ['label' => 'Consumer secret', 'help' => 'Prázdné = beze změny.'] + $secret)
+            ->add('petServiceIds', TextType::class, [
+                'label' => 'ID služeb „pes"',
+                'required' => false,
+                'help' => 'ID MotoPress služeb, které znamenají „host se psem". Víc oddělte čárkou.',
+            ])
+            ->add('babyCotServiceIds', TextType::class, [
+                'label' => 'ID služeb „dětská postýlka"',
+                'required' => false,
+                'help' => 'ID MotoPress služeb pro dětskou postýlku. Víc oddělte čárkou.',
+            ])
+            ->add('pushPayments', CheckboxType::class, [
+                'label' => 'Posílat potvrzené platby zpět do MotoPressu',
+                'required' => false,
+            ])
             ->add('smtpHost', TextType::class, ['label' => 'SMTP server', 'required' => false, 'help' => 'Prázdné = použije se MAILER_DSN z prostředí.'])
             ->add('smtpPort', IntegerType::class, ['label' => 'Port', 'required' => false, 'help' => 'Obvykle 465 (SSL) nebo 587 (TLS).'])
             ->add('smtpEncryption', ChoiceType::class, [

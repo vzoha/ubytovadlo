@@ -44,7 +44,7 @@
             </div>
 
             <div class="card mb-3">
-                <div class="card-header py-2 fw-semibold">MotoPress — REST API</div>
+                <div class="card-header py-2 fw-semibold">MotoPress — REST API a chování</div>
                 <div class="card-body">
                     <div class="mb-3">{{ form_row(form.motopressBaseUrl) }}</div>
                     <div class="mb-1">
@@ -55,6 +55,16 @@
                         {{ form_row(form.motopressConsumerSecret) }}
                         {% if secretsSet.motopressConsumerSecret %}<span class="badge text-bg-success">nastaveno</span>{% else %}<span class="badge text-bg-secondary">nenastaveno</span>{% endif %}
                     </div>
+                    <hr>
+                    <p class="text-muted small mb-3">
+                        Které MotoPress služby znamenají psa nebo dětskou postýlku a jestli
+                        posílat potvrzené platby zpět do MotoPressu.
+                    </p>
+                    <div class="row g-3">
+                        <div class="col-md-6">{{ form_row(form.petServiceIds) }}</div>
+                        <div class="col-md-6">{{ form_row(form.babyCotServiceIds) }}</div>
+                    </div>
+                    <div class="mt-2">{{ form_row(form.pushPayments) }}</div>
                 </div>
             </div>
 
@@ -84,27 +94,5 @@
                 <button type="submit" class="btn btn-primary">Uložit</button>
             </div>
         {{ form_end(form) }}
-
-        <hr class="my-4">
-
-        <h2 class="h5 mb-2">MotoPress — chování</h2>
-        <p class="text-muted small">
-            Které MotoPress služby znamenají psa nebo dětskou postýlku a jestli
-            posílat potvrzené platby zpět do MotoPressu.
-        </p>
-        {{ form_start(mappingForm) }}
-            <div class="card mb-3">
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-6">{{ form_row(mappingForm.petServiceIds) }}</div>
-                        <div class="col-md-6">{{ form_row(mappingForm.babyCotServiceIds) }}</div>
-                    </div>
-                    <div class="mt-2">{{ form_row(mappingForm.pushPayments) }}</div>
-                </div>
-            </div>
-            <div class="d-flex justify-content-end">
-                <button type="submit" class="btn btn-primary">Uložit</button>
-            </div>
-        {{ form_end(mappingForm) }}
     </div>
 {% endblock %}

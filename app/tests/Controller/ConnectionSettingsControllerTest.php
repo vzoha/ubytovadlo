@@ -46,17 +46,17 @@ final class ConnectionSettingsControllerTest extends WebTestCase
         $this->client->loginUser($container->get(UserRepository::class)->findOneBy(['email' => 'connection@example.com']));
     }
 
-    public function testMappingFormSavesMotopressSettings(): void
+    public function testFormSavesMotopressMappingSettings(): void
     {
         $crawler = $this->client->request('GET', '/nastaveni/pripojeni');
         self::assertResponseIsSuccessful();
 
-        // Druhé tlačítko „Uložit" patří formuláři chování MotoPressu.
-        $form = $crawler->selectButton('Uložit')->eq(1)->form();
+        // Chování MotoPressu je součástí jediného formuláře připojení.
+        $form = $crawler->selectButton('Uložit')->form();
         $this->client->submit($form, [
-            'moto_press_mapping[petServiceIds]' => '925, 926',
-            'moto_press_mapping[babyCotServiceIds]' => '866',
-            'moto_press_mapping[pushPayments]' => '1',
+            'connection_settings[petServiceIds]' => '925, 926',
+            'connection_settings[babyCotServiceIds]' => '866',
+            'connection_settings[pushPayments]' => '1',
         ]);
 
         self::assertResponseRedirects('/nastaveni/pripojeni');

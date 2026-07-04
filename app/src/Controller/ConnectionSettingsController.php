@@ -14,7 +14,6 @@ namespace App\Controller;
 use App\Credential\CredentialCipher;
 use App\Credential\CredentialProvider;
 use App\Form\ConnectionSettingsType;
-use App\Form\MotoPressMappingType;
 use App\MotoPress\MotoPressSettings;
 use App\Repository\CredentialRepository;
 use App\Repository\SettingRepository;
@@ -40,12 +39,19 @@ class ConnectionSettingsController extends AbstractController
     public function edit(Request $request): Response
     {
         $state = $this->provider->formState();
-        $form = $this->createForm(ConnectionSettingsType::class, $state['values']);
+        $form = $this->createForm(ConnectionSettingsType::class, $state['values'] + $this->motopress->currentValues());
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            // Chování MotoPressu (Setting) nešifrujeme — uloží se i bez klíče.
+            $this->saveMapping(
+                $form->get('petServiceIds')->getData(),
+                $form->get('babyCotServiceIds')->getData(),
+                (bool) $form->get('pushPayments')->getData(),
+            );
+
             if (!$this->cipher->isReady()) {
-                $this->addFlash('danger', 'Chybí APP_CREDENTIALS_KEY (base64 32 B) — bez něj nelze údaje uložit. Doplň ho do .env.local.');
+                $this->addFlash('warning', 'Chování MotoPressu uloženo. Přístupové údaje ale vyžadují APP_CREDENTIALS_KEY (base64 32 B) v .env.local — bez něj se neuloží.');
 
                 return $this->redirectToRoute('connection_settings_edit');
             }
@@ -59,23 +65,13 @@ class ConnectionSettingsController extends AbstractController
                 $this->credentials->setEncrypted($key, $value);
             }
             $this->em->flush();
-            $this->addFlash('success', 'Přístupové údaje uloženy (šifrovaně).');
-
-            return $this->redirectToRoute('connection_settings_edit');
-        }
-
-        $mappingForm = $this->createForm(MotoPressMappingType::class, $this->motopress->currentValues());
-        $mappingForm->handleRequest($request);
-        if ($mappingForm->isSubmitted() && $mappingForm->isValid()) {
-            $this->saveMapping($mappingForm->get('petServiceIds')->getData(), $mappingForm->get('babyCotServiceIds')->getData(), (bool) $mappingForm->get('pushPayments')->getData());
-            $this->addFlash('success', 'Nastavení MotoPressu uloženo.');
+            $this->addFlash('success', 'Nastavení připojení uloženo.');
 
             return $this->redirectToRoute('connection_settings_edit');
         }
 
         return $this->render('connection_settings/edit.html.twig', [
             'form' => $form->createView(),
-            'mappingForm' => $mappingForm->createView(),
             'secretsSet' => $state['secretsSet'],
             'cipherReady' => $this->cipher->isReady(),
         ]);

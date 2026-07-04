@@ -66,6 +66,11 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
   („Úklid", „Notifikace ubytovateli"). Editace šablony zprávy běží v kartě jako ostatní
   stránky. Popis záložky **E-maily** odkazuje na SMTP přístup v záložce **Připojení**.
 
+- **MotoPress na záložce Připojení pohromadě.** REST API přístup i chování (mapování
+  služeb pes/postýlka, push plateb) jsou v jedné kartě „MotoPress — REST API a chování"
+  a ukládají se jedním tlačítkem. Stránka Připojení je členěná po systémech: IMAP
+  schránka, MotoPress, SMTP.
+
 ## [0.6.0] — 2026-07-02
 
 ### Přidáno
