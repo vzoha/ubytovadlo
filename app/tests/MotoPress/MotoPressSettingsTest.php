@@ -19,38 +19,32 @@ use PHPUnit\Framework\TestCase;
 #[AllowMockObjectsWithoutExpectations]
 final class MotoPressSettingsTest extends TestCase
 {
-    public function testFallsBackToEnvWhenDbEmpty(): void
+    public function testReadsIdsAndPushFromDb(): void
     {
-        $motopress = new MotoPressSettings($this->settings([]), ['925'], ['866'], true);
+        $stored = [
+            MotoPressSettings::KEY_PET => '10, 20',
+            MotoPressSettings::KEY_BABY_COT => '866',
+            MotoPressSettings::KEY_PUSH => '1',
+        ];
+        $motopress = new MotoPressSettings($this->settings($stored));
 
-        self::assertSame([925], $motopress->petServiceIds());
+        self::assertSame([10, 20], $motopress->petServiceIds());
         self::assertSame([866], $motopress->babyCotServiceIds());
         self::assertTrue($motopress->pushPayments());
     }
 
-    public function testDbOverridesEnv(): void
+    public function testEmptyWhenNotSet(): void
     {
-        $stored = [
-            MotoPressSettings::KEY_PET => '10, 20',
-            MotoPressSettings::KEY_PUSH => '0',
-        ];
-        $motopress = new MotoPressSettings($this->settings($stored), ['925'], ['866'], true);
-
-        self::assertSame([10, 20], $motopress->petServiceIds());   // z DB
-        self::assertSame([866], $motopress->babyCotServiceIds());  // fallback z env
-        self::assertFalse($motopress->pushPayments());             // z DB
-    }
-
-    public function testEmptyDbValueMeansNoIds(): void
-    {
-        $motopress = new MotoPressSettings($this->settings([MotoPressSettings::KEY_PET => '']), ['925'], [], false);
+        $motopress = new MotoPressSettings($this->settings([]));
 
         self::assertSame([], $motopress->petServiceIds());
+        self::assertSame([], $motopress->babyCotServiceIds());
+        self::assertFalse($motopress->pushPayments());
     }
 
     public function testCreateMapperUsesCurrentIds(): void
     {
-        $motopress = new MotoPressSettings($this->settings([MotoPressSettings::KEY_PET => '925']), [], [], false);
+        $motopress = new MotoPressSettings($this->settings([MotoPressSettings::KEY_PET => '925']));
         $mapper = $motopress->createMapper();
 
         $reservation = new \App\Entity\Reservation(\App\Enum\Channel::WEB, new \DateTimeImmutable('2026-07-10'));

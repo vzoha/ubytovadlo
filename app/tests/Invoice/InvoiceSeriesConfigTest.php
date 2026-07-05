@@ -19,34 +19,33 @@ use PHPUnit\Framework\TestCase;
 #[AllowMockObjectsWithoutExpectations]
 final class InvoiceSeriesConfigTest extends TestCase
 {
-    public function testFallsBackToEnvWhenDbEmpty(): void
+    public function testEmptyWhenNotSet(): void
     {
-        $config = new InvoiceSeriesConfig($this->settings(null), [2026 => 12]);
+        $config = new InvoiceSeriesConfig($this->settings(null));
 
-        self::assertSame([2026 => 12], $config->all());
-        self::assertSame(12, $config->startForYear(2026));
-        self::assertSame(1, $config->startForYear(2027));
+        self::assertSame([], $config->all());
+        self::assertSame(1, $config->startForYear(2026));
     }
 
-    public function testDbOverridesEnv(): void
+    public function testReadsMapFromDb(): void
     {
-        $config = new InvoiceSeriesConfig($this->settings('{"2027":5}'), [2026 => 12]);
+        $config = new InvoiceSeriesConfig($this->settings('{"2027":5}'));
 
         self::assertSame([2027 => 5], $config->all());
         self::assertSame(5, $config->startForYear(2027));
         self::assertSame(1, $config->startForYear(2026));
     }
 
-    public function testInvalidJsonFallsBackToEnv(): void
+    public function testInvalidJsonMeansEmpty(): void
     {
-        $config = new InvoiceSeriesConfig($this->settings('not-json'), [2026 => 12]);
+        $config = new InvoiceSeriesConfig($this->settings('not-json'));
 
-        self::assertSame([2026 => 12], $config->all());
+        self::assertSame([], $config->all());
     }
 
     public function testEmptyMapMeansStartFromOne(): void
     {
-        $config = new InvoiceSeriesConfig($this->settings('{}'), [2026 => 12]);
+        $config = new InvoiceSeriesConfig($this->settings('{}'));
 
         self::assertSame([], $config->all());
         self::assertSame(1, $config->startForYear(2026));

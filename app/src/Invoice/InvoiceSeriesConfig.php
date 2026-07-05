@@ -18,22 +18,20 @@ use App\Repository\SettingRepository;
  * Číslování se každý rok resetuje na 1; pokud se navazuje na dosavadní řadu,
  * první číslo roku se posune (např. 2026 → 12, když 2026001–2026011 vznikly dřív).
  *
- * Přednost má hodnota z DB (setting `invoice.series_starts`, JSON), fallback je
- * env INVOICE_SERIES_STARTS — instance si mapu nastaví v UI (/nastaveni/fakturace).
+ * Hodnota se čte z DB (setting `invoice.series_starts`, JSON) — instance si mapu
+ * nastaví v UI (/nastaveni/fakturace). Bez nastavení číslování začíná od 1.
  */
 final class InvoiceSeriesConfig
 {
     public const KEY = 'invoice.series_starts';
 
-    /** @param array<int, int> $envFallback */
     public function __construct(
         private readonly SettingRepository $settings,
-        private readonly array $envFallback = [],
     ) {
     }
 
     /**
-     * Celá mapa rok → první pořadové číslo (DB, s fallbackem na env).
+     * Celá mapa rok → první pořadové číslo z DB (prázdná, když není nastavená).
      *
      * @return array<int, int>
      */
@@ -41,12 +39,12 @@ final class InvoiceSeriesConfig
     {
         $stored = $this->settings->getString(self::KEY);
         if ($stored === null || $stored === '') {
-            return $this->envFallback;
+            return [];
         }
 
         $decoded = json_decode($stored, true);
         if (!is_array($decoded)) {
-            return $this->envFallback;
+            return [];
         }
 
         $map = [];

@@ -52,21 +52,6 @@ final class InvoiceServicePayoutTest extends TestCase
 
         $settings = $this->createMock(SettingRepository::class);
         $settings->method('getString')->willReturn(null);
-        $issuerProvider = new IssuerProfileProvider(
-            $settings,
-            'Dodavatel',
-            'Ulice 1',
-            'Praha',
-            '11000',
-            'CZ',
-            '12345678',
-            'CZ12345678',
-            '+420',
-            'a@b.cz',
-            'web',
-            '123/0300',
-            'CZ00',
-        );
 
         $this->service = new InvoiceService(
             $em,
@@ -76,9 +61,9 @@ final class InvoiceServicePayoutTest extends TestCase
             $pdfRenderer,
             $this->createMock(SpaydGenerator::class),
             $this->createMock(CnbExchangeRateClient::class),
-            $issuerProvider,
+            new IssuerProfileProvider($settings),
             $this->createMock(IncomeUpserter::class),
-            new DepositConfig($settings, '1000'),
+            new DepositConfig($settings),
         );
     }
 

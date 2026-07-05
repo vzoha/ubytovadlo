@@ -19,10 +19,7 @@ use App\Repository\SettingRepository;
  *  - zda posílat potvrzené platby zpět do MotoPressu.
  *
  * Zapnutí/vypnutí importu drží konektor (App\Connector\ConnectorManager).
- *
- * Přednost má hodnota z DB (setting), fallback jsou hodnoty z env
- * (MOTOPRESS_PET_SERVICE_IDS / MOTOPRESS_BABY_COT_SERVICE_IDS /
- * MOTOPRESS_PUSH_PAYMENTS). Nastavuje se v UI (/nastaveni/pripojeni).
+ * Hodnoty se čtou z DB (setting), nastavují se v UI (/nastaveni/pripojeni).
  */
 final class MotoPressSettings
 {
@@ -30,35 +27,26 @@ final class MotoPressSettings
     public const KEY_BABY_COT = 'motopress.baby_cot_service_ids';
     public const KEY_PUSH = 'motopress.push_payments';
 
-    /**
-     * @param array<int|string, scalar> $petFallback
-     * @param array<int|string, scalar> $babyCotFallback
-     */
     public function __construct(
         private readonly SettingRepository $settings,
-        private readonly array $petFallback = [],
-        private readonly array $babyCotFallback = [],
-        private readonly bool $pushFallback = false,
     ) {
     }
 
     /** @return list<int> */
     public function petServiceIds(): array
     {
-        return $this->ids(self::KEY_PET, $this->petFallback);
+        return $this->ids(self::KEY_PET);
     }
 
     /** @return list<int> */
     public function babyCotServiceIds(): array
     {
-        return $this->ids(self::KEY_BABY_COT, $this->babyCotFallback);
+        return $this->ids(self::KEY_BABY_COT);
     }
 
     public function pushPayments(): bool
     {
-        $stored = $this->settings->getString(self::KEY_PUSH);
-
-        return $stored === null ? $this->pushFallback : $stored === '1';
+        return $this->settings->getString(self::KEY_PUSH) === '1';
     }
 
     /** Mapper drží normalizovaná ID → sestavíme ho z aktuálního nastavení. */
@@ -81,17 +69,10 @@ final class MotoPressSettings
         ];
     }
 
-    /**
-     * @param array<int|string, scalar> $fallback
-     *
-     * @return list<int>
-     */
-    private function ids(string $key, array $fallback): array
+    /** @return list<int> */
+    private function ids(string $key): array
     {
-        $stored = $this->settings->getString($key);
-
-        // Není v DB → env fallback. Prázdný řetězec (uživatel vymazal) = žádná ID.
-        return $stored === null ? self::normalize($fallback) : self::parseIds($stored);
+        return self::parseIds((string) $this->settings->getString($key));
     }
 
     /**

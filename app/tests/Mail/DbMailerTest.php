@@ -29,7 +29,7 @@ final class DbMailerTest extends TestCase
         // DB nemá SMTP → smtpDsn() je null → deleguje se na dekorovaný env mailer.
         $repo = $this->createMock(CredentialRepository::class);
         $repo->method('getDecrypted')->willReturn(null);
-        $credentials = new CredentialProvider($repo, 'h', 993, 'ssl', 'u', 'p', 'INBOX', 'https://x', 'k', 's');
+        $credentials = new CredentialProvider($repo);
 
         $email = (new Email())->from('a@example.cz')->to('b@example.cz')->subject('x')->text('y');
         $inner = $this->createMock(MailerInterface::class);

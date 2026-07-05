@@ -21,22 +21,23 @@ use PHPUnit\Framework\TestCase;
 #[AllowMockObjectsWithoutExpectations]
 final class DepositConfigTest extends TestCase
 {
-    public function testDefaultsToFixedWithEnvFallbackAmount(): void
+    public function testDefaultsToFixedModeButNoAmountUntilSet(): void
     {
-        $config = $this->config([], amountFallback: '1000');
+        $config = $this->config([]);
 
         self::assertSame(DepositMode::FIXED, $config->mode());
         self::assertTrue($config->enabled());
-        self::assertSame('1000.00', $config->computeAmount(null));
+        // Bez nastavené výše se záloha nevystaví.
+        self::assertNull($config->computeAmount(null));
         self::assertSame(DepositConfig::DEFAULT_DUE_DAYS, $config->dueDays());
     }
 
-    public function testFixedAmountFromDbOverridesFallback(): void
+    public function testFixedAmountFromDb(): void
     {
         $config = $this->config([
             DepositConfig::KEY_MODE => 'fixed',
             DepositConfig::KEY_VALUE => '1500',
-        ], amountFallback: '1000');
+        ]);
 
         self::assertSame('1500.00', $config->computeAmount('9000'));
     }
@@ -102,7 +103,7 @@ final class DepositConfigTest extends TestCase
     }
 
     /** @param array<string, string> $stored */
-    private function config(array $stored, string $amountFallback = '1000'): DepositConfig
+    private function config(array $stored): DepositConfig
     {
         $settings = $this->createMock(SettingRepository::class);
         $settings->method('getString')->willReturnCallback(
@@ -112,6 +113,6 @@ final class DepositConfigTest extends TestCase
             static fn (string $key, int $default = 0): int => isset($stored[$key]) ? (int) $stored[$key] : $default,
         );
 
-        return new DepositConfig($settings, $amountFallback);
+        return new DepositConfig($settings);
     }
 }

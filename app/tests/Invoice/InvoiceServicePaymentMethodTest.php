@@ -53,23 +53,16 @@ final class InvoiceServicePaymentMethodTest extends TestCase
         $spayd = $this->createMock(SpaydGenerator::class);
         $spayd->method('generate')->willReturn('SPD*1.0*ACC:CZ00*AM:100.00*CC:CZK');
 
+        // Dodavatel (bankovní spojení) z DB — jen to, co test potřebuje.
         $settings = $this->createMock(SettingRepository::class);
-        $settings->method('getString')->willReturn(null);
-        $issuerProvider = new IssuerProfileProvider(
-            $settings,
-            'Dodavatel',
-            'Ulice 1',
-            'Praha',
-            '11000',
-            'CZ',
-            '12345678',
-            'CZ12345678',
-            '+420',
-            'a@b.cz',
-            'web',
-            '123/0300',
-            'CZ00',
+        $settings->method('getString')->willReturnCallback(
+            static fn (string $key): ?string => match ($key) {
+                'invoice.bank.account' => '123/0300',
+                'invoice.bank.iban' => 'CZ00',
+                default => null,
+            },
         );
+        $issuerProvider = new IssuerProfileProvider($settings);
 
         $this->service = new InvoiceService(
             $em,
@@ -81,7 +74,7 @@ final class InvoiceServicePaymentMethodTest extends TestCase
             $this->createMock(CnbExchangeRateClient::class),
             $issuerProvider,
             $this->createMock(IncomeUpserter::class),
-            new DepositConfig($settings, '1000'),
+            new DepositConfig($settings),
         );
     }
 

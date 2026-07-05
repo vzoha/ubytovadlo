@@ -1,3 +1,5 @@
 framework:
     mailer:
-        dsn: '%env(MAILER_DSN)%'
+        # Reálné SMTP se nastavuje v UI (Připojení); tady je jen výchozí „neodesílá",
+        # na které DbMailer spadne, když v DB nic není.
+        dsn: 'null://null'

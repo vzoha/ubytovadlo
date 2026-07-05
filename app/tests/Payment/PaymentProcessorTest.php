@@ -59,8 +59,11 @@ final class PaymentProcessorTest extends TestCase
             $this->persisted[] = $e;
         });
 
+        // Fixní záloha 1000 Kč nastavená v DB (režim „fixní" je default).
         $settings = $this->createMock(SettingRepository::class);
-        $settings->method('getString')->willReturn(null);
+        $settings->method('getString')->willReturnCallback(
+            static fn (string $key): ?string => $key === DepositConfig::KEY_VALUE ? '1000' : null,
+        );
 
         $this->processor = new PaymentProcessor(
             $this->em,
@@ -69,7 +72,7 @@ final class PaymentProcessorTest extends TestCase
             $this->invoiceService,
             $this->planner,
             $this->dispatcher,
-            new DepositConfig($settings, '1000'),
+            new DepositConfig($settings),
         );
     }
 

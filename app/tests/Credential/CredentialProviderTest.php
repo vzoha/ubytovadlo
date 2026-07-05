@@ -27,7 +27,7 @@ final class CredentialProviderTest extends TestCase
         $this->repo = $this->createMock(CredentialRepository::class);
     }
 
-    public function testPrefersDbValueOverEnvFallback(): void
+    public function testReadsDbValues(): void
     {
         $this->repo->method('getDecrypted')->willReturnMap([
             ['imap.host', 'db.example.com'],
@@ -40,23 +40,21 @@ final class CredentialProviderTest extends TestCase
         self::assertSame('db-key', $provider->motopressConsumerKey());
     }
 
-    public function testFallsBackToEnvWhenDbNullOrEmpty(): void
+    public function testEmptyWhenNotInDb(): void
     {
-        $this->repo->method('getDecrypted')->willReturnMap([
-            ['imap.host', null],
-            ['imap.username', ''],
-        ]);
+        $this->repo->method('getDecrypted')->willReturn(null);
 
         $provider = $this->provider();
 
-        self::assertSame('env-host', $provider->imapHost());
-        self::assertSame('env-user', $provider->imapUsername());
-        self::assertSame(993, $provider->imapPort());
+        self::assertSame('', $provider->imapHost());
+        self::assertSame('', $provider->imapUsername());
+        self::assertSame(0, $provider->imapPort());
     }
 
     public function testFormStateMasksSecretsAndExposesNonSecrets(): void
     {
         $this->repo->method('getDecrypted')->willReturnMap([
+            ['imap.host', 'db.example.com'],
             ['imap.password', 'secret'],
             ['motopress.consumer_secret', null],
         ]);
@@ -64,10 +62,10 @@ final class CredentialProviderTest extends TestCase
         $state = $this->provider()->formState();
 
         self::assertArrayNotHasKey('imapPassword', $state['values']);
-        self::assertSame('env-host', $state['values']['imapHost']);
+        self::assertSame('db.example.com', $state['values']['imapHost']);
         self::assertTrue($state['secretsSet']['imapPassword']);
-        // env fallback je neprázdný, takže se bere jako "nastaveno"
-        self::assertTrue($state['secretsSet']['motopressConsumerSecret']);
+        // Bez hodnoty v DB tajemství není nastaveno.
+        self::assertFalse($state['secretsSet']['motopressConsumerSecret']);
     }
 
     public function testSmtpDsnFromStoredCredentials(): void
@@ -107,17 +105,6 @@ final class CredentialProviderTest extends TestCase
 
     private function provider(): CredentialProvider
     {
-        return new CredentialProvider(
-            $this->repo,
-            'env-host',
-            993,
-            'ssl',
-            'env-user',
-            'env-pass',
-            'INBOX',
-            'https://env.example.com',
-            'env-ckey',
-            'env-csecret',
-        );
+        return new CredentialProvider($this->repo);
     }
 }

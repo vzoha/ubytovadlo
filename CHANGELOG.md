@@ -8,6 +8,13 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Změněno
 
+- **Veškerá provozní konfigurace je v databázi, ne v env.** Dodavatel na faktuře,
+  číselná řada, záloha, název a adresa instance i přístupy k automatizační schránce
+  (IMAP), MotoPressu a SMTP se nastavují výhradně v aplikaci a ukládají do DB.
+  V env zůstávají jen `APP_ENV`, `APP_SECRET`, `APP_CREDENTIALS_KEY` (klíč k
+  šifrování údajů v DB) a `DATABASE_URL`. Nenastavená položka je prázdná, dokud ji
+  nevyplníš v UI (dashboard checklist ukáže, co chybí). *Přesunuto z env do UI.*
+
 - **MotoPress je volitelný konektor, autoritou je Ubytovadlo.** Import rezervací
   z webu jde na Připojení vypnout (přepínačem konektoru **Web (MotoPress)**);
   bez vyplněných přístupů se sync tiše přeskočí. Novou rezervaci import naplní

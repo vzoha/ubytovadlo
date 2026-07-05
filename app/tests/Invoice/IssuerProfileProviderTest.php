@@ -19,56 +19,36 @@ use PHPUnit\Framework\TestCase;
 #[AllowMockObjectsWithoutExpectations]
 final class IssuerProfileProviderTest extends TestCase
 {
-    public function testFallsBackToEnvWhenDbEmpty(): void
+    public function testReadsFromDb(): void
+    {
+        $settings = $this->createMock(SettingRepository::class);
+        $settings->method('getString')->willReturnCallback(
+            static fn (string $key): ?string => match ($key) {
+                'invoice.issuer.name' => 'Malý Statek',
+                'invoice.bank.iban' => 'CZ00',
+                default => null,
+            },
+        );
+
+        $issuer = $this->provider($settings)->current();
+
+        self::assertSame('Malý Statek', $issuer->name);
+        self::assertSame('CZ00', $issuer->bankAccountIban);
+    }
+
+    public function testEmptyWhenUnset(): void
     {
         $settings = $this->createMock(SettingRepository::class);
         $settings->method('getString')->willReturn(null);
 
         $issuer = $this->provider($settings)->current();
 
-        self::assertSame('Env Name', $issuer->name);
-        self::assertSame('CZ00', $issuer->bankAccountIban);
-    }
-
-    public function testDbOverridesEnv(): void
-    {
-        $settings = $this->createMock(SettingRepository::class);
-        $settings->method('getString')->willReturnCallback(
-            static fn (string $key): ?string => $key === 'invoice.issuer.name' ? 'Malý Statek' : null,
-        );
-
-        $issuer = $this->provider($settings)->current();
-
-        self::assertSame('Malý Statek', $issuer->name);   // z DB
-        self::assertSame('Env Street', $issuer->street);  // fallback z env
-    }
-
-    public function testEmptyDbValueFallsBack(): void
-    {
-        $settings = $this->createMock(SettingRepository::class);
-        $settings->method('getString')->willReturnCallback(
-            static fn (string $key): ?string => $key === 'invoice.issuer.name' ? '' : null,
-        );
-
-        self::assertSame('Env Name', $this->provider($settings)->current()->name);
+        self::assertSame('', $issuer->name);
+        self::assertSame('', $issuer->bankAccount);
     }
 
     private function provider(SettingRepository $settings): IssuerProfileProvider
     {
-        return new IssuerProfileProvider(
-            $settings,
-            'Env Name',
-            'Env Street',
-            'Env City',
-            '10000',
-            'CZ',
-            '12345678',
-            'CZ12345678',
-            '+420 1',
-            'env@example.com',
-            'https://example.com',
-            '1/0300',
-            'CZ00',
-        );
+        return new IssuerProfileProvider($settings);
     }
 }

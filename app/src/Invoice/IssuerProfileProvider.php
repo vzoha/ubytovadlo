@@ -16,8 +16,7 @@ use App\Repository\SettingRepository;
 /**
  * Sestaví dodavatele faktury (IssuerProfile) z DB (tabulka setting, klíče
  * `invoice.issuer.*` a `invoice.bank.*`). Každá instance si dodavatele nastaví
- * v UI (/nastaveni/dodavatel) místo editace .env. Hodnoty z .env (INVOICE_ISSUER_*)
- * slouží už jen jako fallback pro nenakonfigurované instance / vývoj.
+ * v UI (/nastaveni/dodavatel); nenakonfigurovaná instance nemá dodavatele (prázdno).
  */
 final class IssuerProfileProvider
 {
@@ -39,42 +38,29 @@ final class IssuerProfileProvider
 
     public function __construct(
         private readonly SettingRepository $settings,
-        // Fallback z .env (INVOICE_ISSUER_* / INVOICE_BANK_*).
-        private readonly string $name,
-        private readonly string $street,
-        private readonly string $city,
-        private readonly string $zip,
-        private readonly string $country,
-        private readonly string $ico,
-        private readonly string $dic,
-        private readonly string $phone,
-        private readonly string $email,
-        private readonly string $web,
-        private readonly string $bankAccount,
-        private readonly string $bankAccountIban,
     ) {
     }
 
     public function current(): IssuerProfile
     {
         return new IssuerProfile(
-            name: $this->value('name', $this->name),
-            street: $this->value('street', $this->street),
-            city: $this->value('city', $this->city),
-            zip: $this->value('zip', $this->zip),
-            country: $this->value('country', $this->country),
-            ico: $this->value('ico', $this->ico),
-            dic: $this->value('dic', $this->dic),
-            phone: $this->value('phone', $this->phone),
-            email: $this->value('email', $this->email),
-            web: $this->value('web', $this->web),
-            bankAccount: $this->value('bankAccount', $this->bankAccount),
-            bankAccountIban: $this->value('bankAccountIban', $this->bankAccountIban),
+            name: $this->value('name'),
+            street: $this->value('street'),
+            city: $this->value('city'),
+            zip: $this->value('zip'),
+            country: $this->value('country'),
+            ico: $this->value('ico'),
+            dic: $this->value('dic'),
+            phone: $this->value('phone'),
+            email: $this->value('email'),
+            web: $this->value('web'),
+            bankAccount: $this->value('bankAccount'),
+            bankAccountIban: $this->value('bankAccountIban'),
         );
     }
 
     /**
-     * Aktuální hodnoty (DB s fallbackem na env) pro předvyplnění formuláře.
+     * Aktuální hodnoty z DB pro předvyplnění formuláře.
      *
      * @return array<string, string>
      */
@@ -82,16 +68,14 @@ final class IssuerProfileProvider
     {
         $values = [];
         foreach (array_keys(self::KEYS) as $field) {
-            $values[$field] = $this->value($field, $this->{$field});
+            $values[$field] = $this->value($field);
         }
 
         return $values;
     }
 
-    private function value(string $field, string $fallback): string
+    private function value(string $field): string
     {
-        $stored = $this->settings->getString(self::KEYS[$field]);
-
-        return $stored !== null && $stored !== '' ? $stored : $fallback;
+        return (string) $this->settings->getString(self::KEYS[$field]);
     }
 }

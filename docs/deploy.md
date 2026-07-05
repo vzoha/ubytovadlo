@@ -169,23 +169,29 @@ scp -r -F /dev/null -i ~/.ssh/<klíč> -o IdentitiesOnly=yes \
 
 ## 5. Produkční `.env.local`
 
-Založit `~/src/app/.env.local` (gitignored). Vychází z lokálního + prod:
+Založit `~/src/app/.env.local` (gitignored). Do env patří **jen** to, co musí být
+k dispozici dřív než databáze:
 
 ```dotenv
 APP_ENV=prod
 APP_DEBUG=0
-APP_SECRET=<nový náhodný secret>
+APP_SECRET=<nový náhodný secret>            # openssl rand -hex 32
+APP_CREDENTIALS_KEY=<base64 z 32 B>         # php -r "echo base64_encode(random_bytes(32)).PHP_EOL;"
 DATABASE_URL="mysql://<DB_USER>:<DB_HESLO>@localhost:3306/<DB>?serverVersion=11.8.6-MariaDB&charset=utf8mb4"
-IMAP_HOST=<imap-host>
-IMAP_USERNAME=<automatizační schránka>
-IMAP_PASSWORD=<heslo schránky>
-MOTOPRESS_BASE_URL=<https://vas-web>
-MOTOPRESS_CONSUMER_KEY=<…>
-MOTOPRESS_CONSUMER_SECRET=<…>
 ```
 
-Nesecret defaulty (porty, service IDs) jsou v commitnutém `.env`; tajemství a
-identity patří **jen** do `.env.local`.
+`APP_CREDENTIALS_KEY` je master klíč pro šifrování přístupových údajů v DB — bez
+něj nejde v UI uložit IMAP/SMTP/MotoPress hesla.
+
+**Veškerá provozní konfigurace se po nasazení zadá v aplikaci** (Nastavení →
+Obecné / Fakturace / Připojení) a uloží do databáze: dodavatel na faktuře,
+číselná řada, záloha, název a adresa instance, přístupy k automatizační schránce
+(IMAP), MotoPressu a SMTP. Dashboard checklist ukáže, co ještě chybí. Do env už
+tyhle hodnoty nepatří.
+
+> **Migrace ze starší instance**, která měla config v `.env.local` (IMAP_*,
+> MOTOPRESS_*, INVOICE_ISSUER_* …): po nasazení tyhle hodnoty jednou přepiš do UI
+> (uloží se do DB), pak je z `.env.local` smaž — už se nečtou.
 
 ---
 

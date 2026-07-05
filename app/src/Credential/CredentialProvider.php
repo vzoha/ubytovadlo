@@ -15,8 +15,8 @@ use App\Repository\CredentialRepository;
 
 /**
  * Jediné místo, které ví, odkud se berou přístupové údaje (IMAP, MotoPress).
- * Přednost má hodnota z DB (šifrovaná, zadaná v UI), fallback je env — díky tomu
- * self-host / vývoj funguje z .env a hostovaná instance si creds vyplní v UI.
+ * Přístupové údaje (IMAP, MotoPress, SMTP) čte z DB (šifrovaně, zadané v UI).
+ * Nenastavené pole vrací prázdno — pollery/sync se pak tiše přeskočí.
  * Konzumenti (MotoPressClient, IMAP poller) čtou jen přes tohoto providera.
  */
 final class CredentialProvider
@@ -39,48 +39,9 @@ final class CredentialProvider
         'smtpPassword' => ['smtp.password', true],
     ];
 
-    /** @var array<string, string> env fallback hodnoty podle pole */
-    private readonly array $envFallback;
-
     public function __construct(
         private readonly CredentialRepository $credentials,
-        string $imapHost,
-        int $imapPort,
-        string $imapEncryption,
-        string $imapUsername,
-        #[\SensitiveParameter]
-        string $imapPassword,
-        string $imapFolder,
-        string $motopressBaseUrl,
-        #[\SensitiveParameter]
-        string $motopressConsumerKey,
-        #[\SensitiveParameter]
-        string $motopressConsumerSecret,
-        // SMTP nemá per-pole env fallback (v env je jen celé MAILER_DSN) — když
-        // v DB nic není, vrátí prázdno a DbMailer padne zpět na MAILER_DSN.
-        string $smtpHost = '',
-        string $smtpPort = '',
-        string $smtpEncryption = '',
-        string $smtpUsername = '',
-        #[\SensitiveParameter]
-        string $smtpPassword = '',
     ) {
-        $this->envFallback = [
-            'imapHost' => $imapHost,
-            'imapPort' => (string) $imapPort,
-            'imapEncryption' => $imapEncryption,
-            'imapUsername' => $imapUsername,
-            'imapPassword' => $imapPassword,
-            'imapFolder' => $imapFolder,
-            'motopressBaseUrl' => $motopressBaseUrl,
-            'motopressConsumerKey' => $motopressConsumerKey,
-            'motopressConsumerSecret' => $motopressConsumerSecret,
-            'smtpHost' => $smtpHost,
-            'smtpPort' => $smtpPort,
-            'smtpEncryption' => $smtpEncryption,
-            'smtpUsername' => $smtpUsername,
-            'smtpPassword' => $smtpPassword,
-        ];
     }
 
     public function imapHost(): string
@@ -224,8 +185,7 @@ final class CredentialProvider
     private function get(string $field): string
     {
         [$key] = self::FIELDS[$field];
-        $stored = $this->credentials->getDecrypted($key);
 
-        return $stored !== null && $stored !== '' ? $stored : $this->envFallback[$field];
+        return (string) $this->credentials->getDecrypted($key);
     }
 }

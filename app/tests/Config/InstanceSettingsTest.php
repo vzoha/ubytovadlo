@@ -19,36 +19,29 @@ use PHPUnit\Framework\TestCase;
 #[AllowMockObjectsWithoutExpectations]
 final class InstanceSettingsTest extends TestCase
 {
-    public function testFallsBackToEnvWhenDbEmpty(): void
-    {
-        $settings = $this->createMock(SettingRepository::class);
-        $settings->method('getString')->willReturn(null);
-
-        $instance = new InstanceSettings($settings, 'Env Brand', 'https://env.example');
-
-        self::assertSame('Env Brand', $instance->brandName());
-        self::assertSame('https://env.example', $instance->baseUrl());
-    }
-
-    public function testDbOverridesEnv(): void
+    public function testReadsFromDb(): void
     {
         $settings = $this->createMock(SettingRepository::class);
         $settings->method('getString')->willReturnCallback(
-            static fn (string $key): ?string => $key === InstanceSettings::KEY_BRAND_NAME ? 'Penzion U Lesa' : null,
+            static fn (string $key): ?string => match ($key) {
+                InstanceSettings::KEY_BRAND_NAME => 'Penzion U Lesa',
+                InstanceSettings::KEY_BASE_URL => 'https://app.example',
+                default => null,
+            },
         );
 
-        $instance = new InstanceSettings($settings, 'Env Brand', 'https://env.example');
+        $instance = new InstanceSettings($settings);
 
-        self::assertSame('Penzion U Lesa', $instance->brandName());     // z DB
-        self::assertSame('https://env.example', $instance->baseUrl());  // fallback z env
+        self::assertSame('Penzion U Lesa', $instance->brandName());
+        self::assertSame('https://app.example', $instance->baseUrl());
     }
 
-    public function testDefaultBrandWhenNoDbAndNoEnv(): void
+    public function testDefaultBrandAndEmptyBaseUrlWhenUnset(): void
     {
         $settings = $this->createMock(SettingRepository::class);
         $settings->method('getString')->willReturn(null);
 
-        $instance = new InstanceSettings($settings, '', '');
+        $instance = new InstanceSettings($settings);
 
         self::assertSame('Ubytovadlo', $instance->brandName());
         self::assertSame('', $instance->baseUrl());

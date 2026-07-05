@@ -19,8 +19,8 @@ use App\Repository\SettingRepository;
  * Pravidla zálohy pro toky, které ji vyžadují (web klasika, ruční rezervace).
  * Výše je fixní částka, procento z ceny, nebo žádná; k tomu splatnost. Vždy v CZK.
  *
- * Přednost má hodnota z DB (settings `invoice.deposit.*`), fallback výše je env
- * INVOICE_DEPOSIT_AMOUNT — instance si zálohu nastaví v UI (/nastaveni/dodavatel).
+ * Hodnoty se čtou z DB (settings `invoice.deposit.*`) — instance si zálohu nastaví
+ * v UI (/nastaveni/dodavatel). Bez nastavení se záloha nevystavuje (computeAmount null).
  */
 final class DepositConfig
 {
@@ -32,7 +32,6 @@ final class DepositConfig
 
     public function __construct(
         private readonly SettingRepository $settings,
-        private readonly string $amountFallback = '',
     ) {
     }
 
@@ -104,13 +103,7 @@ final class DepositConfig
 
     private function rawValue(): string
     {
-        $stored = $this->settings->getString(self::KEY_VALUE);
-        if ($stored !== null && $stored !== '') {
-            return $stored;
-        }
-
-        // U fixní částky ukážeme aspoň env fallback, ať pole není prázdné.
-        return $this->mode() === DepositMode::FIXED ? $this->amountFallback : '';
+        return (string) $this->settings->getString(self::KEY_VALUE);
     }
 
     private function fixedAmount(): float

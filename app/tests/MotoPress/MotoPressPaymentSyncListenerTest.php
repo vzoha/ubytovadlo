@@ -81,10 +81,12 @@ final class MotoPressPaymentSyncListenerTest extends TestCase
 
     private function listener(bool $enabled): MotoPressPaymentSyncListener
     {
-        // Setting prázdný → provider vrátí push flag z fallbacku ($enabled).
+        // Push plateb zapnutý/vypnutý přes setting v DB.
         $settings = $this->createMock(SettingRepository::class);
-        $settings->method('getString')->willReturn(null);
-        $motopress = new MotoPressSettings($settings, [], [], $enabled);
+        $settings->method('getString')->willReturnCallback(
+            static fn (string $key): ?string => $key === MotoPressSettings::KEY_PUSH ? ($enabled ? '1' : '0') : null,
+        );
+        $motopress = new MotoPressSettings($settings);
 
         return new MotoPressPaymentSyncListener($this->client, new NullLogger(), $motopress);
     }

@@ -15,37 +15,33 @@ use App\Repository\SettingRepository;
 
 /**
  * Per-instance identita a základní adresa aplikace. Každá instance si je nastaví
- * v UI (/nastaveni/obecne) místo editace .env. Přednost má hodnota z DB (setting),
- * fallback jsou hodnoty z .env (APP_BRAND_NAME / DEFAULT_URI) — díky tomu čerstvá
- * instance běží z env a nakonfigurovaná si je přepíše v UI.
+ * v UI (/nastaveni/obecne). Bez nastavení má značka produktový default, adresa je prázdná.
  */
 final class InstanceSettings
 {
     public const KEY_BRAND_NAME = 'app.brand_name';
     public const KEY_BASE_URL = 'app.base_url';
 
-    /** Poslední záchrana, když není ani setting ani env fallback. */
+    /** Poslední záchrana, když není nastavená značka. */
     private const DEFAULT_BRAND_NAME = 'Ubytovadlo';
 
     public function __construct(
         private readonly SettingRepository $settings,
-        private readonly string $brandNameFallback,
-        private readonly string $baseUrlFallback,
     ) {
     }
 
     public function brandName(): string
     {
-        return $this->value(self::KEY_BRAND_NAME, $this->brandNameFallback) ?: self::DEFAULT_BRAND_NAME;
+        return $this->value(self::KEY_BRAND_NAME) ?: self::DEFAULT_BRAND_NAME;
     }
 
     public function baseUrl(): string
     {
-        return $this->value(self::KEY_BASE_URL, $this->baseUrlFallback);
+        return $this->value(self::KEY_BASE_URL);
     }
 
     /**
-     * Aktuální hodnoty (DB s fallbackem na env) pro předvyplnění formuláře.
+     * Aktuální hodnoty z DB pro předvyplnění formuláře.
      *
      * @return array{brandName: string, baseUrl: string}
      */
@@ -57,10 +53,8 @@ final class InstanceSettings
         ];
     }
 
-    private function value(string $key, string $fallback): string
+    private function value(string $key): string
     {
-        $stored = $this->settings->getString($key);
-
-        return $stored !== null && $stored !== '' ? $stored : $fallback;
+        return (string) $this->settings->getString($key);
     }
 }
