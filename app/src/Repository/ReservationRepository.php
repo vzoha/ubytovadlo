@@ -37,6 +37,56 @@ class ReservationRepository extends ServiceEntityRepository
         return $this->findOneBy(['motopressExternalId' => $motopressExternalId]);
     }
 
+    /** Rezervace podle UID iCal bloku obsazenosti (stabilní identita OTA feedu). */
+    public function findByIcalUid(string $icalUid): ?Reservation
+    {
+        return $this->findOneBy(['icalUid' => $icalUid]);
+    }
+
+    /**
+     * Existující OTA blok téhož kanálu a příjezdu, který ještě není navázaný na
+     * žádný iCal UID a není zrušený — kandidát na adopci iCal importem (typicky
+     * blok už importovaný z MotoPressu). U jednoho objektu je (kanál, příjezd)
+     * jedinečné, takže nehrozí záměna.
+     */
+    public function findAdoptableOtaBlock(Channel $channel, \DateTimeImmutable $checkIn): ?Reservation
+    {
+        return $this->createQueryBuilder('r')
+            ->andWhere('r.channel = :channel')
+            ->andWhere('r.checkIn = :checkIn')
+            ->andWhere('r.icalUid IS NULL')
+            ->andWhere('r.status != :cancelled')
+            ->setParameter('channel', $channel)
+            ->setParameter('checkIn', $checkIn)
+            ->setParameter('cancelled', ReservationStatus::CANCELLED)
+            ->orderBy('r.id', 'ASC')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
+    /**
+     * Aktivní (nezrušené) rezervace kanálu založené z iCal feedu, jejichž pobyt
+     * ještě neskončil — vstup pro detekci storn: co je tady, ale zmizelo z feedu,
+     * se stornuje.
+     *
+     * @return Reservation[]
+     */
+    public function findActiveIcalReservations(Channel $channel, \DateTimeImmutable $from): array
+    {
+        return $this->createQueryBuilder('r')
+            ->andWhere('r.channel = :channel')
+            ->andWhere('r.icalUid IS NOT NULL')
+            ->andWhere('r.status != :cancelled')
+            ->andWhere('COALESCE(r.checkOut, r.checkIn) >= :from')
+            ->setParameter('channel', $channel)
+            ->setParameter('cancelled', ReservationStatus::CANCELLED)
+            ->setParameter('from', $from)
+            ->orderBy('r.checkIn', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
     /**
      * Rezervace podle variabilního symbolu příchozí platby. Host u webové rezervace
      * platí s VS = MotoPress booking ID, které držíme v motopressExternalId (a u web

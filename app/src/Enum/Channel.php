@@ -16,6 +16,8 @@ enum Channel: string
     case WEB = 'web';
     case BOOKING = 'booking';
     case AIRBNB = 'airbnb';
+    case ECHALUPY = 'echalupy';
+    case CS_CHALUPY = 'cs_chalupy';
     /** Přímá rezervace zadaná ručně (telefon, e-mail, osobně) — bez OTA ani webového funnelu. */
     case DIRECT = 'direct';
 
@@ -25,6 +27,8 @@ enum Channel: string
             self::WEB => 'Web',
             self::BOOKING => 'Booking.com',
             self::AIRBNB => 'Airbnb',
+            self::ECHALUPY => 'eChalupy',
+            self::CS_CHALUPY => 'CS chalupy',
             self::DIRECT => 'Přímá',
         };
     }

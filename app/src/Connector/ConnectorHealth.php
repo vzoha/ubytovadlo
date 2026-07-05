@@ -48,6 +48,7 @@ final class ConnectorHealth
         public readonly ?string $lastError,
         public readonly ?int $staleDays,
         public readonly string $state,
+        public readonly ?string $feedUrl,
     ) {
     }
 
@@ -72,7 +73,14 @@ final class ConnectorHealth
             $connector->getLastError(),
             $staleDays,
             self::deriveState($connector, $configured, $staleDays),
+            $connector->getConfigValue(ConnectorManager::ICAL_FEED_URL_KEY),
         );
+    }
+
+    /** Umí konektor importovat obsazenost z iCal feedu (má smysl pole na URL)? */
+    public function supportsIcalImport(): bool
+    {
+        return $this->type->supportsIcalImport();
     }
 
     private static function deriveState(Connector $connector, bool $configured, ?int $staleDays): string

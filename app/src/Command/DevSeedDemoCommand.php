@@ -238,7 +238,9 @@ class DevSeedDemoCommand extends Command
             $r->setCheckOut(new \DateTimeImmutable($s['out']));
         }
         $r->setStatus($this->resolveStatus($s));
-        $r->setBillingMode($s['billing']);
+        if (isset($s['billing'])) {
+            $r->setBillingMode($s['billing']);
+        }
         $r->setCheckInTime(new \DateTimeImmutable('15:00'));
         $r->setCheckOutTime(new \DateTimeImmutable('10:00'));
         $r->setBookedAt($checkIn->modify('-' . ($s['leadDays'] ?? 40) . ' days'));
@@ -249,6 +251,9 @@ class DevSeedDemoCommand extends Command
             $r->setMotopressExternalId('mphb-' . $s['ext']);
         } elseif (isset($s['ext'])) {
             $r->setExternalId($s['ext']);
+        }
+        if (isset($s['icalUid'])) {
+            $r->setIcalUid($s['icalUid']);
         }
 
         // Údaje hosta (NEEDS_DETAILS je úmyslně nemá).
@@ -568,6 +573,15 @@ class DevSeedDemoCommand extends Command
                 'ext' => '105', 'in' => '2026-03-06', 'out' => '2026-03-09', 'name' => 'Lucie Horáková',
                 'region' => 'Brno', 'adults' => 2, 'children' => 1, 'price' => '4500.00', 'acq' => 'Airbnb',
                 'vtKwh' => 31, 'ntKwh' => 20, 'clean' => [CleaningType::CLEANER, 700, 700], 'inv' => 'full',
+            ],
+            [
+                // Blok z iCal feedu eChalupy — obsazenost s UID, hosta doplnila majitelka.
+                'channel' => Channel::ECHALUPY, 'icalUid' => 'echalupy-demo-3001@echalupy.cz',
+                'in' => '2026-03-27', 'out' => '2026-03-30', 'name' => 'Petra Svobodová',
+                'email' => 'petra.svobodova@email.cz', 'phone' => '+420 606 222 333',
+                'street' => 'Zahradní 9', 'city' => 'Jindřichův Hradec', 'zip' => '37701',
+                'adults' => 2, 'children' => 2, 'price' => '5200.00', 'acq' => 'eChalupy',
+                'vtKwh' => 27, 'ntKwh' => 17, 'clean' => [CleaningType::CLEANER, 700, 700], 'inv' => 'none',
             ],
             [
                 'channel' => Channel::BOOKING, 'billing' => \App\Enum\BillingMode::BOOKING_COM,

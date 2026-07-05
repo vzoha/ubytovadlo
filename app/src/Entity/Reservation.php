@@ -27,6 +27,7 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\UniqueConstraint(name: 'uniq_reservation_checkin_token', columns: ['checkin_token'])]
 #[ORM\Index(name: 'idx_status', columns: ['status'])]
 #[ORM\Index(name: 'idx_check_in', columns: ['check_in'])]
+#[ORM\Index(name: 'idx_ical_uid', columns: ['ical_uid'])]
 class Reservation
 {
     #[ORM\Id]
@@ -55,6 +56,15 @@ class Reservation
 
     #[ORM\Column(length: 64, nullable: true)]
     private ?string $motopressExternalId = null;
+
+    /**
+     * UID VEVENTu z OTA iCal feedu (Airbnb/Booking/eChalupy/CS chalupy). Stabilní
+     * identita bloku obsazenosti napříč běhy — podle ní se rezervace dohledá,
+     * aktualizuje a pozná se storno (blok zmizí z feedu). Jen u rezervací
+     * založených/adoptovaných iCal importem.
+     */
+    #[ORM\Column(length: 128, nullable: true)]
+    private ?string $icalUid = null;
 
     #[ORM\Column(type: Types::DATE_IMMUTABLE)]
     private \DateTimeImmutable $checkIn;
@@ -304,6 +314,19 @@ class Reservation
     public function setMotopressExternalId(?string $motopressExternalId): self
     {
         $this->motopressExternalId = $motopressExternalId;
+        $this->touch();
+
+        return $this;
+    }
+
+    public function getIcalUid(): ?string
+    {
+        return $this->icalUid;
+    }
+
+    public function setIcalUid(?string $icalUid): self
+    {
+        $this->icalUid = $icalUid;
         $this->touch();
 
         return $this;

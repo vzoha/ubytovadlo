@@ -24,6 +24,9 @@ use Doctrine\ORM\EntityManagerInterface;
  */
 class ConnectorManager
 {
+    /** Klíč v Connector::config, pod kterým žije URL iCal feedu obsazenosti. */
+    public const ICAL_FEED_URL_KEY = 'ical_import_url';
+
     public function __construct(
         private readonly ConnectorRepository $connectors,
         private readonly CredentialProvider $credentials,
@@ -60,12 +63,30 @@ class ConnectorManager
         $this->connectors->getOrCreate($type)->recordActivity($when ?? new \DateTimeImmutable());
     }
 
-    /** Má konektor vyplněné přístupy? MotoPress přes REST, ostatní přes IMAP. */
+    /**
+     * Má konektor vyplněné přístupy? MotoPress přes REST, e-mailové přes IMAP,
+     * iCal-only konektory (eChalupy, CS chalupy) přes URL feedu.
+     */
     public function isConfigured(ConnectorType $type): bool
     {
-        return $type === ConnectorType::MOTOPRESS
-            ? $this->credentials->motopressConfigured()
-            : $this->credentials->imapConfigured();
+        return match (true) {
+            $type === ConnectorType::MOTOPRESS => $this->credentials->motopressConfigured(),
+            $type->usesImap() => $this->credentials->imapConfigured(),
+            $type->supportsIcalImport() => $this->getFeedUrl($type) !== null,
+            default => false,
+        };
+    }
+
+    /** URL iCal feedu konektoru, nebo null. Nezakládá řádek (jen čte). */
+    public function getFeedUrl(ConnectorType $type): ?string
+    {
+        return $this->connectors->findOneBy(['type' => $type])?->getConfigValue(self::ICAL_FEED_URL_KEY);
+    }
+
+    public function setFeedUrl(ConnectorType $type, ?string $url): void
+    {
+        $this->connectors->getOrCreate($type)->setConfigValue(self::ICAL_FEED_URL_KEY, $url);
+        $this->em->flush();
     }
 
     /**

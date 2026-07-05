@@ -13,6 +13,8 @@ namespace App\Connector;
 
 use App\Email\ImapClientFactory;
 use App\Enum\ConnectorType;
+use App\Ical\Import\IcalFeedFetcher;
+use App\Ical\Import\IcalParser;
 use App\MotoPress\MotoPressClient;
 
 /**
@@ -26,6 +28,8 @@ final class ConnectorTester
         private readonly ConnectorManager $manager,
         private readonly ImapClientFactory $imap,
         private readonly MotoPressClient $motopress,
+        private readonly IcalFeedFetcher $icalFetcher,
+        private readonly IcalParser $icalParser,
     ) {
     }
 
@@ -36,9 +40,12 @@ final class ConnectorTester
         }
 
         try {
-            return $type === ConnectorType::MOTOPRESS
-                ? $this->testMotoPress()
-                : $this->testImap();
+            return match (true) {
+                $type === ConnectorType::MOTOPRESS => $this->testMotoPress(),
+                $type->usesImap() => $this->testImap(),
+                $type->supportsIcalImport() => $this->testIcalFeed($type),
+                default => ConnectorTestResult::failure('Tento konektor nelze otestovat.'),
+            };
         } catch (\Throwable $e) {
             return ConnectorTestResult::failure($e->getMessage());
         }
@@ -57,5 +64,17 @@ final class ConnectorTester
         $client->disconnect();
 
         return ConnectorTestResult::success('Přihlášení do automatizační schránky (IMAP) funguje.');
+    }
+
+    private function testIcalFeed(ConnectorType $type): ConnectorTestResult
+    {
+        $url = $this->manager->getFeedUrl($type);
+        if ($url === null) {
+            return ConnectorTestResult::failure('Není vyplněná URL iCal feedu.');
+        }
+
+        $events = $this->icalParser->parse($this->icalFetcher->fetch($url));
+
+        return ConnectorTestResult::success(sprintf('iCal feed funguje — nalezeno %d událostí.', count($events)));
     }
 }

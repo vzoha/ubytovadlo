@@ -222,14 +222,14 @@ argumentů** (`crontab` v lshell není). Proto jsou v repu wrappery
 `app/cron/{imap-poll,motopress-sync}.php` (volají `_kernel.php`, který bootne
 kernel z `.env` a spustí console command).
 
-V panelu **Cron úlohy** založ pět úloh (čtyři á 15 min + jeden denní):
+V panelu **Cron úlohy** založ šest úloh (pět á 15 min + jeden denní):
 
-| pole | imap | motopress | actions-plan | process-due |
-|---|---|---|---|---|
-| Soubor | `/src/app/cron/imap-poll.php` | `/src/app/cron/motopress-sync.php` | `/src/app/cron/actions-plan.php` | `/src/app/cron/process-due.php` |
-| Time / Memory limit | 300 s / 256 MB | 300 s / 256 MB | 300 s / 256 MB | 300 s / 256 MB |
-| Minuta | každých 15 min | každých 15 min | každých 15 min | každých 15 min |
-| Hodina/Den/Měsíc/Den v týdnu | Každý | Každý | Každý | Každý |
+| pole | imap | motopress | ical | actions-plan | process-due |
+|---|---|---|---|---|---|
+| Soubor | `/src/app/cron/imap-poll.php` | `/src/app/cron/motopress-sync.php` | `/src/app/cron/ical-sync.php` | `/src/app/cron/actions-plan.php` | `/src/app/cron/process-due.php` |
+| Time / Memory limit | 300 s / 256 MB | 300 s / 256 MB | 300 s / 256 MB | 300 s / 256 MB | 300 s / 256 MB |
+| Minuta | každých 15 min | každých 15 min | každých 15 min | každých 15 min | každých 15 min |
+| Hodina/Den/Měsíc/Den v týdnu | Každý | Každý | Každý | Každý | Každý |
 
 | pole | notifications-daily |
 |---|---|
@@ -241,6 +241,10 @@ V panelu **Cron úlohy** založ pět úloh (čtyři á 15 min + jeden denní):
 
 (Cesta je relativní z úrovně `www`, proto `/src/app/...`.)
 
+`ical-sync` stáhne iCal feedy zapnutých OTA konektorů (Booking, Airbnb, eChalupy,
+CS chalupy — URL feedu se zadává na stránce Připojení) a založí/aktualizuje z nich
+obsazenost; blok, který z feedu zmizí, stornuje. Bez vyplněné URL feedu se konektor
+přeskočí.
 `actions-plan` doplní automatické akce na časovou osu (pre-arrival/post-stay zprávy,
 doplatek, Ubyport u cizinců) i u rezervací potvrzených přes MotoPress sync.
 `process-due` (á 15 min) vyhodnotí akce, kterým nadešel čas (zprávy hostům,
@@ -270,6 +274,7 @@ Zdravý výstup: `Found N message(s) … [OK] Done. processed=…` resp.
 - [ ] dashboard zobrazí rezervace, `/dph` sedí s lokálem
 - [ ] detail rezervace → existující PDF faktury se otevřou (var/invoices přenesené, cesty relativní)
 - [ ] `php bin/console app:imap:poll --dry-run --env=prod` projde (IMAP creds)
+- [ ] `php bin/console app:ical:sync --dry-run --env=prod` projde (feedy zapnutých OTA konektorů)
 - [ ] `~/_log/cron/*.log` po čtvrthodině obsahují úspěšné běhy
 
 ---

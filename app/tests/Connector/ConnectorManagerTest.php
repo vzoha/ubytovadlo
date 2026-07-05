@@ -81,7 +81,14 @@ final class ConnectorManagerTest extends KernelTestCase
         $health = $this->manager->health();
 
         self::assertSame(
-            [ConnectorType::MOTOPRESS, ConnectorType::BOOKING, ConnectorType::AIRBNB, ConnectorType::BANK_CS],
+            [
+                ConnectorType::MOTOPRESS,
+                ConnectorType::BOOKING,
+                ConnectorType::AIRBNB,
+                ConnectorType::ECHALUPY,
+                ConnectorType::CS_CHALUPY,
+                ConnectorType::BANK_CS,
+            ],
             array_map(static fn ($h) => $h->type, $health),
         );
     }

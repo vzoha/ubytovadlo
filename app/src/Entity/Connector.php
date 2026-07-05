@@ -52,6 +52,15 @@ class Connector
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $lastError = null;
 
+    /**
+     * Volitelná konfigurace konektoru (např. URL iCal feedu). Ne pro tajemství —
+     * ta patří do šifrovaného credential storu.
+     *
+     * @var array<string, mixed>
+     */
+    #[ORM\Column(type: Types::JSON, nullable: true)]
+    private ?array $config = null;
+
     public function __construct(ConnectorType $type)
     {
         $this->type = $type;
@@ -105,6 +114,26 @@ class Connector
         $this->lastRunAt = new \DateTimeImmutable();
         $this->lastStatus = $status;
         $this->lastError = $status === ConnectorStatus::ERROR ? $error : null;
+
+        return $this;
+    }
+
+    public function getConfigValue(string $key): ?string
+    {
+        $value = $this->config[$key] ?? null;
+
+        return is_string($value) && $value !== '' ? $value : null;
+    }
+
+    public function setConfigValue(string $key, ?string $value): self
+    {
+        $config = $this->config ?? [];
+        if ($value === null || $value === '') {
+            unset($config[$key]);
+        } else {
+            $config[$key] = $value;
+        }
+        $this->config = $config === [] ? null : $config;
 
         return $this;
     }

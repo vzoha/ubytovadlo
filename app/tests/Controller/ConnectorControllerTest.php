@@ -63,4 +63,42 @@ final class ConnectorControllerTest extends WebTestCase
         $this->client->request('POST', '/nastaveni/konektory/neexistuje/prepnout', ['_token' => 'x']);
         self::assertResponseStatusCodeSame(404);
     }
+
+    public function testSavesAndClearsFeedUrl(): void
+    {
+        $crawler = $this->client->request('GET', '/nastaveni/pripojeni');
+        self::assertResponseIsSuccessful();
+
+        $form = $crawler->filter('form[action*="konektory/echalupy/feed"]')->form();
+        $form['feed_url'] = 'https://example.test/echalupy.ics';
+        $this->client->submit($form);
+        self::assertResponseRedirects('/nastaveni/pripojeni');
+        // Klient rebootuje kernel mezi requesty → manager čteme z aktuálního containeru.
+        self::assertSame('https://example.test/echalupy.ics', $this->currentFeedUrl(ConnectorType::ECHALUPY));
+
+        // Prázdné pole feed odebere.
+        $crawler = $this->client->request('GET', '/nastaveni/pripojeni');
+        $form = $crawler->filter('form[action*="konektory/echalupy/feed"]')->form();
+        $form['feed_url'] = '';
+        $this->client->submit($form);
+        self::assertNull($this->currentFeedUrl(ConnectorType::ECHALUPY));
+    }
+
+    private function currentFeedUrl(ConnectorType $type): ?string
+    {
+        return static::getContainer()->get(ConnectorManager::class)->getFeedUrl($type);
+    }
+
+    public function testFeedRouteRejectsConnectorWithoutIcalSupport(): void
+    {
+        $crawler = $this->client->request('GET', '/nastaveni/pripojeni');
+        // Platný CSRF token ze stránky — ať 404 pochází z kontroly iCal podpory, ne z CSRF.
+        $token = $crawler->filter('input[name="_token"]')->first()->attr('value');
+
+        $this->client->request('POST', '/nastaveni/konektory/motopress/feed', [
+            '_token' => $token,
+            'feed_url' => 'https://example.test/x.ics',
+        ]);
+        self::assertResponseStatusCodeSame(404);
+    }
 }

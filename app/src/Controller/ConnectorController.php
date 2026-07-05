@@ -42,6 +42,21 @@ class ConnectorController extends AbstractController
         return $this->redirectToRoute('connection_settings_edit');
     }
 
+    #[Route('/nastaveni/konektory/{type}/feed', name: 'connector_feed', methods: ['POST'])]
+    public function feed(string $type, Request $request): Response
+    {
+        $connector = $this->resolve($type, $request);
+        if (!$connector->supportsIcalImport()) {
+            throw $this->createNotFoundException();
+        }
+
+        $url = trim((string) $request->request->get('feed_url'));
+        $this->manager->setFeedUrl($connector, $url === '' ? null : $url);
+        $this->addFlash('success', sprintf('Feed konektoru „%s" %s.', $connector->label(), $url === '' ? 'odebrán' : 'uložen'));
+
+        return $this->redirectToRoute('connection_settings_edit');
+    }
+
     #[Route('/nastaveni/konektory/{type}/test', name: 'connector_test', methods: ['POST'])]
     public function test(string $type, Request $request): Response
     {

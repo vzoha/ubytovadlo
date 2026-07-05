@@ -51,8 +51,9 @@ final class ConnectionSettingsControllerTest extends WebTestCase
         $crawler = $this->client->request('GET', '/nastaveni/pripojeni');
         self::assertResponseIsSuccessful();
 
-        // Chování MotoPressu je součástí jediného formuláře připojení.
-        $form = $crawler->selectButton('Uložit')->form();
+        // Chování MotoPressu je součástí formuláře připojení; jeho hlavní tlačítko
+        // (btn-primary) je jednoznačné, konektory mají vlastní „Uložit feed".
+        $form = $crawler->filter('button.btn-primary')->form();
         $this->client->submit($form, [
             'connection_settings[petServiceIds]' => '925, 926',
             'connection_settings[babyCotServiceIds]' => '866',
