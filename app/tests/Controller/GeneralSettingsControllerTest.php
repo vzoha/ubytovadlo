@@ -65,4 +65,13 @@ final class GeneralSettingsControllerTest extends WebTestCase
         $instance = static::getContainer()->get(InstanceSettings::class);
         self::assertSame('Penzion U Lesa', $instance->brandName());
     }
+
+    public function testPageOffersLogoUpload(): void
+    {
+        $crawler = $this->client->request('GET', '/nastaveni/obecne');
+        self::assertResponseIsSuccessful();
+
+        self::assertCount(1, $crawler->filter('input[type="file"][name="general_settings[logoFile]"]'));
+        self::assertStringContainsString('multipart/form-data', (string) $crawler->filter('form')->first()->attr('enctype'));
+    }
 }

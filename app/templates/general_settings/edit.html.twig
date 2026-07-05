@@ -1,29 +1,50 @@
-{% extends 'base.html.twig' %}
+{% extends 'settings/base.html.twig' %}
 
 {% block title %}Nastavení — obecné{% endblock %}
 
-{% block body %}
-    <h1 class="h3 mb-3">Nastavení</h1>
+{% block settings_active %}general{% endblock %}
 
-    {{ include('settings/_nav.html.twig', { active: 'general' }) }}
-
+{% block settings_content %}
     <h2 class="h5 mb-2">Obecné</h2>
     <p class="text-muted small">
         Základní identita instance — název a veřejná adresa aplikace.
     </p>
 
-    <div class="col-lg-8">
-        {{ form_start(form) }}
-            <div class="card mb-3">
-                <div class="card-body">
-                    <div class="mb-3">{{ form_row(form.brandName) }}</div>
-                    <div class="mb-3">{{ form_row(form.baseUrl) }}</div>
-                </div>
+    {{ form_start(form) }}
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="mb-3">{{ form_row(form.brandName) }}</div>
+                <div class="mb-3">{{ form_row(form.baseUrl) }}</div>
             </div>
+        </div>
 
-            <div class="d-flex justify-content-end">
-                <button type="submit" class="btn btn-primary">Uložit</button>
+        <div class="card mb-3">
+            <div class="card-body">
+                {% if hasLogo %}
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <img src="{{ asset(logoUrl|trim('/')) }}" alt="Logo instance"
+                             class="border rounded bg-light p-2" style="max-height:80px;max-width:200px;">
+                        <div>
+                            <div class="small text-muted mb-1">Aktuální logo</div>
+                            <button type="submit" form="logo-delete-form"
+                                    class="btn btn-outline-danger btn-sm">Odebrat</button>
+                        </div>
+                    </div>
+                {% else %}
+                    <p class="text-muted small mb-3">Zatím není nahrané žádné logo.</p>
+                {% endif %}
+                <div class="mb-2">{{ form_row(form.logoFile) }}</div>
             </div>
-        {{ form_end(form) }}
-    </div>
+        </div>
+
+        <div class="d-flex justify-content-end">
+            <button type="submit" class="btn btn-primary">Uložit</button>
+        </div>
+    {{ form_end(form) }}
+
+    {% if hasLogo %}
+        <form id="logo-delete-form" method="post" action="{{ path('general_settings_logo_delete') }}" class="d-none">
+            <input type="hidden" name="_token" value="{{ csrf_token('general_settings_logo_delete') }}">
+        </form>
+    {% endif %}
 {% endblock %}

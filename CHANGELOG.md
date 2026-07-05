@@ -6,6 +6,12 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ## [Unreleased]
 
+### Přidáno
+
+- **Logo instance se nahrává v Obecném nastavení.** Nahraješ PNG nebo JPG (max 2 MB),
+  ukáže se náhled a jde odebrat. Logo se objeví v hlavičce e-mailů hostům a na
+  fakturách; když žádné není, hlavička je bez něj.
+
 ### Opraveno
 
 - **Konzolové příkazy fungují i proti ještě nezmigrované databázi.** Instalace a

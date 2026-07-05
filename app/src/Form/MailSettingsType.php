@@ -58,7 +58,7 @@ class MailSettingsType extends AbstractType
             ->add('showLogo', CheckboxType::class, [
                 'label' => 'Zobrazit logo v záhlaví',
                 'required' => false,
-                'help' => 'Logo se bere z public/assets/logo.png.',
+                'help' => 'Logo nahraješ v Obecném nastavení.',
             ])
             // theme/colorPrimary/colorAccent se v UI renderují vlastním markupem
             // (swatche + color-picker), takže label/help z form theme se nezobrazí.

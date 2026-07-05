@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Invoice;
 
+use App\Config\LogoStorage;
 use App\Entity\Invoice;
 use App\Storage\PdfStorage;
 use Mpdf\HTMLParserMode;
@@ -25,6 +26,7 @@ class InvoicePdfRenderer
         private readonly IssuerProfileProvider $issuerProvider,
         private readonly string $projectDir,
         private readonly PdfStorage $pdfStorage,
+        private readonly LogoStorage $logo,
     ) {
     }
 
@@ -35,11 +37,10 @@ class InvoicePdfRenderer
     public function renderToFile(Invoice $invoice): string
     {
         $issuer = $this->issuerProvider->current();
-        $logoPath = $this->projectDir . '/public/assets/logo.png';
         $html = $this->twig->render('invoice/pdf.html.twig', [
             'invoice' => $invoice,
             'issuer' => $issuer,
-            'logoPath' => is_file($logoPath) ? $logoPath : null,
+            'logoPath' => $this->logo->exists() ? $this->logo->absolutePath() : null,
         ]);
 
         $dir = sprintf('%s/var/invoices/%04d', $this->projectDir, $invoice->getSeriesYear());

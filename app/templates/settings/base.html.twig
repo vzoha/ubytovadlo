@@ -1,0 +1,17 @@
+{# Layout stránek nastavení: levý sidebar s pod-navigací + obsah.
+   Stránka nastavuje `settings_active` (klíč aktivní záložky) a `settings_content`. #}
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    <h1 class="h3 mb-4">Nastavení</h1>
+    <div class="row g-4">
+        <aside class="col-lg-3 col-xl-2">
+            {{ include('settings/_nav.html.twig', { active: block('settings_active')|trim }) }}
+        </aside>
+        <div class="{% block settings_content_class %}col-lg-9 col-xl-8{% endblock %}">
+            {% block settings_content %}{% endblock %}
+        </div>
+    </div>
+{% endblock %}
+
+{% block settings_active %}{% endblock %}

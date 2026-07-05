@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Config\LogoStorage;
 use App\Form\MailSettingsType;
 use App\Mail\GuestMessageRenderer;
 use App\Mail\MailSettingsProvider;
@@ -45,7 +46,7 @@ class MailSettingsController extends AbstractController
         private readonly EntityManagerInterface $em,
         private readonly GuestMessageRenderer $renderer,
         private readonly SampleReservationFactory $sampleFactory,
-        private readonly string $projectDir,
+        private readonly LogoStorage $logo,
     ) {
     }
 
@@ -73,7 +74,8 @@ class MailSettingsController extends AbstractController
         return $this->render('mail_settings/edit.html.twig', [
             'form' => $form->createView(),
             'themes' => MailThemes::presets(),
-            'hasLogo' => is_file($this->projectDir . '/public/assets/logo.png'),
+            'hasLogo' => $this->logo->exists(),
+            'logoUrl' => $this->logo->publicPath(),
         ]);
     }
 

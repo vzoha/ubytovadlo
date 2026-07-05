@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Mail;
 
+use App\Config\LogoStorage;
 use App\Entity\GuestMessage;
 use App\Entity\MessageTemplate;
 use App\Entity\Reservation;
@@ -35,7 +36,7 @@ final class GuestMessageSender
         private readonly MailSettingsProvider $mailSettings,
         private readonly EntityManagerInterface $em,
         private readonly LoggerInterface $logger,
-        private readonly string $projectDir,
+        private readonly LogoStorage $logo,
     ) {
     }
 
@@ -117,7 +118,7 @@ final class GuestMessageSender
             $email->replyTo($settings->replyTo);
         }
         if ($useLogo) {
-            $email->embedFromPath($this->logoPath(), 'logo');
+            $email->embedFromPath($this->logo->absolutePath(), 'logo');
         }
         foreach ($attachmentPaths as $path) {
             if (is_file($path)) {
@@ -130,11 +131,6 @@ final class GuestMessageSender
 
     private function useLogo(): bool
     {
-        return $this->mailSettings->current()->showLogo && is_file($this->logoPath());
-    }
-
-    private function logoPath(): string
-    {
-        return $this->projectDir . '/public/assets/logo.png';
+        return $this->mailSettings->current()->showLogo && $this->logo->exists();
     }
 }

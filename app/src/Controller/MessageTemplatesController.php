@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Config\LogoStorage;
 use App\Entity\MessageTemplate;
 use App\Enum\MessageKind;
 use App\Form\MessageTemplateType;
@@ -36,6 +37,7 @@ class MessageTemplatesController extends AbstractController
         private readonly GuestMessageSender $sender,
         private readonly SampleReservationFactory $sampleFactory,
         private readonly EntityManagerInterface $em,
+        private readonly LogoStorage $logo,
     ) {
     }
 
@@ -87,7 +89,7 @@ class MessageTemplatesController extends AbstractController
             (string) $request->request->get('body'),
         );
 
-        $logoSrc = $request->getSchemeAndHttpHost() . '/assets/logo.png';
+        $logoSrc = $this->logo->exists() ? $request->getSchemeAndHttpHost() . $this->logo->publicPath() : null;
         $rendered = $this->renderer->renderTemplate(
             $transient,
             $this->sampleFactory->create(),

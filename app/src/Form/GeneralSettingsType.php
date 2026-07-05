@@ -12,10 +12,12 @@ declare(strict_types=1);
 namespace App\Form;
 
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\UrlType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Validator\Constraints\Image;
 use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Constraints\Url;
 
@@ -41,6 +43,19 @@ class GeneralSettingsType extends AbstractType
                 'required' => false,
                 'help' => 'Např. https://app.tvojedomena.cz — použije se pro odkazy v e-mailech odeslaných z cronu.',
                 'constraints' => [new Url(requireTld: false)],
+            ])
+            ->add('logoFile', FileType::class, [
+                'label' => 'Logo',
+                'mapped' => false,
+                'required' => false,
+                'help' => 'PNG nebo JPG, doporučeně na výšku max 300 px. Objeví se v hlavičce e-mailů hostům a na fakturách.',
+                'constraints' => [
+                    new Image(
+                        maxSize: '2M',
+                        mimeTypes: ['image/png', 'image/jpeg'],
+                        mimeTypesMessage: 'Nahraj obrázek ve formátu PNG nebo JPG.',
+                    ),
+                ],
             ]);
     }
 
