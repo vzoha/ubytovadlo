@@ -9,24 +9,31 @@
     {% block stylesheets %}{% endblock %}
 </head>
 <body class="bg-light">
-<nav class="navbar navbar-dark bg-dark mb-4">
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
     <div class="container">
         <a class="navbar-brand" href="{{ path('dashboard') }}">🏡 {{ brand_name }}</a>
-        <div class="d-flex align-items-center text-light small">
-            <a class="text-light me-3 text-decoration-none" href="{{ path('dashboard') }}">Přehled</a>
-            <a class="text-light me-3 text-decoration-none" href="{{ path('reservation_list') }}">Rezervace</a>
-            <a class="text-light me-3 text-decoration-none" href="{{ path('economics_overview') }}">Ekonomika</a>
-            <a class="text-light me-3 text-decoration-none" href="{{ path('account_index') }}">Účty</a>
-            <a class="text-light me-3 text-decoration-none" href="{{ path('vat_list') }}">DPH</a>
-            <a class="text-light me-3 text-decoration-none" href="{{ path('electricity_index') }}">Elektřina</a>
-            <a class="text-light me-3 text-decoration-none" href="{{ path('cleaning_index') }}">Úklid</a>
-            <a class="text-light me-3 text-decoration-none" href="{{ path('ubyport_index') }}">Ubyport</a>
-            <a class="text-light me-3 text-decoration-none" href="{{ path('accommodation_profile_edit') }}">Nastavení</a>
-            {% if app.user %}
-                <span class="me-3">{{ app.user.userIdentifier }}</span>
-                <a class="btn btn-sm btn-outline-light" href="{{ path('app_logout') }}">Odhlásit</a>
-            {% endif %}
-        </div>
+        {% if app.user %}
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Menu">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="mainNav">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item"><a class="nav-link" href="{{ path('dashboard') }}">Přehled</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ path('reservation_list') }}">Rezervace</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ path('economics_overview') }}">Ekonomika</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ path('account_index') }}">Účty</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ path('vat_list') }}">DPH</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ path('electricity_index') }}">Elektřina</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ path('cleaning_index') }}">Úklid</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ path('ubyport_index') }}">Ubyport</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ path('general_settings_edit') }}">Nastavení</a></li>
+                </ul>
+                <div class="d-flex align-items-center text-light small">
+                    <span class="me-3">{{ app.user.userIdentifier }}</span>
+                    <a class="btn btn-sm btn-outline-light" href="{{ path('app_logout') }}">Odhlásit</a>
+                </div>
+            </div>
+        {% endif %}
     </div>
 </nav>
 <main class="container pb-5">

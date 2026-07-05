@@ -15,6 +15,13 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Změněno
 
+- **Horní menu je responzivní a jen pro přihlášené.** Na úzkém displeji se položky
+  sbalí pod tlačítko (hamburger) místo aby přetekly a část zmizela; nepřihlášenému
+  se navigace nezobrazuje. Záložky nastavení jsou seřazené podle důležitosti (Obecné,
+  Fakturace, Připojení, E-maily, Šablony zpráv, Notifikace, Úklid, Ubyport), kliknutí
+  na **Nastavení** otevře první z nich a záložka s identifikátory pro cizineckou
+  policii se jmenuje **Ubyport**.
+
 - **Veškerá provozní konfigurace je v databázi, ne v env.** Dodavatel na faktuře,
   číselná řada, záloha, název a adresa instance i přístupy k automatizační schránce
   (IMAP), MotoPressu a SMTP se nastavují výhradně v aplikaci a ukládají do DB.

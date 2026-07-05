@@ -1,13 +1,13 @@
 {# Sdílená sub-navigace nastavení. Parametr `active` = klíč aktivní záložky. #}
 {% set tabs = {
     'general': { label: 'Obecné', route: 'general_settings_edit' },
-    'accommodation': { label: 'Ubytovací zařízení', route: 'accommodation_profile_edit' },
-    'cleaning': { label: 'Úklid', route: 'cleaning_settings_edit' },
     'issuer': { label: 'Fakturace', route: 'issuer_settings_edit' },
+    'connection': { label: 'Připojení', route: 'connection_settings_edit' },
     'mail': { label: 'E-maily', route: 'mail_settings_edit' },
     'messages': { label: 'Šablony zpráv', route: 'message_templates_index' },
     'notifications': { label: 'Notifikace', route: 'owner_notification_settings_edit' },
-    'connection': { label: 'Připojení', route: 'connection_settings_edit' },
+    'cleaning': { label: 'Úklid', route: 'cleaning_settings_edit' },
+    'accommodation': { label: 'Ubyport', route: 'accommodation_profile_edit' },
 } %}
 <ul class="nav nav-pills mb-4">
     {% for key, tab in tabs %}
