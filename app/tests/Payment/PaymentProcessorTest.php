@@ -18,11 +18,13 @@ use App\Entity\Payment;
 use App\Entity\Reservation;
 use App\Enum\BillingMode;
 use App\Enum\Channel;
+use App\Invoice\DepositConfig;
 use App\Invoice\InvoiceService;
 use App\Payment\Event\PaymentSettledEvent;
 use App\Payment\PaymentProcessor;
 use App\Repository\InvoiceRepository;
 use App\Repository\ReservationRepository;
+use App\Repository\SettingRepository;
 use App\Timeline\ReservationActionPlanner;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
@@ -57,6 +59,9 @@ final class PaymentProcessorTest extends TestCase
             $this->persisted[] = $e;
         });
 
+        $settings = $this->createMock(SettingRepository::class);
+        $settings->method('getString')->willReturn(null);
+
         $this->processor = new PaymentProcessor(
             $this->em,
             $this->invoices,
@@ -64,7 +69,7 @@ final class PaymentProcessorTest extends TestCase
             $this->invoiceService,
             $this->planner,
             $this->dispatcher,
-            '1000',
+            new DepositConfig($settings, '1000'),
         );
     }
 

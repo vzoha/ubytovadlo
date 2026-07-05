@@ -11,8 +11,11 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Enum\DepositMode;
+use App\Form\DepositSettingsType;
 use App\Form\IssuerSettingsType;
 use App\Form\NumberingSettingsType;
+use App\Invoice\DepositConfig;
 use App\Invoice\InvoiceNumberFormat;
 use App\Invoice\InvoiceSeriesConfig;
 use App\Invoice\IssuerProfileProvider;
@@ -25,8 +28,8 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
 /**
- * Stránka „Fakturace": dodavatel + bankovní spojení a číselná řada faktur
- * (formát čísla a příští pořadové číslo). Dvě samostatné formy na jedné stránce.
+ * Stránka „Fakturace": dodavatel + bankovní spojení, číselná řada faktur (formát
+ * čísla a příští pořadové číslo) a pravidla zálohy. Samostatné formy na jedné stránce.
  */
 class IssuerSettingsController extends AbstractController
 {
@@ -35,6 +38,7 @@ class IssuerSettingsController extends AbstractController
         private readonly IssuerProfileProvider $issuerProvider,
         private readonly InvoiceNumberFormat $numberFormat,
         private readonly InvoiceSeriesConfig $series,
+        private readonly DepositConfig $deposit,
         private readonly EntityManagerInterface $em,
     ) {
     }
@@ -74,11 +78,41 @@ class IssuerSettingsController extends AbstractController
             }
         }
 
+        $depositForm = $this->createForm(DepositSettingsType::class, $this->deposit->currentValues());
+        $depositForm->handleRequest($request);
+        if ($depositForm->isSubmitted()) {
+            $mode = $depositForm->get('mode')->getData();
+            $value = trim((string) $depositForm->get('value')->getData());
+            // Fixní i procento potřebují kladné číslo; procento navíc ≤ 100.
+            if ($mode !== DepositMode::NONE) {
+                if ($value === '' || !is_numeric($value) || (float) $value <= 0) {
+                    $depositForm->get('value')->addError(new FormError('Zadej kladné číslo (Kč u fixní, % u procenta).'));
+                } elseif ($mode === DepositMode::PERCENT && (float) $value > 100) {
+                    $depositForm->get('value')->addError(new FormError('Procento nemůže být víc než 100.'));
+                }
+            }
+            if ($depositForm->isValid()) {
+                $this->saveDeposit($mode, $value, (int) $depositForm->get('dueDays')->getData());
+                $this->addFlash('success', 'Nastavení zálohy uloženo.');
+
+                return $this->redirectToRoute('issuer_settings_edit');
+            }
+        }
+
         return $this->render('issuer_settings/edit.html.twig', [
             'form' => $issuerForm->createView(),
             'numberingForm' => $numberingForm->createView(),
+            'depositForm' => $depositForm->createView(),
             'example' => $this->numberFormat->format($year, 12),
         ]);
+    }
+
+    private function saveDeposit(DepositMode $mode, string $value, int $dueDays): void
+    {
+        $this->settings->set(DepositConfig::KEY_MODE, $mode->value, 'Záloha: způsob výše.');
+        $this->settings->set(DepositConfig::KEY_VALUE, trim($value), 'Záloha: výše (Kč u fixní, % u procenta).');
+        $this->settings->set(DepositConfig::KEY_DUE_DAYS, (string) max(0, $dueDays), 'Záloha: splatnost ve dnech.');
+        $this->em->flush();
     }
 
     private function saveNumbering(string $format, mixed $nextNumber, int $year): void

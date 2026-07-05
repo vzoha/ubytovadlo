@@ -16,6 +16,7 @@ use App\Entity\Reservation;
 use App\Enum\BillingMode;
 use App\Enum\Channel;
 use App\Enum\ReservationStatus;
+use App\Invoice\DepositConfig;
 use App\Invoice\InvoiceNumber;
 use App\Invoice\InvoiceNumberAllocator;
 use App\Invoice\InvoiceNumberFormat;
@@ -77,7 +78,7 @@ final class InvoiceServicePayoutTest extends TestCase
             $this->createMock(CnbExchangeRateClient::class),
             $issuerProvider,
             $this->createMock(IncomeUpserter::class),
-            '1000.00',
+            new DepositConfig($settings, '1000'),
         );
     }
 

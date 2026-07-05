@@ -103,4 +103,39 @@ final class IssuerSettingsControllerTest extends WebTestCase
         $settings = static::getContainer()->get(SettingRepository::class);
         self::assertNull($settings->getString('invoice.number_format'));
     }
+
+    public function testDepositFormSavesPercentSettings(): void
+    {
+        $crawler = $this->client->request('GET', '/nastaveni/dodavatel');
+
+        // Třetí „Uložit" patří formuláři zálohy.
+        $form = $crawler->selectButton('Uložit')->eq(2)->form();
+        $form['deposit_settings[mode]'] = 'percent';
+        $form['deposit_settings[value]'] = '30';
+        $form['deposit_settings[dueDays]'] = '3';
+        $this->client->submit($form);
+
+        self::assertResponseRedirects('/nastaveni/dodavatel');
+
+        $settings = static::getContainer()->get(SettingRepository::class);
+        self::assertSame('percent', $settings->getString('invoice.deposit.mode'));
+        self::assertSame('30', $settings->getString('invoice.deposit.value'));
+        self::assertSame('3', $settings->getString('invoice.deposit.due_days'));
+    }
+
+    public function testDepositFormRejectsNonPositiveValue(): void
+    {
+        $crawler = $this->client->request('GET', '/nastaveni/dodavatel');
+
+        $form = $crawler->selectButton('Uložit')->eq(2)->form();
+        $form['deposit_settings[mode]'] = 'fixed';
+        $form['deposit_settings[value]'] = '0';
+        $form['deposit_settings[dueDays]'] = '2';
+        $this->client->submit($form);
+
+        // Nulová záloha se odmítne, nic se neuloží.
+        self::assertResponseIsSuccessful();
+        $settings = static::getContainer()->get(SettingRepository::class);
+        self::assertNull($settings->getString('invoice.deposit.mode'));
+    }
 }

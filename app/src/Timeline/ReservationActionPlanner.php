@@ -14,8 +14,8 @@ namespace App\Timeline;
 use App\Entity\Reservation;
 use App\Entity\ReservationAction;
 use App\Enum\ActionType;
-use App\Enum\BillingMode;
 use App\Enum\ReservationStatus;
+use App\Invoice\DepositConfig;
 use App\Repository\ReservationActionRepository;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -29,6 +29,7 @@ class ReservationActionPlanner
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly ReservationActionRepository $actions,
+        private readonly DepositConfig $depositConfig,
     ) {
     }
 
@@ -57,7 +58,9 @@ class ReservationActionPlanner
             $added += $this->ensure($reservation, ActionType::POST_STAY_MESSAGE, $this->at($checkOut, '+1 day', '10:00'));
         }
 
-        if ($reservation->getBillingMode() === BillingMode::STANDARD_WITH_DEPOSIT) {
+        // Doplatek + připomínka jen u toku se zálohou; při „bez zálohy" jde web
+        // klasika na jednu fakturu, doplatková akce nedává smysl.
+        if ($this->depositConfig->appliesTo($reservation->getBillingMode())) {
             $added += $this->ensure($reservation, ActionType::ISSUE_FINAL_INVOICE, $this->at($checkIn, null, '10:00'));
             $added += $this->ensure($reservation, ActionType::BALANCE_REMINDER, $this->at($checkIn, null, '12:00'));
         }

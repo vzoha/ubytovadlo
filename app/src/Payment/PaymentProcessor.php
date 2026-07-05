@@ -16,9 +16,9 @@ use App\Email\EmailMessage;
 use App\Entity\Invoice;
 use App\Entity\Payment;
 use App\Entity\Reservation;
-use App\Enum\BillingMode;
 use App\Enum\InvoiceType;
 use App\Enum\PaymentSource;
+use App\Invoice\DepositConfig;
 use App\Invoice\InvoiceService;
 use App\Payment\Event\PaymentSettledEvent;
 use App\Repository\InvoiceRepository;
@@ -46,7 +46,7 @@ class PaymentProcessor
         private readonly InvoiceService $invoiceService,
         private readonly ReservationActionPlanner $planner,
         private readonly EventDispatcherInterface $dispatcher,
-        private readonly string $invoiceDepositAmount,
+        private readonly DepositConfig $depositConfig,
     ) {
     }
 
@@ -112,11 +112,14 @@ class PaymentProcessor
      */
     private function applyDeposit(Payment $payment, Reservation $reservation, CsPaymentData $data): void
     {
-        // Záloha web klasiky je vždy v CZK; cizí měnu sem nepouštíme.
-        if ($reservation->getBillingMode() !== BillingMode::STANDARD_WITH_DEPOSIT) {
+        // Jen toky se zálohou a jen když je záloha zapnutá (ne „bez zálohy").
+        if (!$this->depositConfig->appliesTo($reservation->getBillingMode())) {
             return;
         }
-        if ($data->currency !== 'CZK' || !$this->matchesDeposit($data->amount)) {
+        // Záloha web klasiky je vždy v CZK; cizí měnu sem nepouštíme. Očekávaná výše
+        // se počítá z ceny rezervace (fixní částka, nebo procento).
+        $expected = $this->depositConfig->computeAmount($reservation->getPriceTotal());
+        if ($data->currency !== 'CZK' || $expected === null || $expected !== $data->amount) {
             return;
         }
 
@@ -150,10 +153,5 @@ class PaymentProcessor
 
         return ($reservation->getGuestName() ?? '') !== ''
             && $mode !== null && $mode->isInvoiced();
-    }
-
-    private function matchesDeposit(string $amount): bool
-    {
-        return number_format((float) $this->invoiceDepositAmount, 2, '.', '') === $amount;
     }
 }

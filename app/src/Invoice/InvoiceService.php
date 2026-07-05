@@ -24,7 +24,7 @@ use Doctrine\ORM\EntityManagerInterface;
 
 /**
  * Orchestrace vystavení faktur. Tři vstupní body podle toku:
- *  - issueDeposit(): zálohová 1000 Kč pro Web klasiku (gateway bank).
+ *  - issueDeposit(): zálohová faktura pro Web klasiku (výše dle DepositConfig).
  *  - issueFinal(Reservation, Invoice $deposit): konečná s odpočtem zálohy.
  *  - issueFull(): jedna faktura na celou částku (FKSP, admin, Airbnb, Booking).
  *
@@ -48,7 +48,7 @@ class InvoiceService
         private readonly CnbExchangeRateClient $cnb,
         private readonly IssuerProfileProvider $issuerProvider,
         private readonly IncomeUpserter $incomeUpserter,
-        private readonly string $invoiceDepositAmount,
+        private readonly DepositConfig $depositConfig,
     ) {
     }
 
@@ -57,12 +57,20 @@ class InvoiceService
         $this->assertHasCustomer($reservation);
         $this->assertNotWaived($reservation);
         $this->assertNotYetIssued($reservation, InvoiceType::DEPOSIT);
+        // Nad už vystavenou fakturou na celou částku nemá záloha co dělat.
+        $this->assertNotYetIssued($reservation, InvoiceType::FULL);
         $issuedAt ??= new \DateTimeImmutable('today');
 
-        $invoice = $this->buildInvoice($reservation, InvoiceType::DEPOSIT, $issuedAt, $issuedAt->modify('+2 days'));
-        $invoice->setTotalAmount($this->invoiceDepositAmount);
-        $line = new InvoiceLine('Záloha na ubytovací služby', $this->invoiceDepositAmount);
-        $invoice->addLine($line);
+        // Výše zálohy je fixní částka nebo procento z ceny (CZK) dle nastavení.
+        $amount = $this->depositConfig->computeAmount($reservation->getPriceTotal());
+        if ($amount === null) {
+            throw new \LogicException('Zálohu nelze vystavit: záloha je vypnutá, nebo u procenta chybí cena rezervace.');
+        }
+
+        $due = $issuedAt->modify('+' . $this->depositConfig->dueDays() . ' days');
+        $invoice = $this->buildInvoice($reservation, InvoiceType::DEPOSIT, $issuedAt, $due);
+        $invoice->setTotalAmount($amount);
+        $invoice->addLine(new InvoiceLine('Záloha na ubytovací služby', $amount));
 
         $this->fillBankPayment($invoice);
         $this->persist($invoice);
@@ -102,6 +110,8 @@ class InvoiceService
         $this->assertHasCustomer($reservation);
         $this->assertNotWaived($reservation);
         $this->assertNotYetIssued($reservation, InvoiceType::FULL);
+        // Existuje-li už záloha, patří k ní doplatek (issueFinal), ne faktura na celou.
+        $this->assertNotYetIssued($reservation, InvoiceType::DEPOSIT);
         if ($reservation->getPriceTotal() === null) {
             throw new \LogicException('Reservation nemá priceTotal — nelze vystavit fakturu.');
         }

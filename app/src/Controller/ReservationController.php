@@ -29,6 +29,7 @@ use App\Enum\ReservationStatus;
 use App\Form\ReservationDetailsType;
 use App\Form\ReservationManualType;
 use App\Invoice\BalanceCalculator;
+use App\Invoice\DepositConfig;
 use App\Invoice\PaymentStatusResolver;
 use App\Profit\ReservationProfitCalculator;
 use App\Repository\CleaningRepository;
@@ -64,6 +65,7 @@ class ReservationController extends AbstractController
         private readonly IncomeUpserter $incomeUpserter,
         private readonly ReservationReceiptRepository $receipts,
         private readonly PaymentStatusResolver $paymentStatusResolver,
+        private readonly DepositConfig $depositConfig,
     ) {
     }
 
@@ -155,6 +157,8 @@ class ReservationController extends AbstractController
             'timeline' => $this->timelineBuilder->build($reservation),
             'balance' => $this->balanceCalculator->forReservation($reservation),
             'note_types' => NoteType::cases(),
+            'deposit_applies' => $this->depositConfig->appliesTo($reservation->getBillingMode()),
+            'deposit_amount' => $this->depositConfig->computeAmount($reservation->getPriceTotal()),
         ]);
     }
 

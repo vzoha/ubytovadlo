@@ -24,7 +24,6 @@ services:
             string $motopressBaseUrl: '%env(MOTOPRESS_BASE_URL)%'
             string $motopressConsumerKey: '%env(MOTOPRESS_CONSUMER_KEY)%'
             string $motopressConsumerSecret: '%env(MOTOPRESS_CONSUMER_SECRET)%'
-            string $invoiceDepositAmount: '%env(INVOICE_DEPOSIT_AMOUNT)%'
             string $appCredentialsKey: '%env(APP_CREDENTIALS_KEY)%'
             string $appEnv: '%kernel.environment%'
 
@@ -36,6 +35,10 @@ services:
     App\Invoice\InvoiceSeriesConfig:
         arguments:
             $envFallback: '%env(json:INVOICE_SERIES_STARTS)%'
+
+    App\Invoice\DepositConfig:
+        arguments:
+            $amountFallback: '%env(INVOICE_DEPOSIT_AMOUNT)%'
 
     App\Config\InstanceSettings:
         arguments:

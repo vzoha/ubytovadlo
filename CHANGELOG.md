@@ -16,6 +16,13 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Přidáno
 
+- **Nastavitelná záloha.** Na stránce **Fakturace** se určuje, kolik a kdy platí
+  host předem u web klasiky a ručních rezervací: výše jako **fixní částka**,
+  **procento z ceny**, nebo **bez zálohy** (pak jde rezervace rovnou na jednu
+  fakturu na celou částku), plus splatnost ve dnech. Tlačítko na vystavení zálohy
+  i připomínka doplatku se řídí tímto nastavením; Booking a Airbnb si platby řeší
+  sami, u nich se záloha neúčtuje. Vše v korunách.
+
 - **Konektory se zapínáním a přehledem zdraví.** Na stránce **Připojení** je nahoře
   přehled zdrojů rezervací a plateb — **Web (MotoPress)**, **Booking.com**, **Airbnb**
   a **Banka (Česká spořitelna)**. Každý jde přepínačem **zapnout/vypnout**; vypnutý

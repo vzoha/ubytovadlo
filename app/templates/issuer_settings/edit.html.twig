@@ -82,4 +82,31 @@
             </div>
         {{ form_end(numberingForm) }}
     </div>
+
+    <hr class="my-4">
+
+    <h2 class="h5 mb-2">Záloha</h2>
+    <p class="text-muted small">
+        Kolik a kdy platí host předem u <strong>web klasiky</strong> a <strong>ručních
+        rezervací</strong>. Booking a Airbnb si platby řeší sami — zálohy se u nich neúčtují.
+        Při „bez zálohy" jde web klasika rovnou na jednu fakturu na celou částku.
+    </p>
+
+    <div class="col-lg-8">
+        {{ form_start(depositForm) }}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-5">{{ form_row(depositForm.mode) }}</div>
+                        <div class="col-md-4">{{ form_row(depositForm.value) }}</div>
+                        <div class="col-md-3">{{ form_row(depositForm.dueDays) }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-end">
+                <button type="submit" class="btn btn-primary">Uložit</button>
+            </div>
+        {{ form_end(depositForm) }}
+    </div>
 {% endblock %}
