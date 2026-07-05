@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace App\EventListener;
 
 use App\Config\InstanceSettings;
+use Doctrine\DBAL\Exception as DbalException;
 use Symfony\Component\Console\ConsoleEvents;
 use Symfony\Component\Console\Event\ConsoleCommandEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -38,7 +39,13 @@ final class RouterContextConsoleSubscriber implements EventSubscriberInterface
 
     public function onCommand(ConsoleCommandEvent $event): void
     {
-        $baseUrl = $this->settings->baseUrl();
+        try {
+            $baseUrl = $this->settings->baseUrl();
+        } catch (DbalException) {
+            // Čerstvá instalace či cache warmup před migracemi — tabulka settingů
+            // ještě neexistuje. URL kontext zůstane na výchozí adrese.
+            return;
+        }
         if ($baseUrl === '') {
             return;
         }

@@ -6,6 +6,13 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ## [Unreleased]
 
+### Opraveno
+
+- **Konzolové příkazy fungují i proti ještě nezmigrované databázi.** Instalace a
+  cache warmup (`assets:install`, `cache:clear`) se nezastaví na chybějící tabulce
+  settingů — URL kontext pro generování odkazů v CLI prostě zůstane na výchozí
+  adrese, dokud tabulka nevznikne.
+
 ### Změněno
 
 - **Veškerá provozní konfigurace je v databázi, ne v env.** Dodavatel na faktuře,
@@ -22,6 +29,15 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
   a promítne zrušení — ručně upravené jméno, cenu ani stav nepřepíše.
 
 ### Přidáno
+
+- **Obsazenost z iCal feedů OTA nezávisle na MotoPressu.** Ke každému kanálu
+  **Booking.com**, **Airbnb**, **eChalupy** a **CS chalupy** lze na stránce
+  **Připojení** vložit adresu iCal feedu obsazenosti. Úloha `app:ical:sync`
+  (z cronu) z něj zakládá a udržuje rezervace jako blokátory termínu — bere jen
+  příjezd, odjezd a identitu bloku, jméno ani cenu ne. Blok, který z feedu zmizí
+  a jehož pobyt ještě neskončil, se automaticky **stornuje**. Když už termín
+  eviduje jiný zdroj, feed se s ním sloučí a nevznikne duplikát. Kanály
+  **eChalupy** a **CS chalupy** přibyly i do přehledů a ekonomiky.
 
 - **Nastavitelná záloha.** Na stránce **Fakturace** se určuje, kolik a kdy platí
   host předem u web klasiky a ručních rezervací: výše jako **fixní částka**,
