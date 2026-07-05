@@ -48,11 +48,6 @@ class ConnectionSettingsType extends AbstractType
             ->add('motopressBaseUrl', TextType::class, ['label' => 'MotoPress URL', 'required' => false, 'help' => 'Adresa webu s pluginem, např. https://example.com'])
             ->add('motopressConsumerKey', PasswordType::class, ['label' => 'Consumer key', 'help' => 'Prázdné = beze změny.'] + $secret)
             ->add('motopressConsumerSecret', PasswordType::class, ['label' => 'Consumer secret', 'help' => 'Prázdné = beze změny.'] + $secret)
-            ->add('motopressEnabled', CheckboxType::class, [
-                'label' => 'Importovat rezervace z MotoPressu',
-                'required' => false,
-                'help' => 'Vypnuto = rezervace z webu se nestahují. Rezervace jde vždy přidat i ručně.',
-            ])
             ->add('petServiceIds', TextType::class, [
                 'label' => 'ID služeb „pes"',
                 'required' => false,

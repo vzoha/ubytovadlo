@@ -48,13 +48,6 @@ final class MotoPressSettingsTest extends TestCase
         self::assertSame([], $motopress->petServiceIds());
     }
 
-    public function testEnabledByDefaultAndTurnedOffByStoredZero(): void
-    {
-        self::assertTrue((new MotoPressSettings($this->settings([])))->enabled());
-        self::assertTrue((new MotoPressSettings($this->settings([MotoPressSettings::KEY_ENABLED => '1'])))->enabled());
-        self::assertFalse((new MotoPressSettings($this->settings([MotoPressSettings::KEY_ENABLED => '0'])))->enabled());
-    }
-
     public function testCreateMapperUsesCurrentIds(): void
     {
         $motopress = new MotoPressSettings($this->settings([MotoPressSettings::KEY_PET => '925']), [], [], false);

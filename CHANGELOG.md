@@ -9,12 +9,21 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 ### Změněno
 
 - **MotoPress je volitelný konektor, autoritou je Ubytovadlo.** Import rezervací
-  z webu jde na Připojení vypnout (přepínačem „Importovat rezervace z MotoPressu");
+  z webu jde na Připojení vypnout (přepínačem konektoru **Web (MotoPress)**);
   bez vyplněných přístupů se sync tiše přeskočí. Novou rezervaci import naplní
   celou, ale u **existující** rezervace už jen doplní prázdná pole, srovná termín
   a promítne zrušení — ručně upravené jméno, cenu ani stav nepřepíše.
 
 ### Přidáno
+
+- **Konektory se zapínáním a přehledem zdraví.** Na stránce **Připojení** je nahoře
+  přehled zdrojů rezervací a plateb — **Web (MotoPress)**, **Booking.com**, **Airbnb**
+  a **Banka (Česká spořitelna)**. Každý jde přepínačem **zapnout/vypnout**; vypnutý
+  konektor pollery přeskočí. U každého je stav (v pořádku / chyba / dlouho bez dat /
+  nenastaveno), čas poslední přijaté zprávy a tlačítko **Otestovat**, které ověří
+  přístup (MotoPress přes REST, ostatní přihlášením do automatizační schránky), aniž
+  by měnilo data. Poll schránky i sync webu se u nevyplněných přístupů tiše přeskočí
+  a jejich výsledek se propíše do stavu konektoru.
 
 - **Stav platby a ruční platby.** Rezervace (web i přímá) má na detailu i v seznamu
   štítek **Nezaplaceno / Částečně / Zaplaceno** (spočítaný z ceny, zaplacených

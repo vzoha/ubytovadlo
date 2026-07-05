@@ -12,12 +12,14 @@ declare(strict_types=1);
 namespace App\Email;
 
 use App\Cashflow\IncomeUpserter;
+use App\Connector\ConnectorManager;
 use App\Email\Dto\AirbnbParsedReservation;
 use App\Email\Dto\AirbnbPayoutData;
 use App\Email\Dto\BookingTriggerData;
 use App\Entity\EmailLog;
 use App\Entity\Reservation;
 use App\Enum\Channel;
+use App\Enum\ConnectorType;
 use App\Enum\OwnerNotificationType;
 use App\Enum\ReservationStatus;
 use App\Notification\OwnerNotifier;
@@ -44,6 +46,7 @@ class EmailDispatcher
         private readonly InvoiceRepository $invoices,
         private readonly IncomeUpserter $incomeUpserter,
         private readonly OwnerNotifier $notifier,
+        private readonly ConnectorManager $connectors,
         private readonly EntityManagerInterface $em,
         private readonly LoggerInterface $logger,
     ) {
@@ -74,6 +77,18 @@ class EmailDispatcher
         $log->setFromAddress($email->fromAddress);
         $log->setSubject($email->subject);
         $this->em->persist($log);
+
+        $connectorType = $this->connectorType($email);
+        if ($connectorType !== null) {
+            if (!$this->connectors->isEnabled($connectorType)) {
+                $log->markIgnored(sprintf('Konektor „%s" je vypnutý', $connectorType->label()));
+
+                return $log;
+            }
+            // Zpráva z tohoto zdroje dorazila → poslední aktivita konektoru (i když
+            // ji nakonec ignorujeme, transport žije — podklad pro „nechodí data").
+            $this->connectors->recordActivity($connectorType, $email->date);
+        }
 
         try {
             if ($this->airbnbParser->supports($email)) {
@@ -201,6 +216,22 @@ class EmailDispatcher
         $this->incomeUpserter->recompute($reservation);
 
         return $reservation;
+    }
+
+    /**
+     * Kterému konektoru zpráva patří (podle odesílatele), nebo null když žádnému.
+     * Stejné pořadí jako zpracování — Airbnb rezervace i výplata spadají pod Airbnb,
+     * Booking trigger i měsíční faktura pod Booking, platební notifikace pod banku.
+     * Poller si tím ověří, jestli zprávu vůbec zpracovávat (vypnutý konektor přeskočí).
+     */
+    public function connectorType(EmailMessage $email): ?ConnectorType
+    {
+        return match (true) {
+            $this->airbnbParser->supports($email), $this->airbnbPayoutParser->supports($email) => ConnectorType::AIRBNB,
+            $this->bookingParser->supports($email), $this->bookingInvoiceImporter->supports($email) => ConnectorType::BOOKING,
+            $this->csPaymentParser->supports($email) => ConnectorType::BANK_CS,
+            default => null,
+        };
     }
 
     private function upsertBooking(BookingTriggerData $data): Reservation

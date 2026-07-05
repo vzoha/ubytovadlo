@@ -11,10 +11,12 @@ declare(strict_types=1);
 
 namespace App\Command;
 
+use App\Connector\ConnectorManager;
 use App\Credential\CredentialProvider;
+use App\Enum\ConnectorStatus;
+use App\Enum\ConnectorType;
 use App\MotoPress\MotoPressApiException;
 use App\MotoPress\MotoPressClient;
-use App\MotoPress\MotoPressSettings;
 use App\MotoPress\MotoPressSync;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -29,7 +31,7 @@ class MotoPressSyncCommand extends Command
     public function __construct(
         private readonly MotoPressSync $sync,
         private readonly MotoPressClient $client,
-        private readonly MotoPressSettings $settings,
+        private readonly ConnectorManager $connectors,
         private readonly CredentialProvider $credentials,
     ) {
         parent::__construct();
@@ -67,7 +69,7 @@ class MotoPressSyncCommand extends Command
             return Command::SUCCESS;
         }
 
-        if (!$this->settings->enabled()) {
+        if (!$this->connectors->isEnabled(ConnectorType::MOTOPRESS)) {
             $io->warning('MotoPress konektor je vypnutý — sync přeskočen.');
 
             return Command::SUCCESS;
@@ -88,9 +90,20 @@ class MotoPressSyncCommand extends Command
         try {
             $result = $this->sync->sync($query, $dryRun);
         } catch (MotoPressApiException $e) {
+            if (!$dryRun) {
+                $this->connectors->recordRun(ConnectorType::MOTOPRESS, ConnectorStatus::ERROR, $e->getMessage());
+            }
             $io->error($e->getMessage());
 
             return Command::FAILURE;
+        }
+
+        // Testovací běhy (--dry-run) stav konektoru nemění. Úspěšný sync bereme jako
+        // aktivitu (konektor odpověděl a data proudí) i bez nové/změněné rezervace —
+        // jinak by web v klidném období falešně spadl do „dlouho bez dat".
+        if (!$dryRun) {
+            $this->connectors->recordActivity(ConnectorType::MOTOPRESS);
+            $this->connectors->recordRun(ConnectorType::MOTOPRESS, ConnectorStatus::OK);
         }
 
         $io->success(sprintf(

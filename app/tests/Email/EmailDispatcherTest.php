@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace App\Tests\Email;
 
 use App\Cashflow\IncomeUpserter;
+use App\Connector\ConnectorManager;
 use App\Email\AirbnbPayoutParser;
 use App\Email\AirbnbReservationParser;
 use App\Email\BookingTriggerParser;
@@ -67,20 +68,25 @@ final class EmailDispatcherTest extends TestCase
         $this->em->method('wrapInTransaction')
             ->willReturnCallback(static fn (callable $fn) => $fn());
 
-        $bookingInvoices = $this->createMock(BookingMonthlyInvoiceRepository::class);
+        $this->dispatcher = $this->buildDispatcher(new AirbnbReservationParser(), $this->connectors(true));
+        $this->reader = new EmlReader();
+    }
+
+    private function buildDispatcher(AirbnbReservationParser $airbnb, ConnectorManager $connectors): EmailDispatcher
+    {
         $bookingInvoiceImporter = new BookingInvoiceImporter(
             new BookingInvoiceParser(),
-            $bookingInvoices,
+            $this->createMock(BookingMonthlyInvoiceRepository::class),
             $this->em,
             sys_get_temp_dir(),
             new PdfStorage(sys_get_temp_dir()),
             new NullLogger(),
         );
 
-        $this->dispatcher = new EmailDispatcher(
+        return new EmailDispatcher(
             $this->emailLogs,
             $this->reservations,
-            new AirbnbReservationParser(),
+            $airbnb,
             new AirbnbPayoutParser(),
             new BookingTriggerParser(),
             $bookingInvoiceImporter,
@@ -89,11 +95,19 @@ final class EmailDispatcherTest extends TestCase
             $this->invoices,
             $this->createMock(IncomeUpserter::class),
             $this->makeOwnerNotifier(),
+            $connectors,
             $this->em,
             new NullLogger(),
         );
+    }
 
-        $this->reader = new EmlReader();
+    /** Konektory se zadaným stavem zapnutí (isEnabled). */
+    private function connectors(bool $enabled): ConnectorManager
+    {
+        $connectors = $this->createMock(ConnectorManager::class);
+        $connectors->method('isEnabled')->willReturn($enabled);
+
+        return $connectors;
     }
 
     /**
@@ -293,30 +307,7 @@ final class EmailDispatcherTest extends TestCase
         $airbnbParser->method('supports')->willReturn(true);
         $airbnbParser->method('parse')->willThrowException(new \RuntimeException('parser exploded'));
 
-        $bookingInvoiceImporter = new BookingInvoiceImporter(
-            new BookingInvoiceParser(),
-            $this->createMock(BookingMonthlyInvoiceRepository::class),
-            $this->em,
-            sys_get_temp_dir(),
-            new PdfStorage(sys_get_temp_dir()),
-            new NullLogger(),
-        );
-
-        $dispatcher = new EmailDispatcher(
-            $this->emailLogs,
-            $this->reservations,
-            $airbnbParser,
-            new AirbnbPayoutParser(),
-            new BookingTriggerParser(),
-            $bookingInvoiceImporter,
-            new CsPaymentParser(),
-            $this->paymentProcessor,
-            $this->invoices,
-            $this->createMock(IncomeUpserter::class),
-            $this->makeOwnerNotifier(),
-            $this->em,
-            new NullLogger(),
-        );
+        $dispatcher = $this->buildDispatcher($airbnbParser, $this->connectors(true));
 
         $this->emailLogs->method('findByMessageId')->willReturn(null);
         $this->em->expects(self::once())->method('persist');
@@ -333,6 +324,32 @@ final class EmailDispatcherTest extends TestCase
 
         self::assertSame(EmailLogStatus::ERROR, $log->getStatus());
         self::assertSame('parser exploded', $log->getError());
+    }
+
+    public function testSkipsDisabledConnector(): void
+    {
+        // Airbnb parser by e-mail poznal, ale konektor je vypnutý → jen ignorováno,
+        // žádné parsování ani rezervace.
+        $airbnbParser = $this->createMock(AirbnbReservationParser::class);
+        $airbnbParser->method('supports')->willReturn(true);
+        $airbnbParser->expects(self::never())->method('parse');
+
+        $dispatcher = $this->buildDispatcher($airbnbParser, $this->connectors(false));
+
+        $this->emailLogs->method('findByMessageId')->willReturn(null);
+
+        $email = new EmailMessage(
+            messageId: '<disabled@example.com>',
+            fromAddress: 'automated@airbnb.com',
+            subject: 'nová rezervace',
+            date: new \DateTimeImmutable(),
+            textBody: '',
+        );
+
+        $log = $dispatcher->dispatch($email);
+
+        self::assertSame(EmailLogStatus::IGNORED, $log->getStatus());
+        self::assertStringContainsString('vypnutý', (string) $log->getError());
     }
 
     public function testRecoversFromConcurrentInsertOnUniqueConstraint(): void

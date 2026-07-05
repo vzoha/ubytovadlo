@@ -113,6 +113,12 @@ final class CredentialProvider
         return $this->get('imapFolder');
     }
 
+    /** Automatizační schránka je nakonfigurovaná, když má aspoň server a uživatele. */
+    public function imapConfigured(): bool
+    {
+        return $this->imapHost() !== '' && $this->imapUsername() !== '';
+    }
+
     public function motopressBaseUrl(): string
     {
         return $this->get('motopressBaseUrl');
