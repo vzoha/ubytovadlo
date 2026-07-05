@@ -1,12 +1,10 @@
-{% extends 'base.html.twig' %}
+{% extends 'settings/base.html.twig' %}
 
 {% block title %}Nastavení úklidu{% endblock %}
 
-{% block body %}
-    <h1 class="h3 mb-3">Nastavení</h1>
+{% block settings_active %}cleaning{% endblock %}
 
-    {{ include('settings/_nav.html.twig', { active: 'cleaning' }) }}
-
+{% block settings_content %}
     <h2 class="h5 mb-2">Úklid</h2>
     <p class="text-muted small">
         Pro každý typ úklidu nastav konkrétní název (např. jméno uklízečky) a ceník.
@@ -14,24 +12,22 @@
         Stejná cena v obou polích = paušál. Název nech prázdný pro výchozí obecný.
     </p>
 
-    <div class="col-lg-8">
-        {{ form_start(form) }}
-            {% for type in types %}
-                <div class="card mb-3">
-                    <div class="card-header py-2 fw-semibold">{{ type.label }}</div>
-                    <div class="card-body">
-                        <div class="mb-3">{{ form_row(form[type.value ~ '_label']) }}</div>
-                        <div class="row g-3">
-                            <div class="col-md-4">{{ form_row(form[type.value ~ '_threshold']) }}</div>
-                            <div class="col-md-4">{{ form_row(form[type.value ~ '_small']) }}</div>
-                            <div class="col-md-4">{{ form_row(form[type.value ~ '_large']) }}</div>
-                        </div>
+    {{ form_start(form) }}
+        {% for type in types %}
+            <div class="card mb-3">
+                <div class="card-header py-2 fw-semibold">{{ type.label }}</div>
+                <div class="card-body">
+                    <div class="mb-3">{{ form_row(form[type.value ~ '_label']) }}</div>
+                    <div class="row g-3">
+                        <div class="col-md-4">{{ form_row(form[type.value ~ '_threshold']) }}</div>
+                        <div class="col-md-4">{{ form_row(form[type.value ~ '_small']) }}</div>
+                        <div class="col-md-4">{{ form_row(form[type.value ~ '_large']) }}</div>
                     </div>
                 </div>
-            {% endfor %}
-            <div class="d-flex justify-content-end">
-                <button type="submit" class="btn btn-primary">Uložit</button>
             </div>
-        {{ form_end(form) }}
-    </div>
+        {% endfor %}
+        <div class="d-flex justify-content-end">
+            <button type="submit" class="btn btn-primary">Uložit</button>
+        </div>
+    {{ form_end(form) }}
 {% endblock %}

@@ -1,10 +1,14 @@
-{% extends 'base.html.twig' %}
+{% extends 'settings/base.html.twig' %}
 
 {% import '_partials/markdown_editor.html.twig' as md %}
 
 {% block title %}Nastavení — e-maily{% endblock %}
 
-{% block body %}
+{% block settings_active %}mail{% endblock %}
+
+{% block settings_content_class %}col-lg-9 col-xl-10{% endblock %}
+
+{% block settings_content %}
     <style>
         .theme-swatch { display:flex; flex-direction:column; gap:8px; align-items:stretch; width:100%; padding:10px; border:2px solid #dee2e6; border-radius:12px; background:#fff; cursor:pointer; transition:border-color .15s, box-shadow .15s; text-align:left; }
         .theme-swatch:hover { border-color:#adb5bd; }
@@ -24,10 +28,6 @@
         #mp-footer .mp-foot-contact p:last-child { margin-bottom:0; }
         #mp-footer .mp-foot-contact a { color:#fff; text-decoration:underline; }
     </style>
-
-    <h1 class="h3 mb-3">Nastavení</h1>
-
-    {{ include('settings/_nav.html.twig', { active: 'mail' }) }}
 
     <h2 class="h5 mb-2">E-maily hostům</h2>
     <p class="text-muted small">
@@ -120,7 +120,7 @@
             <label class="form-label">Náhled vzhledu</label>
             <div id="mail-preview">
                 <div id="mp-logo">
-                    <img id="mp-logo-img" src="{{ asset('assets/logo.png') }}" alt="" style="display:none;">
+                    <img id="mp-logo-img" src="{{ asset(logoUrl|trim('/')) }}" alt="" style="display:none;">
                     <span id="mp-logo-name">{{ form.senderName.vars.value|default('Vaše ubytování') }}</span>
                 </div>
                 <div id="mp-body">

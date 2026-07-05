@@ -1,12 +1,10 @@
-{% extends 'base.html.twig' %}
+{% extends 'settings/base.html.twig' %}
 
 {% block title %}Ubyport{% endblock %}
 
-{% block body %}
-    <h1 class="h3 mb-3">Nastavení</h1>
+{% block settings_active %}accommodation{% endblock %}
 
-    {{ include('settings/_nav.html.twig', { active: 'accommodation' }) }}
-
+{% block settings_content %}
     <h2 class="h5 mb-2">Ubyport — ubytovací zařízení</h2>
 
     <p class="text-muted small">
@@ -19,33 +17,31 @@
         <div class="alert alert-warning">Profil ještě nebyl vyplněn. Po uložení bude možné generovat UNL exporty.</div>
     {% endif %}
 
-    <div class="col-lg-8">
-        {{ form_start(form) }}
-            <div class="card mb-3">
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-6">{{ form_row(form.idub) }}</div>
-                        <div class="col-md-6">{{ form_row(form.kod) }}</div>
-                        <div class="col-12">{{ form_row(form.nazev) }}</div>
-                        <div class="col-12">{{ form_row(form.spojeni) }}</div>
-                    </div>
-                    <hr>
-                    <h2 class="h6 text-muted mb-3">Adresa</h2>
-                    <div class="row g-3">
-                        <div class="col-md-6">{{ form_row(form.okres) }}</div>
-                        <div class="col-md-6">{{ form_row(form.obec) }}</div>
-                        <div class="col-md-6">{{ form_row(form.castObce) }}</div>
-                        <div class="col-md-6">{{ form_row(form.ulice) }}</div>
-                        <div class="col-md-3">{{ form_row(form.cp) }}</div>
-                        <div class="col-md-3">{{ form_row(form.co) }}</div>
-                        <div class="col-md-6">{{ form_row(form.psc) }}</div>
-                    </div>
+    {{ form_start(form) }}
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">{{ form_row(form.idub) }}</div>
+                    <div class="col-md-6">{{ form_row(form.kod) }}</div>
+                    <div class="col-12">{{ form_row(form.nazev) }}</div>
+                    <div class="col-12">{{ form_row(form.spojeni) }}</div>
+                </div>
+                <hr>
+                <h2 class="h6 text-muted mb-3">Adresa</h2>
+                <div class="row g-3">
+                    <div class="col-md-6">{{ form_row(form.okres) }}</div>
+                    <div class="col-md-6">{{ form_row(form.obec) }}</div>
+                    <div class="col-md-6">{{ form_row(form.castObce) }}</div>
+                    <div class="col-md-6">{{ form_row(form.ulice) }}</div>
+                    <div class="col-md-3">{{ form_row(form.cp) }}</div>
+                    <div class="col-md-3">{{ form_row(form.co) }}</div>
+                    <div class="col-md-6">{{ form_row(form.psc) }}</div>
                 </div>
             </div>
+        </div>
 
-            <div class="d-flex justify-content-end">
-                <button type="submit" class="btn btn-primary">Uložit</button>
-            </div>
-        {{ form_end(form) }}
-    </div>
+        <div class="d-flex justify-content-end">
+            <button type="submit" class="btn btn-primary">Uložit</button>
+        </div>
+    {{ form_end(form) }}
 {% endblock %}

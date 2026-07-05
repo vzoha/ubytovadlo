@@ -1,12 +1,10 @@
-{% extends 'base.html.twig' %}
+{% extends 'settings/base.html.twig' %}
 
 {% block title %}Nastavení notifikací{% endblock %}
 
-{% block body %}
-    <h1 class="h3 mb-3">Nastavení</h1>
+{% block settings_active %}notifications{% endblock %}
 
-    {{ include('settings/_nav.html.twig', { active: 'notifications' }) }}
-
+{% block settings_content %}
     <h2 class="h5 mb-2">Notifikace ubytovateli</h2>
     <p class="text-muted small">
         Vyber adresu, na kterou chodí provozní notifikace, a u každého typu zvol způsob doručení:
@@ -14,27 +12,25 @@
         (jednou denně vše dohromady) nebo <strong>vypnuto</strong>.
     </p>
 
-    <div class="col-lg-8">
-        {{ form_start(form) }}
-            <div class="card mb-3">
-                <div class="card-body">
-                    {{ form_row(form.email) }}
-                </div>
+    {{ form_start(form) }}
+        <div class="card mb-3">
+            <div class="card-body">
+                {{ form_row(form.email) }}
             </div>
+        </div>
 
-            <div class="card mb-3">
-                <div class="card-body">
-                    {% for type in types %}
-                        <div class="{{ not loop.last ? 'mb-3 pb-3 border-bottom' : '' }}">
-                            {{ form_row(form[type.value]) }}
-                        </div>
-                    {% endfor %}
-                </div>
+        <div class="card mb-3">
+            <div class="card-body">
+                {% for type in types %}
+                    <div class="{{ not loop.last ? 'mb-3 pb-3 border-bottom' : '' }}">
+                        {{ form_row(form[type.value]) }}
+                    </div>
+                {% endfor %}
             </div>
+        </div>
 
-            <div class="d-flex justify-content-end">
-                <button type="submit" class="btn btn-primary">Uložit</button>
-            </div>
-        {{ form_end(form) }}
-    </div>
+        <div class="d-flex justify-content-end">
+            <button type="submit" class="btn btn-primary">Uložit</button>
+        </div>
+    {{ form_end(form) }}
 {% endblock %}

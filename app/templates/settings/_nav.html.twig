@@ -1,4 +1,4 @@
-{# Sdílená sub-navigace nastavení. Parametr `active` = klíč aktivní záložky. #}
+{# Sdílená pod-navigace nastavení (levý sidebar). Parametr `active` = klíč aktivní záložky. #}
 {% set tabs = {
     'general': { label: 'Obecné', route: 'general_settings_edit' },
     'issuer': { label: 'Fakturace', route: 'issuer_settings_edit' },
@@ -9,10 +9,18 @@
     'cleaning': { label: 'Úklid', route: 'cleaning_settings_edit' },
     'accommodation': { label: 'Ubyport', route: 'accommodation_profile_edit' },
 } %}
-<ul class="nav nav-pills mb-4">
+{# Mobil: kompaktní dropdown; desktop (lg+): svislý sidebar. #}
+<div class="d-lg-none mb-3">
+    <label class="form-label small text-muted mb-1" for="settings-nav-select">Sekce nastavení</label>
+    <select id="settings-nav-select" class="form-select" onchange="if (this.value) window.location.href = this.value;" aria-label="Sekce nastavení">
+        {% for key, tab in tabs %}
+            <option value="{{ path(tab.route) }}" {{ active == key ? 'selected' : '' }}>{{ tab.label }}</option>
+        {% endfor %}
+    </select>
+</div>
+
+<nav class="nav nav-pills flex-column gap-1 sticky-lg-top d-none d-lg-flex" style="top: 1rem;" aria-label="Nastavení">
     {% for key, tab in tabs %}
-        <li class="nav-item">
-            <a class="nav-link {{ active == key ? 'active' : '' }}" href="{{ path(tab.route) }}">{{ tab.label }}</a>
-        </li>
+        <a class="nav-link {{ active == key ? 'active' : '' }}" href="{{ path(tab.route) }}">{{ tab.label }}</a>
     {% endfor %}
-</ul>
+</nav>

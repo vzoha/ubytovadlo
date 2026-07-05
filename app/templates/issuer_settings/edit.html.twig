@@ -1,63 +1,59 @@
-{% extends 'base.html.twig' %}
+{% extends 'settings/base.html.twig' %}
 
 {% block title %}Nastavení — fakturace{% endblock %}
 
-{% block body %}
-    <h1 class="h3 mb-3">Nastavení</h1>
+{% block settings_active %}issuer{% endblock %}
 
-    {{ include('settings/_nav.html.twig', { active: 'issuer' }) }}
-
+{% block settings_content %}
     <h2 class="h5 mb-2">Dodavatel na faktuře</h2>
     <p class="text-muted small">
         Tahle fakturační identita se tiskne jako dodavatel na všechny faktury a plní
         QR Platbu. Po změně se nové faktury vystaví správně; u už vystavených přegeneruj PDF.
     </p>
 
-    <div class="col-lg-8">
-        {{ form_start(form) }}
-            <div class="card mb-3">
-                <div class="card-header py-2 fw-semibold">Identita</div>
-                <div class="card-body">
-                    <div class="mb-3">{{ form_row(form.name) }}</div>
-                    <div class="mb-3">{{ form_row(form.street) }}</div>
-                    <div class="row g-3">
-                        <div class="col-md-4">{{ form_row(form.zip) }}</div>
-                        <div class="col-md-5">{{ form_row(form.city) }}</div>
-                        <div class="col-md-3">{{ form_row(form.country) }}</div>
-                    </div>
-                    <div class="row g-3 mt-0">
-                        <div class="col-md-6">{{ form_row(form.ico) }}</div>
-                        <div class="col-md-6">{{ form_row(form.dic) }}</div>
-                    </div>
+    {{ form_start(form) }}
+        <div class="card mb-3">
+            <div class="card-header py-2 fw-semibold">Identita</div>
+            <div class="card-body">
+                <div class="mb-3">{{ form_row(form.name) }}</div>
+                <div class="mb-3">{{ form_row(form.street) }}</div>
+                <div class="row g-3">
+                    <div class="col-md-4">{{ form_row(form.zip) }}</div>
+                    <div class="col-md-5">{{ form_row(form.city) }}</div>
+                    <div class="col-md-3">{{ form_row(form.country) }}</div>
+                </div>
+                <div class="row g-3 mt-0">
+                    <div class="col-md-6">{{ form_row(form.ico) }}</div>
+                    <div class="col-md-6">{{ form_row(form.dic) }}</div>
                 </div>
             </div>
+        </div>
 
-            <div class="card mb-3">
-                <div class="card-header py-2 fw-semibold">Kontakt</div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-4">{{ form_row(form.phone) }}</div>
-                        <div class="col-md-4">{{ form_row(form.email) }}</div>
-                        <div class="col-md-4">{{ form_row(form.web) }}</div>
-                    </div>
+        <div class="card mb-3">
+            <div class="card-header py-2 fw-semibold">Kontakt</div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">{{ form_row(form.phone) }}</div>
+                    <div class="col-md-4">{{ form_row(form.email) }}</div>
+                    <div class="col-md-4">{{ form_row(form.web) }}</div>
                 </div>
             </div>
+        </div>
 
-            <div class="card mb-3">
-                <div class="card-header py-2 fw-semibold">Bankovní spojení</div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-6">{{ form_row(form.bankAccount) }}</div>
-                        <div class="col-md-6">{{ form_row(form.bankAccountIban) }}</div>
-                    </div>
+        <div class="card mb-3">
+            <div class="card-header py-2 fw-semibold">Bankovní spojení</div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">{{ form_row(form.bankAccount) }}</div>
+                    <div class="col-md-6">{{ form_row(form.bankAccountIban) }}</div>
                 </div>
             </div>
+        </div>
 
-            <div class="d-flex justify-content-end">
-                <button type="submit" class="btn btn-primary">Uložit</button>
-            </div>
-        {{ form_end(form) }}
-    </div>
+        <div class="d-flex justify-content-end">
+            <button type="submit" class="btn btn-primary">Uložit</button>
+        </div>
+    {{ form_end(form) }}
 
     <hr class="my-4">
 
@@ -68,20 +64,18 @@
         číselný nezávisle na formátu.
     </p>
 
-    <div class="col-lg-8">
-        {{ form_start(numberingForm) }}
-            <div class="card mb-3">
-                <div class="card-body">
-                    <div class="mb-3">{{ form_row(numberingForm.format) }}</div>
-                    <div class="mb-3 col-md-6">{{ form_row(numberingForm.nextNumber) }}</div>
-                </div>
+    {{ form_start(numberingForm) }}
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="mb-3">{{ form_row(numberingForm.format) }}</div>
+                <div class="mb-3 col-md-6">{{ form_row(numberingForm.nextNumber) }}</div>
             </div>
+        </div>
 
-            <div class="d-flex justify-content-end">
-                <button type="submit" class="btn btn-primary">Uložit</button>
-            </div>
-        {{ form_end(numberingForm) }}
-    </div>
+        <div class="d-flex justify-content-end">
+            <button type="submit" class="btn btn-primary">Uložit</button>
+        </div>
+    {{ form_end(numberingForm) }}
 
     <hr class="my-4">
 
@@ -92,21 +86,19 @@
         Při „bez zálohy" jde web klasika rovnou na jednu fakturu na celou částku.
     </p>
 
-    <div class="col-lg-8">
-        {{ form_start(depositForm) }}
-            <div class="card mb-3">
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-5">{{ form_row(depositForm.mode) }}</div>
-                        <div class="col-md-4">{{ form_row(depositForm.value) }}</div>
-                        <div class="col-md-3">{{ form_row(depositForm.dueDays) }}</div>
-                    </div>
+    {{ form_start(depositForm) }}
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-5">{{ form_row(depositForm.mode) }}</div>
+                    <div class="col-md-4">{{ form_row(depositForm.value) }}</div>
+                    <div class="col-md-3">{{ form_row(depositForm.dueDays) }}</div>
                 </div>
             </div>
+        </div>
 
-            <div class="d-flex justify-content-end">
-                <button type="submit" class="btn btn-primary">Uložit</button>
-            </div>
-        {{ form_end(depositForm) }}
-    </div>
+        <div class="d-flex justify-content-end">
+            <button type="submit" class="btn btn-primary">Uložit</button>
+        </div>
+    {{ form_end(depositForm) }}
 {% endblock %}

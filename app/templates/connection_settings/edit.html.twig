@@ -1,12 +1,10 @@
-{% extends 'base.html.twig' %}
+{% extends 'settings/base.html.twig' %}
 
 {% block title %}Nastavení — připojení{% endblock %}
 
-{% block body %}
-    <h1 class="h3 mb-3">Nastavení</h1>
+{% block settings_active %}connection{% endblock %}
 
-    {{ include('settings/_nav.html.twig', { active: 'connection' }) }}
-
+{% block settings_content %}
     <h2 class="h5 mb-2">Připojení a přístupové údaje</h2>
     <p class="text-muted small">
         Údaje se ukládají <strong>šifrovaně</strong> v databázi (master klíč žije jen v env).
@@ -22,157 +20,155 @@
         </div>
     {% endif %}
 
-    <div class="col-lg-8">
-        <div class="card mb-4">
-            <div class="card-header py-2 fw-semibold">Konektory — zdroje rezervací a plateb</div>
-            <div class="list-group list-group-flush">
-                {% for c in connectors %}
-                    <div class="list-group-item">
-                        <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
-                            <div class="me-2">
-                                <div class="d-flex align-items-center gap-2">
-                                    <span class="fw-semibold">{{ c.type.label }}</span>
-                                    <span class="badge text-bg-{{ c.badge }}">{{ c.stateLabel }}</span>
-                                </div>
-                                <div class="small text-muted">{{ c.type.description }}</div>
-                                <div class="small text-muted mt-1">
-                                    {% if c.lastActivityAt %}
-                                        Poslední data {{ c.lastActivityAt|date('d. m. Y H:i') }}
-                                        {%- if c.state == 'stale' %} · {{ c.staleDays }} dní ticho{% endif %}
-                                    {% elseif not c.configured %}
-                                        Chybí přístupy — vyplňte je níže.
-                                    {% elseif c.enabled %}
-                                        Zatím nedorazila žádná data.
-                                    {% endif %}
-                                </div>
-                                {% if c.state == 'error' and c.lastError %}
-                                    <div class="small text-danger mt-1">Poslední běh selhal: {{ c.lastError }}</div>
+    <div class="card mb-4">
+        <div class="card-header py-2 fw-semibold">Konektory — zdroje rezervací a plateb</div>
+        <div class="list-group list-group-flush">
+            {% for c in connectors %}
+                <div class="list-group-item">
+                    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
+                        <div class="me-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="fw-semibold">{{ c.type.label }}</span>
+                                <span class="badge text-bg-{{ c.badge }}">{{ c.stateLabel }}</span>
+                            </div>
+                            <div class="small text-muted">{{ c.type.description }}</div>
+                            <div class="small text-muted mt-1">
+                                {% if c.lastActivityAt %}
+                                    Poslední data {{ c.lastActivityAt|date('d. m. Y H:i') }}
+                                    {%- if c.state == 'stale' %} · {{ c.staleDays }} dní ticho{% endif %}
+                                {% elseif not c.configured %}
+                                    Chybí přístupy — vyplňte je níže.
+                                {% elseif c.enabled %}
+                                    Zatím nedorazila žádná data.
                                 {% endif %}
                             </div>
-                            <div class="d-flex align-items-center gap-3">
-                                <form method="post" action="{{ path('connector_test', { type: c.type.value }) }}">
-                                    <input type="hidden" name="_token" value="{{ csrf_token('connector') }}">
-                                    <button type="submit" class="btn btn-sm btn-outline-secondary" {{ c.configured ? '' : 'disabled' }}>Otestovat</button>
-                                </form>
-                                <form method="post" action="{{ path('connector_toggle', { type: c.type.value }) }}">
-                                    <input type="hidden" name="_token" value="{{ csrf_token('connector') }}">
-                                    <div class="form-check form-switch m-0">
-                                        <input class="form-check-input" type="checkbox" role="switch"
-                                               id="connector-{{ c.type.value }}"
-                                               {{ c.enabled ? 'checked' : '' }}
-                                               onchange="this.form.submit()">
-                                        <label class="form-check-label small" for="connector-{{ c.type.value }}">Zapnuto</label>
-                                    </div>
-                                </form>
-                            </div>
+                            {% if c.state == 'error' and c.lastError %}
+                                <div class="small text-danger mt-1">Poslední běh selhal: {{ c.lastError }}</div>
+                            {% endif %}
                         </div>
-                        {% if c.supportsIcalImport %}
-                            <form method="post" action="{{ path('connector_feed', { type: c.type.value }) }}" class="mt-2">
+                        <div class="d-flex align-items-center gap-3">
+                            <form method="post" action="{{ path('connector_test', { type: c.type.value }) }}">
                                 <input type="hidden" name="_token" value="{{ csrf_token('connector') }}">
-                                <label class="form-label small text-muted mb-1" for="feed-{{ c.type.value }}">URL iCal feedu obsazenosti</label>
-                                <div class="input-group input-group-sm">
-                                    <input type="url" class="form-control font-monospace" id="feed-{{ c.type.value }}"
-                                           name="feed_url" value="{{ c.feedUrl }}" placeholder="https://…/calendar.ics">
-                                    <button type="submit" class="btn btn-outline-secondary">Uložit feed</button>
+                                <button type="submit" class="btn btn-sm btn-outline-secondary" {{ c.configured ? '' : 'disabled' }}>Otestovat</button>
+                            </form>
+                            <form method="post" action="{{ path('connector_toggle', { type: c.type.value }) }}">
+                                <input type="hidden" name="_token" value="{{ csrf_token('connector') }}">
+                                <div class="form-check form-switch m-0">
+                                    <input class="form-check-input" type="checkbox" role="switch"
+                                           id="connector-{{ c.type.value }}"
+                                           {{ c.enabled ? 'checked' : '' }}
+                                           onchange="this.form.submit()">
+                                    <label class="form-check-label small" for="connector-{{ c.type.value }}">Zapnuto</label>
                                 </div>
                             </form>
-                        {% endif %}
+                        </div>
                     </div>
-                {% endfor %}
-            </div>
-            <div class="card-footer py-2 text-muted small">
-                Vypnutý konektor pollery přeskočí. „Otestovat" jen ověří přístup, data nemění.
-                URL iCal feedu najdete v extranetu OTA v sekci exportu kalendáře — obsazenost
-                se z něj načte i bez MotoPressu.
+                    {% if c.supportsIcalImport %}
+                        <form method="post" action="{{ path('connector_feed', { type: c.type.value }) }}" class="mt-2">
+                            <input type="hidden" name="_token" value="{{ csrf_token('connector') }}">
+                            <label class="form-label small text-muted mb-1" for="feed-{{ c.type.value }}">URL iCal feedu obsazenosti</label>
+                            <div class="input-group input-group-sm">
+                                <input type="url" class="form-control font-monospace" id="feed-{{ c.type.value }}"
+                                       name="feed_url" value="{{ c.feedUrl }}" placeholder="https://…/calendar.ics">
+                                <button type="submit" class="btn btn-outline-secondary">Uložit feed</button>
+                            </div>
+                        </form>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+        <div class="card-footer py-2 text-muted small">
+            Vypnutý konektor pollery přeskočí. „Otestovat" jen ověří přístup, data nemění.
+            URL iCal feedu najdete v extranetu OTA v sekci exportu kalendáře — obsazenost
+            se z něj načte i bez MotoPressu.
+        </div>
+    </div>
+
+    {{ form_start(form) }}
+        <div class="card mb-3">
+            <div class="card-header py-2 fw-semibold">IMAP — automatizační schránka</div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">{{ form_row(form.imapHost) }}</div>
+                    <div class="col-md-3">{{ form_row(form.imapPort) }}</div>
+                    <div class="col-md-3">{{ form_row(form.imapEncryption) }}</div>
+                </div>
+                <div class="row g-3 mt-0">
+                    <div class="col-md-6">{{ form_row(form.imapUsername) }}</div>
+                    <div class="col-md-6">{{ form_row(form.imapFolder) }}</div>
+                </div>
+                <div class="mb-1">
+                    {{ form_row(form.imapPassword) }}
+                    {% if secretsSet.imapPassword %}<span class="badge text-bg-success">heslo nastaveno</span>{% else %}<span class="badge text-bg-secondary">heslo nenastaveno</span>{% endif %}
+                </div>
             </div>
         </div>
 
-        {{ form_start(form) }}
-            <div class="card mb-3">
-                <div class="card-header py-2 fw-semibold">IMAP — automatizační schránka</div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-6">{{ form_row(form.imapHost) }}</div>
-                        <div class="col-md-3">{{ form_row(form.imapPort) }}</div>
-                        <div class="col-md-3">{{ form_row(form.imapEncryption) }}</div>
-                    </div>
-                    <div class="row g-3 mt-0">
-                        <div class="col-md-6">{{ form_row(form.imapUsername) }}</div>
-                        <div class="col-md-6">{{ form_row(form.imapFolder) }}</div>
-                    </div>
-                    <div class="mb-1">
-                        {{ form_row(form.imapPassword) }}
-                        {% if secretsSet.imapPassword %}<span class="badge text-bg-success">heslo nastaveno</span>{% else %}<span class="badge text-bg-secondary">heslo nenastaveno</span>{% endif %}
-                    </div>
+        <div class="card mb-3">
+            <div class="card-header py-2 fw-semibold">MotoPress — REST API a chování</div>
+            <div class="card-body">
+                <div class="mb-3">{{ form_row(form.motopressBaseUrl) }}</div>
+                <div class="mb-1">
+                    {{ form_row(form.motopressConsumerKey) }}
+                    {% if secretsSet.motopressConsumerKey %}<span class="badge text-bg-success">nastaveno</span>{% else %}<span class="badge text-bg-secondary">nenastaveno</span>{% endif %}
                 </div>
-            </div>
-
-            <div class="card mb-3">
-                <div class="card-header py-2 fw-semibold">MotoPress — REST API a chování</div>
-                <div class="card-body">
-                    <div class="mb-3">{{ form_row(form.motopressBaseUrl) }}</div>
-                    <div class="mb-1">
-                        {{ form_row(form.motopressConsumerKey) }}
-                        {% if secretsSet.motopressConsumerKey %}<span class="badge text-bg-success">nastaveno</span>{% else %}<span class="badge text-bg-secondary">nenastaveno</span>{% endif %}
-                    </div>
-                    <div class="mb-1">
-                        {{ form_row(form.motopressConsumerSecret) }}
-                        {% if secretsSet.motopressConsumerSecret %}<span class="badge text-bg-success">nastaveno</span>{% else %}<span class="badge text-bg-secondary">nenastaveno</span>{% endif %}
-                    </div>
-                    <hr>
-                    <p class="text-muted small mb-3">
-                        Které MotoPress služby znamenají psa nebo dětskou postýlku a jestli
-                        posílat potvrzené platby zpět do MotoPressu. Import zapnete nahoře
-                        v <em>Konektorech</em>.
-                    </p>
-                    <div class="row g-3">
-                        <div class="col-md-6">{{ form_row(form.petServiceIds) }}</div>
-                        <div class="col-md-6">{{ form_row(form.babyCotServiceIds) }}</div>
-                    </div>
-                    <div class="mt-2">{{ form_row(form.pushPayments) }}</div>
+                <div class="mb-1">
+                    {{ form_row(form.motopressConsumerSecret) }}
+                    {% if secretsSet.motopressConsumerSecret %}<span class="badge text-bg-success">nastaveno</span>{% else %}<span class="badge text-bg-secondary">nenastaveno</span>{% endif %}
                 </div>
-            </div>
-
-            <div class="card mb-3">
-                <div class="card-header py-2 fw-semibold">SMTP — odchozí e-maily</div>
-                <div class="card-body">
-                    <p class="text-muted small mb-3">
-                        Odesílání zpráv hostům, faktur a notifikací. Bez vyplnění se použije
-                        <code>MAILER_DSN</code> z prostředí (na produkci default <code>null://null</code> = neodesílá).
-                    </p>
-                    <div class="row g-3">
-                        <div class="col-md-6">{{ form_row(form.smtpHost) }}</div>
-                        <div class="col-md-3">{{ form_row(form.smtpPort) }}</div>
-                        <div class="col-md-3">{{ form_row(form.smtpEncryption) }}</div>
-                    </div>
-                    <div class="row g-3 mt-0">
-                        <div class="col-md-6">{{ form_row(form.smtpUsername) }}</div>
-                        <div class="col-md-6">
-                            {{ form_row(form.smtpPassword) }}
-                            {% if secretsSet.smtpPassword %}<span class="badge text-bg-success">heslo nastaveno</span>{% else %}<span class="badge text-bg-secondary">heslo nenastaveno</span>{% endif %}
-                        </div>
-                    </div>
+                <hr>
+                <p class="text-muted small mb-3">
+                    Které MotoPress služby znamenají psa nebo dětskou postýlku a jestli
+                    posílat potvrzené platby zpět do MotoPressu. Import zapnete nahoře
+                    v <em>Konektorech</em>.
+                </p>
+                <div class="row g-3">
+                    <div class="col-md-6">{{ form_row(form.petServiceIds) }}</div>
+                    <div class="col-md-6">{{ form_row(form.babyCotServiceIds) }}</div>
                 </div>
+                <div class="mt-2">{{ form_row(form.pushPayments) }}</div>
             </div>
-
-            <div class="d-flex justify-content-end">
-                <button type="submit" class="btn btn-primary">Uložit</button>
-            </div>
-        {{ form_end(form) }}
+        </div>
 
         <div class="card mb-3">
-            <div class="card-header py-2 fw-semibold">Export obsazenosti (iCal)</div>
+            <div class="card-header py-2 fw-semibold">SMTP — odchozí e-maily</div>
             <div class="card-body">
                 <p class="text-muted small mb-3">
-                    Adresa kalendáře se všemi rezervacemi jako obsazenými termíny. Vlož ji
-                    v Booking i Airbnb extranetu do <em>importu kalendáře</em> — OTA pak
-                    neprodá termín obsazený jiným kanálem, webem ani přímou rezervací.
-                    Ven jde jen „obsazeno", žádné údaje hosta.
+                    Odesílání zpráv hostům, faktur a notifikací. Bez vyplnění se použije
+                    <code>MAILER_DSN</code> z prostředí (na produkci default <code>null://null</code> = neodesílá).
                 </p>
-                <div class="input-group">
-                    <input type="text" class="form-control font-monospace small" id="ical-feed-url" value="{{ icalFeedUrl }}" readonly>
-                    <button type="button" class="btn btn-outline-secondary" onclick="navigator.clipboard.writeText(document.getElementById('ical-feed-url').value)">Kopírovat</button>
+                <div class="row g-3">
+                    <div class="col-md-6">{{ form_row(form.smtpHost) }}</div>
+                    <div class="col-md-3">{{ form_row(form.smtpPort) }}</div>
+                    <div class="col-md-3">{{ form_row(form.smtpEncryption) }}</div>
                 </div>
+                <div class="row g-3 mt-0">
+                    <div class="col-md-6">{{ form_row(form.smtpUsername) }}</div>
+                    <div class="col-md-6">
+                        {{ form_row(form.smtpPassword) }}
+                        {% if secretsSet.smtpPassword %}<span class="badge text-bg-success">heslo nastaveno</span>{% else %}<span class="badge text-bg-secondary">heslo nenastaveno</span>{% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-end">
+            <button type="submit" class="btn btn-primary">Uložit</button>
+        </div>
+    {{ form_end(form) }}
+
+    <div class="card mb-3">
+        <div class="card-header py-2 fw-semibold">Export obsazenosti (iCal)</div>
+        <div class="card-body">
+            <p class="text-muted small mb-3">
+                Adresa kalendáře se všemi rezervacemi jako obsazenými termíny. Vlož ji
+                v Booking i Airbnb extranetu do <em>importu kalendáře</em> — OTA pak
+                neprodá termín obsazený jiným kanálem, webem ani přímou rezervací.
+                Ven jde jen „obsazeno", žádné údaje hosta.
+            </p>
+            <div class="input-group">
+                <input type="text" class="form-control font-monospace small" id="ical-feed-url" value="{{ icalFeedUrl }}" readonly>
+                <button type="button" class="btn btn-outline-secondary" onclick="navigator.clipboard.writeText(document.getElementById('ical-feed-url').value)">Kopírovat</button>
             </div>
         </div>
     </div>

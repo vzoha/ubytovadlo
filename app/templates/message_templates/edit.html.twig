@@ -1,14 +1,14 @@
-{% extends 'base.html.twig' %}
+{% extends 'settings/base.html.twig' %}
 
 {% import '_partials/markdown_editor.html.twig' as md %}
 
 {% block title %}Šablona — {{ kind.label }}{% endblock %}
 
-{% block body %}
-    <h1 class="h3 mb-3">Nastavení</h1>
+{% block settings_active %}messages{% endblock %}
 
-    {{ include('settings/_nav.html.twig', { active: 'messages' }) }}
+{% block settings_content_class %}col-lg-9 col-xl-10{% endblock %}
 
+{% block settings_content %}
     <div class="d-flex align-items-center mb-3">
         <a href="{{ path('message_templates_index') }}" class="btn btn-sm btn-outline-secondary me-3">← Zpět</a>
         <div>

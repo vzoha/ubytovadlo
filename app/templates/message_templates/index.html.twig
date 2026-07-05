@@ -1,12 +1,10 @@
-{% extends 'base.html.twig' %}
+{% extends 'settings/base.html.twig' %}
 
 {% block title %}Nastavení — šablony zpráv{% endblock %}
 
-{% block body %}
-    <h1 class="h3 mb-3">Nastavení</h1>
+{% block settings_active %}messages{% endblock %}
 
-    {{ include('settings/_nav.html.twig', { active: 'messages' }) }}
-
+{% block settings_content %}
     <h2 class="h5 mb-2">Šablony zpráv hostům</h2>
     <p class="text-muted small">
         Texty jednotlivých e-mailů hostům. Společný vzhled (logo, barvy, patička)
@@ -14,20 +12,18 @@
         jako <code>{{ '{{ guest_first_name }}' }}</code>.
     </p>
 
-    <div class="col-lg-8">
-        <div class="list-group">
-            {% for row in rows %}
-                <a class="list-group-item list-group-item-action d-flex justify-content-between align-items-start"
-                   href="{{ path('message_templates_edit', { kind: row.kind.value }) }}">
-                    <div class="me-3">
-                        <div class="fw-semibold">{{ row.kind.label }}</div>
-                        <div class="small text-muted">{{ row.kind.description }}</div>
-                    </div>
-                    <span class="badge rounded-pill bg-{{ row.template.enabled ? 'success' : 'secondary' }} flex-shrink-0">
-                        {{ row.template.enabled ? 'Odesílá se' : 'Vypnuto' }}
-                    </span>
-                </a>
-            {% endfor %}
-        </div>
+    <div class="list-group">
+        {% for row in rows %}
+            <a class="list-group-item list-group-item-action d-flex justify-content-between align-items-start"
+               href="{{ path('message_templates_edit', { kind: row.kind.value }) }}">
+                <div class="me-3">
+                    <div class="fw-semibold">{{ row.kind.label }}</div>
+                    <div class="small text-muted">{{ row.kind.description }}</div>
+                </div>
+                <span class="badge rounded-pill bg-{{ row.template.enabled ? 'success' : 'secondary' }} flex-shrink-0">
+                    {{ row.template.enabled ? 'Odesílá se' : 'Vypnuto' }}
+                </span>
+            </a>
+        {% endfor %}
     </div>
 {% endblock %}
