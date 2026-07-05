@@ -190,8 +190,14 @@ Obecné / Fakturace / Připojení) a uloží do databáze: dodavatel na faktuře
 tyhle hodnoty nepatří.
 
 > **Migrace ze starší instance**, která měla config v `.env.local` (IMAP_*,
-> MOTOPRESS_*, INVOICE_ISSUER_* …): po nasazení tyhle hodnoty jednou přepiš do UI
-> (uloží se do DB), pak je z `.env.local` smaž — už se nečtou.
+> MOTOPRESS_*, INVOICE_ISSUER_* …): po nasazení (a s vyplněným `APP_CREDENTIALS_KEY`)
+> spusť jednorázově
+> ```sh
+> php bin/console app:config:import-env --dry-run --env=prod   # náhled
+> php bin/console app:config:import-env --env=prod             # přenos do DB
+> ```
+> Přenese identitu, fakturaci a přístupy z env do databáze (šifrovaně). Pak proměnné
+> z `.env.local` smaž, `composer dump-env prod` + `cache:clear` — už se nečtou.
 
 ---
 
