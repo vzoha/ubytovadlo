@@ -6,6 +6,8 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ## [Unreleased]
 
+## [0.7.0] — 2026-07-05
+
 ### Přidáno
 
 - **Logo instance se nahrává v Obecném nastavení.** Nahraješ PNG nebo JPG (max 2 MB),
@@ -419,6 +421,7 @@ iniciální snapshot vyčleněný z interního vývoje (bez přenosu git histori
 - iCal sanity sync (kontrola obsazenosti, detekce Airbnb storen) chybí.
 - Cílí zatím na jednu ubytovací jednotku (multi-unit je v plánu).
 
+[0.7.0]: https://github.com/vzoha/ubytovadlo/releases/tag/v0.7.0
 [0.6.0]: https://github.com/vzoha/ubytovadlo/releases/tag/v0.6.0
 [0.5.0]: https://github.com/vzoha/ubytovadlo/releases/tag/v0.5.0
 [0.4.0]: https://github.com/vzoha/ubytovadlo/releases/tag/v0.4.0
