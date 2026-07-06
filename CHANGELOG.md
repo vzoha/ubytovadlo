@@ -6,6 +6,15 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ## [Unreleased]
 
+### Přidáno
+
+- **Rezervace z vlastního webu naskočí okamžitě.** WordPress po potvrzení rezervace
+  ťukne na aplikaci a ta si ji hned dotáhne — bez čekání na pravidelnou kontrolu.
+  Adresu pro toto propojení najdeš v **Nastavení → Připojení → Okamžitý import z webu**
+  (kopírování i vygenerování nové), do WordPressu se vloží přiložené rozšíření
+  `integrations/wordpress/ubytovadlo-motopress-webhook.php`. Pravidelná kontrola
+  běží dál jako záloha, kdyby ťuknutí nedorazilo.
+
 ## [0.7.0] — 2026-07-05
 
 ### Přidáno

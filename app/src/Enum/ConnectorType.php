@@ -80,6 +80,16 @@ enum ConnectorType: string
         return array_values(array_filter(self::cases(), static fn (self $t): bool => $t->supportsIcalImport()));
     }
 
+    /**
+     * Umí zdroj poslat push (webhook), takže rezervace naskočí hned, ne až s pollem?
+     * Jen web přes MotoPress — WordPress volá náš endpoint z hooku po potvrzení
+     * rezervace. OTA (Booking/Airbnb) push neumí, chodí přes IMAP a iCal.
+     */
+    public function supportsWebhook(): bool
+    {
+        return $this === self::MOTOPRESS;
+    }
+
     /** Jezdí přes automatizační schránku (IMAP) — trigger e-maily / platby. */
     public function usesImap(): bool
     {

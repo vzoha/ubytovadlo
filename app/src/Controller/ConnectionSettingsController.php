@@ -14,6 +14,7 @@ namespace App\Controller;
 use App\Connector\ConnectorManager;
 use App\Credential\CredentialCipher;
 use App\Credential\CredentialProvider;
+use App\Enum\ConnectorType;
 use App\Form\ConnectionSettingsType;
 use App\Ical\IcalFeedToken;
 use App\MotoPress\MotoPressSettings;
@@ -80,12 +81,19 @@ class ConnectionSettingsController extends AbstractController
             ['token' => $this->icalFeedToken->getOrCreate()],
             UrlGeneratorInterface::ABSOLUTE_URL,
         );
+        $motopressWebhookUrl = $this->generateUrl(
+            'motopress_webhook',
+            ['token' => $this->connectors->getOrCreateWebhookToken(ConnectorType::MOTOPRESS)],
+            UrlGeneratorInterface::ABSOLUTE_URL,
+        );
 
         return $this->render('connection_settings/edit.html.twig', [
             'form' => $form->createView(),
             'secretsSet' => $state['secretsSet'],
             'cipherReady' => $this->cipher->isReady(),
             'icalFeedUrl' => $icalFeedUrl,
+            'motopressWebhookUrl' => $motopressWebhookUrl,
+            'motopressType' => ConnectorType::MOTOPRESS->value,
             'connectors' => $this->connectors->health(),
         ]);
     }

@@ -27,6 +27,9 @@ class ConnectorManager
     /** Klíč v Connector::config, pod kterým žije URL iCal feedu obsazenosti. */
     public const ICAL_FEED_URL_KEY = 'ical_import_url';
 
+    /** Klíč v Connector::config s tajným tokenem push webhooku (neuhodnutelná část URL). */
+    public const WEBHOOK_TOKEN_KEY = 'webhook_token';
+
     public function __construct(
         private readonly ConnectorRepository $connectors,
         private readonly CredentialProvider $credentials,
@@ -87,6 +90,44 @@ class ConnectorManager
     {
         $this->connectors->getOrCreate($type)->setConfigValue(self::ICAL_FEED_URL_KEY, $url);
         $this->em->flush();
+    }
+
+    /**
+     * Token push webhooku; při prvním použití ho vygeneruje a uloží (64 hex = 256 bitů).
+     * Token je jediné tajemství URL, takže ho zakládáme líně — analogicky iCal feedu.
+     */
+    public function getOrCreateWebhookToken(ConnectorType $type): string
+    {
+        $connector = $this->connectors->getOrCreate($type);
+        $token = $connector->getConfigValue(self::WEBHOOK_TOKEN_KEY);
+        if ($token !== null) {
+            return $token;
+        }
+
+        return $this->storeWebhookToken($connector);
+    }
+
+    /** Vygeneruje nový token (zneplatní starou URL) a vrátí ho. */
+    public function regenerateWebhookToken(ConnectorType $type): string
+    {
+        return $this->storeWebhookToken($this->connectors->getOrCreate($type));
+    }
+
+    /** Porovnání v konstantním čase — token je jediné tajemství webhooku. */
+    public function webhookTokenMatches(ConnectorType $type, string $candidate): bool
+    {
+        $token = $this->connectors->findOneBy(['type' => $type])?->getConfigValue(self::WEBHOOK_TOKEN_KEY);
+
+        return $token !== null && hash_equals($token, $candidate);
+    }
+
+    private function storeWebhookToken(Connector $connector): string
+    {
+        $token = bin2hex(random_bytes(32));
+        $connector->setConfigValue(self::WEBHOOK_TOKEN_KEY, $token);
+        $this->em->flush();
+
+        return $token;
     }
 
     /**

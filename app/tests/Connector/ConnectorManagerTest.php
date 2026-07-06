@@ -76,6 +76,38 @@ final class ConnectorManagerTest extends KernelTestCase
         );
     }
 
+    public function testWebhookTokenIsGeneratedOnceAndStableAcrossCalls(): void
+    {
+        $token = $this->manager->getOrCreateWebhookToken(ConnectorType::MOTOPRESS);
+        self::assertMatchesRegularExpression('/^[a-f0-9]{64}$/', $token);
+
+        $this->em->clear();
+        // Podruhé se nesmí přegenerovat — stejný token přežije reload.
+        self::assertSame($token, $this->manager->getOrCreateWebhookToken(ConnectorType::MOTOPRESS));
+    }
+
+    public function testWebhookTokenMatchesOnlyStoredValue(): void
+    {
+        $token = $this->manager->getOrCreateWebhookToken(ConnectorType::MOTOPRESS);
+        $this->em->clear();
+
+        self::assertTrue($this->manager->webhookTokenMatches(ConnectorType::MOTOPRESS, $token));
+        self::assertFalse($this->manager->webhookTokenMatches(ConnectorType::MOTOPRESS, str_repeat('0', 64)));
+        // Bez uloženého tokenu neprojde nic (chybějící konektor).
+        self::assertFalse($this->manager->webhookTokenMatches(ConnectorType::BOOKING, $token));
+    }
+
+    public function testRegenerateWebhookTokenInvalidatesOldOne(): void
+    {
+        $old = $this->manager->getOrCreateWebhookToken(ConnectorType::MOTOPRESS);
+        $new = $this->manager->regenerateWebhookToken(ConnectorType::MOTOPRESS);
+
+        self::assertNotSame($old, $new);
+        $this->em->clear();
+        self::assertFalse($this->manager->webhookTokenMatches(ConnectorType::MOTOPRESS, $old));
+        self::assertTrue($this->manager->webhookTokenMatches(ConnectorType::MOTOPRESS, $new));
+    }
+
     public function testHealthReturnsAllTypesInEnumOrder(): void
     {
         $health = $this->manager->health();

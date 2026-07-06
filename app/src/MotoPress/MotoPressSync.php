@@ -22,6 +22,11 @@ use Psr\Log\LoggerInterface;
 
 class MotoPressSync
 {
+    private const CREATED = 'created';
+    private const UPDATED = 'updated';
+    private const UNCHANGED = 'unchanged';
+    private const SKIPPED = 'skipped';
+
     public function __construct(
         private readonly MotoPressClient $client,
         private readonly MotoPressBookingClassifier $classifier,
@@ -38,51 +43,37 @@ class MotoPressSync
      */
     public function sync(array $query = [], bool $dryRun = false): SyncResult
     {
-        $bookings = $this->client->listBookings($query);
+        return $this->syncBatch($this->client->listBookings($query), $dryRun);
+    }
+
+    /**
+     * Import jediné rezervace podle MotoPress ID — trigger webhooku (push z WP),
+     * aby web rezervace naskočila hned, ne až s dalším pollem. Data se berou
+     * autoritativně z REST API (WP posílá jen ID). Idempotentní: běží stejnou
+     * cestou jako full sync, takže se s cronovým pollem nebije.
+     */
+    public function syncById(int $id, bool $dryRun = false): SyncResult
+    {
+        return $this->syncBatch([$this->client->getBooking($id)], $dryRun);
+    }
+
+    /**
+     * @param list<array<string, mixed>> $bookings
+     */
+    private function syncBatch(array $bookings, bool $dryRun): SyncResult
+    {
         $created = 0;
         $updated = 0;
         $unchanged = 0;
         $skipped = 0;
 
         foreach ($bookings as $data) {
-            $mphbId = isset($data['id']) ? (string) $data['id'] : null;
-            if ($mphbId === null || $mphbId === '') {
-                $this->logger->warning('MotoPress booking bez id, preskakuji', ['data' => $data]);
-                $skipped++;
-                continue;
-            }
-
-            $checkIn = $this->parseCheckIn($data);
-            if ($checkIn === null) {
-                $this->logger->warning('MotoPress booking bez check_in_date, preskakuji', ['mphb_id' => $mphbId]);
-                $skipped++;
-                continue;
-            }
-
-            $classified = $this->classifier->classify($data);
-
-            $reservation = $this->resolve($classified, $mphbId, $checkIn, $data);
-            if ($reservation === null) {
-                $skipped++;
-                continue;
-            }
-
-            $isNew = $reservation->getId() === null;
-            $before = $isNew ? null : $this->snapshot($reservation);
-
-            $this->apply($reservation, $classified, $mphbId, $data, $isNew);
-
-            if ($isNew) {
-                if (!$dryRun) {
-                    $this->em->persist($reservation);
-                    $this->notifier->notify(OwnerNotificationType::NEW_RESERVATION, $reservation);
-                }
-                $created++;
-            } elseif ($before !== $this->snapshot($reservation)) {
-                $updated++;
-            } else {
-                $unchanged++;
-            }
+            match ($this->syncBooking($data, $dryRun)) {
+                self::CREATED => $created++,
+                self::UPDATED => $updated++,
+                self::UNCHANGED => $unchanged++,
+                self::SKIPPED => $skipped++,
+            };
         }
 
         if (!$dryRun) {
@@ -90,6 +81,56 @@ class MotoPressSync
         }
 
         return new SyncResult($created, $updated, $unchanged, count($bookings), $skipped);
+    }
+
+    /**
+     * Zpracuje jednu MotoPress rezervaci (upsert) a vrátí, jak dopadla.
+     *
+     * @param array<string, mixed> $data
+     *
+     * @return self::CREATED|self::UPDATED|self::UNCHANGED|self::SKIPPED
+     */
+    private function syncBooking(array $data, bool $dryRun): string
+    {
+        $mphbId = isset($data['id']) ? (string) $data['id'] : null;
+        if ($mphbId === null || $mphbId === '') {
+            $this->logger->warning('MotoPress booking bez id, preskakuji', ['data' => $data]);
+
+            return self::SKIPPED;
+        }
+
+        $checkIn = $this->parseCheckIn($data);
+        if ($checkIn === null) {
+            $this->logger->warning('MotoPress booking bez check_in_date, preskakuji', ['mphb_id' => $mphbId]);
+
+            return self::SKIPPED;
+        }
+
+        $classified = $this->classifier->classify($data);
+
+        $reservation = $this->resolve($classified, $mphbId, $checkIn, $data);
+        if ($reservation === null) {
+            return self::SKIPPED;
+        }
+
+        $isNew = $reservation->getId() === null;
+        $before = $isNew ? null : $this->snapshot($reservation);
+
+        $this->apply($reservation, $classified, $mphbId, $data, $isNew);
+
+        if ($isNew) {
+            if (!$dryRun) {
+                $this->em->persist($reservation);
+                $this->notifier->notify(OwnerNotificationType::NEW_RESERVATION, $reservation);
+            }
+
+            return self::CREATED;
+        }
+        if ($before !== $this->snapshot($reservation)) {
+            return self::UPDATED;
+        }
+
+        return self::UNCHANGED;
     }
 
     /**

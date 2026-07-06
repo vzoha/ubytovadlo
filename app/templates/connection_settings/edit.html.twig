@@ -172,4 +172,25 @@
             </div>
         </div>
     </div>
+
+    <div class="card mb-3">
+        <div class="card-header py-2 fw-semibold">Okamžitý import z webu</div>
+        <div class="card-body">
+            <p class="text-muted small mb-3">
+                Bez tohohle naskočí nová rezervace z webu až s pravidelnou kontrolou (á 15 min).
+                Vložte tuhle adresu do WordPressu (rozšíření <code>ubytovadlo-motopress-webhook</code>)
+                a web po každé potvrzené rezervaci sám ťukne — objeví se tu během pár vteřin.
+                Adresa je tajná: kdo ji zná, může spustit import. Sdílejte ji jen s vlastním webem.
+            </p>
+            <div class="input-group">
+                <input type="text" class="form-control font-monospace small" id="motopress-webhook-url" value="{{ motopressWebhookUrl }}" readonly>
+                <button type="button" class="btn btn-outline-secondary" onclick="navigator.clipboard.writeText(document.getElementById('motopress-webhook-url').value)">Kopírovat</button>
+            </div>
+            <form method="post" action="{{ path('connector_webhook_regenerate', { type: motopressType }) }}" class="mt-2"
+                  onsubmit="return confirm('Vygenerovat novou adresu? Ta stávající hned přestane fungovat, dokud novou nevložíte do WordPressu.')">
+                <input type="hidden" name="_token" value="{{ csrf_token('connector') }}">
+                <button type="submit" class="btn btn-sm btn-outline-danger">Vygenerovat novou adresu</button>
+            </form>
+        </div>
+    </div>
 {% endblock %}

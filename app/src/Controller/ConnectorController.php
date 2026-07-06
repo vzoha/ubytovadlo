@@ -57,6 +57,20 @@ class ConnectorController extends AbstractController
         return $this->redirectToRoute('connection_settings_edit');
     }
 
+    #[Route('/nastaveni/konektory/{type}/webhook/obnovit', name: 'connector_webhook_regenerate', methods: ['POST'])]
+    public function regenerateWebhook(string $type, Request $request): Response
+    {
+        $connector = $this->resolve($type, $request);
+        if (!$connector->supportsWebhook()) {
+            throw $this->createNotFoundException();
+        }
+
+        $this->manager->regenerateWebhookToken($connector);
+        $this->addFlash('success', 'Adresa pro okamžitý import se změnila — vložte novou do WordPressu, jinak přestane chodit.');
+
+        return $this->redirectToRoute('connection_settings_edit');
+    }
+
     #[Route('/nastaveni/konektory/{type}/test', name: 'connector_test', methods: ['POST'])]
     public function test(string $type, Request $request): Response
     {
