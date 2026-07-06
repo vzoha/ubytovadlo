@@ -6,6 +6,13 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ## [Unreleased]
 
+### Opraveno
+
+- **Odchozí HTTP funguje i na hostingu bez `curl_multi_exec`.** Volání ven
+  (import z MotoPressu přes webhook, kurzy ČNB, ARES, iCal feedy) používají
+  stream-based HTTP klient, takže projdou i tam, kde je ve webovém PHP zakázaná
+  funkce `curl_multi_exec`.
+
 ### Přidáno
 
 - **Rezervace z vlastního webu naskočí okamžitě.** WordPress po potvrzení rezervace

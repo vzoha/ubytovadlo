@@ -35,5 +35,14 @@ services:
                 html_input: escape
                 allow_unsafe_links: false
 
+    # Sdílený hosting má ve web SAPI v disable_functions curl_multi_exec →
+    # Symfony CurlHttpClient tam spadne ("Call to undefined function
+    # curl_multi_exec"). Přepíšeme výchozí http_client na stream-based
+    # NativeHttpClient, ať odchozí HTTP (MotoPress webhook import, ČNB kurzy, ARES,
+    # iCal feedy) jede i z webu, ne jen z CLI (kde bývá curl_multi povolený).
+    # HttpClientInterface je na http_client aliasovaný frameworkem → platí všude.
+    http_client:
+        class: Symfony\Component\HttpClient\NativeHttpClient
+
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
