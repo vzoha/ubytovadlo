@@ -15,6 +15,14 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Přidáno
 
+- **Žádost o zálohu a potvrzení rezervace posílá aplikace sama.** Po objednávce
+  webové/přímé rezervace se zálohou dostane host e-mail s pokyny k platbě zálohy —
+  částka, číslo účtu, variabilní symbol, splatnost a **QR kód pro rychlou platbu**.
+  Jakmile záloha dorazí (nebo ručně tlačítkem **Potvrdit a poslat hostovi** na detailu
+  rezervace), host dostane potvrzení, že rezervace platí, a stav se přepne na
+  „Potvrzeno". Obě zprávy mají editovatelnou šablonu v **Nastavení → Zprávy hostům**,
+  ve výchozím stavu vypnutou — zapneš je, až je budeš chtít odesílat. Podrobný příjezd
+  a předání klíčů nese dál zpráva před příjezdem.
 - **Rezervace z vlastního webu naskočí okamžitě.** WordPress po vytvoření i potvrzení
   rezervace ťukne na aplikaci a ta si ji hned dotáhne — bez čekání na pravidelnou kontrolu.
   Adresu pro toto propojení najdeš v **Nastavení → Připojení → Okamžitý import z webu**

@@ -15,6 +15,8 @@ use App\Entity\Reservation;
 use App\Enum\Channel;
 use App\Invoice\BalanceCalculator;
 use App\Invoice\BalanceResult;
+use App\Invoice\DepositPayment;
+use App\Invoice\DepositPaymentBuilder;
 use App\Mail\GuestVocative;
 use App\Mail\MessageVariableResolver;
 use App\Repository\AccommodationProfileRepository;
@@ -64,7 +66,59 @@ final class MessageVariableResolverTest extends TestCase
         self::assertStringContainsString('Kč', $out);
     }
 
-    private function resolver(?BalanceResult $balance): MessageVariableResolver
+    public function testDepositVariablesRenderFromDeposit(): void
+    {
+        $deposit = new DepositPayment(
+            '1000.00',
+            '1760',
+            '1861547133/0800',
+            'CZ6508000000001861547133',
+            new \DateTimeImmutable('2026-07-20'),
+            'SPD*1.0*ACC:CZ6508000000001861547133*AM:1000.00*CC:CZK*X-VS:1760',
+        );
+        $resolver = $this->resolver(null, $deposit);
+
+        $out = $resolver->render(
+            'Záloha {{ deposit_amount }}, VS {{ variable_symbol }}, účet {{ bank_account }}, do {{ deposit_due }}',
+            $this->reservation(),
+        );
+
+        self::assertStringContainsString('VS 1760', $out);
+        self::assertStringContainsString('účet 1861547133/0800', $out);
+        self::assertStringContainsString('do 20. 7. 2026', $out);
+        self::assertStringContainsString('1', $out); // částka
+        self::assertStringContainsString('Kč', $out);
+    }
+
+    public function testDepositQrEmptyWithoutDeposit(): void
+    {
+        $resolver = $this->resolver(null, null);
+
+        self::assertSame('QR: ', $resolver->render('QR: {{ deposit_qr }}', $this->reservation()));
+    }
+
+    public function testDepositQrRendersMarkdownImageForPersistedReservation(): void
+    {
+        $deposit = new DepositPayment(
+            '1000.00',
+            '1760',
+            '1861547133/0800',
+            'CZ6508000000001861547133',
+            new \DateTimeImmutable('2026-07-20'),
+            'SPD*1.0*ACC:CZ6508000000001861547133*AM:1000.00*CC:CZK*X-VS:1760',
+        );
+        $resolver = $this->resolver(null, $deposit);
+
+        $reservation = $this->reservation();
+        $reservation->setCheckinToken(str_repeat('0123456789abcdef', 4));
+        (new \ReflectionProperty(Reservation::class, 'id'))->setValue($reservation, 42);
+
+        $out = $resolver->render('{{ deposit_qr }}', $reservation);
+
+        self::assertStringContainsString('![QR platba zálohy](https://example.test/checkin/abc)', $out);
+    }
+
+    private function resolver(?BalanceResult $balance, ?DepositPayment $deposit = null): MessageVariableResolver
     {
         $profiles = $this->createStub(AccommodationProfileRepository::class);
         $profiles->method('getSingleton')->willReturn(null);
@@ -75,7 +129,10 @@ final class MessageVariableResolverTest extends TestCase
         $url = $this->createStub(UrlGeneratorInterface::class);
         $url->method('generate')->willReturn('https://example.test/checkin/abc');
 
-        return new MessageVariableResolver($profiles, $calc, $url, new GuestVocative());
+        $deposits = $this->createStub(DepositPaymentBuilder::class);
+        $deposits->method('forReservation')->willReturn($deposit);
+
+        return new MessageVariableResolver($profiles, $calc, $url, new GuestVocative(), $deposits);
     }
 
     private function reservation(): Reservation
@@ -84,6 +141,7 @@ final class MessageVariableResolverTest extends TestCase
         $r->setCheckOut(new \DateTimeImmutable('2026-04-16'));
         $r->setGuestName('Jan Novák');
         $r->setPriceTotal('6000');
+        $r->setExternalId('1760');
 
         return $r;
     }

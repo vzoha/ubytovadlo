@@ -28,7 +28,7 @@ use Symfony\Component\Mime\Email;
  * pojistka proti duplicitě). Při selhání transportu se zaloguje FAILED a vrátí —
  * volající (executor / UI) podle stavu rozhodne, neshodí celý cron běh.
  */
-final class GuestMessageSender
+class GuestMessageSender
 {
     public function __construct(
         private readonly MailerInterface $mailer,

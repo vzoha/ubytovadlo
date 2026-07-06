@@ -13,6 +13,8 @@ namespace App\Mail;
 
 use App\Entity\Reservation;
 use App\Invoice\BalanceCalculator;
+use App\Invoice\DepositPayment;
+use App\Invoice\DepositPaymentBuilder;
 use App\Repository\AccommodationProfileRepository;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
@@ -46,6 +48,11 @@ final class MessageVariableResolver
         'accommodation_address' => 'Adresa ubytování',
         'checkin_url' => 'Odkaz na online check-in',
         'invoice_number' => 'Číslo faktury',
+        'deposit_amount' => 'Výše zálohy k zaplacení',
+        'deposit_due' => 'Splatnost zálohy (datum)',
+        'bank_account' => 'Číslo účtu pro platbu',
+        'variable_symbol' => 'Variabilní symbol platby',
+        'deposit_qr' => 'QR kód pro platbu zálohy (obrázek)',
     ];
 
     private const DEFAULT_CHECK_IN_TIME = '15:00';
@@ -56,6 +63,7 @@ final class MessageVariableResolver
         private readonly BalanceCalculator $balance,
         private readonly UrlGeneratorInterface $urlGenerator,
         private readonly GuestVocative $vocative,
+        private readonly DepositPaymentBuilder $deposits,
     ) {
     }
 
@@ -90,6 +98,7 @@ final class MessageVariableResolver
     {
         $profile = $this->profiles->getSingleton();
         $balance = $this->balance->forReservation($reservation);
+        $deposit = $this->deposits->forReservation($reservation);
 
         $values = [
             'guest_name' => $reservation->getGuestName() ?? '',
@@ -114,6 +123,11 @@ final class MessageVariableResolver
             'accommodation_address' => $this->address($profile),
             'checkin_url' => $this->checkinUrl($reservation),
             'invoice_number' => '',
+            'deposit_amount' => $deposit !== null ? $this->depositAmount($deposit->amount) : '',
+            'deposit_due' => $deposit?->dueDate->format('j. n. Y') ?? '',
+            'bank_account' => $deposit !== null ? $deposit->bankAccount : '',
+            'variable_symbol' => $reservation->getPaymentVariableSymbol() ?? '',
+            'deposit_qr' => $this->depositQr($reservation, $deposit),
         ];
 
         return array_merge($values, array_intersect_key($context, self::VARIABLES));
@@ -152,6 +166,18 @@ final class MessageVariableResolver
         return $checkOut !== null ? $reservation->getCheckIn()->diff($checkOut)->days : 0;
     }
 
+    /**
+     * Výše zálohy — haléře jen když nejsou nulové (procentní záloha), ať se text
+     * shoduje s částkou v QR kódu (`AM:%.2F`) i na bankovním převodu.
+     */
+    private function depositAmount(string $amount): string
+    {
+        $value = (float) $amount;
+        $decimals = fmod($value, 1.0) === 0.0 ? 0 : 2;
+
+        return number_format($value, $decimals, ',', "\u{00a0}") . "\u{00a0}Kč";
+    }
+
     private function money(?string $amount, string $currency): string
     {
         if ($amount === null || $amount === '') {
@@ -171,6 +197,25 @@ final class MessageVariableResolver
         $cityLine = trim($profile->getPsc() . ' ' . $profile->getObec());
 
         return trim($street . ', ' . $cityLine, ', ');
+    }
+
+    /**
+     * QR platba jako Markdownový obrázek na veřejný PNG endpoint (CommonMark má
+     * html_input: escape, přímé <img> by zescapoval; obrázek se navíc servíruje
+     * z URL, protože mailoví klienti blokují data: URI). Prázdné, když zálohu nelze
+     * zaplatit QR kódem (chybí IBAN) nebo rezervace není uložená (náhled/test).
+     */
+    private function depositQr(Reservation $reservation, ?DepositPayment $deposit): string
+    {
+        $id = $reservation->getId();
+        $token = $reservation->getCheckinToken();
+        if ($deposit === null || $deposit->spayd === null || $id === null || $id <= 0 || $token === null) {
+            return '';
+        }
+
+        $url = $this->urlGenerator->generate('qr_deposit', ['token' => $token], UrlGeneratorInterface::ABSOLUTE_URL);
+
+        return sprintf('![QR platba zálohy](%s)', $url);
     }
 
     private function checkinUrl(Reservation $reservation): string

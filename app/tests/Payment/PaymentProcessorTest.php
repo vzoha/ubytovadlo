@@ -20,6 +20,8 @@ use App\Enum\BillingMode;
 use App\Enum\Channel;
 use App\Invoice\DepositConfig;
 use App\Invoice\InvoiceService;
+use App\Mail\ConfirmationResult;
+use App\Mail\ReservationConfirmation;
 use App\Payment\Event\PaymentSettledEvent;
 use App\Payment\PaymentProcessor;
 use App\Repository\InvoiceRepository;
@@ -41,6 +43,7 @@ final class PaymentProcessorTest extends TestCase
     private InvoiceService&MockObject $invoiceService;
     private ReservationActionPlanner&MockObject $planner;
     private EventDispatcherInterface&MockObject $dispatcher;
+    private ReservationConfirmation&MockObject $confirmation;
     private PaymentProcessor $processor;
     /** @var list<object> */
     private array $persisted = [];
@@ -53,6 +56,8 @@ final class PaymentProcessorTest extends TestCase
         $this->invoiceService = $this->createMock(InvoiceService::class);
         $this->planner = $this->createMock(ReservationActionPlanner::class);
         $this->dispatcher = $this->createMock(EventDispatcherInterface::class);
+        $this->confirmation = $this->createMock(ReservationConfirmation::class);
+        $this->confirmation->method('confirm')->willReturn(new ConfirmationResult(true, true, null));
 
         $this->persisted = [];
         $this->em->method('persist')->willReturnCallback(function (object $e): void {
@@ -73,6 +78,7 @@ final class PaymentProcessorTest extends TestCase
             $this->planner,
             $this->dispatcher,
             new DepositConfig($settings),
+            $this->confirmation,
         );
     }
 

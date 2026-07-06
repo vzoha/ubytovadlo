@@ -19,7 +19,7 @@ use App\Repository\MessageTemplateRepository;
  * Efektivní šablona pro daný druh zprávy: override z DB, jinak výchozí z kódu.
  * Díky tomu má čerstvá instance funkční texty bez seedování.
  */
-final class MessageTemplateProvider
+class MessageTemplateProvider
 {
     public function __construct(
         private readonly MessageTemplateRepository $templates,

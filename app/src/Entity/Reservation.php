@@ -319,6 +319,16 @@ class Reservation
         return $this;
     }
 
+    /**
+     * Variabilní symbol pro platbu zálohy hostem: MotoPress booking ID (web klasika),
+     * jinak vlastní externí kód, jinak interní ID. Číselný tvar pro banku i QR Platbu;
+     * párování příchozí platby dohledává rezervaci podle stejné hodnoty.
+     */
+    public function getPaymentVariableSymbol(): ?string
+    {
+        return $this->motopressExternalId ?? $this->externalId ?? ($this->id !== null ? (string) $this->id : null);
+    }
+
     public function getIcalUid(): ?string
     {
         return $this->icalUid;

@@ -31,6 +31,7 @@ use App\Form\ReservationManualType;
 use App\Invoice\BalanceCalculator;
 use App\Invoice\DepositConfig;
 use App\Invoice\PaymentStatusResolver;
+use App\Mail\ReservationConfirmation;
 use App\Profit\ReservationProfitCalculator;
 use App\Repository\CleaningRepository;
 use App\Repository\GuestDocumentRepository;
@@ -66,6 +67,7 @@ class ReservationController extends AbstractController
         private readonly ReservationReceiptRepository $receipts,
         private readonly PaymentStatusResolver $paymentStatusResolver,
         private readonly DepositConfig $depositConfig,
+        private readonly ReservationConfirmation $confirmation,
     ) {
     }
 
@@ -370,6 +372,26 @@ class ReservationController extends AbstractController
         $reservation->resetCheckin();
         $this->em->flush();
         $this->addFlash('success', 'Check-in znovu otevřen — host může doplnit údaje.');
+
+        return $this->redirectToRoute('reservation_detail', ['id' => $reservation->getId()]);
+    }
+
+    #[Route('/reservation/{id}/confirm', name: 'reservation_confirm', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function confirm(Reservation $reservation, Request $request): Response
+    {
+        if (!$this->isCsrfTokenValid('confirm-' . $reservation->getId(), (string) $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+
+        $result = $this->confirmation->confirm($reservation, true);
+
+        if ($result->emailSent) {
+            $this->addFlash('success', 'Rezervace potvrzena — potvrzení odesláno hostovi.');
+        } elseif ($result->statusChanged) {
+            $this->addFlash('success', 'Rezervace potvrzena. ' . ($result->skipReason ?? ''));
+        } else {
+            $this->addFlash('warning', $result->skipReason ?? 'Rezervaci se nepodařilo potvrdit.');
+        }
 
         return $this->redirectToRoute('reservation_detail', ['id' => $reservation->getId()]);
     }

@@ -20,6 +20,7 @@ use App\Enum\InvoiceType;
 use App\Enum\PaymentSource;
 use App\Invoice\DepositConfig;
 use App\Invoice\InvoiceService;
+use App\Mail\ReservationConfirmation;
 use App\Payment\Event\PaymentSettledEvent;
 use App\Repository\InvoiceRepository;
 use App\Repository\ReservationRepository;
@@ -47,6 +48,7 @@ class PaymentProcessor
         private readonly ReservationActionPlanner $planner,
         private readonly EventDispatcherInterface $dispatcher,
         private readonly DepositConfig $depositConfig,
+        private readonly ReservationConfirmation $confirmation,
     ) {
     }
 
@@ -133,6 +135,9 @@ class PaymentProcessor
 
         $this->settle($deposit, $data);
         $payment->setInvoice($deposit);
+
+        // Záloha dorazila → rezervace platí: potvrdíme ji a pošleme hostovi potvrzení.
+        $this->confirmation->confirm($reservation, false);
     }
 
     /**

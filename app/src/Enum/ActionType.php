@@ -21,6 +21,7 @@ namespace App\Enum;
  */
 enum ActionType: string
 {
+    case RESERVATION_REQUEST_MESSAGE = 'reservation_request_message';
     case PRE_ARRIVAL_MESSAGE = 'pre_arrival_message';
     case POST_STAY_MESSAGE = 'post_stay_message';
     case ISSUE_FINAL_INVOICE = 'issue_final_invoice';
@@ -32,6 +33,7 @@ enum ActionType: string
     public function label(): string
     {
         return match ($this) {
+            self::RESERVATION_REQUEST_MESSAGE => 'Žádost o zálohu',
             self::PRE_ARRIVAL_MESSAGE => 'Zpráva před příjezdem',
             self::POST_STAY_MESSAGE => 'Zpráva po pobytu',
             self::ISSUE_FINAL_INVOICE => 'Vystavit doplatkovou fakturu',
@@ -45,7 +47,7 @@ enum ActionType: string
     public function icon(): string
     {
         return match ($this) {
-            self::PRE_ARRIVAL_MESSAGE, self::POST_STAY_MESSAGE, self::CUSTOM_MESSAGE => '✉️',
+            self::RESERVATION_REQUEST_MESSAGE, self::PRE_ARRIVAL_MESSAGE, self::POST_STAY_MESSAGE, self::CUSTOM_MESSAGE => '✉️',
             self::ISSUE_FINAL_INVOICE => '🧾',
             self::BALANCE_REMINDER => '💰',
             self::UBYPORT_EXPORT => '🛂',
@@ -57,7 +59,7 @@ enum ActionType: string
     public function isGuestMessage(): bool
     {
         return match ($this) {
-            self::PRE_ARRIVAL_MESSAGE, self::POST_STAY_MESSAGE, self::CUSTOM_MESSAGE => true,
+            self::RESERVATION_REQUEST_MESSAGE, self::PRE_ARRIVAL_MESSAGE, self::POST_STAY_MESSAGE, self::CUSTOM_MESSAGE => true,
             default => false,
         };
     }

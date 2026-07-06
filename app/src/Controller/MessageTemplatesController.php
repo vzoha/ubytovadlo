@@ -29,7 +29,13 @@ use Symfony\Component\Routing\Attribute\Route;
 class MessageTemplatesController extends AbstractController
 {
     /** Ukázkové hodnoty proměnných, které neplynou z rezervace (jen pro náhled/test). */
-    private const SAMPLE_CONTEXT = ['invoice_number' => '2026012'];
+    private const SAMPLE_CONTEXT = [
+        'invoice_number' => '2026012',
+        'deposit_amount' => "1\u{00a0}000\u{00a0}Kč",
+        'deposit_due' => '20. 7. 2026',
+        'bank_account' => '1861547133/0800',
+        'variable_symbol' => '1760',
+    ];
 
     public function __construct(
         private readonly MessageTemplateProvider $templates,

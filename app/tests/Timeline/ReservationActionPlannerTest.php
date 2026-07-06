@@ -47,8 +47,9 @@ final class ReservationActionPlannerTest extends KernelTestCase
         $added = $this->planner->planFor($r);
         $this->em->flush();
 
-        // pre-arrival + post-stay + issue-final + balance-reminder
-        self::assertSame(4, $added);
+        // žádost o zálohu + pre-arrival + post-stay + issue-final + balance-reminder
+        self::assertSame(5, $added);
+        self::assertTrue($this->actions->hasOfType($r, ActionType::RESERVATION_REQUEST_MESSAGE));
         self::assertTrue($this->actions->hasOfType($r, ActionType::PRE_ARRIVAL_MESSAGE));
         self::assertTrue($this->actions->hasOfType($r, ActionType::ISSUE_FINAL_INVOICE));
         self::assertTrue($this->actions->hasOfType($r, ActionType::BALANCE_REMINDER));
@@ -67,6 +68,8 @@ final class ReservationActionPlannerTest extends KernelTestCase
 
         self::assertTrue($this->actions->hasOfType($r, ActionType::UBYPORT_EXPORT));
         self::assertFalse($this->actions->hasOfType($r, ActionType::ISSUE_FINAL_INVOICE));
+        // OTA kanál zálohu neřeší → žádná žádost o zálohu.
+        self::assertFalse($this->actions->hasOfType($r, ActionType::RESERVATION_REQUEST_MESSAGE));
     }
 
     public function testSkipsPastStay(): void

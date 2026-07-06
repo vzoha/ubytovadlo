@@ -12,7 +12,7 @@
                 {% if reservation.motopressExternalId %}· MotoPress #{{ reservation.motopressExternalId }}{% endif %}
             </div>
         </div>
-        <div>
+        <div class="text-end">
             {% set badge = {
                 needs_details: 'warning',
                 confirmed: 'success',
@@ -21,6 +21,16 @@
                 cancelled: 'dark',
             }[reservation.status.value] %}
             <span class="badge text-bg-{{ badge }} fs-6">{{ reservation.status.label }}</span>
+            {% if reservation.channel.value in ['web', 'direct'] and reservation.status.value not in ['cancelled', 'completed'] %}
+                {% set already_confirmed = reservation.status.value != 'needs_details' %}
+                <form method="post" action="{{ path('reservation_confirm', {id: reservation.id}) }}" class="mt-2"
+                      onsubmit="return confirm('Potvrdit rezervaci a poslat hostovi potvrzovací e-mail?');">
+                    <input type="hidden" name="_token" value="{{ csrf_token('confirm-' ~ reservation.id) }}">
+                    <button type="submit" class="btn btn-sm btn-outline-success">
+                        {{ already_confirmed ? 'Poslat potvrzení znovu' : 'Potvrdit a poslat hostovi' }}
+                    </button>
+                </form>
+            {% endif %}
         </div>
     </div>
 

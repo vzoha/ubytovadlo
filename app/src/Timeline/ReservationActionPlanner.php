@@ -14,6 +14,7 @@ namespace App\Timeline;
 use App\Entity\Reservation;
 use App\Entity\ReservationAction;
 use App\Enum\ActionType;
+use App\Enum\Channel;
 use App\Enum\ReservationStatus;
 use App\Invoice\DepositConfig;
 use App\Repository\ReservationActionRepository;
@@ -51,6 +52,14 @@ class ReservationActionPlanner
         $checkIn = $reservation->getCheckIn();
         $checkOut = $reservation->getCheckOut();
         $added = 0;
+
+        // Žádost o zálohu odejde hned po objednávce (nejbližší běh cronu) — jen u web/
+        // přímých rezervací s tokem, který zálohu bere (OTA si platby řeší samy).
+        // Okno platnosti hlídá odeslání (do příjezdu).
+        if (\in_array($reservation->getChannel(), [Channel::WEB, Channel::DIRECT], true)
+            && $this->depositConfig->appliesTo($reservation->getBillingMode())) {
+            $added += $this->ensure($reservation, ActionType::RESERVATION_REQUEST_MESSAGE, $reservation->getCreatedAt());
+        }
 
         $added += $this->ensure($reservation, ActionType::PRE_ARRIVAL_MESSAGE, $this->at($checkIn, '-3 days', '09:00'));
 

@@ -26,7 +26,7 @@ use Doctrine\ORM\EntityManagerInterface;
  * Záznam se jen persistuje (bez flush) — volající kontext (listener transakce /
  * controller / cron) flush zajistí sám.
  */
-final class OwnerNotifier
+class OwnerNotifier
 {
     public function __construct(
         private readonly OwnerNotificationSettingsProvider $settings,

@@ -12,13 +12,16 @@ declare(strict_types=1);
 namespace App\Timeline;
 
 use App\Entity\MessageTemplate;
+use App\Entity\Reservation;
 use App\Entity\ReservationAction;
 use App\Enum\ActionType;
 use App\Enum\GuestMessageStatus;
 use App\Enum\InvoiceType;
 use App\Enum\MessageKind;
 use App\Enum\OwnerNotificationType;
+use App\Enum\PaymentStatus;
 use App\Invoice\BalanceCalculator;
+use App\Invoice\PaymentStatusResolver;
 use App\Mail\GuestMessageSender;
 use App\Mail\MessageTemplateProvider;
 use App\Notification\OwnerNotifier;
@@ -42,6 +45,7 @@ class ReservationActionExecutor
         private readonly GuestMessageSender $sender,
         private readonly MessageTemplateProvider $templates,
         private readonly OwnerNotifier $notifier,
+        private readonly PaymentStatusResolver $paymentStatus,
     ) {
     }
 
@@ -61,12 +65,37 @@ class ReservationActionExecutor
             ),
             ActionType::BALANCE_REMINDER => $this->handleBalanceReminder($action),
             ActionType::UBYPORT_EXPORT => $this->handleUbyport($action),
+            ActionType::RESERVATION_REQUEST_MESSAGE => $this->handleDepositRequest($action, $now),
             ActionType::PRE_ARRIVAL_MESSAGE,
             ActionType::POST_STAY_MESSAGE,
             ActionType::CUSTOM_MESSAGE => $this->handleGuestMessage($action, $now),
             // Ruční připomínky (CUSTOM_REMINDER) řeší majitelka sama.
             default => false,
         };
+    }
+
+    /**
+     * Žádost o zálohu: záloha už dorazila → hotovo (host se nenaguje). Jinak jako
+     * ostatní zprávy — okno platnosti do příjezdu, ctí vypnutou šablonu i chybějící
+     * e-mail hosta.
+     */
+    private function handleDepositRequest(ReservationAction $action, \DateTimeImmutable $now): bool
+    {
+        if ($this->depositPaid($action->getReservation())) {
+            $action->markDone('Záloha uhrazena — žádost neodeslána.');
+
+            return true;
+        }
+
+        return $this->handleGuestMessage($action, $now);
+    }
+
+    /** Přišla na rezervaci alespoň část platby (typicky záloha)? */
+    private function depositPaid(Reservation $reservation): bool
+    {
+        $status = $this->paymentStatus->batch([$reservation])[(int) $reservation->getId()] ?? null;
+
+        return $status !== null && $status !== PaymentStatus::UNPAID;
     }
 
     /**
@@ -194,7 +223,7 @@ class ReservationActionExecutor
     {
         $reservation = $action->getReservation();
         $deadline = match ($action->getType()) {
-            ActionType::PRE_ARRIVAL_MESSAGE => $reservation->getCheckIn(),
+            ActionType::RESERVATION_REQUEST_MESSAGE, ActionType::PRE_ARRIVAL_MESSAGE => $reservation->getCheckIn(),
             ActionType::POST_STAY_MESSAGE => ($reservation->getCheckOut() ?? $reservation->getCheckIn())->modify('+3 days'),
             default => $action->getScheduledFor()->modify('+3 days'),
         };

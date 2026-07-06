@@ -23,6 +23,42 @@ final class MessageTemplateDefaults
 {
     /** @var array<string, array{subject: string, body: string}> */
     private const DEFAULTS = [
+        'reservation_request' => [
+            'subject' => 'Rezervace {{ variable_symbol }} — zbývá zaplatit zálohu · {{ accommodation_name }}',
+            'body' => <<<'MD'
+                Dobrý den, {{ guest_first_name_vocative }},
+
+                děkujeme za vaši rezervaci. Termín pobytu **{{ check_in }} — {{ check_out }}** pro vás držíme.
+
+                Rezervaci potvrdíme po přijetí zálohy **{{ deposit_amount }}** (odečte se z celkové ceny):
+
+                - **Číslo účtu:** {{ bank_account }}
+                - **Variabilní symbol:** {{ variable_symbol }}
+                - **Splatnost:** {{ deposit_due }}
+
+                Platbu můžete pohodlně naskenovat z QR kódu:
+
+                {{ deposit_qr }}
+
+                Jakmile záloha dorazí, pošleme vám potvrzení. Děkujeme!
+                MD,
+        ],
+        'reservation_confirmed' => [
+            'subject' => 'Rezervace potvrzena — {{ accommodation_name }}, příjezd {{ check_in }}',
+            'body' => <<<'MD'
+                Dobrý den, {{ guest_first_name_vocative }},
+
+                vaše rezervace je **potvrzená** — těšíme se na vás!
+
+                - **Příjezd:** {{ check_in }} od {{ check_in_time }}
+                - **Odjezd:** {{ check_out }} do {{ check_out_time }}
+                - **Počet nocí:** {{ nights }}
+
+                Pár dní před příjezdem vám pošleme podrobné pokyny k cestě a předání klíčů.
+
+                V případě dotazů jsme vám k dispozici.
+                MD,
+        ],
         'pre_arrival' => [
             'subject' => 'Těšíme se na vás — {{ accommodation_name }}, příjezd {{ check_in }}',
             'body' => <<<'MD'
@@ -88,7 +124,8 @@ final class MessageTemplateDefaults
 
     public static function for(MessageKind $kind): MessageTemplate
     {
-        $default = self::DEFAULTS[$kind->value];
+        $default = self::DEFAULTS[$kind->value]
+            ?? throw new \LogicException(sprintf('Chybí výchozí šablona pro druh zprávy „%s".', $kind->value));
 
         return new MessageTemplate($kind, $default['subject'], $default['body']);
     }
