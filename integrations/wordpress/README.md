@@ -3,16 +3,17 @@
 ## Okamžitý import z webu (MotoPress webhook)
 
 `ubytovadlo-motopress-webhook.php` zajistí, že rezervace z vlastního webu
-(WordPress + MotoPress Hotel Booking) naskočí do Ubytovadla **hned po potvrzení**,
-ne až s pravidelnou kontrolou přes REST API.
+(WordPress + MotoPress Hotel Booking) naskočí do Ubytovadla **hned**, ne až
+s pravidelnou kontrolou přes REST API.
 
 ### Jak to funguje
 
-Po potvrzení rezervace MotoPress spustí akci `mphb_booking_confirmed`. Plugin na ni
-zavolá webhook adresu Ubytovadla a pošle jen **ID rezervace**. Ubytovadlo si detail
-dotáhne z REST API a rezervaci upsertne stejnou cestou jako pravidelný import —
-takže se s ním nebije (je idempotentní) a slouží jako záchranná síť, kdyby ťuknutí
-nedorazilo.
+Při vytvoření rezervace (`mphb_booking_placed`) i jejím potvrzení
+(`mphb_booking_confirmed`) MotoPress spustí akci, na kterou plugin zavolá webhook
+adresu Ubytovadla a pošle jen **ID rezervace**. Ubytovadlo si detail dotáhne
+z REST API a rezervaci upsertne stejnou cestou jako pravidelný import — takže se
+s ním nebije (je idempotentní, dvojí ťuknutí nezaloží duplicitu) a slouží jako
+záchranná síť, kdyby ťuknutí nedorazilo.
 
 Žádná logika ani údaje hosta nejsou v pluginu — je to jen forwarder.
 

@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: Ubytovadlo — MotoPress webhook
- * Description: Po potvrzení rezervace v MotoPress Hotel Booking ťukne na Ubytovadlo, aby ji hned naimportovalo.
- * Version: 1.0.0
+ * Description: Po vytvoření nebo potvrzení rezervace v MotoPress Hotel Booking ťukne na Ubytovadlo, aby ji hned naimportovalo.
+ * Version: 1.1.0
  * License: LicenseRef-FSL-1.1-ALv2
  *
  * Nasazení: zkopírujte tenhle soubor do wp-content/mu-plugins/ (must-use plugins se
@@ -19,7 +19,8 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-add_action('mphb_booking_confirmed', static function ($booking): void {
+function ubytovadlo_notify_booking($booking): void
+{
     if (!defined('UBYTOVADLO_WEBHOOK_URL') || !UBYTOVADLO_WEBHOOK_URL) {
         return;
     }
@@ -38,4 +39,10 @@ add_action('mphb_booking_confirmed', static function ($booking): void {
         'headers'  => ['Content-Type' => 'application/json'],
         'body'     => wp_json_encode(['booking_id' => $bookingId]),
     ]);
-}, 10, 1);
+}
+
+// Vytvoření (placed) i potvrzení (confirmed) rezervace → import naskočí hned.
+// Když se u jedné rezervace spustí obojí, nevadí: Ubytovadlo import upsertne
+// podle MotoPress ID, duplicita nevznikne.
+add_action('mphb_booking_placed', 'ubytovadlo_notify_booking', 10, 1);
+add_action('mphb_booking_confirmed', 'ubytovadlo_notify_booking', 10, 1);
