@@ -17,8 +17,10 @@ use App\Entity\Reservation;
 use App\Entity\VatPeriod;
 use App\Enum\Channel;
 use App\Form\AirbnbStatementUploadType;
+use App\Invoice\TaxProfileConfig;
 use App\Repository\AirbnbStatementRepository;
 use App\Repository\BookingMonthlyInvoiceRepository;
+use App\Repository\InvoiceRepository;
 use App\Repository\ReservationRepository;
 use App\Repository\VatPeriodRepository;
 use App\Storage\PdfStorage;
@@ -30,6 +32,7 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\Routing\Attribute\Route;
 
 class VatController extends AbstractController
@@ -40,6 +43,8 @@ class VatController extends AbstractController
         private readonly AirbnbStatementRepository $airbnbStatements,
         private readonly VatPeriodRepository $periods,
         private readonly VatMonthCalculator $calculator,
+        private readonly InvoiceRepository $hostInvoices,
+        private readonly TaxProfileConfig $taxProfile,
         private readonly EntityManagerInterface $em,
         private readonly string $projectDir,
         private readonly PdfStorage $pdfStorage,
@@ -62,6 +67,12 @@ class VatController extends AbstractController
         foreach ($this->invoices->findAll() as $inv) {
             $months[$inv->getPeriodTo()->format('Y-m')] = true;
         }
+        // U plátce i měsíce, kde jsou jen výstupní faktury hostům (bez OTA provize).
+        if ($this->taxProfile->current()->chargesOutputVat()) {
+            foreach ($this->hostInvoices->findMonthsWithOutputVat() as $ym) {
+                $months[$ym] = true;
+            }
+        }
 
         krsort($months);
 
@@ -71,7 +82,10 @@ class VatController extends AbstractController
             $rows[] = $this->buildMonthSummary($y, $m);
         }
 
-        return $this->render('vat/list.html.twig', ['months' => $rows]);
+        return $this->render('vat/list.html.twig', [
+            'months' => $rows,
+            'taxProfile' => $this->taxProfile->current(),
+        ]);
     }
 
     #[Route('/dph/{year}-{month}', name: 'vat_detail', methods: ['GET'], requirements: ['year' => '\d{4}', 'month' => '\d{2}'])]
@@ -79,7 +93,58 @@ class VatController extends AbstractController
     {
         return $this->render('vat/detail.html.twig', [
             'summary' => $this->buildMonthSummary($year, $month),
+            'taxProfile' => $this->taxProfile->current(),
         ]);
+    }
+
+    #[Route('/dph/{year}-{month}/podklad.csv', name: 'vat_csv', methods: ['GET'], requirements: ['year' => '\d{4}', 'month' => '\d{2}'])]
+    public function csv(int $year, int $month): StreamedResponse
+    {
+        $summary = $this->calculator->summarize($year, $month);
+        $hostInvoices = $this->hostInvoices->findIssuedInMonth($year, $month);
+
+        $response = new StreamedResponse(function () use ($summary, $hostInvoices): void {
+            $out = fopen('php://output', 'wb');
+            \assert($out !== false);
+            // UTF-8 BOM — Excel jinak háže diakritiku.
+            fwrite($out, "\xEF\xBB\xBF");
+
+            fputcsv($out, ['Typ', 'Doklad', 'Datum', 'Partner', 'Základ Kč', 'DPH Kč', 'Sazba %'], ';', '"', '');
+            foreach ($hostInvoices as $inv) {
+                if ($inv->getVatAmountTotal() === null) {
+                    continue;
+                }
+                fputcsv($out, [
+                    'Výstup — faktura hostovi',
+                    $inv->getNumber(),
+                    $inv->getIssuedAt()->format('Y-m-d'),
+                    $inv->getCustomerName(),
+                    $inv->getVatBaseTotal(),
+                    $inv->getVatAmountTotal(),
+                    '12',
+                ], ';', '"', '');
+            }
+            foreach ($summary->reservations as $r) {
+                if ($r->getVatBaseCzk() === null) {
+                    continue;
+                }
+                fputcsv($out, [
+                    'Vstup — provize ' . $r->getChannel()->label(),
+                    $r->getExternalId() ?? ('rezervace ' . $r->getId()),
+                    $r->getVatDuzp()?->format('Y-m-d') ?? '',
+                    $r->getGuestName() ?? '',
+                    $r->getVatBaseCzk(),
+                    $r->getVatAmountCzk() ?? '',
+                    '21',
+                ], ';', '"', '');
+            }
+            fclose($out);
+        });
+
+        $response->headers->set('Content-Type', 'text/csv; charset=UTF-8');
+        $response->headers->set('Content-Disposition', sprintf('attachment; filename="dph-podklad-%04d-%02d.csv"', $year, $month));
+
+        return $response;
     }
 
     #[Route('/dph/{year}-{month}/airbnb-statement', name: 'vat_airbnb_upload', methods: ['GET', 'POST'], requirements: ['year' => '\d{4}', 'month' => '\d{2}'])]
@@ -248,9 +313,12 @@ class VatController extends AbstractController
         }
 
         $summary = $this->calculator->summarize($year, $month);
+        $liability = $summary->liability($this->taxProfile->current());
         $period = $this->periods->findOrCreate($year, $month);
         $period->setSumBaseCzk(number_format($summary->sumBaseCzk, 2, '.', ''));
         $period->setSumVatCzk(number_format($summary->sumVatCzk, 2, '.', ''));
+        $period->setOutputVatCzk($this->taxProfile->current()->chargesOutputVat() ? number_format($liability->outputVatCzk, 2, '.', '') : null);
+        $period->setInputDeductibleCzk($this->taxProfile->current()->chargesOutputVat() ? number_format($liability->deductibleVatCzk, 2, '.', '') : null);
         $period->setFiledAt($filedAt);
         $period->setPaidAt($paidAt);
         $period->setPaidAmountCzk($paidAmount);
@@ -275,6 +343,8 @@ class VatController extends AbstractController
      *     sumBaseCzk: float, sumVatCzk: float,
      *     bookingReservationSum: float, bookingDelta: float|null,
      *     period: VatPeriod|null,
+     *     liability: \App\Vat\VatLiability,
+     *     outputBaseCzk: float, outputVatCzk: float,
      * }
      */
     private function buildMonthSummary(int $year, int $month): array
@@ -331,6 +401,9 @@ class VatController extends AbstractController
             'airbnbDelta' => $airbnbDelta,
             'period' => $period,
             'filingDueAt' => ($period ?? new VatPeriod($year, $month))->getFilingDueAt(),
+            'liability' => $summary->liability($this->taxProfile->current()),
+            'outputBaseCzk' => $summary->outputBaseCzk,
+            'outputVatCzk' => $summary->outputVatCzk,
         ];
     }
 }

@@ -159,6 +159,81 @@ class InvoiceRepository extends ServiceEntityRepository
     }
 
     /**
+     * Součet výstupní DPH z faktur hostům vystavených v daném měsíci (plátce DPH).
+     * Bere jen faktury se snímkem DPH (vat_amount_total not null) — ty jsou vždy v CZK.
+     *
+     * @return array{base: string, vat: string} součty v CZK, scale 2
+     */
+    public function sumOutputVatByIssuedMonth(int $year, int $month): array
+    {
+        [$from, $to] = self::monthRange($year, $month);
+
+        $row = $this->createQueryBuilder('i')
+            ->select('SUM(i.vatBaseTotal) AS base', 'SUM(i.vatAmountTotal) AS vat')
+            ->andWhere('i.vatAmountTotal IS NOT NULL')
+            ->andWhere('i.issuedAt >= :from')
+            ->andWhere('i.issuedAt < :to')
+            ->setParameter('from', $from)
+            ->setParameter('to', $to)
+            ->getQuery()
+            ->getSingleResult();
+
+        return [
+            'base' => number_format((float) ($row['base'] ?? 0), 2, '.', ''),
+            'vat' => number_format((float) ($row['vat'] ?? 0), 2, '.', ''),
+        ];
+    }
+
+    /**
+     * Měsíce (klíč „Y-m"), ve kterých byla vystavena aspoň jedna faktura s výstupní DPH.
+     * Podklad pro seznam DPH období u plátce (faktury bez OTA provize).
+     *
+     * @return list<string>
+     */
+    public function findMonthsWithOutputVat(): array
+    {
+        $rows = $this->createQueryBuilder('i')
+            ->select('DISTINCT SUBSTRING(i.issuedAt, 1, 7) AS ym')
+            ->andWhere('i.vatAmountTotal IS NOT NULL')
+            ->getQuery()
+            ->getScalarResult();
+
+        return array_map(static fn (array $row): string => (string) $row['ym'], $rows);
+    }
+
+    /**
+     * Faktury hostům vystavené v daném měsíci (podklad DPH — výstupní doklady).
+     *
+     * @return Invoice[]
+     */
+    public function findIssuedInMonth(int $year, int $month): array
+    {
+        [$from, $to] = self::monthRange($year, $month);
+
+        return $this->createQueryBuilder('i')
+            ->andWhere('i.issuedAt >= :from')
+            ->andWhere('i.issuedAt < :to')
+            ->setParameter('from', $from)
+            ->setParameter('to', $to)
+            ->orderBy('i.issuedAt', 'ASC')
+            ->addOrderBy('i.seriesSequence', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Polootevřený interval měsíce [první den; první den následujícího měsíce).
+     *
+     * @return array{0: \DateTimeImmutable, 1: \DateTimeImmutable}
+     */
+    private static function monthRange(int $year, int $month): array
+    {
+        $from = new \DateTimeImmutable(sprintf('%04d-%02d-01', $year, $month));
+
+        return [$from, $from->modify('first day of next month')];
+    }
+
+    /**
      * Vrátí nejvyšší pořadové číslo v daném roce (poslední 3 cifry z čísla RRRR###).
      *
      * Z výběru jsou vyřazena starší čísla z původní fakturace (formát YYMMDD###, 9 cifer),

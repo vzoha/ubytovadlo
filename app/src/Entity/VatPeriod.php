@@ -41,6 +41,14 @@ class VatPeriod
     #[ORM\Column(type: Types::DECIMAL, precision: 12, scale: 2, options: ['default' => '0.00'])]
     private string $sumVatCzk = '0.00';
 
+    /** Výstupní DPH z faktur hostům v období (plátce; jinak null). */
+    #[ORM\Column(type: Types::DECIMAL, precision: 12, scale: 2, nullable: true)]
+    private ?string $outputVatCzk = null;
+
+    /** Odpočet DPH na vstupu v období (u plátce reverse charge z provize; jinak null). */
+    #[ORM\Column(type: Types::DECIMAL, precision: 12, scale: 2, nullable: true)]
+    private ?string $inputDeductibleCzk = null;
+
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
     private ?\DateTimeImmutable $filedAt = null;
 
@@ -99,6 +107,32 @@ class VatPeriod
     public function setSumVatCzk(string $sumVatCzk): self
     {
         $this->sumVatCzk = $sumVatCzk;
+        $this->touch();
+
+        return $this;
+    }
+
+    public function getOutputVatCzk(): ?string
+    {
+        return $this->outputVatCzk;
+    }
+
+    public function setOutputVatCzk(?string $outputVatCzk): self
+    {
+        $this->outputVatCzk = $outputVatCzk;
+        $this->touch();
+
+        return $this;
+    }
+
+    public function getInputDeductibleCzk(): ?string
+    {
+        return $this->inputDeductibleCzk;
+    }
+
+    public function setInputDeductibleCzk(?string $inputDeductibleCzk): self
+    {
+        $this->inputDeductibleCzk = $inputDeductibleCzk;
         $this->touch();
 
         return $this;

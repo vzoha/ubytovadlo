@@ -3,13 +3,16 @@
 {% block title %}DPH {{ '%04d-%02d'|format(summary.year, summary.month) }}{% endblock %}
 
 {% block body %}
+    {% set is_payer = taxProfile.value == 'vat_payer' %}
+    {% set filing_amount = is_payer ? summary.liability.totalCzk|round : summary.filingVatCzk %}
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
             <a href="{{ path('vat_list') }}" class="text-decoration-none small">← všechny měsíce</a>
             <h1 class="h3 mb-0 mt-1">DPH za {{ '%04d-%02d'|format(summary.year, summary.month) }}</h1>
         </div>
         {% set period = summary.period %}
-        <div>
+        <div class="d-flex align-items-center gap-2">
+            <a href="{{ path('vat_csv', {year: summary.year, month: '%02d'|format(summary.month)}) }}" class="btn btn-sm btn-outline-secondary">Stáhnout podklad (CSV)</a>
             {% if period and period.filedAt %}
                 <span class="badge text-bg-secondary fs-6">odesláno {{ period.filedAt|date('d. m. Y') }}</span>
                 {% if period.paidAt %}
@@ -36,18 +39,18 @@
                 </div>
                 <div class="col-md-3">
                     <label class="form-label small mb-1">Zaplaceno Kč</label>
-                    <input type="text" inputmode="decimal" name="paid_amount_czk" class="form-control" placeholder="{{ summary.filingVatCzk }}" value="{{ period ? period.paidAmountCzk ?? '' : '' }}">
+                    <input type="text" inputmode="decimal" name="paid_amount_czk" class="form-control" placeholder="{{ filing_amount }}" value="{{ period ? period.paidAmountCzk ?? '' : '' }}">
                 </div>
                 <div class="col-md-3">
                     <button type="submit" class="btn btn-primary w-100">Uložit</button>
                 </div>
             </form>
             {% if period and period.paidAmountCzk %}
-                {% set delta = (period.paidAmountCzk - summary.filingVatCzk)|round(2) %}
+                {% set delta = (period.paidAmountCzk - filing_amount)|round(2) %}
                 {% if delta|abs < 0.5 %}
-                    <div class="text-success small mt-2">✓ úhrada sedí s DPH přiznáním ({{ summary.filingVatCzk|number_format(0, ',', ' ') }} Kč)</div>
+                    <div class="text-success small mt-2">✓ úhrada sedí s DPH přiznáním ({{ filing_amount|number_format(0, ',', ' ') }} Kč)</div>
                 {% else %}
-                    <div class="text-danger small mt-2">Δ {{ delta|number_format(2, ',', ' ') }} Kč oproti přiznání ({{ summary.filingVatCzk|number_format(0, ',', ' ') }} Kč)</div>
+                    <div class="text-danger small mt-2">Δ {{ delta|number_format(2, ',', ' ') }} Kč oproti přiznání ({{ filing_amount|number_format(0, ',', ' ') }} Kč)</div>
                 {% endif %}
             {% endif %}
         </div>
@@ -87,6 +90,33 @@
             </div>
         </div>
     </div>
+
+    {% if is_payer %}
+        <div class="card mb-4">
+            <div class="card-header bg-white"><strong>Daňová povinnost</strong> <span class="text-muted small">(plátce DPH)</span></div>
+            <div class="card-body">
+                <table class="table table-sm mb-0" style="max-width: 32rem;">
+                    <tr>
+                        <td>Výstupní DPH z faktur hostům (12 %)</td>
+                        <td class="text-end">{{ summary.liability.outputVatCzk|number_format(2, ',', ' ') }} Kč</td>
+                    </tr>
+                    <tr>
+                        <td>Reverse charge z provize (21 %)</td>
+                        <td class="text-end">{{ summary.liability.reverseChargeVatCzk|number_format(2, ',', ' ') }} Kč</td>
+                    </tr>
+                    <tr>
+                        <td>Odpočet DPH na vstupu (RC)</td>
+                        <td class="text-end text-success">− {{ summary.liability.deductibleVatCzk|number_format(2, ',', ' ') }} Kč</td>
+                    </tr>
+                    <tr class="border-top">
+                        <td class="fw-bold">Daňová povinnost</td>
+                        <td class="text-end fw-bold">{{ summary.liability.totalCzk|number_format(2, ',', ' ') }} Kč</td>
+                    </tr>
+                </table>
+                <div class="small text-muted mt-2">Základ výstupu {{ summary.outputBaseCzk|number_format(2, ',', ' ') }} Kč. Reverse charge z provize má nárok na odpočet, takže se vyruší — k úhradě zbývá výstupní daň.</div>
+            </div>
+        </div>
+    {% endif %}
 
     <h2 class="h5">Doklady od OTA</h2>
     <div class="row g-3 mb-4">

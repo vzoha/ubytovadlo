@@ -13,9 +13,12 @@ namespace App\Tests\Controller;
 
 use App\Entity\BookingMonthlyInvoice;
 use App\Entity\Reservation;
+use App\Entity\Setting;
 use App\Entity\User;
 use App\Enum\Channel;
 use App\Enum\ReservationStatus;
+use App\Invoice\TaxProfileConfig;
+use App\Repository\SettingRepository;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -40,6 +43,8 @@ final class VatControllerTest extends WebTestCase
         $this->em->createQuery('DELETE FROM ' . BookingMonthlyInvoice::class . ' i')->execute();
         $this->em->createQuery('DELETE FROM ' . Reservation::class . ' r')->execute();
         $this->em->createQuery('DELETE FROM ' . User::class . ' u')->execute();
+        // Daňový profil (setting) ovlivňuje /dph — každý test startuje jako identifikovaná osoba.
+        $this->em->createQuery('DELETE FROM ' . Setting::class . ' s')->execute();
 
         $hasher = $container->get(UserPasswordHasherInterface::class);
         $user = new User('vat-test@example.com');
@@ -101,6 +106,24 @@ final class VatControllerTest extends WebTestCase
         self::assertStringContainsString('Podání + úhrada na FÚ', $body);
         // Lhůta podání: 25. května
         self::assertStringContainsString('25. 05. 2026', $body);
+    }
+
+    public function testPayerSeesLiabilityAndCsvExport(): void
+    {
+        static::getContainer()->get(SettingRepository::class)->set(TaxProfileConfig::KEY, 'vat_payer', 'test');
+        $this->em->flush();
+
+        $this->client->request('GET', '/dph');
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString('Plátce DPH', (string) $this->client->getResponse()->getContent());
+
+        $this->client->request('GET', '/dph/2026-04');
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString('Daňová povinnost', (string) $this->client->getResponse()->getContent());
+
+        $this->client->request('GET', '/dph/2026-04/podklad.csv');
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString('text/csv', (string) $this->client->getResponse()->headers->get('Content-Type'));
     }
 
     public function testDetailShowsMissingReceiptCtaForAirbnbReservation(): void

@@ -3,8 +3,13 @@
 {% block title %}DPH — měsíční přehled{% endblock %}
 
 {% block body %}
+    {% set is_payer = taxProfile.value == 'vat_payer' %}
     <h1 class="h3 mb-3">DPH — měsíční přehled</h1>
-    <p class="text-muted small">Reverse charge nad provizí OTA (identifikovaná osoba, §6h ZDPH). Sazba 21 %, bez nároku na odpočet. Lhůta podání + úhrady: 25. den následujícího měsíce.</p>
+    {% if is_payer %}
+        <p class="text-muted small">Plátce DPH. Výstupní daň z faktur hostům (ubytování 12 %) a reverse charge z provize OTA (21 %) s nárokem na odpočet — RC se vyruší, zbývá výstupní daň. Daňová povinnost = výstup + RC − odpočet. Lhůta podání + úhrady: 25. den následujícího měsíce.</p>
+    {% else %}
+        <p class="text-muted small">Reverse charge nad provizí OTA (identifikovaná osoba, §6h ZDPH). Sazba 21 %, bez nároku na odpočet. Lhůta podání + úhrady: 25. den následujícího měsíce.</p>
+    {% endif %}
 
     {% if months is empty %}
         <div class="alert alert-info">Žádné rezervace s vyplněnou provizí ani Booking faktury.</div>
@@ -15,8 +20,14 @@
                 <tr>
                     <th>Měsíc</th>
                     <th class="text-end">Rezervací</th>
-                    <th class="text-end">Základ Kč</th>
-                    <th class="text-end">DPH Kč</th>
+                    {% if is_payer %}
+                        <th class="text-end" title="Výstupní DPH z faktur hostům">Výstup Kč</th>
+                        <th class="text-end" title="Reverse charge z provize (s odpočtem)">RC Kč</th>
+                        <th class="text-end">Povinnost Kč</th>
+                    {% else %}
+                        <th class="text-end">Základ Kč</th>
+                        <th class="text-end">DPH Kč</th>
+                    {% endif %}
                     <th>Doklady OTA</th>
                     <th>Stav</th>
                     <th></th>
@@ -28,8 +39,14 @@
                     <tr>
                         <td><strong>{{ key }}</strong></td>
                         <td class="text-end">{{ s.reservations|length }}</td>
-                        <td class="text-end">{{ s.sumBaseCzk|number_format(2, ',', ' ') }}</td>
-                        <td class="text-end"><strong>{{ s.sumVatCzk|number_format(2, ',', ' ') }}</strong></td>
+                        {% if is_payer %}
+                            <td class="text-end">{{ s.outputVatCzk|number_format(2, ',', ' ') }}</td>
+                            <td class="text-end text-muted">{{ s.sumVatCzk|number_format(2, ',', ' ') }}</td>
+                            <td class="text-end"><strong>{{ s.liability.totalCzk|number_format(2, ',', ' ') }}</strong></td>
+                        {% else %}
+                            <td class="text-end">{{ s.sumBaseCzk|number_format(2, ',', ' ') }}</td>
+                            <td class="text-end"><strong>{{ s.sumVatCzk|number_format(2, ',', ' ') }}</strong></td>
+                        {% endif %}
                         <td>
                             {% if s.invoice %}
                                 <span class="badge text-bg-success" title="Booking faktura #{{ s.invoice.invoiceNumber }}">B ✓</span>

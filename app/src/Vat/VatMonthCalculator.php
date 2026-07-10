@@ -12,18 +12,22 @@ declare(strict_types=1);
 namespace App\Vat;
 
 use App\Enum\Channel;
+use App\Repository\InvoiceRepository;
 use App\Repository\ReservationRepository;
 
 /**
- * Sečte DPH měsíce z rezervací (reverse charge nad provizí OTA).
+ * Sečte DPH měsíce: reverse charge nad provizí OTA (vstup) + výstupní DPH z faktur
+ * hostům vystavených v měsíci (výstup, jen u plátce).
  *
  * Sazba 21 % se aplikuje až na součet základů — sčítání zaokrouhlených DPH per rezervaci by
  * na drobných číslech ujelo o haléře.
  */
 final class VatMonthCalculator
 {
-    public function __construct(private readonly ReservationRepository $reservations)
-    {
+    public function __construct(
+        private readonly ReservationRepository $reservations,
+        private readonly InvoiceRepository $invoices,
+    ) {
     }
 
     public function summarize(int $year, int $month): VatMonthSummary
@@ -43,6 +47,8 @@ final class VatMonthCalculator
             };
         }
 
+        $output = $this->invoices->sumOutputVatByIssuedMonth($year, $month);
+
         return new VatMonthSummary(
             year: $year,
             month: $month,
@@ -53,6 +59,8 @@ final class VatMonthCalculator
             hasAirbnbReservations: $airbnbSum > 0.0,
             bookingReservationSum: $bookingSum,
             airbnbReservationSum: $airbnbSum,
+            outputBaseCzk: (float) $output['base'],
+            outputVatCzk: (float) $output['vat'],
         );
     }
 }
