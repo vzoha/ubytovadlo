@@ -72,6 +72,32 @@
         </div>
     {% endif %}
 
+    {% if occupancyConflicts is not empty %}
+        <div class="card shadow-sm mb-4 border-danger">
+            <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
+                <strong>⚠ Překrývající se rezervace</strong>
+                <span class="badge bg-light text-danger">{{ occupancyConflicts|length }}</span>
+            </div>
+            <div class="card-body pb-1">
+                <p class="small text-muted">Tyhle termíny jsou obsazené dvěma rezervacemi zároveň — zkontroluj, jestli nejde o dvojí prodej.</p>
+                <ul class="list-group list-group-flush">
+                    {% for c in occupancyConflicts %}
+                        <li class="list-group-item px-0">
+                            <div class="fw-semibold">{{ c.from|date('j. n. Y') }} – {{ c.to|date('j. n. Y') }} <span class="text-muted fw-normal">({{ c.nights }} {{ c.nights == 1 ? 'noc' : (c.nights < 5 ? 'noci' : 'nocí') }})</span></div>
+                            <div class="small">
+                                <a href="{{ path('reservation_detail', {id: c.a.id}) }}">#{{ c.a.id }} {{ c.a.guestName ?? '—' }}</a>
+                                <span class="text-muted">({{ c.a.channel.label }})</span>
+                                ×
+                                <a href="{{ path('reservation_detail', {id: c.b.id}) }}">#{{ c.b.id }} {{ c.b.guestName ?? '—' }}</a>
+                                <span class="text-muted">({{ c.b.channel.label }})</span>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    {% endif %}
+
     <div class="row g-4">
 
         {# === ÚKLID === #}

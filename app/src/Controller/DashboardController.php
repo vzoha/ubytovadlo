@@ -16,6 +16,7 @@ use App\Entity\VatPeriod;
 use App\Enum\BillingMode;
 use App\Enum\Channel;
 use App\Enum\InvoiceType;
+use App\Occupancy\OccupancyConflictFinder;
 use App\Profit\YearEconomicsBuilder;
 use App\Repository\AirbnbStatementRepository;
 use App\Repository\BookingMonthlyInvoiceRepository;
@@ -51,6 +52,7 @@ class DashboardController extends AbstractController
         private readonly UbyportQueue $ubyportQueue,
         private readonly YearEconomicsBuilder $economicsBuilder,
         private readonly SetupChecklist $setupChecklist,
+        private readonly OccupancyConflictFinder $occupancyFinder,
     ) {
     }
 
@@ -69,6 +71,7 @@ class DashboardController extends AbstractController
             'economics' => $this->buildEconomics($today),
             'setupPending' => $this->setupChecklist->pending(),
             'setupDismissedCount' => $this->setupChecklist->dismissedCount(),
+            'occupancyConflicts' => $this->occupancyFinder->find($this->reservations->findActiveForOccupancy($today)),
         ]);
     }
 

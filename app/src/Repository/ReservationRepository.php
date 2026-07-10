@@ -88,6 +88,26 @@ class ReservationRepository extends ServiceEntityRepository
     }
 
     /**
+     * Aktivní (nezrušené) rezervace všech kanálů, jejichž pobyt ještě neskončil —
+     * vstup pro kontrolu obsazenosti (detekci překrývajících se termínů). Řazeno
+     * podle příjezdu, ať jde konflikty najít jedním průchodem.
+     *
+     * @return Reservation[]
+     */
+    public function findActiveForOccupancy(\DateTimeImmutable $from): array
+    {
+        return $this->createQueryBuilder('r')
+            ->andWhere('r.status != :cancelled')
+            ->andWhere('COALESCE(r.checkOut, r.checkIn) >= :from')
+            ->setParameter('cancelled', ReservationStatus::CANCELLED)
+            ->setParameter('from', $from)
+            ->orderBy('r.checkIn', 'ASC')
+            ->addOrderBy('r.id', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
      * Rezervace podle variabilního symbolu příchozí platby. Host u webové rezervace
      * platí s VS = MotoPress booking ID, které držíme v motopressExternalId (a u web
      * rezervací i v externalId). Vrací nejstarší shodu, kdyby byly obě stejné.

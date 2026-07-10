@@ -6,6 +6,14 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ## [Unreleased]
 
+### Přidáno
+
+- **Kontrola obsazenosti — upozornění na dvojí prodej.** Když se dvě aktivní
+  rezervace překrývají ve stejném termínu (typicky když se sesynchronizuje
+  kolidující blok z jiného kanálu), dashboard nahoře ukáže **červenou kartu**
+  s daným termínem a oběma rezervacemi, ať se dá hned zkontrolovat. Kontrolu jde
+  spustit i z příkazové řádky (`app:occupancy:check`).
+
 ## [0.8.0] — 2026-07-11
 
 ### Přidáno
