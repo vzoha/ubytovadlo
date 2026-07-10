@@ -1,0 +1,118 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Uživatelé — {{ brand_name }}{% endblock %}
+
+{% block body %}
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <h1 class="h4 mb-0">Uživatelé</h1>
+    <button class="btn btn-primary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#newUser">Přidat uživatele</button>
+</div>
+
+<p class="text-muted small">
+    Každý uživatel má jednu <strong>roli</strong> (rozsah přístupu) a případná
+    <strong>doplňková práva</strong>, která mu přiřadíš navrch. Správce a admin mají
+    všechna práva vždy — zaškrtávátka se uplatní hlavně u uklízečky.
+</p>
+
+<div class="collapse mb-4" id="newUser">
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <h2 class="h6 text-muted mb-3">Nový uživatel</h2>
+            <form method="post" action="{{ path('user_create') }}" class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label for="newEmail" class="form-label">E-mail</label>
+                    <input type="email" name="email" id="newEmail" class="form-control" required>
+                </div>
+                <div class="col-md-3">
+                    <label for="newPassword" class="form-label">Heslo</label>
+                    <input type="password" name="password" id="newPassword" class="form-control" required minlength="8" autocomplete="new-password">
+                </div>
+                <div class="col-md-3">
+                    <label for="newRole" class="form-label">Role</label>
+                    <select name="role" id="newRole" class="form-select">
+                        {% for role in roles %}
+                            <option value="{{ role.value }}" {{ role.value == 'ROLE_USER' ? 'selected' }}>{{ role.label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">Založit</button>
+                </div>
+                <div class="col-12">
+                    {% for perm in permissions %}
+                        <div class="form-check form-check-inline">
+                            <input type="checkbox" name="permissions[]" value="{{ perm.value }}" id="newPerm{{ loop.index }}" class="form-check-input">
+                            <label for="newPerm{{ loop.index }}" class="form-check-label">{{ perm.label }}</label>
+                        </div>
+                    {% endfor %}
+                </div>
+                <input type="hidden" name="_token" value="{{ csrf_token('user-create') }}">
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th scope="col">Uživatel</th>
+                    <th scope="col">Role</th>
+                    {% for perm in permissions %}<th scope="col" class="text-center">{{ perm.label }}</th>{% endfor %}
+                    <th scope="col" class="text-center">Aktivní</th>
+                    <th scope="col" class="text-end">Akce</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                    {% set fid = 'access-' ~ user.id %}
+                    <tr>
+                        <td>
+                            <div>{{ user.email }}</div>
+                            <div class="small text-muted">od {{ user.createdAt|date('j. n. Y') }}</div>
+                            <form id="{{ fid }}" method="post" action="{{ path('user_update', {id: user.id}) }}">
+                                <input type="hidden" name="_token" value="{{ csrf_token('user-update-' ~ user.id) }}">
+                            </form>
+                        </td>
+                        <td>
+                            <select name="role" form="{{ fid }}" class="form-select form-select-sm">
+                                {% for role in roles %}
+                                    <option value="{{ role.value }}" {{ role == user.role ? 'selected' }}>{{ role.label }}</option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                        {% for perm in permissions %}
+                            <td class="text-center">
+                                <input type="checkbox" name="permissions[]" value="{{ perm.value }}" form="{{ fid }}"
+                                       class="form-check-input" aria-label="{{ perm.label }}"
+                                       {{ user.hasPermission(perm) ? 'checked' }}>
+                            </td>
+                        {% endfor %}
+                        <td class="text-center">
+                            <input type="checkbox" name="active" value="1" form="{{ fid }}"
+                                   class="form-check-input" aria-label="Aktivní" {{ user.active ? 'checked' }}>
+                        </td>
+                        <td class="text-end">
+                            <div class="d-flex gap-2 justify-content-end align-items-center">
+                                <button type="submit" form="{{ fid }}" class="btn btn-sm btn-outline-primary">Uložit</button>
+                                <form method="post" action="{{ path('user_reset_password', {id: user.id}) }}" class="d-flex gap-1">
+                                    <input type="password" name="password" class="form-control form-control-sm" style="width:9rem"
+                                           placeholder="Nové heslo" minlength="8" autocomplete="new-password" required>
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary">Heslo</button>
+                                    <input type="hidden" name="_token" value="{{ csrf_token('user-password-' ~ user.id) }}">
+                                </form>
+                                <form method="post" action="{{ path('user_delete', {id: user.id}) }}"
+                                      onsubmit="return confirm('Smazat uživatele {{ user.email }}?');">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Smazat</button>
+                                    <input type="hidden" name="_token" value="{{ csrf_token('user-delete-' ~ user.id) }}">
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

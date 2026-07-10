@@ -8,6 +8,13 @@ security:
                 class: App\Entity\User
                 property: email
 
+    # Základní role tvoří žebříček (Admin ⊃ Správce ⊃ Uklízečka); doplňková
+    # práva (ROLE_ELECTRICITY) mají Správce a Admin vždy, uklízečka jen když
+    # jí je admin přiřadí.
+    role_hierarchy:
+        ROLE_USER: [ROLE_CLEANER, ROLE_ELECTRICITY]
+        ROLE_ADMIN: [ROLE_USER]
+
     firewalls:
         dev:
             pattern: ^/(_profiler|_wdt|assets|build)/
@@ -15,11 +22,16 @@ security:
         main:
             lazy: true
             provider: app_user_provider
+            user_checker: App\Security\UserChecker
             form_login:
                 login_path: app_login
                 check_path: app_login
                 enable_csrf: true
-                default_target_path: reservation_list
+                success_handler: App\Security\LoginSuccessHandler
+            remember_me:
+                secret: '%kernel.secret%'
+                lifetime: 2592000 # 30 dní
+                path: /
             logout:
                 path: app_logout
                 target: app_login
@@ -31,6 +43,12 @@ security:
         - { path: ^/qr, roles: PUBLIC_ACCESS }
         - { path: ^/webhook, roles: PUBLIC_ACCESS }
         - { path: ^/dev/mrz, roles: PUBLIC_ACCESS }
+        - { path: ^/logout, roles: ROLE_CLEANER }
+        - { path: ^/profil, roles: ROLE_CLEANER }
+        - { path: ^/uzivatele, roles: ROLE_ADMIN }
+        - { path: ^/nastaveni, roles: ROLE_ADMIN }
+        - { path: ^/uklid, roles: ROLE_CLEANER }
+        - { path: ^/elektrina, roles: ROLE_ELECTRICITY }
         - { path: ^/, roles: ROLE_USER }
 
 when@test:

@@ -1,0 +1,50 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Profil — {{ brand_name }}{% endblock %}
+
+{% block body %}
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <h1 class="h4 mb-4">Můj profil</h1>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h2 class="h6 text-muted mb-3">Účet</h2>
+                <dl class="row mb-0">
+                    <dt class="col-sm-4 fw-normal text-muted">E-mail</dt>
+                    <dd class="col-sm-8">{{ user.email }}</dd>
+                    <dt class="col-sm-4 fw-normal text-muted">Role</dt>
+                    <dd class="col-sm-8">
+                        {% for role in user.roles %}<span class="badge bg-secondary">{{ role }}</span> {% endfor %}
+                    </dd>
+                    <dt class="col-sm-4 fw-normal text-muted">Účet založen</dt>
+                    <dd class="col-sm-8">{{ user.createdAt|date('j. n. Y') }}</dd>
+                </dl>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h2 class="h6 text-muted mb-3">Změna hesla</h2>
+                <form method="post" autocomplete="off">
+                    <div class="mb-3">
+                        <label for="currentPassword" class="form-label">Současné heslo</label>
+                        <input type="password" name="current_password" id="currentPassword" class="form-control" required autocomplete="current-password">
+                    </div>
+                    <div class="mb-3">
+                        <label for="newPassword" class="form-label">Nové heslo</label>
+                        <input type="password" name="new_password" id="newPassword" class="form-control" required minlength="8" autocomplete="new-password">
+                        <div class="form-text">Alespoň 8 znaků. Doporučeně delší fráze s číslicí a velkým písmenem.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="confirmPassword" class="form-label">Potvrzení nového hesla</label>
+                        <input type="password" name="confirm_password" id="confirmPassword" class="form-control" required minlength="8" autocomplete="new-password">
+                    </div>
+                    <input type="hidden" name="_token" value="{{ csrf_token('profile-password') }}">
+                    <button type="submit" class="btn btn-primary">Uložit nové heslo</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

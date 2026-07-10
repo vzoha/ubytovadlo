@@ -40,6 +40,7 @@ final class ConnectionSettingsControllerTest extends WebTestCase
         $hasher = $container->get(UserPasswordHasherInterface::class);
         $user = new User('connection@example.com');
         $user->setPassword($hasher->hashPassword($user, 'secret123'));
+        $user->setRoles(['ROLE_ADMIN']);
         $this->em->persist($user);
         $this->em->flush();
 

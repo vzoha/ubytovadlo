@@ -18,18 +18,27 @@
             </button>
             <div class="collapse navbar-collapse" id="mainNav">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item"><a class="nav-link" href="{{ path('dashboard') }}">Přehled</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{ path('reservation_list') }}">Rezervace</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{ path('economics_overview') }}">Ekonomika</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{ path('account_index') }}">Účty</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{ path('vat_list') }}">DPH</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{ path('electricity_index') }}">Elektřina</a></li>
+                    {% if is_granted('ROLE_USER') %}
+                        <li class="nav-item"><a class="nav-link" href="{{ path('dashboard') }}">Přehled</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ path('reservation_list') }}">Rezervace</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ path('economics_overview') }}">Ekonomika</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ path('account_index') }}">Účty</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ path('vat_list') }}">DPH</a></li>
+                    {% endif %}
+                    {% if is_granted('ROLE_ELECTRICITY') %}
+                        <li class="nav-item"><a class="nav-link" href="{{ path('electricity_index') }}">Elektřina</a></li>
+                    {% endif %}
                     <li class="nav-item"><a class="nav-link" href="{{ path('cleaning_index') }}">Úklid</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{ path('ubyport_index') }}">Ubyport</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{ path('general_settings_edit') }}">Nastavení</a></li>
+                    {% if is_granted('ROLE_USER') %}
+                        <li class="nav-item"><a class="nav-link" href="{{ path('ubyport_index') }}">Ubyport</a></li>
+                    {% endif %}
+                    {% if is_granted('ROLE_ADMIN') %}
+                        <li class="nav-item"><a class="nav-link" href="{{ path('user_index') }}">Uživatelé</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ path('general_settings_edit') }}">Nastavení</a></li>
+                    {% endif %}
                 </ul>
                 <div class="d-flex align-items-center text-light small">
-                    <span class="me-3">{{ app.user.userIdentifier }}</span>
+                    <a class="me-3 text-light text-decoration-none" href="{{ path('profile_index') }}">{{ app.user.userIdentifier }}</a>
                     <a class="btn btn-sm btn-outline-light" href="{{ path('app_logout') }}">Odhlásit</a>
                 </div>
             </div>

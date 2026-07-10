@@ -17,6 +17,21 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
   na koncové ceně. Identifikovaná osoba a neplátce fakturují beze změny, s příslušnou
   poznámkou o režimu. Každá faktura si drží svůj profil a sazbu i po pozdější změně
   nastavení.
+- **Uživatelské role a přiřaditelná práva.** Uživatelé se spravují v **Uživatelé**
+  (jen pro admina) jako matice: každý má jednu **roli** — **Admin** (vše včetně
+  nastavení a správy uživatelů), **Správce** (provoz i finance bez nastavení a
+  uživatelů), **Uklízečka** (jen úklid) — a k tomu volitelná **doplňková práva**
+  zaškrtnutá navrch, začínající právem **Odečty elektřiny**. Admin zakládá účty,
+  mění role a práva, resetuje heslo a účet deaktivuje; menu i stránky se řídí
+  přístupem a uklízečka po přihlášení přistane rovnou na úklidu. Aspoň jeden
+  aktivní admin musí vždy zůstat.
+- **Přihlášení může zůstat platné 30 dní.** Na přihlašovací obrazovce je volba
+  **Zůstat přihlášen 30 dní** (ve výchozím stavu zapnutá) — po jejím potvrzení tě
+  aplikace nevyhodí po zavření prohlížeče, ale drží přihlášení po dobu 30 dní.
+- **Profil s vlastním nastavením účtu.** Kliknutím na e-mail v horní liště se
+  otevře stránka **Můj profil** — přehled účtu (e-mail, role, datum založení) a
+  formulář pro **změnu hesla** (ověření současného hesla, kontrola délky a shody
+  potvrzení).
 
 ### Opraveno
 

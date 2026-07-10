@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Enum\UserPermission;
+use App\Enum\UserRole;
 use App\Repository\UserRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -36,6 +38,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /** @var list<string> */
     #[ORM\Column(type: Types::JSON)]
     private array $roles = ['ROLE_USER'];
+
+    #[ORM\Column(name: 'is_active')]
+    private bool $active = true;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeImmutable $createdAt;
@@ -77,18 +82,69 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /** @return list<string> */
     public function getRoles(): array
     {
-        $roles = $this->roles;
-        if (!in_array('ROLE_USER', $roles, true)) {
-            $roles[] = 'ROLE_USER';
-        }
+        $roles = array_values(array_unique($this->roles));
 
-        return array_values(array_unique($roles));
+        return $roles !== [] ? $roles : [UserRole::CLEANER->value];
     }
 
     /** @param list<string> $roles */
     public function setRoles(array $roles): self
     {
         $this->roles = $roles;
+
+        return $this;
+    }
+
+    /** Primární role odvozená z pole rolí (nejsilnější přítomná). */
+    public function getRole(): UserRole
+    {
+        foreach (UserRole::PRIORITY as $role) {
+            if (\in_array($role->value, $this->roles, true)) {
+                return $role;
+            }
+        }
+
+        return UserRole::CLEANER;
+    }
+
+    /** @return list<UserPermission> */
+    public function getPermissions(): array
+    {
+        return array_values(array_filter(
+            UserPermission::cases(),
+            fn (UserPermission $p): bool => \in_array($p->value, $this->roles, true),
+        ));
+    }
+
+    public function hasPermission(UserPermission $permission): bool
+    {
+        return \in_array($permission->value, $this->roles, true);
+    }
+
+    /**
+     * Přepíše roli i doplňková práva jedním voláním — pole rolí je vždy
+     * právě jedna základní role plus vybraná práva.
+     *
+     * @param list<UserPermission> $permissions
+     */
+    public function assignAccess(UserRole $role, array $permissions = []): self
+    {
+        $this->roles = array_values(array_unique(array_merge(
+            [$role->value],
+            array_map(static fn (UserPermission $p): string => $p->value, $permissions),
+        )));
+
+        return $this;
+    }
+
+    public function isActive(): bool
+    {
+        return $this->active;
+    }
+
+    public function setActive(bool $active): self
+    {
+        $this->active = $active;
 
         return $this;
     }
