@@ -390,8 +390,12 @@
                         <dt class="col-sm-6 text-muted">Provize OTA</dt>
                         <dd class="col-sm-6 text-end text-muted">−{{ profit.commissionCzk|number_format(0, ',', ' ') }} Kč</dd>
 
-                        <dt class="col-sm-6 text-muted">DPH z provize</dt>
-                        <dd class="col-sm-6 text-end text-muted">−{{ profit.vatCzk|number_format(0, ',', ' ') }} Kč</dd>
+                        <dt class="col-sm-6 text-muted">DPH z provize
+                            {% if profit.vatDeductible %}<span class="badge text-bg-secondary" title="Reverse charge z provize je u plátce odpočet">odpočet</span>{% endif %}
+                        </dt>
+                        <dd class="col-sm-6 text-end text-muted">
+                            {% if profit.vatDeductible %}0 Kč{% else %}−{{ profit.vatCzk|number_format(0, ',', ' ') }} Kč{% endif %}
+                        </dd>
 
                         <dt class="col-sm-6 text-muted">Elektřina
                             {% if profit.missingElectricity %}<span class="badge text-bg-secondary">chybí odečet</span>{% endif %}

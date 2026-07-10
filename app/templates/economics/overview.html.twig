@@ -76,7 +76,13 @@
                             {% endif %}
                         </td>
                         <td class="text-end text-muted">{{ p.commissionCzk|number_format(0, ',', ' ') }}</td>
-                        <td class="text-end text-muted">{{ p.vatCzk|number_format(0, ',', ' ') }}</td>
+                        <td class="text-end text-muted">
+                            {% if p.vatDeductible %}
+                                <span title="Plátce DPH — reverse charge z provize je odpočet, není náklad">0</span>
+                            {% else %}
+                                {{ p.vatCzk|number_format(0, ',', ' ') }}
+                            {% endif %}
+                        </td>
                         <td class="text-end text-muted">
                             {{ p.electricityCzk|number_format(0, ',', ' ') }}{% if p.missingElectricity %} <span title="chybí odečet">?</span>{% endif %}
                         </td>

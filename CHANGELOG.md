@@ -16,7 +16,9 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
   s daní) a poznámka, že faktura je daňový doklad. QR Platba i částka k úhradě zůstávají
   na koncové ceně. Identifikovaná osoba a neplátce fakturují beze změny, s příslušnou
   poznámkou o režimu. Každá faktura si drží svůj profil a sazbu i po pozdější změně
-  nastavení.
+  nastavení. U **plátce** navíc **ekonomika** nepočítá reverse charge z provize OTA
+  jako náklad — má nárok na odpočet, takže se v zisku neprojeví (v přehledu i na kartě
+  rezervace je označen jako „odpočet").
 - **Uživatelské role a přiřaditelná práva.** Uživatelé se spravují v **Uživatelé**
   (jen pro admina) jako matice: každý má jednu **roli** — **Admin** (vše včetně
   nastavení a správy uživatelů), **Správce** (provoz i finance bez nastavení a

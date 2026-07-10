@@ -15,6 +15,9 @@ namespace App\Profit;
  * Ekonomika jedné rezervace — zrcadlí výpočet z původní ruční evidence:
  * Výdaje = elektřina + úklid + rekreační poplatek + OTA provize + DPH (reverse charge),
  * Zisk = Příjem − Výdaje. Všechny částky jsou bcmath stringy v CZK, scale 2.
+ *
+ * U plátce DPH má reverse charge z provize nárok na odpočet (`vatDeductible`), takže
+ * se do výdajů nezapočítává — `vatCzk` zůstává jen informativní částkou.
  */
 final readonly class ReservationProfit
 {
@@ -24,6 +27,7 @@ final readonly class ReservationProfit
         public bool $incomeIsEstimate,
         public string $commissionCzk,
         public string $vatCzk,
+        public bool $vatDeductible,
         public string $electricityCzk,
         public string $cleaningCzk,
         public string $recreationFeeCzk,

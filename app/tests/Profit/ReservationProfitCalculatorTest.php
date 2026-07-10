@@ -16,10 +16,13 @@ use App\Entity\ElectricityTariff;
 use App\Entity\Invoice;
 use App\Entity\InvoiceLine;
 use App\Entity\Reservation;
+use App\Entity\Setting;
 use App\Enum\Channel;
 use App\Enum\InvoiceType;
 use App\Enum\ReservationStatus;
+use App\Invoice\TaxProfileConfig;
 use App\Profit\ReservationProfitCalculator;
+use App\Repository\SettingRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
@@ -42,6 +45,8 @@ class ReservationProfitCalculatorTest extends KernelTestCase
         $this->em->createQuery('DELETE FROM ' . Invoice::class . ' i')->execute();
         $this->em->createQuery('DELETE FROM ' . Reservation::class . ' r')->execute();
         $this->em->createQuery('DELETE FROM ' . ElectricityTariff::class . ' t')->execute();
+        // Daňový profil ovlivňuje výdaje (reverse charge) — každý test startuje s výchozím.
+        $this->em->createQuery('DELETE FROM ' . Setting::class . ' s')->execute();
     }
 
     public function testWebReservationWithFullInvoice(): void
@@ -94,6 +99,27 @@ class ReservationProfitCalculatorTest extends KernelTestCase
         // výdaje = elektřina 0 + úklid 400 + rekreační (15×2×3=90) + 365.40 + 76.73
         self::assertSame('932.13', $p->expensesTotalCzk);
         self::assertSame('1503.87', $p->profitCzk);
+    }
+
+    public function testVatPayerDeductsReverseChargeFromExpenses(): void
+    {
+        static::getContainer()->get(SettingRepository::class)->set(TaxProfileConfig::KEY, 'vat_payer', 'test');
+        $this->em->flush();
+
+        // Stejná Booking rezervace jako odhad výše, ale u plátce se RC z provize odečte.
+        $r = $this->makeReservation(Channel::BOOKING, '2026-04-13', '2026-04-16', adults: 2);
+        $r->setPriceTotal('100.00')->setPriceCurrency('EUR');
+        $r->setVatCnbRate('24.36000000');
+        $r->setVatBaseCzk('365.40')->setVatAmountCzk('76.73');
+        $this->em->flush();
+
+        $p = $this->calculator->calculate($r);
+
+        self::assertTrue($p->vatDeductible);
+        self::assertSame('76.73', $p->vatCzk); // informativní částka zůstává
+        // výdaje bez DPH: úklid 400 + rekreační (15×2×3=90) + provize 365.40
+        self::assertSame('855.40', $p->expensesTotalCzk);
+        self::assertSame('1580.60', $p->profitCzk);
     }
 
     public function testDepositPlusFinalInvoiceIsNotDoubleCounted(): void

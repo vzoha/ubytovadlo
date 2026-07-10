@@ -16,6 +16,7 @@ use App\Entity\Cleaning;
 use App\Entity\Invoice;
 use App\Entity\Reservation;
 use App\Enum\InvoiceType;
+use App\Invoice\TaxProfileConfig;
 use App\Repository\CleaningRepository;
 use App\Repository\InvoiceRepository;
 use App\Repository\SettingRepository;
@@ -44,6 +45,7 @@ final class ReservationProfitCalculator
         private readonly InvoiceRepository $invoices,
         private readonly SettingRepository $settings,
         private readonly CurrencyConverter $converter,
+        private readonly TaxProfileConfig $taxProfile,
     ) {
     }
 
@@ -100,8 +102,13 @@ final class ReservationProfitCalculator
         $commissionCzk = $this->resolveCommissionCzk($r);
         $vatCzk = $r->getVatAmountCzk() ?? '0.00';
 
+        // Plátce DPH má z reverse charge z provize nárok na odpočet → v přiznání se
+        // vyruší, není to reálný náklad. Provize samotná nákladem zůstává.
+        $vatDeductible = $this->taxProfile->current()->chargesOutputVat();
+        $vatExpense = $vatDeductible ? '0.00' : $vatCzk;
+
         $expenses = '0.00';
-        foreach ([$electricityCzk, $cleaningCzk, $recreationFeeCzk, $commissionCzk, $vatCzk] as $component) {
+        foreach ([$electricityCzk, $cleaningCzk, $recreationFeeCzk, $commissionCzk, $vatExpense] as $component) {
             $expenses = bcadd($expenses, $component, 2);
         }
 
@@ -114,6 +121,7 @@ final class ReservationProfitCalculator
             incomeIsEstimate: $isEstimate,
             commissionCzk: $commissionCzk,
             vatCzk: $vatCzk,
+            vatDeductible: $vatDeductible,
             electricityCzk: $electricityCzk,
             cleaningCzk: $cleaningCzk,
             recreationFeeCzk: $recreationFeeCzk,
