@@ -14,9 +14,7 @@
                     <dt class="col-sm-4 fw-normal text-muted">E-mail</dt>
                     <dd class="col-sm-8">{{ user.email }}</dd>
                     <dt class="col-sm-4 fw-normal text-muted">Role</dt>
-                    <dd class="col-sm-8">
-                        {% for role in user.roles %}<span class="badge bg-secondary">{{ role }}</span> {% endfor %}
-                    </dd>
+                    <dd class="col-sm-8"><span class="badge bg-secondary">{{ user.role.label }}</span></dd>
                     <dt class="col-sm-4 fw-normal text-muted">Účet založen</dt>
                     <dd class="col-sm-8">{{ user.createdAt|date('j. n. Y') }}</dd>
                 </dl>

@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace App\Tests\Controller;
 
 use App\Entity\User;
-use App\Enum\UserPermission;
 use App\Enum\UserRole;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -53,16 +52,7 @@ final class RoleAccessControlTest extends WebTestCase
         $this->assertForbidden('/nastaveni/dodavatel');
     }
 
-    public function testCleanerWithElectricityPermission(): void
-    {
-        $this->loginAs('uklid2@example.com', UserRole::CLEANER, [UserPermission::ELECTRICITY]);
-
-        $this->assertAllowed('/uklid');
-        $this->assertAllowed('/elektrina');
-        $this->assertForbidden('/rezervace');
-    }
-
-    public function testManagerSeesOperationsAndElectricityButNotAdmin(): void
+    public function testManagerSeesOperationsIncludingElectricityButNotAdmin(): void
     {
         $this->loginAs('spravce@example.com', UserRole::MANAGER);
 
@@ -86,7 +76,7 @@ final class RoleAccessControlTest extends WebTestCase
     public function testDeactivatedUserCannotLogIn(): void
     {
         $user = new User('deaktivovany@example.com');
-        $user->assignAccess(UserRole::MANAGER);
+        $user->setRole(UserRole::MANAGER);
         $user->setActive(false);
         $user->setPassword($this->hasher->hashPassword($user, 'secret123'));
         $this->em->persist($user);
@@ -103,11 +93,10 @@ final class RoleAccessControlTest extends WebTestCase
         self::assertStringContainsString('deaktivovaný', (string) $this->client->getResponse()->getContent());
     }
 
-    /** @param list<UserPermission> $permissions */
-    private function loginAs(string $email, UserRole $role, array $permissions = []): void
+    private function loginAs(string $email, UserRole $role): void
     {
-        $user = new User($email);
-        $user->assignAccess($role, $permissions);
+        $user = $this->em->getRepository(User::class)->findOneBy(['email' => $email]) ?? new User($email);
+        $user->setRole($role);
         $user->setPassword($this->hasher->hashPassword($user, 'secret123'));
         $this->em->persist($user);
         $this->em->flush();

@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Entity\User;
-use App\Enum\UserPermission;
 use App\Enum\UserRole;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -45,7 +44,6 @@ class UserController extends AbstractController
         return $this->render('user/index.html.twig', [
             'users' => $this->users->findBy([], ['createdAt' => 'ASC']),
             'roles' => UserRole::cases(),
-            'permissions' => UserPermission::cases(),
         ]);
     }
 
@@ -77,7 +75,7 @@ class UserController extends AbstractController
         }
 
         $user = new User($email);
-        $user->assignAccess($role, $this->readPermissions($request));
+        $user->setRole($role);
         $user->setPassword($this->hasher->hashPassword($user, $password));
         $this->em->persist($user);
         $this->em->flush();
@@ -107,7 +105,7 @@ class UserController extends AbstractController
             return $this->redirectToRoute('user_index');
         }
 
-        $user->assignAccess($role, $this->readPermissions($request));
+        $user->setRole($role);
         $user->setActive($active);
         $this->em->flush();
         $this->addFlash('success', sprintf('Uživatel %s upraven.', $user->getEmail()));
@@ -160,17 +158,6 @@ class UserController extends AbstractController
         $this->addFlash('success', sprintf('Uživatel %s smazán.', $email));
 
         return $this->redirectToRoute('user_index');
-    }
-
-    /** @return list<UserPermission> */
-    private function readPermissions(Request $request): array
-    {
-        $raw = $request->request->all('permissions');
-
-        return array_values(array_filter(array_map(
-            static fn (mixed $value): ?UserPermission => \is_string($value) ? UserPermission::tryFrom($value) : null,
-            $raw,
-        )));
     }
 
     /**

@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
-use App\Enum\UserPermission;
 use App\Enum\UserRole;
 use App\Repository\UserRepository;
 use Doctrine\DBAL\Types\Types;
@@ -39,7 +38,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: Types::JSON)]
     private array $roles = ['ROLE_USER'];
 
-    #[ORM\Column(name: 'is_active')]
+    #[ORM\Column(name: 'is_active', options: ['default' => true])]
     private bool $active = true;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
@@ -95,7 +94,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    /** Primární role odvozená z pole rolí (nejsilnější přítomná). */
+    /** Role uživatele odvozená z pole rolí (nejsilnější přítomná). */
     public function getRole(): UserRole
     {
         foreach (UserRole::PRIORITY as $role) {
@@ -107,32 +106,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return UserRole::CLEANER;
     }
 
-    /** @return list<UserPermission> */
-    public function getPermissions(): array
+    public function setRole(UserRole $role): self
     {
-        return array_values(array_filter(
-            UserPermission::cases(),
-            fn (UserPermission $p): bool => \in_array($p->value, $this->roles, true),
-        ));
-    }
-
-    public function hasPermission(UserPermission $permission): bool
-    {
-        return \in_array($permission->value, $this->roles, true);
-    }
-
-    /**
-     * Přepíše roli i doplňková práva jedním voláním — pole rolí je vždy
-     * právě jedna základní role plus vybraná práva.
-     *
-     * @param list<UserPermission> $permissions
-     */
-    public function assignAccess(UserRole $role, array $permissions = []): self
-    {
-        $this->roles = array_values(array_unique(array_merge(
-            [$role->value],
-            array_map(static fn (UserPermission $p): string => $p->value, $permissions),
-        )));
+        $this->roles = [$role->value];
 
         return $this;
     }

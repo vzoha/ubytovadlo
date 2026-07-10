@@ -8,11 +8,10 @@ security:
                 class: App\Entity\User
                 property: email
 
-    # Základní role tvoří žebříček (Admin ⊃ Správce ⊃ Uklízečka); doplňková
-    # práva (ROLE_ELECTRICITY) mají Správce a Admin vždy, uklízečka jen když
-    # jí je admin přiřadí.
+    # Role tvoří žebříček: Admin ⊃ Správce ⊃ Uklízečka. Uklízečka vidí jen
+    # úklid, správce navíc celý provoz i finance, admin ještě nastavení a uživatele.
     role_hierarchy:
-        ROLE_USER: [ROLE_CLEANER, ROLE_ELECTRICITY]
+        ROLE_USER: [ROLE_CLEANER]
         ROLE_ADMIN: [ROLE_USER]
 
     firewalls:
@@ -48,7 +47,6 @@ security:
         - { path: ^/uzivatele, roles: ROLE_ADMIN }
         - { path: ^/nastaveni, roles: ROLE_ADMIN }
         - { path: ^/uklid, roles: ROLE_CLEANER }
-        - { path: ^/elektrina, roles: ROLE_ELECTRICITY }
         - { path: ^/, roles: ROLE_USER }
 
 when@test:

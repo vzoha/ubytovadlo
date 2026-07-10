@@ -18,13 +18,19 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Component\Security\Http\Authentication\AuthenticationSuccessHandlerInterface;
+use Symfony\Component\Security\Http\Util\TargetPathTrait;
 
 /**
- * Po přihlášení nasměruje uživatele na první stránku, kterou jeho role vidí:
+ * Po přihlášení pokračuje na původně žádanou stránku (byl-li uživatel na login
+ * přesměrován odjinud), jinak na první stránku, kterou jeho role vidí:
  * uklízečka na úklid, ostatní na seznam rezervací.
  */
 class LoginSuccessHandler implements AuthenticationSuccessHandlerInterface
 {
+    use TargetPathTrait;
+
+    private const FIREWALL = 'main';
+
     public function __construct(
         private readonly UrlGeneratorInterface $urls,
         private readonly AuthorizationCheckerInterface $authorization,
@@ -33,6 +39,16 @@ class LoginSuccessHandler implements AuthenticationSuccessHandlerInterface
 
     public function onAuthenticationSuccess(Request $request, TokenInterface $token): Response
     {
+        $session = $request->hasSession() ? $request->getSession() : null;
+        if ($session !== null) {
+            $target = $this->getTargetPath($session, self::FIREWALL);
+            if (\is_string($target) && $target !== '') {
+                $this->removeTargetPath($session, self::FIREWALL);
+
+                return new RedirectResponse($target);
+            }
+        }
+
         $route = $this->authorization->isGranted('ROLE_USER') ? 'reservation_list' : 'cleaning_index';
 
         return new RedirectResponse($this->urls->generate($route));

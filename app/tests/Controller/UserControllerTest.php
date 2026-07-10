@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace App\Tests\Controller;
 
 use App\Entity\User;
-use App\Enum\UserPermission;
 use App\Enum\UserRole;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -48,7 +47,6 @@ final class UserControllerTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertStringContainsString('admin@example.com', (string) $this->client->getResponse()->getContent());
-        self::assertStringContainsString('Odečty elektřiny', (string) $this->client->getResponse()->getContent());
     }
 
     public function testCreateUser(): void
@@ -76,15 +74,14 @@ final class UserControllerTest extends WebTestCase
         self::assertNull($this->repo()->findOneBy(['email' => 'kratke@example.com']));
     }
 
-    public function testAssignRoleAndPermission(): void
+    public function testChangeRole(): void
     {
         $cleaner = $this->createUser('uklid@example.com', UserRole::CLEANER);
         $this->em->flush();
         $id = $cleaner->getId();
 
         $this->post('/uzivatele/' . $id, 'user-update-' . $id, [
-            'role' => UserRole::CLEANER->value,
-            'permissions' => [UserPermission::ELECTRICITY->value],
+            'role' => UserRole::MANAGER->value,
             'active' => '1',
         ]);
 
@@ -92,7 +89,7 @@ final class UserControllerTest extends WebTestCase
         $this->em->clear();
         $reloaded = $this->repo()->find($id);
         self::assertNotNull($reloaded);
-        self::assertTrue($reloaded->hasPermission(UserPermission::ELECTRICITY));
+        self::assertSame(UserRole::MANAGER, $reloaded->getRole());
     }
 
     public function testCannotDemoteLastAdmin(): void
@@ -134,7 +131,7 @@ final class UserControllerTest extends WebTestCase
     private function createUser(string $email, UserRole $role): User
     {
         $user = new User($email);
-        $user->assignAccess($role);
+        $user->setRole($role);
         $user->setPassword($this->hasher->hashPassword($user, 'secret123'));
         $this->em->persist($user);
 

@@ -9,9 +9,9 @@
 </div>
 
 <p class="text-muted small">
-    Každý uživatel má jednu <strong>roli</strong> (rozsah přístupu) a případná
-    <strong>doplňková práva</strong>, která mu přiřadíš navrch. Správce a admin mají
-    všechna práva vždy — zaškrtávátka se uplatní hlavně u uklízečky.
+    Každý uživatel má jednu <strong>roli</strong>, která určuje rozsah přístupu:
+    <strong>Admin</strong> vše včetně nastavení a uživatelů, <strong>Správce</strong>
+    provoz i finance, <strong>Uklízečka</strong> jen úklid.
 </p>
 
 <div class="collapse mb-4" id="newUser">
@@ -38,14 +38,6 @@
                 <div class="col-md-2">
                     <button type="submit" class="btn btn-primary w-100">Založit</button>
                 </div>
-                <div class="col-12">
-                    {% for perm in permissions %}
-                        <div class="form-check form-check-inline">
-                            <input type="checkbox" name="permissions[]" value="{{ perm.value }}" id="newPerm{{ loop.index }}" class="form-check-input">
-                            <label for="newPerm{{ loop.index }}" class="form-check-label">{{ perm.label }}</label>
-                        </div>
-                    {% endfor %}
-                </div>
                 <input type="hidden" name="_token" value="{{ csrf_token('user-create') }}">
             </form>
         </div>
@@ -59,7 +51,6 @@
                 <tr>
                     <th scope="col">Uživatel</th>
                     <th scope="col">Role</th>
-                    {% for perm in permissions %}<th scope="col" class="text-center">{{ perm.label }}</th>{% endfor %}
                     <th scope="col" class="text-center">Aktivní</th>
                     <th scope="col" class="text-end">Akce</th>
                 </tr>
@@ -82,13 +73,6 @@
                                 {% endfor %}
                             </select>
                         </td>
-                        {% for perm in permissions %}
-                            <td class="text-center">
-                                <input type="checkbox" name="permissions[]" value="{{ perm.value }}" form="{{ fid }}"
-                                       class="form-check-input" aria-label="{{ perm.label }}"
-                                       {{ user.hasPermission(perm) ? 'checked' }}>
-                            </td>
-                        {% endfor %}
                         <td class="text-center">
                             <input type="checkbox" name="active" value="1" form="{{ fid }}"
                                    class="form-check-input" aria-label="Aktivní" {{ user.active ? 'checked' }}>

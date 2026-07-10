@@ -3,6 +3,8 @@
 {% block title %}Úklid{% endblock %}
 
 {% block body %}
+    {# Jméno hosta a odkaz na rezervaci vidí jen provozní role, ne uklízečka. #}
+    {% set show_guest = is_granted('ROLE_USER') %}
     <h1 class="h3 mb-3">Úklid — vyplácení uklízečce</h1>
 
     <div class="card mb-3">
@@ -17,7 +19,7 @@
                 <thead class="small text-muted">
                 <tr>
                     <th>Pobyt</th>
-                    <th>Host</th>
+                    {% if show_guest %}<th>Host</th>{% endif %}
                     <th>Typ</th>
                     <th class="text-end">Vyplatit</th>
                     <th></th>
@@ -29,11 +31,13 @@
                         <td>
                             {{ c.reservation.checkOut ? c.reservation.checkOut|date('d. m. Y') : c.reservation.checkIn|date('d. m. Y') }}
                         </td>
+                        {% if show_guest %}
                         <td>
                             <a href="{{ path('reservation_detail', {id: c.reservation.id}) }}">
                                 {{ c.reservation.guestName ?? '—' }}
                             </a>
                         </td>
+                        {% endif %}
                         <td>{{ c.type|cleaning_label }}</td>
                         <td class="text-end fw-bold">{{ c.payoutCzk|number_format(0, ',', ' ') }} Kč</td>
                         <td class="text-end">
@@ -45,7 +49,7 @@
                         </td>
                     </tr>
                 {% else %}
-                    <tr><td colspan="5" class="text-muted small p-3">Nic k vyplacení.</td></tr>
+                    <tr><td colspan="{{ show_guest ? 5 : 4 }}" class="text-muted small p-3">Nic k vyplacení.</td></tr>
                 {% endfor %}
                 </tbody>
             </table>
@@ -65,7 +69,7 @@
                 <tr>
                     <th>Vyplaceno</th>
                     <th>Pobyt</th>
-                    <th>Host</th>
+                    {% if show_guest %}<th>Host</th>{% endif %}
                     <th>Typ</th>
                     <th class="text-end">Částka</th>
                 </tr>
@@ -75,23 +79,27 @@
                     <tr>
                         <td>{{ c.paidAt|date('d. m. Y') }}</td>
                         <td>{{ c.reservation.checkOut ? c.reservation.checkOut|date('d. m. Y') : c.reservation.checkIn|date('d. m. Y') }}</td>
+                        {% if show_guest %}
                         <td>
                             <a href="{{ path('reservation_detail', {id: c.reservation.id}) }}">
                                 {{ c.reservation.guestName ?? '—' }}
                             </a>
                         </td>
+                        {% endif %}
                         <td>{{ c.type|cleaning_label }}</td>
                         <td class="text-end">{{ c.payoutCzk|number_format(0, ',', ' ') }} Kč</td>
                     </tr>
                 {% else %}
-                    <tr><td colspan="5" class="text-muted small p-3">Tento měsíc nic vyplaceno.</td></tr>
+                    <tr><td colspan="{{ show_guest ? 5 : 4 }}" class="text-muted small p-3">Tento měsíc nic vyplaceno.</td></tr>
                 {% endfor %}
                 </tbody>
             </table>
         </div>
     </div>
 
+    {% if show_guest %}
     <div class="mt-4">
         <a href="{{ path('dashboard') }}" class="btn btn-outline-secondary btn-sm">← Zpět na přehled</a>
     </div>
+    {% endif %}
 {% endblock %}
