@@ -45,13 +45,18 @@ class InvoiceLine
     #[ORM\Column(type: Types::DECIMAL, precision: 12, scale: 2)]
     private string $totalPrice;
 
-    public function __construct(string $description, string $unitPrice, string $quantity = '1', ?string $unit = null)
+    /** Sazba výstupní DPH v procentech (12.00 / 21.00). null = řádek bez DPH (neplátce, identifikovaná osoba). */
+    #[ORM\Column(type: Types::DECIMAL, precision: 5, scale: 2, nullable: true)]
+    private ?string $vatRate = null;
+
+    public function __construct(string $description, string $unitPrice, string $quantity = '1', ?string $unit = null, ?string $vatRate = null)
     {
         $this->description = $description;
         $this->unitPrice = $unitPrice;
         $this->quantity = $quantity;
         $this->unit = $unit;
         $this->totalPrice = bcmul($quantity, $unitPrice, 2);
+        $this->vatRate = $vatRate;
     }
 
     public function getId(): ?int
@@ -106,5 +111,10 @@ class InvoiceLine
     public function getTotalPrice(): string
     {
         return $this->totalPrice;
+    }
+
+    public function getVatRate(): ?string
+    {
+        return $this->vatRate;
     }
 }

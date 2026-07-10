@@ -40,6 +40,7 @@ class InvoicePdfRenderer
         $html = $this->twig->render('invoice/pdf.html.twig', [
             'invoice' => $invoice,
             'issuer' => $issuer,
+            'vatRecap' => InvoiceVatRecap::fromInvoice($invoice),
             'logoPath' => $this->logo->exists() ? $this->logo->absolutePath() : null,
         ]);
 

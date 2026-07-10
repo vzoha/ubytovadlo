@@ -13,6 +13,7 @@ namespace App\Entity;
 
 use App\Enum\InvoiceType;
 use App\Enum\PdfSource;
+use App\Enum\TaxProfile;
 use App\Repository\InvoiceRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -98,6 +99,19 @@ class Invoice
 
     #[ORM\Column(type: Types::DATE_IMMUTABLE, nullable: true)]
     private ?\DateTimeImmutable $exchangeRateDate = null;
+
+    // === Snímek výstupní DPH v čase vystavení (plátce DPH; jinak null) ===
+    /** Daňový profil dodavatele při vystavení — historická faktura drží svůj režim. */
+    #[ORM\Column(length: 32, nullable: true, enumType: TaxProfile::class)]
+    private ?TaxProfile $taxProfileSnapshot = null;
+
+    /** Základ DPH celkem (součet za všechny sazby). null u faktur bez DPH. */
+    #[ORM\Column(type: Types::DECIMAL, precision: 12, scale: 2, nullable: true)]
+    private ?string $vatBaseTotal = null;
+
+    /** Výstupní DPH celkem. null u faktur bez DPH. */
+    #[ORM\Column(type: Types::DECIMAL, precision: 12, scale: 2, nullable: true)]
+    private ?string $vatAmountTotal = null;
 
     // === Termíny + platba ===
     #[ORM\Column(type: Types::DATE_IMMUTABLE)]
@@ -375,6 +389,48 @@ class Invoice
         $this->exchangeRateDate = $date;
 
         return $this;
+    }
+
+    public function getTaxProfileSnapshot(): ?TaxProfile
+    {
+        return $this->taxProfileSnapshot;
+    }
+
+    public function setTaxProfileSnapshot(?TaxProfile $profile): self
+    {
+        $this->taxProfileSnapshot = $profile;
+
+        return $this;
+    }
+
+    public function getVatBaseTotal(): ?string
+    {
+        return $this->vatBaseTotal;
+    }
+
+    public function setVatBaseTotal(?string $base): self
+    {
+        $this->vatBaseTotal = $base;
+
+        return $this;
+    }
+
+    public function getVatAmountTotal(): ?string
+    {
+        return $this->vatAmountTotal;
+    }
+
+    public function setVatAmountTotal(?string $amount): self
+    {
+        $this->vatAmountTotal = $amount;
+
+        return $this;
+    }
+
+    /** Nese faktura výstupní DPH? (plátce DPH v době vystavení) */
+    public function hasOutputVat(): bool
+    {
+        return $this->vatAmountTotal !== null;
     }
 
     public function getIssuedAt(): \DateTimeImmutable

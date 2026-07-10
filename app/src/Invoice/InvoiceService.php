@@ -70,7 +70,7 @@ class InvoiceService
         $due = $issuedAt->modify('+' . $this->depositConfig->dueDays() . ' days');
         $invoice = $this->buildInvoice($reservation, InvoiceType::DEPOSIT, $issuedAt, $due);
         $invoice->setTotalAmount($amount);
-        $invoice->addLine(new InvoiceLine('Záloha na ubytovací služby', $amount));
+        $invoice->addLine(new InvoiceLine('Záloha na ubytovací služby', $amount, vatRate: $this->accommodationVatRate()));
 
         $this->fillBankPayment($invoice);
         $this->persist($invoice);
@@ -94,10 +94,11 @@ class InvoiceService
         $invoice = $this->buildInvoice($reservation, InvoiceType::FINAL, $issuedAt, $issuedAt->modify('+' . self::DUE_DAYS_DEFAULT . ' days'));
         $invoice->setParentInvoice($deposit);
 
+        $rate = $this->accommodationVatRate();
         $total = bcsub($this->resolveTotalCzk($reservation, $invoice, $issuedAt), $deposit->getTotalAmount(), 2);
         $invoice->setTotalAmount($total);
-        $invoice->addLine(new InvoiceLine('Ubytovací služby', $reservation->getPriceTotal()));
-        $invoice->addLine(new InvoiceLine('Odpočet zálohy (faktura ' . $deposit->getNumber() . ')', '-' . $deposit->getTotalAmount()));
+        $invoice->addLine(new InvoiceLine('Ubytovací služby', $reservation->getPriceTotal(), vatRate: $rate));
+        $invoice->addLine(new InvoiceLine('Odpočet zálohy (faktura ' . $deposit->getNumber() . ')', '-' . $deposit->getTotalAmount(), vatRate: $rate));
 
         $this->fillBankPayment($invoice);
         $this->persist($invoice);
@@ -121,7 +122,7 @@ class InvoiceService
         $invoice = $this->buildInvoice($reservation, InvoiceType::FULL, $issuedAt, $issuedAt->modify('+' . $dueDays . ' days'));
         $totalCzk = $this->resolveTotalCzk($reservation, $invoice, $issuedAt);
         $invoice->setTotalAmount($totalCzk);
-        $invoice->addLine(new InvoiceLine('Ubytovací služby', $totalCzk));
+        $invoice->addLine(new InvoiceLine('Ubytovací služby', $totalCzk, vatRate: $this->accommodationVatRate()));
 
         if ($this->isOtaIntermediated($reservation)) {
             $invoice->setPaymentMethod('převodem – zprostředkovatel');
@@ -174,9 +175,26 @@ class InvoiceService
         // banka i QR Platba ho potřebují číselný.
         $invoice->setVariableSymbol($number->formatted());
         $invoice->setCurrency('CZK');
+        $invoice->setTaxProfileSnapshot($this->issuerProvider->current()->taxProfile);
         $this->copyCustomerSnapshot($reservation, $invoice);
 
         return $invoice;
+    }
+
+    /** Sazba výstupní DPH pro ubytování — jen když je dodavatel plátce DPH; jinak null (bez DPH). */
+    private function accommodationVatRate(): ?string
+    {
+        return $this->issuerProvider->current()->taxProfile->chargesOutputVat() ? VatRates::ACCOMMODATION : null;
+    }
+
+    /** Uloží na fakturu součet základu a výstupní DPH z řádků (snímek pro historii i DPH přehled). */
+    private function applyVatSnapshot(Invoice $invoice): void
+    {
+        $recap = InvoiceVatRecap::fromInvoice($invoice);
+        if ($recap->hasVat()) {
+            $invoice->setVatBaseTotal($recap->baseTotal);
+            $invoice->setVatAmountTotal($recap->vatTotal);
+        }
     }
 
     private function copyCustomerSnapshot(Reservation $reservation, Invoice $invoice): void
@@ -320,6 +338,7 @@ class InvoiceService
         foreach ($invoice->getLines() as $i => $line) {
             $line->setPosition($i);
         }
+        $this->applyVatSnapshot($invoice);
         // PDF až po flush: orphan PDF na disku je menší zlo než nezpersistovaná faktura s neexistujícím PDF.
         $this->em->persist($invoice);
         $this->em->flush();

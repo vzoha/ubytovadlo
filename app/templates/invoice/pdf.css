@@ -83,13 +83,15 @@ table.lines thead th {
     text-align: left;
 }
 table.lines thead th.amt,
+table.lines thead th.rate,
 table.lines thead th.price,
 table.lines thead th.total { text-align: right; }
 table.lines thead th.unit { text-align: left; padding-left: 2mm; }
-table.lines thead th.amt { width: 18mm; }
-table.lines thead th.unit { width: 12mm; }
-table.lines thead th.price { width: 32mm; }
-table.lines thead th.total { width: 32mm; }
+table.lines thead th.amt { width: 16mm; }
+table.lines thead th.unit { width: 10mm; }
+table.lines thead th.rate { width: 14mm; }
+table.lines thead th.price { width: 30mm; }
+table.lines thead th.total { width: 30mm; }
 
 table.lines tbody td {
     padding: 3mm 0;
@@ -97,9 +99,36 @@ table.lines tbody td {
     text-align: left;
 }
 table.lines tbody td.amt,
+table.lines tbody td.rate,
 table.lines tbody td.price,
 table.lines tbody td.total { text-align: right; white-space: nowrap; }
 table.lines tbody td.unit { text-align: left; padding-left: 2mm; white-space: nowrap; }
+
+/* === REKAPITULACE DPH === */
+table.vat-recap { width: 100%; border-collapse: collapse; margin-top: 4mm; }
+table.vat-recap thead th {
+    padding: 1.5mm 0;
+    font-size: 7pt;
+    font-weight: normal;
+    color: #999;
+    border-bottom: 0.4pt solid #eee;
+    text-align: left;
+}
+table.vat-recap th.r-amt { text-align: right; width: 30mm; }
+table.vat-recap tbody td {
+    padding: 1.5mm 0;
+    font-size: 8.5pt;
+    text-align: left;
+}
+table.vat-recap tbody td.r-amt { text-align: right; white-space: nowrap; }
+table.vat-recap tfoot td {
+    padding: 1.5mm 0;
+    font-size: 8.5pt;
+    font-weight: bold;
+    border-top: 0.4pt solid #eee;
+    text-align: left;
+}
+table.vat-recap tfoot td.r-amt { text-align: right; white-space: nowrap; }
 
 /* === SUMMARY (paid stamp + Celkem k úhradě) === */
 table.summary { width: 100%; border-collapse: collapse; margin-top: 4mm; }

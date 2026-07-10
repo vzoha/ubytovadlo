@@ -10,12 +10,14 @@
 {% include 'invoice/_payment.html.twig' %}
 
 {% set currency = invoice.currency %}
+{% set showVat = vatRecap.hasVat %}
 <table class="lines">
     <thead>
     <tr>
         <th>Název položky</th>
         <th class="amt">Množství</th>
         <th class="unit">MJ</th>
+        {% if showVat %}<th class="rate">DPH</th>{% endif %}
         <th class="price">Cena / MJ</th>
         <th class="total">Celkem</th>
     </tr>
@@ -26,12 +28,44 @@
             <td>{{ line.description }}</td>
             <td class="amt">{{ line.quantity|number_format(line.quantity == line.quantity|round ? 0 : 2, ',', ' ') }}</td>
             <td class="unit">{{ line.unit }}</td>
+            {% if showVat %}<td class="rate">{{ line.vatRate ? line.vatRate|number_format(0, ',', ' ') ~ ' %' : '' }}</td>{% endif %}
             <td class="price">{{ line.unitPrice|money(currency) }}</td>
             <td class="total">{{ line.totalPrice|money(currency) }}</td>
         </tr>
     {% endfor %}
     </tbody>
 </table>
+
+{% if showVat %}
+<table class="vat-recap">
+    <thead>
+    <tr>
+        <th>Rekapitulace DPH</th>
+        <th class="r-amt">Základ</th>
+        <th class="r-amt">DPH</th>
+        <th class="r-amt">S daní</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for row in vatRecap.rows %}
+        <tr>
+            <td>Sazba {{ row.rate|number_format(0, ',', ' ') }} %</td>
+            <td class="r-amt">{{ row.base|money(currency) }}</td>
+            <td class="r-amt">{{ row.vat|money(currency) }}</td>
+            <td class="r-amt">{{ row.gross|money(currency) }}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+    <tfoot>
+    <tr>
+        <td>Celkem</td>
+        <td class="r-amt">{{ vatRecap.baseTotal|money(currency) }}</td>
+        <td class="r-amt">{{ vatRecap.vatTotal|money(currency) }}</td>
+        <td class="r-amt">{{ vatRecap.grossTotal|money(currency) }}</td>
+    </tr>
+    </tfoot>
+</table>
+{% endif %}
 
 <table class="summary">
     <tr>
@@ -46,6 +80,17 @@
     </tr>
     {% endif %}
 </table>
+
+{% set profile = invoice.taxProfileSnapshot ?? issuer.taxProfile %}
+<div class="fine-note">
+    {% if profile.value == 'vat_payer' %}
+        Dodavatel je plátce DPH. Faktura je daňový doklad.
+    {% elseif profile.value == 'non_payer' %}
+        Dodavatel není plátce DPH.
+    {% else %}
+        Dodavatel je identifikovaná osoba (§6h ZDPH), neplátce DPH — fakturováno bez DPH.
+    {% endif %}
+</div>
 
 {% if invoice.originalAmount and invoice.originalCurrency != invoice.currency %}
     <div class="fine-note">

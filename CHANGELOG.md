@@ -8,10 +8,15 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Přidáno
 
-- **Daňový profil dodavatele.** V **Nastavení → Fakturace** se u identity dodavatele
-  volí daňový profil: **identifikovaná osoba** (výchozí), **plátce DPH**, nebo
-  **neplátce DPH**. Profil řídí, jak se na fakturách hostům zachází s DPH a jestli se
-  odvádí daň z provizí OTA.
+- **Daňový profil dodavatele a výstupní DPH na fakturách.** V **Nastavení → Fakturace**
+  se u identity dodavatele volí daňový profil: **identifikovaná osoba** (výchozí),
+  **plátce DPH**, nebo **neplátce DPH**. U **plátce** nesou faktury hostům výstupní DPH:
+  ubytování ve snížené sazbě **12 %**, daň se počítá **shora** z ceny (cena zůstává
+  koncová včetně DPH), přibývá sloupec sazby, **rekapitulace DPH** (základ / daň /
+  s daní) a poznámka, že faktura je daňový doklad. QR Platba i částka k úhradě zůstávají
+  na koncové ceně. Identifikovaná osoba a neplátce fakturují beze změny, s příslušnou
+  poznámkou o režimu. Každá faktura si drží svůj profil a sazbu i po pozdější změně
+  nastavení.
 
 ### Opraveno
 
