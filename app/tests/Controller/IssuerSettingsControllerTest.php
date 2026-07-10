@@ -13,6 +13,7 @@ namespace App\Tests\Controller;
 
 use App\Entity\Setting;
 use App\Entity\User;
+use App\Enum\TaxProfile;
 use App\Invoice\IssuerProfileProvider;
 use App\Repository\SettingRepository;
 use App\Repository\UserRepository;
@@ -54,6 +55,7 @@ final class IssuerSettingsControllerTest extends WebTestCase
         $form = $crawler->selectButton('Uložit')->form();
         $form['issuer_settings[name]'] = 'Malý Statek Lniště';
         $form['issuer_settings[ico]'] = '87654321';
+        $form['issuer_settings[taxProfile]'] = 'vat_payer';
         $form['issuer_settings[bankAccountIban]'] = 'CZ6508000000001234567890';
         $this->client->submit($form);
 
@@ -61,11 +63,13 @@ final class IssuerSettingsControllerTest extends WebTestCase
 
         $settings = static::getContainer()->get(SettingRepository::class);
         self::assertSame('Malý Statek Lniště', $settings->getString('invoice.issuer.name'));
+        self::assertSame('vat_payer', $settings->getString('invoice.issuer.tax_profile'));
 
         // a provider to promítne do dodavatele faktury
         $issuer = static::getContainer()->get(IssuerProfileProvider::class)->current();
         self::assertSame('Malý Statek Lniště', $issuer->name);
         self::assertSame('87654321', $issuer->ico);
+        self::assertSame(TaxProfile::VAT_PAYER, $issuer->taxProfile);
     }
 
     public function testNumberingFormSavesFormatAndNextNumber(): void

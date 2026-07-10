@@ -24,6 +24,7 @@ use App\Invoice\InvoicePdfRenderer;
 use App\Invoice\InvoiceService;
 use App\Invoice\IssuerProfileProvider;
 use App\Invoice\SpaydGenerator;
+use App\Invoice\TaxProfileConfig;
 use App\Repository\InvoiceRepository;
 use App\Repository\SettingRepository;
 use App\Vat\CnbExchangeRateClient;
@@ -61,7 +62,7 @@ final class InvoiceServicePayoutTest extends TestCase
             $pdfRenderer,
             $this->createMock(SpaydGenerator::class),
             $this->createMock(CnbExchangeRateClient::class),
-            new IssuerProfileProvider($settings),
+            new IssuerProfileProvider($settings, new TaxProfileConfig($settings)),
             $this->createMock(IncomeUpserter::class),
             new DepositConfig($settings),
         );

@@ -24,6 +24,7 @@ use App\Invoice\InvoicePdfRenderer;
 use App\Invoice\InvoiceService;
 use App\Invoice\IssuerProfileProvider;
 use App\Invoice\SpaydGenerator;
+use App\Invoice\TaxProfileConfig;
 use App\Repository\InvoiceRepository;
 use App\Repository\SettingRepository;
 use App\Vat\CnbExchangeRateClient;
@@ -62,7 +63,7 @@ final class InvoiceServicePaymentMethodTest extends TestCase
                 default => null,
             },
         );
-        $issuerProvider = new IssuerProfileProvider($settings);
+        $issuerProvider = new IssuerProfileProvider($settings, new TaxProfileConfig($settings));
 
         $this->service = new InvoiceService(
             $em,

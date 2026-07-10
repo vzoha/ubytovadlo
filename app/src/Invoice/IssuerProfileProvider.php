@@ -38,6 +38,7 @@ final class IssuerProfileProvider
 
     public function __construct(
         private readonly SettingRepository $settings,
+        private readonly TaxProfileConfig $taxProfile,
     ) {
     }
 
@@ -56,6 +57,7 @@ final class IssuerProfileProvider
             web: $this->value('web'),
             bankAccount: $this->value('bankAccount'),
             bankAccountIban: $this->value('bankAccountIban'),
+            taxProfile: $this->taxProfile->current(),
         );
     }
 

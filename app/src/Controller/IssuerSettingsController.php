@@ -19,6 +19,7 @@ use App\Invoice\DepositConfig;
 use App\Invoice\InvoiceNumberFormat;
 use App\Invoice\InvoiceSeriesConfig;
 use App\Invoice\IssuerProfileProvider;
+use App\Invoice\TaxProfileConfig;
 use App\Repository\SettingRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -39,6 +40,7 @@ class IssuerSettingsController extends AbstractController
         private readonly InvoiceNumberFormat $numberFormat,
         private readonly InvoiceSeriesConfig $series,
         private readonly DepositConfig $deposit,
+        private readonly TaxProfileConfig $taxProfile,
         private readonly EntityManagerInterface $em,
     ) {
     }
@@ -46,13 +48,16 @@ class IssuerSettingsController extends AbstractController
     #[Route('/nastaveni/dodavatel', name: 'issuer_settings_edit', methods: ['GET', 'POST'])]
     public function edit(Request $request): Response
     {
-        $issuerForm = $this->createForm(IssuerSettingsType::class, $this->issuerProvider->currentValues());
+        $issuerForm = $this->createForm(IssuerSettingsType::class, $this->issuerProvider->currentValues() + [
+            'taxProfile' => $this->taxProfile->current(),
+        ]);
         $issuerForm->handleRequest($request);
         if ($issuerForm->isSubmitted() && $issuerForm->isValid()) {
             foreach (IssuerProfileProvider::KEYS as $field => $key) {
                 $value = trim((string) $issuerForm->get($field)->getData());
                 $this->settings->set($key, $value, 'Dodavatel na faktuře.');
             }
+            $this->settings->set(TaxProfileConfig::KEY, $issuerForm->get('taxProfile')->getData()->value, 'Daňový profil dodavatele.');
             $this->em->flush();
             $this->addFlash('success', 'Údaje dodavatele uloženy. Nové faktury je použijí; u stávajících přegeneruj PDF.');
 

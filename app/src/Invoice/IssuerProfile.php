@@ -11,8 +11,10 @@ declare(strict_types=1);
 
 namespace App\Invoice;
 
+use App\Enum\TaxProfile;
+
 /**
- * Snímek dodavatele pro účely faktury. Hodnoty jdou z .env (INVOICE_ISSUER_*).
+ * Snímek dodavatele pro účely faktury. Hodnoty jdou z DB (settings `invoice.issuer.*`).
  */
 final readonly class IssuerProfile
 {
@@ -29,6 +31,7 @@ final readonly class IssuerProfile
         public string $web,
         public string $bankAccount,
         public string $bankAccountIban,
+        public TaxProfile $taxProfile = TaxProfile::IDENTIFIED_PERSON,
     ) {
     }
 }

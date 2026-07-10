@@ -11,7 +11,9 @@ declare(strict_types=1);
 
 namespace App\Form;
 
+use App\Enum\TaxProfile;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\EnumType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
@@ -38,7 +40,13 @@ class IssuerSettingsType extends AbstractType
             ->add('zip', TextType::class, ['label' => 'PSČ', 'required' => false])
             ->add('country', TextType::class, ['label' => 'Země', 'required' => false])
             ->add('ico', TextType::class, ['label' => 'IČO', 'required' => false])
-            ->add('dic', TextType::class, ['label' => 'DIČ', 'required' => false, 'help' => 'Identifikovaná osoba — uvádí se na faktuře.'])
+            ->add('dic', TextType::class, ['label' => 'DIČ', 'required' => false, 'help' => 'Uvádí se na faktuře u identifikované osoby i plátce DPH.'])
+            ->add('taxProfile', EnumType::class, [
+                'label' => 'Daňový profil',
+                'class' => TaxProfile::class,
+                'choice_label' => fn (TaxProfile $p): string => $p->label(),
+                'help' => 'Určuje DPH na fakturách hostům a odvod z provizí OTA.',
+            ])
             ->add('phone', TextType::class, ['label' => 'Telefon', 'required' => false])
             ->add('email', TextType::class, ['label' => 'E-mail', 'required' => false])
             ->add('web', TextType::class, ['label' => 'Web', 'required' => false])

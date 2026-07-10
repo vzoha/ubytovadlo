@@ -6,6 +6,13 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ## [Unreleased]
 
+### Přidáno
+
+- **Daňový profil dodavatele.** V **Nastavení → Fakturace** se u identity dodavatele
+  volí daňový profil: **identifikovaná osoba** (výchozí), **plátce DPH**, nebo
+  **neplátce DPH**. Profil řídí, jak se na fakturách hostům zachází s DPH a jestli se
+  odvádí daň z provizí OTA.
+
 ### Opraveno
 
 - **Odchozí HTTP funguje i na hostingu bez `curl_multi_exec`.** Volání ven

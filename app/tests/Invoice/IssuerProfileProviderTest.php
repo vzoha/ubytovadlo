@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace App\Tests\Invoice;
 
 use App\Invoice\IssuerProfileProvider;
+use App\Invoice\TaxProfileConfig;
 use App\Repository\SettingRepository;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\TestCase;
@@ -49,6 +50,6 @@ final class IssuerProfileProviderTest extends TestCase
 
     private function provider(SettingRepository $settings): IssuerProfileProvider
     {
-        return new IssuerProfileProvider($settings);
+        return new IssuerProfileProvider($settings, new TaxProfileConfig($settings));
     }
 }

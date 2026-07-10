@@ -18,6 +18,7 @@ use App\Invoice\DepositConfig;
 use App\Invoice\DepositPaymentBuilder;
 use App\Invoice\IssuerProfileProvider;
 use App\Invoice\SpaydGenerator;
+use App\Invoice\TaxProfileConfig;
 use App\Repository\SettingRepository;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\TestCase;
@@ -94,7 +95,7 @@ final class DepositPaymentBuilderTest extends TestCase
 
         return new DepositPaymentBuilder(
             new DepositConfig($settings),
-            new IssuerProfileProvider($settings),
+            new IssuerProfileProvider($settings, new TaxProfileConfig($settings)),
             new SpaydGenerator(),
         );
     }
