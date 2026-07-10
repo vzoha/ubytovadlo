@@ -24,6 +24,7 @@ enum OwnerNotificationType: string
     case GUEST_MESSAGE_FAILED = 'guest_message_failed';
     case VAT_REMINDER = 'vat_reminder';
     case UBYPORT_DUE = 'ubyport_due';
+    case IDENTIFIED_PERSON_ONSET = 'identified_person_onset';
 
     /** Krátký název typu pro UI nastavení. */
     public function label(): string
@@ -35,6 +36,7 @@ enum OwnerNotificationType: string
             self::GUEST_MESSAGE_FAILED => 'Selhalo odeslání zprávy hostovi',
             self::VAT_REMINDER => 'Připomínka DPH přiznání',
             self::UBYPORT_DUE => 'Cizinec k nahlášení na Ubyport',
+            self::IDENTIFIED_PERSON_ONSET => 'Vznik identifikované osoby',
         };
     }
 
@@ -48,6 +50,7 @@ enum OwnerNotificationType: string
             self::GUEST_MESSAGE_FAILED => 'Automatickou zprávu hostovi se nepodařilo odeslat — je třeba zásah.',
             self::VAT_REMINDER => 'Blíží se termín DPH přiznání za měsíc s přijatou provizí (do 25.).',
             self::UBYPORT_DUE => 'Zahraniční host čeká na nahlášení na Ubyport (lhůta 3 dny od příjezdu).',
+            self::IDENTIFIED_PERSON_ONSET => 'První přijatá provize z OTA založila registrační povinnost identifikované osoby (do 15 dnů).',
         };
     }
 

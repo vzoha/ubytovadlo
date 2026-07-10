@@ -6,6 +6,24 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ## [Unreleased]
 
+### Přidáno
+
+- **Podklad rekreačního poplatku pro obec.** V **Ekonomice** je pod tlačítkem
+  **Rekreační poplatek** roční přehled pobytů s počtem poplatníků (dospělých; děti
+  jsou osvobozené), nocí a částkou k odvodu — zvlášť za uskutečněné pobyty a celkem
+  včetně plánovaných. Přehled jde stáhnout jako **CSV** pro účetní nebo obec.
+- **Sazba rekreačního poplatku v nastavení.** V **Nastavení → Poplatky** se zadá
+  sazba za dospělou osobu a noc; aplikace ji použije u každé rezervace.
+- **Upozornění na vznik identifikované osoby.** Jakmile neplátci dorazí první provize
+  z OTA (přeshraniční přijatá služba z EU), aplikace pošle e-mail, že se stal
+  **identifikovanou osobou** podle §6h ZDPH a má **15 dnů** na přihlášku k registraci.
+
+### Změněno
+
+- **Přehled DPH se přepočítává sám.** Denní úloha přepočítá reverse charge z provizí
+  (základ a kurz ČNB) na rezervacích s provizí, takže měsíční přehled i připomínka
+  pracují s aktuálními čísly bez ručního spuštění.
+
 ## [0.9.0] — 2026-07-11
 
 ### Přidáno

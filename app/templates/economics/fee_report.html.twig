@@ -1,0 +1,102 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Rekreační poplatek {{ year }} — {{ brand_name }}{% endblock %}
+
+{% block body %}
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h3 mb-0">Rekreační poplatek {{ year }}</h1>
+        <div class="btn-group">
+            {% for y in years %}
+                <a href="{{ path('recreation_fee_report', {year: y}) }}"
+                   class="btn btn-sm {{ y == year ? 'btn-primary' : 'btn-outline-primary' }}">{{ y }}</a>
+            {% endfor %}
+        </div>
+    </div>
+
+    <p class="text-muted small mb-3">
+        Podklad pro obec: počet pobytů, poplatníků (dospělí, děti jsou osvobozené), nocí a částka k&nbsp;odvodu.
+        Odvádí se za&nbsp;<strong>uskutečněné</strong> pobyty; plánované jsou zatím jen výhled.
+        <a href="{{ path('economics_overview', {year: year}) }}">← Ekonomika {{ year }}</a>
+    </p>
+
+    <div class="row g-3 mb-4">
+        {% for label, s in {'Uskutečněno': realized, 'Celkem (vč. plánovaných)': total} %}
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header py-1 small text-muted">
+                        {{ label }} · {{ s.count }} pobytů
+                    </div>
+                    <div class="card-body py-2">
+                        <dl class="row mb-0 small">
+                            <dt class="col-7 fw-normal text-muted">Poplatníků (dospělých)</dt>
+                            <dd class="col-5 text-end mb-1">{{ s.adults }}</dd>
+                            <dt class="col-7 fw-normal text-muted">Nocí</dt>
+                            <dd class="col-5 text-end mb-1">{{ s.nights }}</dd>
+                            <dt class="col-7">Poplatek k odvodu</dt>
+                            <dd class="col-5 text-end fw-bold">{{ s.fee|number_format(0, ',', ' ') }} Kč</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span>Pobyty</span>
+            {% if reservations is not empty %}
+                <a href="{{ path('recreation_fee_report_csv', {year: year}) }}" class="btn btn-sm btn-outline-secondary">Stáhnout CSV</a>
+            {% endif %}
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle mb-0 small">
+                <thead class="text-muted">
+                <tr>
+                    <th>Příjezd</th>
+                    <th>Odjezd</th>
+                    <th>Jméno</th>
+                    <th>Kanál</th>
+                    <th class="text-end">Dospělí</th>
+                    <th class="text-end">Děti</th>
+                    <th class="text-end">Nocí</th>
+                    <th class="text-end">Poplatek</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for r in reservations %}
+                    {% set p = profits[r.id] %}
+                    {% set is_expected = (r.checkOut ?? r.checkIn) > today %}
+                    <tr {% if is_expected %}class="text-muted"{% endif %}>
+                        <td>
+                            <a href="{{ path('reservation_detail', {id: r.id}) }}">{{ r.checkIn|date('j. n. Y') }}</a>
+                            {% if is_expected %}<span class="badge text-bg-warning ms-1">plán</span>{% endif %}
+                        </td>
+                        <td>{{ r.checkOut ? r.checkOut|date('j. n. Y') : '—' }}</td>
+                        <td>{{ r.guestName ?? '—' }}</td>
+                        <td>{{ r.channel.label }}</td>
+                        <td class="text-end">{{ r.guestsAdult }}</td>
+                        <td class="text-end text-muted">{{ r.guestsChild }}</td>
+                        <td class="text-end">{{ p.nights }}</td>
+                        <td class="text-end">{{ p.recreationFeeCzk|number_format(0, ',', ' ') }} Kč</td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="8" class="text-center text-muted py-3">Žádné pobyty v roce {{ year }}.</td></tr>
+                {% endfor %}
+                </tbody>
+                {% if reservations is not empty %}
+                    <tfoot class="border-top">
+                    {% for label, s in {'Uskutečněno': realized, 'Celkem': total} %}
+                        <tr class="{{ label == 'Celkem' ? 'fw-bold' : 'text-muted' }}">
+                            <td colspan="4">{{ label }} · {{ s.count }} pobytů</td>
+                            <td class="text-end">{{ s.adults }}</td>
+                            <td></td>
+                            <td class="text-end">{{ s.nights }}</td>
+                            <td class="text-end">{{ s.fee|number_format(0, ',', ' ') }} Kč</td>
+                        </tr>
+                    {% endfor %}
+                    </tfoot>
+                {% endif %}
+            </table>
+        </div>
+    </div>
+{% endblock %}

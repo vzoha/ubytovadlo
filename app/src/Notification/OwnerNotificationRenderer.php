@@ -88,6 +88,7 @@ final class OwnerNotificationRenderer
             OwnerNotificationType::GUEST_MESSAGE_FAILED => $this->guestMessageFailed($reservation, $payload),
             OwnerNotificationType::VAT_REMINDER => $this->vatReminder($payload),
             OwnerNotificationType::UBYPORT_DUE => $this->ubyportDue($reservation),
+            OwnerNotificationType::IDENTIFIED_PERSON_ONSET => $this->identifiedPersonOnset($payload),
         };
     }
 
@@ -184,6 +185,23 @@ final class OwnerNotificationRenderer
         );
 
         return new OwnerNotificationContent('Připomínka: DPH přiznání za ' . $label, $body);
+    }
+
+    /** @param array<string, mixed> $payload */
+    private function identifiedPersonOnset(array $payload): OwnerNotificationContent
+    {
+        $deadline = trim((string) ($payload['deadline'] ?? ''));
+        $deadlineNote = $deadline !== '' ? sprintf(' (nejpozději do **%s**)', $deadline) : '';
+
+        $body = sprintf(
+            "Přijala jsi první provizi z OTA (Booking/Airbnb) — přeshraniční přijatou službu z EU. Tím ses stala **identifikovanou osobou** podle §6h zákona o DPH.\n\n"
+            . "Je potřeba **podat přihlášku k registraci** u finančního úřadu do **15 dnů**%s. Registrace neznamená, že se stáváš plátcem DPH — hostům dál fakturuješ bez DPH; jen z přijatých provizí odvádíš 21 %% DPH reverse charge.\n\n"
+            . "Po registraci si v nastavení nastav daňový profil „identifikovaná osoba\".\n\n%s",
+            $deadlineNote,
+            sprintf('[[button:Nastavit daňový profil|%s]]', $this->url('issuer_settings_edit')),
+        );
+
+        return new OwnerNotificationContent('Vznikla ti registrační povinnost — identifikovaná osoba', $body);
     }
 
     private function ubyportDue(?Reservation $reservation): OwnerNotificationContent

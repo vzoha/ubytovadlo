@@ -36,8 +36,8 @@ use App\Service\Electricity\ElectricityCostCalculator;
 final class ReservationProfitCalculator
 {
     /** Setting key pro sazbu rekreačního poplatku (Kč / dospělý / noc), default 15. Děti jsou osvobozeny. */
-    private const RECREATION_FEE_KEY = 'recreation_fee.per_adult_night';
-    private const RECREATION_FEE_DEFAULT = 15;
+    public const RECREATION_FEE_KEY = 'recreation_fee.per_adult_night';
+    public const RECREATION_FEE_DEFAULT = 15;
 
     public function __construct(
         private readonly ElectricityCostCalculator $electricityCost,

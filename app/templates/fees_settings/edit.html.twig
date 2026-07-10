@@ -1,0 +1,25 @@
+{% extends 'settings/base.html.twig' %}
+
+{% block title %}Nastavení poplatků{% endblock %}
+
+{% block settings_active %}fees{% endblock %}
+
+{% block settings_content %}
+    <h2 class="h5 mb-2">Poplatky</h2>
+    <p class="text-muted small">
+        Sazba rekreačního poplatku, kterou aplikace u&nbsp;každé rezervace dopočítá z&nbsp;počtu
+        dospělých hostů a&nbsp;nocí a&nbsp;promítne do&nbsp;ekonomiky. Podklad pro obec najdeš
+        v&nbsp;ekonomickém přehledu.
+    </p>
+
+    {{ form_start(form) }}
+        <div class="card mb-3">
+            <div class="card-body">
+                {{ form_row(form.recreationFeePerAdultNight) }}
+            </div>
+        </div>
+        <div class="d-flex justify-content-end">
+            <button type="submit" class="btn btn-primary">Uložit</button>
+        </div>
+    {{ form_end(form) }}
+{% endblock %}

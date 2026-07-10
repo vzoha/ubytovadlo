@@ -15,6 +15,7 @@ use App\Entity\Cleaning;
 use App\Entity\Invoice;
 use App\Entity\InvoiceLine;
 use App\Entity\Reservation;
+use App\Entity\Setting;
 use App\Entity\User;
 use App\Enum\Channel;
 use App\Enum\ReservationStatus;
@@ -41,6 +42,7 @@ final class EconomicsControllerTest extends WebTestCase
         $this->em->createQuery('DELETE FROM ' . InvoiceLine::class . ' l')->execute();
         $this->em->createQuery('DELETE FROM ' . Invoice::class . ' i')->execute();
         $this->em->createQuery('DELETE FROM ' . Reservation::class . ' r')->execute();
+        $this->em->createQuery('DELETE FROM ' . Setting::class . ' s')->execute();
         $this->em->createQuery('DELETE FROM ' . User::class . ' u')->execute();
 
         $hasher = $container->get(UserPasswordHasherInterface::class);
@@ -124,5 +126,33 @@ final class EconomicsControllerTest extends WebTestCase
         self::assertResponseIsSuccessful();
         $body = (string) $this->client->getResponse()->getContent();
         self::assertStringContainsString('Ekonomika ' . (new \DateTimeImmutable('today'))->format('Y'), $body);
+    }
+
+    public function testRecreationFeeReportRendersTotals(): void
+    {
+        $this->client->request('GET', '/ekonomika/poplatky/2026');
+
+        self::assertResponseIsSuccessful();
+        $body = (string) $this->client->getResponse()->getContent();
+        self::assertStringContainsString('Rekreační poplatek 2026', $body);
+        self::assertStringContainsString('Miluše Testová', $body);
+        // uskutečněný web pobyt: 15 Kč × 2 dospělí × 2 noci = 60 Kč
+        self::assertStringContainsString('60 Kč', $body);
+        // celkem včetně plánovaného pobytu (další 2 dospělí × 2 noci) = 120 Kč
+        self::assertStringContainsString('120 Kč', $body);
+        // zrušená rezervace do podkladu nepatří
+        self::assertStringNotContainsString('Zrušený Host', $body);
+    }
+
+    public function testRecreationFeeCsvDownloads(): void
+    {
+        $this->client->request('GET', '/ekonomika/poplatky/2026/podklad.csv');
+
+        self::assertResponseIsSuccessful();
+        $response = $this->client->getResponse();
+        self::assertStringContainsString('text/csv', (string) $response->headers->get('Content-Type'));
+        $csv = (string) $response->getContent();
+        self::assertStringContainsString('Miluše Testová', $csv);
+        self::assertStringContainsString('Celkem', $csv);
     }
 }
