@@ -6,6 +6,8 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ## [Unreleased]
 
+## [0.8.0] — 2026-07-11
+
 ### Přidáno
 
 - **Daňový profil dodavatele a výstupní DPH na fakturách.** V **Nastavení → Fakturace**
@@ -19,14 +21,12 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
   nastavení. U **plátce** navíc **ekonomika** nepočítá reverse charge z provize OTA
   jako náklad — má nárok na odpočet, takže se v zisku neprojeví (v přehledu i na kartě
   rezervace je označen jako „odpočet"). Přehled **DPH** (`/dph`) rozlišuje profil: u plátce vedle reverse charge z provize (21 %) ukazuje výstupní DPH z faktur a výslednou **daňovou povinnost** (výstup + RC − odpočet) a nabízí **CSV podklad** dokladů pro přiznání; identifikovaná osoba vidí jen reverse charge. U **neplátce** se celý DPH modul skryje (menu, dashboard i přehled) a připomínka DPH se neposílá.
-- **Uživatelské role a přiřaditelná práva.** Uživatelé se spravují v **Uživatelé**
-  (jen pro admina) jako matice: každý má jednu **roli** — **Admin** (vše včetně
-  nastavení a správy uživatelů), **Správce** (provoz i finance bez nastavení a
-  uživatelů), **Uklízečka** (jen úklid) — a k tomu volitelná **doplňková práva**
-  zaškrtnutá navrch, začínající právem **Odečty elektřiny**. Admin zakládá účty,
-  mění role a práva, resetuje heslo a účet deaktivuje; menu i stránky se řídí
-  přístupem a uklízečka po přihlášení přistane rovnou na úklidu. Aspoň jeden
-  aktivní admin musí vždy zůstat.
+- **Uživatelské role.** Uživatelé se spravují v **Uživatelé** (jen pro admina).
+  Každý má jednu **roli**: **Admin** (vše včetně nastavení a správy uživatelů),
+  **Správce** (provoz i finance — rezervace, faktury, účty, elektřina),
+  **Uklízečka** (jen úklid, bez údajů hostů). Admin zakládá účty, mění role,
+  resetuje heslo a účet deaktivuje; menu i stránky se řídí rolí a uklízečka po
+  přihlášení přistane rovnou na úklidu. Aspoň jeden aktivní admin musí vždy zůstat.
 - **Přihlášení může zůstat platné 30 dní.** Na přihlašovací obrazovce je volba
   **Zůstat přihlášen 30 dní** (ve výchozím stavu zapnutá) — po jejím potvrzení tě
   aplikace nevyhodí po zavření prohlížeče, ale drží přihlášení po dobu 30 dní.
@@ -34,16 +34,6 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
   otevře stránka **Můj profil** — přehled účtu (e-mail, role, datum založení) a
   formulář pro **změnu hesla** (ověření současného hesla, kontrola délky a shody
   potvrzení).
-
-### Opraveno
-
-- **Odchozí HTTP funguje i na hostingu bez `curl_multi_exec`.** Volání ven
-  (import z MotoPressu přes webhook, kurzy ČNB, ARES, iCal feedy) používají
-  stream-based HTTP klient, takže projdou i tam, kde je ve webovém PHP zakázaná
-  funkce `curl_multi_exec`.
-
-### Přidáno
-
 - **Žádost o zálohu a potvrzení rezervace posílá aplikace sama.** Po objednávce
   webové/přímé rezervace se zálohou dostane host e-mail s pokyny k platbě zálohy —
   částka, číslo účtu, variabilní symbol, splatnost a **QR kód pro rychlou platbu**.
@@ -58,6 +48,13 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
   (kopírování i vygenerování nové), do WordPressu se vloží přiložené rozšíření
   `integrations/wordpress/ubytovadlo-motopress-webhook.php`. Pravidelná kontrola
   běží dál jako záloha, kdyby ťuknutí nedorazilo.
+
+### Opraveno
+
+- **Odchozí HTTP funguje i na hostingu bez `curl_multi_exec`.** Volání ven
+  (import z MotoPressu přes webhook, kurzy ČNB, ARES, iCal feedy) používají
+  stream-based HTTP klient, takže projdou i tam, kde je ve webovém PHP zakázaná
+  funkce `curl_multi_exec`.
 
 ## [0.7.0] — 2026-07-05
 
@@ -474,6 +471,7 @@ iniciální snapshot vyčleněný z interního vývoje (bez přenosu git histori
 - iCal sanity sync (kontrola obsazenosti, detekce Airbnb storen) chybí.
 - Cílí zatím na jednu ubytovací jednotku (multi-unit je v plánu).
 
+[0.8.0]: https://github.com/vzoha/ubytovadlo/releases/tag/v0.8.0
 [0.7.0]: https://github.com/vzoha/ubytovadlo/releases/tag/v0.7.0
 [0.6.0]: https://github.com/vzoha/ubytovadlo/releases/tag/v0.6.0
 [0.5.0]: https://github.com/vzoha/ubytovadlo/releases/tag/v0.5.0
