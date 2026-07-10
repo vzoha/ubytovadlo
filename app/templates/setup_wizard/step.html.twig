@@ -1,0 +1,78 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Průvodce nastavením — {{ brand_name }}{% endblock %}
+
+{% block body %}
+    <div class="mx-auto" style="max-width: 720px;">
+        <h1 class="h3 mb-1">Průvodce nastavením</h1>
+        <p class="text-muted">Nastav aplikaci v pár krocích. Kdykoli můžeš krok přeskočit a vrátit se k němu později.</p>
+
+        {# Stepper #}
+        <ol class="list-unstyled d-flex flex-wrap gap-2 mb-4">
+            {% for key, meta in steps %}
+                {% set idx = loop.index0 %}
+                {% set state = idx == stepIndex ? 'current' : (idx < stepIndex ? 'done' : 'todo') %}
+                <li class="d-flex align-items-center gap-2 px-2 py-1 rounded {{ state == 'current' ? 'bg-primary text-white' : (state == 'done' ? 'text-success' : 'text-muted') }}">
+                    <span class="badge rounded-pill {{ state == 'current' ? 'bg-light text-primary' : (state == 'done' ? 'bg-success' : 'bg-secondary') }}">
+                        {{ state == 'done' ? '✓' : loop.index }}
+                    </span>
+                    <span class="small fw-semibold">{{ meta.0 }}</span>
+                </li>
+            {% endfor %}
+        </ol>
+
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <strong>{{ steps[step].0 }}</strong>
+                <div class="small text-muted">{{ steps[step].1 }}</div>
+            </div>
+            <div class="card-body">
+                {% if form is not null %}
+                    {{ form_start(form) }}
+                        {{ form_widget(form) }}
+                        <div class="d-flex justify-content-between align-items-center mt-4">
+                            <a href="{{ path('setup_wizard_step', {step: nextStep}) }}" class="btn btn-link text-muted text-decoration-none">Přeskočit</a>
+                            <button type="submit" class="btn btn-primary">Uložit a pokračovat →</button>
+                        </div>
+                    {{ form_end(form) }}
+
+                {% elseif step == 'pripojeni' %}
+                    <p>Přístup k <strong>automatizační schránce</strong> (příchozí e-maily od OTA),
+                       napojení na <strong>web (MotoPress)</strong> a zapnutí <strong>kanálů</strong>
+                       (Booking, Airbnb, …) se nastavuje na samostatné stránce — jsou tam i adresy
+                       iCal feedu a webhooku pro okamžitý import.</p>
+                    <p class="text-muted small">Přístupové údaje se ukládají šifrovaně. Tuhle část obvykle
+                       nastaví jednou technik při nasazení.</p>
+                    <div class="d-flex justify-content-between align-items-center mt-4">
+                        <a href="{{ path('connection_settings_edit') }}" class="btn btn-outline-primary" target="_blank" rel="noopener">Otevřít nastavení připojení ↗</a>
+                        <a href="{{ path('setup_wizard_step', {step: nextStep}) }}" class="btn btn-primary">Pokračovat →</a>
+                    </div>
+
+                {% else %}
+                    {# hotovo — souhrn #}
+                    {% if pending is empty %}
+                        <div class="alert alert-success mb-3">
+                            <strong>Vše podstatné je nastavené.</strong> Aplikace je připravená k provozu.
+                        </div>
+                    {% else %}
+                        <p>Zbývá ještě dotáhnout {{ pending|length }} {{ pending|length == 1 ? 'věc' : (pending|length < 5 ? 'věci' : 'věcí') }}:</p>
+                        <ul class="list-group list-group-flush mb-3">
+                            {% for item in pending %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center gap-3 px-0">
+                                    <div>
+                                        <div class="fw-semibold">{{ item.label }}</div>
+                                        <div class="small text-muted">{{ item.description }}</div>
+                                    </div>
+                                    <a href="{{ path(item.route) }}" class="btn btn-sm btn-outline-primary flex-shrink-0">Nastavit</a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                    <div class="text-end mt-4">
+                        <a href="{{ path('dashboard') }}" class="btn btn-primary">Hotovo — na přehled</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -8,6 +8,11 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Přidáno
 
+- **Průvodce prvotním nastavením.** Na kartě „Co ještě nastavit" na přehledu je
+  tlačítko **Spustit průvodce**, které provede aplikaci krok po kroku: název a adresa
+  instance → dodavatel a daňový profil → připojení → e-maily → souhrn. Každý krok jde
+  přeskočit a vrátit se k němu; závěrečný souhrn ukáže, co ještě zbývá dotáhnout,
+  s odkazy na příslušná nastavení.
 - **Kontrola obsazenosti — upozornění na dvojí prodej.** Když se dvě aktivní
   rezervace překrývají ve stejném termínu (typicky když se sesynchronizuje
   kolidující blok z jiného kanálu), dashboard nahoře ukáže **červenou kartu**

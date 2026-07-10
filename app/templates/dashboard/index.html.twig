@@ -40,7 +40,10 @@
         <div class="card shadow-sm mb-4 border-primary-subtle">
             <div class="card-header bg-primary-subtle d-flex justify-content-between align-items-center">
                 <strong>⚙️ Co ještě nastavit</strong>
-                {% if setupPending is not empty %}<span class="badge bg-primary">{{ setupPending|length }}</span>{% endif %}
+                <span class="d-flex align-items-center gap-2">
+                    {% if setupPending is not empty %}<span class="badge bg-primary">{{ setupPending|length }}</span>{% endif %}
+                    <a href="{{ path('setup_wizard') }}" class="btn btn-sm btn-primary">Spustit průvodce</a>
+                </span>
             </div>
             {% if setupPending is not empty %}
                 <ul class="list-group list-group-flush">
