@@ -18,7 +18,7 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
   poznámkou o režimu. Každá faktura si drží svůj profil a sazbu i po pozdější změně
   nastavení. U **plátce** navíc **ekonomika** nepočítá reverse charge z provize OTA
   jako náklad — má nárok na odpočet, takže se v zisku neprojeví (v přehledu i na kartě
-  rezervace je označen jako „odpočet"). Přehled **DPH** (`/dph`) rozlišuje profil: u plátce vedle reverse charge z provize (21 %) ukazuje výstupní DPH z faktur a výslednou **daňovou povinnost** (výstup + RC − odpočet) a nabízí **CSV podklad** dokladů pro přiznání; identifikovaná osoba vidí jen reverse charge.
+  rezervace je označen jako „odpočet"). Přehled **DPH** (`/dph`) rozlišuje profil: u plátce vedle reverse charge z provize (21 %) ukazuje výstupní DPH z faktur a výslednou **daňovou povinnost** (výstup + RC − odpočet) a nabízí **CSV podklad** dokladů pro přiznání; identifikovaná osoba vidí jen reverse charge. U **neplátce** se celý DPH modul skryje (menu, dashboard i přehled) a připomínka DPH se neposílá.
 - **Uživatelské role a přiřaditelná práva.** Uživatelé se spravují v **Uživatelé**
   (jen pro admina) jako matice: každý má jednu **roli** — **Admin** (vše včetně
   nastavení a správy uživatelů), **Správce** (provoz i finance bez nastavení a

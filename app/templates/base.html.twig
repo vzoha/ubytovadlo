@@ -23,7 +23,9 @@
                         <li class="nav-item"><a class="nav-link" href="{{ path('reservation_list') }}">Rezervace</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ path('economics_overview') }}">Ekonomika</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ path('account_index') }}">Účty</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{{ path('vat_list') }}">DPH</a></li>
+                        {% if tax_profile.current.value != 'non_payer' %}
+                            <li class="nav-item"><a class="nav-link" href="{{ path('vat_list') }}">DPH</a></li>
+                        {% endif %}
                         <li class="nav-item"><a class="nav-link" href="{{ path('electricity_index') }}">Elektřina</a></li>
                     {% endif %}
                     <li class="nav-item"><a class="nav-link" href="{{ path('cleaning_index') }}">Úklid</a></li>

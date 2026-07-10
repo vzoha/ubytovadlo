@@ -5,6 +5,9 @@
 {% block body %}
     {% set is_payer = taxProfile.value == 'vat_payer' %}
     <h1 class="h3 mb-3">DPH — měsíční přehled</h1>
+    {% if taxProfile.value == 'non_payer' %}
+        <div class="alert alert-info">Nejsi plátce DPH ani identifikovaná osoba — modul DPH se nepoužívá. Přepnout daňový profil můžeš v <a href="{{ path('issuer_settings_edit') }}">Nastavení → Fakturace</a>.</div>
+    {% else %}
     {% if is_payer %}
         <p class="text-muted small">Plátce DPH. Výstupní daň z faktur hostům (ubytování 12 %) a reverse charge z provize OTA (21 %) s nárokem na odpočet — RC se vyruší, zbývá výstupní daň. Daňová povinnost = výstup + RC − odpočet. Lhůta podání + úhrady: 25. den následujícího měsíce.</p>
     {% else %}
@@ -74,5 +77,6 @@
                 </tbody>
             </table>
         </div>
+    {% endif %}
     {% endif %}
 {% endblock %}

@@ -3,6 +3,7 @@ twig:
     form_themes: ['bootstrap_5_layout.html.twig']
     globals:
         issuer: '@App\Invoice\IssuerProfileProvider'
+        tax_profile: '@App\Invoice\TaxProfileConfig'
         brand_name: '@App\Config\BrandName'
         product_name: 'Ubytovadlo'
         product_url: 'https://ubytovadlo.cz'

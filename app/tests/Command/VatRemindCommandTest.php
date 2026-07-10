@@ -16,6 +16,7 @@ use App\Entity\Reservation;
 use App\Entity\Setting;
 use App\Enum\Channel;
 use App\Enum\OwnerNotificationType;
+use App\Invoice\TaxProfileConfig;
 use App\Notification\OwnerNotificationSettingsProvider;
 use App\Repository\PendingOwnerNotificationRepository;
 use App\Repository\SettingRepository;
@@ -44,7 +45,7 @@ final class VatRemindCommandTest extends KernelTestCase
         $this->em->createQuery('DELETE FROM ' . PendingOwnerNotification::class . ' n')->execute();
         $this->em->createQuery('DELETE FROM ' . Reservation::class . ' r')->execute();
         $this->em->createQuery('DELETE FROM ' . Setting::class . ' s WHERE s.key IN (:keys)')
-            ->setParameter('keys', [OwnerNotificationSettingsProvider::RECIPIENT, self::LAST_PERIOD_KEY])
+            ->setParameter('keys', [OwnerNotificationSettingsProvider::RECIPIENT, self::LAST_PERIOD_KEY, TaxProfileConfig::KEY])
             ->execute();
         $this->settings->set(OwnerNotificationSettingsProvider::RECIPIENT, 'ja@example.cz');
         $this->em->flush();
@@ -81,6 +82,17 @@ final class VatRemindCommandTest extends KernelTestCase
 
         self::assertSame([], $this->pending->findAll());
         self::assertNull($this->settings->getString(self::LAST_PERIOD_KEY));
+    }
+
+    public function testNoReminderForNonPayer(): void
+    {
+        // Neplátce neodvádí reverse charge z provize → připomínka nevzniká.
+        $this->settings->set(TaxProfileConfig::KEY, 'non_payer', 'test');
+        $this->commissionedReservation('2026-06-15');
+
+        $this->runCommand(['--month' => '2026-06', '--force' => true]);
+
+        self::assertSame([], $this->pending->findAll());
     }
 
     /** @param array<string, mixed> $input */

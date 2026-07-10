@@ -126,6 +126,16 @@ final class VatControllerTest extends WebTestCase
         self::assertStringContainsString('text/csv', (string) $this->client->getResponse()->headers->get('Content-Type'));
     }
 
+    public function testNonPayerSeesModuleNotUsedNotice(): void
+    {
+        static::getContainer()->get(SettingRepository::class)->set(TaxProfileConfig::KEY, 'non_payer', 'test');
+        $this->em->flush();
+
+        $this->client->request('GET', '/dph');
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString('modul DPH se nepoužívá', (string) $this->client->getResponse()->getContent());
+    }
+
     public function testDetailShowsMissingReceiptCtaForAirbnbReservation(): void
     {
         $r = $this->seedAirbnbMayReservation();

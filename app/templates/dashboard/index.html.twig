@@ -204,10 +204,11 @@
         </div>
 
         {# === DPH === #}
+        {% if tax_profile.current.value != 'non_payer' %}
         <div class="col-lg-6">
             <div class="card shadow-sm h-100">
                 <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                    <strong>💸 DPH (identifikovaná osoba)</strong>
+                    <strong>💸 DPH ({{ tax_profile.current.value == 'vat_payer' ? 'plátce' : 'identifikovaná osoba' }})</strong>
                     <a href="{{ path('vat_list') }}" class="badge bg-light text-primary text-decoration-none">Vše →</a>
                 </div>
                 <div class="card-body">
@@ -271,6 +272,7 @@
                 </div>
             </div>
         </div>
+        {% endif %}
 
         {# === UBYPORT === #}
         {% if ubyport.toReport > 0 or ubyport.incomplete > 0 %}

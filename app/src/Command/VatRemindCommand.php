@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace App\Command;
 
 use App\Enum\OwnerNotificationType;
+use App\Invoice\TaxProfileConfig;
 use App\Notification\OwnerNotificationSettingsProvider;
 use App\Notification\OwnerNotifier;
 use App\Repository\ReservationRepository;
@@ -41,6 +42,7 @@ final class VatRemindCommand extends Command
         private readonly OwnerNotifier $notifier,
         private readonly OwnerNotificationSettingsProvider $settings,
         private readonly SettingRepository $settingRepository,
+        private readonly TaxProfileConfig $taxProfile,
         private readonly EntityManagerInterface $em,
     ) {
         parent::__construct();
@@ -58,6 +60,12 @@ final class VatRemindCommand extends Command
         $io = new SymfonyStyle($input, $output);
         $now = new \DateTimeImmutable();
         $force = (bool) $input->getOption('force');
+
+        if (!$this->taxProfile->current()->reverseChargesCommission()) {
+            $io->note('Daňový profil neplátce — reverse charge z provize nevzniká, připomínka není potřeba.');
+
+            return Command::SUCCESS;
+        }
 
         if ($this->settings->recipient() === null) {
             $io->warning('Není nastavena adresa příjemce notifikací — přeskočeno.');
