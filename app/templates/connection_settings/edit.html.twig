@@ -105,32 +105,6 @@
         </div>
 
         <div class="card mb-3">
-            <div class="card-header py-2 fw-semibold">MotoPress — REST API a chování</div>
-            <div class="card-body">
-                <div class="mb-3">{{ form_row(form.motopressBaseUrl) }}</div>
-                <div class="mb-1">
-                    {{ form_row(form.motopressConsumerKey) }}
-                    {% if secretsSet.motopressConsumerKey %}<span class="badge text-bg-success">nastaveno</span>{% else %}<span class="badge text-bg-secondary">nenastaveno</span>{% endif %}
-                </div>
-                <div class="mb-1">
-                    {{ form_row(form.motopressConsumerSecret) }}
-                    {% if secretsSet.motopressConsumerSecret %}<span class="badge text-bg-success">nastaveno</span>{% else %}<span class="badge text-bg-secondary">nenastaveno</span>{% endif %}
-                </div>
-                <hr>
-                <p class="text-muted small mb-3">
-                    Které MotoPress služby znamenají psa nebo dětskou postýlku a jestli
-                    posílat potvrzené platby zpět do MotoPressu. Import zapnete nahoře
-                    v <em>Konektorech</em>.
-                </p>
-                <div class="row g-3">
-                    <div class="col-md-6">{{ form_row(form.petServiceIds) }}</div>
-                    <div class="col-md-6">{{ form_row(form.babyCotServiceIds) }}</div>
-                </div>
-                <div class="mt-2">{{ form_row(form.pushPayments) }}</div>
-            </div>
-        </div>
-
-        <div class="card mb-3">
             <div class="card-header py-2 fw-semibold">SMTP — odchozí e-maily</div>
             <div class="card-body">
                 <p class="text-muted small mb-3">
@@ -151,6 +125,41 @@
                 </div>
             </div>
         </div>
+
+        <details class="mb-3">
+            <summary class="fw-semibold py-1" style="cursor:pointer;">
+                Napojení na vlastní web (MotoPress)
+                <span class="text-muted fw-normal small">— jen když web pohání plugin MotoPress</span>
+            </summary>
+            <div class="card mt-2">
+                <div class="card-body">
+                    <p class="text-muted small mb-3">
+                        Rezervace z vlastního webu se pak natáhnou i s údaji hosta. Prodáváte-li jen
+                        přes Booking, Airbnb nebo napřímo, tuhle část nechte prázdnou.
+                    </p>
+                    <div class="mb-3">{{ form_row(form.motopressBaseUrl) }}</div>
+                    <div class="mb-1">
+                        {{ form_row(form.motopressConsumerKey) }}
+                        {% if secretsSet.motopressConsumerKey %}<span class="badge text-bg-success">nastaveno</span>{% else %}<span class="badge text-bg-secondary">nenastaveno</span>{% endif %}
+                    </div>
+                    <div class="mb-1">
+                        {{ form_row(form.motopressConsumerSecret) }}
+                        {% if secretsSet.motopressConsumerSecret %}<span class="badge text-bg-success">nastaveno</span>{% else %}<span class="badge text-bg-secondary">nenastaveno</span>{% endif %}
+                    </div>
+                    <hr>
+                    <p class="text-muted small mb-3">
+                        Které MotoPress služby znamenají psa nebo dětskou postýlku a jestli
+                        posílat potvrzené platby zpět do MotoPressu. Import zapnete nahoře
+                        v <em>Konektorech</em>.
+                    </p>
+                    <div class="row g-3">
+                        <div class="col-md-6">{{ form_row(form.petServiceIds) }}</div>
+                        <div class="col-md-6">{{ form_row(form.babyCotServiceIds) }}</div>
+                    </div>
+                    <div class="mt-2">{{ form_row(form.pushPayments) }}</div>
+                </div>
+            </div>
+        </details>
 
         <div class="d-flex justify-content-end">
             <button type="submit" class="btn btn-primary">Uložit</button>
@@ -173,24 +182,29 @@
         </div>
     </div>
 
-    <div class="card mb-3">
-        <div class="card-header py-2 fw-semibold">Okamžitý import z webu</div>
-        <div class="card-body">
-            <p class="text-muted small mb-3">
-                Bez tohohle naskočí nová rezervace z webu až s pravidelnou kontrolou (á 15 min).
-                Vložte tuhle adresu do WordPressu (rozšíření <code>ubytovadlo-motopress-webhook</code>)
-                a web po každé potvrzené rezervaci sám ťukne — objeví se tu během pár vteřin.
-                Adresa je tajná: kdo ji zná, může spustit import. Sdílejte ji jen s vlastním webem.
-            </p>
-            <div class="input-group">
-                <input type="text" class="form-control font-monospace small" id="motopress-webhook-url" value="{{ motopressWebhookUrl }}" readonly>
-                <button type="button" class="btn btn-outline-secondary" onclick="navigator.clipboard.writeText(document.getElementById('motopress-webhook-url').value)">Kopírovat</button>
+    <details class="mb-3">
+        <summary class="fw-semibold py-1" style="cursor:pointer;">
+            Okamžitý import z webu
+            <span class="text-muted fw-normal small">— jen pro vlastní web s pluginem MotoPress</span>
+        </summary>
+        <div class="card mt-2">
+            <div class="card-body">
+                <p class="text-muted small mb-3">
+                    Bez tohohle naskočí nová rezervace z webu až s pravidelnou kontrolou (á 15 min).
+                    Vložte tuhle adresu do WordPressu (rozšíření <code>ubytovadlo-motopress-webhook</code>)
+                    a web po každé potvrzené rezervaci sám ťukne — objeví se tu během pár vteřin.
+                    Adresa je tajná: kdo ji zná, může spustit import. Sdílejte ji jen s vlastním webem.
+                </p>
+                <div class="input-group">
+                    <input type="text" class="form-control font-monospace small" id="motopress-webhook-url" value="{{ motopressWebhookUrl }}" readonly>
+                    <button type="button" class="btn btn-outline-secondary" onclick="navigator.clipboard.writeText(document.getElementById('motopress-webhook-url').value)">Kopírovat</button>
+                </div>
+                <form method="post" action="{{ path('connector_webhook_regenerate', { type: motopressType }) }}" class="mt-2"
+                      onsubmit="return confirm('Vygenerovat novou adresu? Ta stávající hned přestane fungovat, dokud novou nevložíte do WordPressu.')">
+                    <input type="hidden" name="_token" value="{{ csrf_token('connector') }}">
+                    <button type="submit" class="btn btn-sm btn-outline-danger">Vygenerovat novou adresu</button>
+                </form>
             </div>
-            <form method="post" action="{{ path('connector_webhook_regenerate', { type: motopressType }) }}" class="mt-2"
-                  onsubmit="return confirm('Vygenerovat novou adresu? Ta stávající hned přestane fungovat, dokud novou nevložíte do WordPressu.')">
-                <input type="hidden" name="_token" value="{{ csrf_token('connector') }}">
-                <button type="submit" class="btn btn-sm btn-outline-danger">Vygenerovat novou adresu</button>
-            </form>
         </div>
-    </div>
+    </details>
 {% endblock %}

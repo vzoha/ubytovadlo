@@ -62,6 +62,58 @@ final class SetupWizardControllerTest extends WebTestCase
         }
     }
 
+    public function testStepsLinkBackToPrevious(): void
+    {
+        $crawler = $this->client->request('GET', '/nastaveni/pruvodce/dodavatel');
+
+        self::assertResponseIsSuccessful();
+        self::assertGreaterThan(
+            0,
+            $crawler->filter('a[href="/nastaveni/pruvodce/instance"]')->count(),
+            'Krok má odkazovat zpět na předchozí',
+        );
+    }
+
+    public function testStepperMarksOnlyReallyCompletedSteps(): void
+    {
+        // Nic není nastaveno → z pozdějšího kroku není žádný krok odškrtnutý jako hotový.
+        $crawler = $this->client->request('GET', '/nastaveni/pruvodce/mail');
+        self::assertResponseIsSuccessful();
+        self::assertCount(0, $crawler->filter('ol a.text-success'), 'Bez vyplnění není žádný krok hotový');
+
+        // Vyplníme identitu instance…
+        $form = $this->client->request('GET', '/nastaveni/pruvodce/instance')
+            ->selectButton('Uložit a pokračovat →')->form();
+        $form['general_settings[brandName]'] = 'Test';
+        $this->client->submit($form);
+
+        // …a z pozdějšího kroku je „Aplikace" hotová, ostatní pořád ne.
+        $crawler = $this->client->request('GET', '/nastaveni/pruvodce/mail');
+        self::assertCount(
+            1,
+            $crawler->filter('ol a.text-success[href="/nastaveni/pruvodce/instance"]'),
+            'Vyplněný krok se odškrtne',
+        );
+        self::assertCount(1, $crawler->filter('ol a.text-success'), 'Nevyplněné kroky zůstávají neodškrtnuté');
+    }
+
+    public function testMailStepShowsLivePreview(): void
+    {
+        $this->client->request('GET', '/nastaveni/pruvodce/mail');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('#mail-preview', 'Krok e-maily má obsahovat živý náhled');
+    }
+
+    public function testConnectionStepListsConnectorStatus(): void
+    {
+        $crawler = $this->client->request('GET', '/nastaveni/pruvodce/pripojeni');
+
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString('Aktuální stav', (string) $this->client->getResponse()->getContent());
+        self::assertGreaterThan(0, $crawler->filter('.badge')->count(), 'Má vypsat stav konektorů');
+    }
+
     public function testInstanceStepSavesAndAdvances(): void
     {
         $crawler = $this->client->request('GET', '/nastaveni/pruvodce/instance');

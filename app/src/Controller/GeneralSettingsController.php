@@ -12,12 +12,10 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Config\InstanceSettings;
+use App\Config\InstanceSettingsWriter;
 use App\Config\LogoStorage;
 use App\Form\GeneralSettingsType;
-use App\Repository\SettingRepository;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -25,10 +23,9 @@ use Symfony\Component\Routing\Attribute\Route;
 class GeneralSettingsController extends AbstractController
 {
     public function __construct(
-        private readonly SettingRepository $settings,
         private readonly InstanceSettings $instance,
+        private readonly InstanceSettingsWriter $writer,
         private readonly LogoStorage $logo,
-        private readonly EntityManagerInterface $em,
     ) {
     }
 
@@ -39,23 +36,7 @@ class GeneralSettingsController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $this->settings->set(
-                InstanceSettings::KEY_BRAND_NAME,
-                trim((string) $form->get('brandName')->getData()),
-                'Název instance (brand).',
-            );
-            $this->settings->set(
-                InstanceSettings::KEY_BASE_URL,
-                trim((string) $form->get('baseUrl')->getData()),
-                'Veřejná adresa aplikace pro odkazy v e-mailech.',
-            );
-            $this->em->flush();
-
-            $logoFile = $form->get('logoFile')->getData();
-            if ($logoFile instanceof UploadedFile) {
-                $this->logo->store($logoFile);
-            }
-
+            $this->writer->save($form);
             $this->addFlash('success', 'Obecné nastavení uloženo.');
 
             return $this->redirectToRoute('general_settings_edit');

@@ -3,48 +3,157 @@
 {% block title %}Průvodce nastavením — {{ brand_name }}{% endblock %}
 
 {% block body %}
-    <div class="mx-auto" style="max-width: 720px;">
+    {% set wide = step == 'mail' %}
+    <div class="mx-auto" style="max-width: {{ wide ? '1080px' : '760px' }};">
         <h1 class="h3 mb-1">Průvodce nastavením</h1>
-        <p class="text-muted">Nastav aplikaci v pár krocích. Kdykoli můžeš krok přeskočit a vrátit se k němu později.</p>
+        <p class="text-muted">
+            Provedeme vás nastavením krok po kroku. U každého kroku je vysvětleno, k čemu slouží.
+            Nevíte-li si s něčím rady, klidně krok <strong>přeskočte</strong> a vraťte se k němu později —
+            nic se tím nerozbije.
+        </p>
 
-        {# Stepper #}
+        {# Stepper — každý krok je odkaz, dá se skočit tam i zpět #}
         <ol class="list-unstyled d-flex flex-wrap gap-2 mb-4">
             {% for key, meta in steps %}
-                {% set idx = loop.index0 %}
-                {% set state = idx == stepIndex ? 'current' : (idx < stepIndex ? 'done' : 'todo') %}
-                <li class="d-flex align-items-center gap-2 px-2 py-1 rounded {{ state == 'current' ? 'bg-primary text-white' : (state == 'done' ? 'text-success' : 'text-muted') }}">
-                    <span class="badge rounded-pill {{ state == 'current' ? 'bg-light text-primary' : (state == 'done' ? 'bg-success' : 'bg-secondary') }}">
-                        {{ state == 'done' ? '✓' : loop.index }}
-                    </span>
-                    <span class="small fw-semibold">{{ meta.0 }}</span>
+                {% set state = key == step ? 'current' : (completed[key] ? 'done' : 'todo') %}
+                <li>
+                    <a href="{{ path('setup_wizard_step', {step: key}) }}"
+                       class="d-flex align-items-center gap-2 px-2 py-1 rounded text-decoration-none {{ state == 'current' ? 'bg-primary text-white' : (state == 'done' ? 'text-success' : 'text-muted') }}">
+                        <span class="badge rounded-pill {{ state == 'current' ? 'bg-light text-primary' : (state == 'done' ? 'bg-success' : 'bg-secondary') }}">
+                            {{ state == 'done' ? '✓' : loop.index }}
+                        </span>
+                        <span class="small fw-semibold">{{ meta.0 }}</span>
+                    </a>
                 </li>
             {% endfor %}
         </ol>
 
         <div class="card shadow-sm">
             <div class="card-header bg-white">
-                <strong>{{ steps[step].0 }}</strong>
+                <strong>Krok {{ stepIndex + 1 }} z {{ steps|length }} — {{ steps[step].0 }}</strong>
                 <div class="small text-muted">{{ steps[step].1 }}</div>
             </div>
             <div class="card-body">
                 {% if form is not null %}
                     {{ form_start(form) }}
-                        {{ form_widget(form) }}
+                        {% if step == 'mail' %}
+                            <p class="text-muted small mb-4">
+                                Takhle budou vypadat e-maily, které chodí hostům (potvrzení, připomínka před
+                                příjezdem, odkaz na online check-in). Vpravo vidíte <strong>živý náhled</strong> —
+                                mění se hned, jak upravíte název, barvy nebo patičku. Konkrétní texty jednotlivých
+                                zpráv se ladí později v <strong>Šablonách zpráv</strong>.
+                            </p>
+                            {{ include('mail_settings/_editor.html.twig') }}
+                        {% else %}
+                            {{ form_widget(form) }}
+                        {% endif %}
                         <div class="d-flex justify-content-between align-items-center mt-4">
-                            <a href="{{ path('setup_wizard_step', {step: nextStep}) }}" class="btn btn-link text-muted text-decoration-none">Přeskočit</a>
-                            <button type="submit" class="btn btn-primary">Uložit a pokračovat →</button>
+                            <div>
+                                {% if prevStep %}
+                                    <a href="{{ path('setup_wizard_step', {step: prevStep}) }}" class="btn btn-link text-muted text-decoration-none px-0">← Zpět</a>
+                                {% endif %}
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <a href="{{ path('setup_wizard_step', {step: nextStep}) }}" class="btn btn-link text-muted text-decoration-none">Přeskočit</a>
+                                <button type="submit" class="btn btn-primary">Uložit a pokračovat →</button>
+                            </div>
                         </div>
                     {{ form_end(form) }}
 
                 {% elseif step == 'pripojeni' %}
-                    <p>Přístup k <strong>automatizační schránce</strong> (příchozí e-maily od OTA),
-                       napojení na <strong>web (MotoPress)</strong> a zapnutí <strong>kanálů</strong>
-                       (Booking, Airbnb, …) se nastavuje na samostatné stránce — jsou tam i adresy
-                       iCal feedu a webhooku pro okamžitý import.</p>
-                    <p class="text-muted small">Přístupové údaje se ukládají šifrovaně. Tuhle část obvykle
-                       nastaví jednou technik při nasazení.</p>
+                    <div class="alert alert-info d-flex gap-2">
+                        <span>ℹ️</span>
+                        <div class="small mb-0">
+                            Tohle je <strong>nejtechničtější krok</strong>. Napojuje aplikaci na e-maily od
+                            portálů, na váš web a na prodejní kanály. Přístupové údaje sem obvykle jednou zadá
+                            technik při nasazení. Pokud je nemáte po ruce, krok klidně <strong>přeskočte</strong> —
+                            zbytek aplikace funguje i bez něj a připojení doplníte kdykoli později.
+                        </div>
+                    </div>
+
+                    <p class="fw-semibold mb-2">Co se sem napojuje</p>
+                    <ul class="list-group list-group-flush mb-4">
+                        <li class="list-group-item px-0">
+                            <div class="fw-semibold">📥 Automatizační schránka</div>
+                            <div class="small text-muted">
+                                Vyhrazená e-mailová schránka, kam Booking.com a Airbnb posílají oznámení o nových
+                                rezervacích. Aplikace je čte a sama z nich zakládá rezervace, abyste nemuseli nic
+                                přepisovat ručně. Aby to fungovalo, je potřeba portály nasměrovat, ať píšou do téhle
+                                schránky — návod je hned pod seznamem.
+                            </div>
+                        </li>
+                        <li class="list-group-item px-0">
+                            <div class="fw-semibold">🔌 Prodejní kanály</div>
+                            <div class="small text-muted">
+                                Zapnutí portálů, přes které prodáváte (Booking, Airbnb, …). U každého je i adresa
+                                kalendáře (iCal), díky které portály navzájem vědí o obsazených termínech.
+                            </div>
+                        </li>
+                        <li class="list-group-item px-0">
+                            <div class="fw-semibold text-muted">🌐 Vlastní web (MotoPress) <span class="fw-normal small">— jen pokud ho máte</span></div>
+                            <div class="small text-muted">
+                                Máte-li vlastní web s rezervačním pluginem MotoPress, rezervace z něj se natáhnou
+                                samy i s údaji hosta. Prodáváte-li jen přes portály nebo napřímo, tuhle část
+                                nepotřebujete.
+                            </div>
+                        </li>
+                    </ul>
+
+                    <p class="fw-semibold mb-2">Jak nasměrovat e-maily z portálů do schránky</p>
+                    <div class="mb-4">
+                        <details class="border rounded p-2 mb-2">
+                            <summary class="fw-semibold" style="cursor:pointer;">Booking.com</summary>
+                            <ol class="small text-muted mb-0 mt-2 ps-3">
+                                <li>Přihlaste se do <strong>extranetu Booking.com</strong>.</li>
+                                <li>Otevřete <strong>Účet → Kontakty</strong> (u objektu).</li>
+                                <li>Přidejte adresu <strong>automatizační schránky</strong> jako kontakt pro
+                                    <strong>Rezervace</strong> (a klidně i <strong>Faktury</strong>).</li>
+                                <li>Booking pak posílá oznámení o každé nové rezervaci rovnou do schránky.</li>
+                            </ol>
+                        </details>
+                        <details class="border rounded p-2 mb-2">
+                            <summary class="fw-semibold" style="cursor:pointer;">Airbnb</summary>
+                            <ol class="small text-muted mb-0 mt-2 ps-3">
+                                <li>Airbnb posílá podrobné e-maily o rezervacích na vaši <strong>osobní adresu</strong>.</li>
+                                <li>Ve své osobní schránce nastavte <strong>přeposílání</strong> těchto zpráv na
+                                    automatizační schránku — nejlépe filtrem na odesílatele z <code>@airbnb.com</code>.</li>
+                                <li>Případně můžete jako e-mail svého Airbnb účtu rovnou nastavit automatizační schránku.</li>
+                            </ol>
+                        </details>
+                        <details class="border rounded p-2">
+                            <summary class="fw-semibold" style="cursor:pointer;">Jak nastavit přeposílání e-mailů</summary>
+                            <ul class="small text-muted mb-0 mt-2 ps-3">
+                                <li><strong>Gmail:</strong> Nastavení → <em>Přeposílání a POP/IMAP</em> → Přidat adresu pro
+                                    přeposílání, nebo si vytvořte filtr s akcí „Přeposlat".</li>
+                                <li><strong>Seznam.cz:</strong> Nastavení → <em>Přeposílání pošty</em>.</li>
+                                <li>Po zadání dorazí do automatizační schránky <strong>ověřovací e-mail</strong> — je
+                                    potřeba ho potvrdit, jinak se přeposílání nespustí.</li>
+                            </ul>
+                        </details>
+                    </div>
+
+                    <p class="fw-semibold mb-2">Aktuální stav</p>
+                    <ul class="list-group mb-4">
+                        {% for c in connectors %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center gap-2">
+                                <span>{{ c.type.label }}</span>
+                                <span class="badge text-bg-{{ c.badge }}">{{ c.stateLabel }}</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+
+                    <p class="text-muted small">
+                        Přístupová hesla se ukládají <strong>šifrovaně</strong> a nikde se nezobrazují zpět.
+                        Přístupy vyplníte na stránce připojení; do průvodce se odsud kdykoli vrátíte přes
+                        kroky nahoře.
+                    </p>
                     <div class="d-flex justify-content-between align-items-center mt-4">
-                        <a href="{{ path('connection_settings_edit') }}" class="btn btn-outline-primary" target="_blank" rel="noopener">Otevřít nastavení připojení ↗</a>
+                        <div class="d-flex align-items-center gap-2">
+                            {% if prevStep %}
+                                <a href="{{ path('setup_wizard_step', {step: prevStep}) }}" class="btn btn-link text-muted text-decoration-none px-0">← Zpět</a>
+                            {% endif %}
+                            <a href="{{ path('connection_settings_edit') }}" class="btn btn-outline-primary">Vyplnit přístupy k připojení</a>
+                        </div>
                         <a href="{{ path('setup_wizard_step', {step: nextStep}) }}" class="btn btn-primary">Pokračovat →</a>
                     </div>
 
@@ -68,7 +177,12 @@
                             {% endfor %}
                         </ul>
                     {% endif %}
-                    <div class="text-end mt-4">
+                    <div class="d-flex justify-content-between align-items-center mt-4">
+                        <div>
+                            {% if prevStep %}
+                                <a href="{{ path('setup_wizard_step', {step: prevStep}) }}" class="btn btn-link text-muted text-decoration-none px-0">← Zpět</a>
+                            {% endif %}
+                        </div>
                         <a href="{{ path('dashboard') }}" class="btn btn-primary">Hotovo — na přehled</a>
                     </div>
                 {% endif %}

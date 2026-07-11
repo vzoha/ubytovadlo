@@ -23,6 +23,22 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 - **Přehled DPH se přepočítává sám.** Denní úloha přepočítá reverse charge z provizí
   (základ a kurz ČNB) na rezervacích s provizí, takže měsíční přehled i připomínka
   pracují s aktuálními čísly bez ručního spuštění.
+- **Průvodce nastavením srozumitelnější pro netechnické uživatele.** Krok **E-maily**
+  ukazuje živý náhled zprávy hostům, který se mění ihned při úpravě názvu, barev
+  i patičky. Krok **Připojení** vysvětlí jednoduchými slovy, co se napojuje
+  (automatizační schránka, prodejní kanály, případně vlastní web) a ukazuje aktuální
+  stav připojení. Přibyl i návod, jak nasměrovat e-maily z Booking.com a Airbnb do
+  automatizační schránky, včetně nastavení přeposílání pošty. Kroky lze procházet
+  oběma směry — přes číslovanou lištu nahoře i tlačítkem Zpět.
+- **Napojení na vlastní web (MotoPress) je upozaděné.** V Připojení i v průvodci je až
+  za automatizační schránkou a odchozími e-maily a ve sbaleném bloku — vyžádá si ho jen
+  ten, kdo prodává přes vlastní web s pluginem MotoPress.
+
+### Opraveno
+
+- **Průvodce odškrtává jen skutečně vyplněné kroky.** Lišta kroků se řídí reálným
+  stavem nastavení, ne pořadím — přeskočený krok zůstane neodškrtnutý, dokud ho
+  nedoplníte.
 
 ## [0.9.0] — 2026-07-11
 

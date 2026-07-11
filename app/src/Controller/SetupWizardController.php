@@ -12,19 +12,21 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Config\InstanceSettings;
+use App\Config\InstanceSettingsWriter;
 use App\Config\LogoStorage;
+use App\Connector\ConnectorManager;
 use App\Form\GeneralSettingsType;
 use App\Form\IssuerSettingsType;
 use App\Form\MailSettingsType;
 use App\Invoice\IssuerProfileProvider;
+use App\Invoice\IssuerSettingsWriter;
 use App\Invoice\TaxProfileConfig;
 use App\Mail\MailSettingsProvider;
-use App\Repository\SettingRepository;
+use App\Mail\MailSettingsWriter;
+use App\Mail\MailThemes;
 use App\Setup\SetupChecklist;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\FormInterface;
-use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -49,14 +51,16 @@ class SetupWizardController extends AbstractController
     ];
 
     public function __construct(
-        private readonly SettingRepository $settings,
-        private readonly EntityManagerInterface $em,
         private readonly InstanceSettings $instance,
+        private readonly InstanceSettingsWriter $instanceWriter,
         private readonly LogoStorage $logo,
         private readonly IssuerProfileProvider $issuerProvider,
+        private readonly IssuerSettingsWriter $issuerWriter,
         private readonly TaxProfileConfig $taxProfile,
         private readonly MailSettingsProvider $mailSettings,
+        private readonly MailSettingsWriter $mailWriter,
         private readonly SetupChecklist $checklist,
+        private readonly ConnectorManager $connectors,
     ) {
     }
 
@@ -86,9 +90,13 @@ class SetupWizardController extends AbstractController
             'stepIndex' => array_search($step, array_keys(self::STEPS), true),
             'form' => $form?->createView(),
             'nextStep' => $this->nextStep($step),
+            'prevStep' => $this->prevStep($step),
             'hasLogo' => $this->logo->exists(),
             'logoUrl' => $this->logo->publicPath(),
             'pending' => $this->checklist->pending(),
+            'completed' => $this->completion(),
+            'themes' => MailThemes::presets(),
+            'connectors' => $this->connectors->health(),
         ]);
     }
 
@@ -109,53 +117,33 @@ class SetupWizardController extends AbstractController
     private function save(string $step, FormInterface $form): void
     {
         match ($step) {
-            'instance' => $this->saveInstance($form),
-            'dodavatel' => $this->saveIssuer($form),
-            'mail' => $this->saveMail($form),
+            'instance' => $this->instanceWriter->save($form),
+            'dodavatel' => $this->issuerWriter->save($form),
+            'mail' => $this->mailWriter->save($form),
             default => null,
         };
     }
 
-    /** @param FormInterface<mixed> $form */
-    private function saveInstance(FormInterface $form): void
+    /**
+     * Reálné dokončení jednotlivých kroků (podle SetupChecklist), aby stepper
+     * neodškrtával kroky jen podle pořadí — přeskočený krok zůstane nedokončený.
+     *
+     * @return array<string, bool>
+     */
+    private function completion(): array
     {
-        $this->settings->set(InstanceSettings::KEY_BRAND_NAME, trim((string) $form->get('brandName')->getData()), 'Název instance (brand).');
-        $this->settings->set(InstanceSettings::KEY_BASE_URL, trim((string) $form->get('baseUrl')->getData()), 'Veřejná adresa aplikace pro odkazy v e-mailech.');
-        $this->em->flush();
-
-        $logoFile = $form->get('logoFile')->getData();
-        if ($logoFile instanceof UploadedFile) {
-            $this->logo->store($logoFile);
+        $configured = [];
+        foreach ($this->checklist->items() as $item) {
+            $configured[$item->key] = $item->configured;
         }
-    }
 
-    /** @param FormInterface<mixed> $form */
-    private function saveIssuer(FormInterface $form): void
-    {
-        foreach (IssuerProfileProvider::KEYS as $field => $key) {
-            $this->settings->set($key, trim((string) $form->get($field)->getData()), 'Dodavatel na faktuře.');
-        }
-        $this->settings->set(TaxProfileConfig::KEY, $form->get('taxProfile')->getData()->value, 'Daňový profil dodavatele.');
-        $this->em->flush();
-    }
-
-    /** @param FormInterface<mixed> $form */
-    private function saveMail(FormInterface $form): void
-    {
-        $map = [
-            'senderName' => MailSettingsProvider::SENDER_NAME,
-            'senderEmail' => MailSettingsProvider::SENDER_EMAIL,
-            'replyTo' => MailSettingsProvider::REPLY_TO,
-            'footer' => MailSettingsProvider::FOOTER,
-            'theme' => MailSettingsProvider::THEME,
-            'colorPrimary' => MailSettingsProvider::COLOR_PRIMARY,
-            'colorAccent' => MailSettingsProvider::COLOR_ACCENT,
+        return [
+            'instance' => $configured['instance'] ?? false,
+            'dodavatel' => $configured['issuer'] ?? false,
+            'pripojeni' => ($configured['imap'] ?? false) || ($configured['smtp'] ?? false) || ($configured['motopress'] ?? false),
+            'mail' => $configured['mail'] ?? false,
+            'hotovo' => $this->checklist->pending() === [],
         ];
-        foreach ($map as $field => $key) {
-            $this->settings->set($key, trim((string) $form->get($field)->getData()), 'Nastavení e-mailů hostům.');
-        }
-        $this->settings->set(MailSettingsProvider::SHOW_LOGO, $form->get('showLogo')->getData() ? '1' : '0', 'Nastavení e-mailů hostům.');
-        $this->em->flush();
     }
 
     private function nextStep(string $step): string
@@ -164,5 +152,13 @@ class SetupWizardController extends AbstractController
         $i = array_search($step, $keys, true);
 
         return $keys[$i + 1] ?? $step;
+    }
+
+    private function prevStep(string $step): ?string
+    {
+        $keys = array_keys(self::STEPS);
+        $i = array_search($step, $keys, true);
+
+        return $i > 0 ? $keys[$i - 1] : null;
     }
 }
