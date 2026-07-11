@@ -37,8 +37,15 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 - **Napojení na vlastní web (MotoPress) je upozaděné.** V Připojení i v průvodci je až
   za automatizační schránkou a odchozími e-maily a ve sbaleném bloku — vyžádá si ho jen
   ten, kdo prodává přes vlastní web s pluginem MotoPress.
+- **Detail rezervace řazený podle důležitosti.** Nahoře jsou pobyt, host a peníze,
+  hned pod nimi fakturace; check-in, ekonomika a provozní evidence (elektřina, úklid)
+  následují. V pobytu přibyl počet nocí. Karty se stejně řadí i na mobilu.
 
 ### Opraveno
+
+- **Detail rezervace se vejde na mobil.** V úzké kartě se řádek tabulky faktur složí
+  do dvou řádků (číslo a částka, pod tím stav a akce) místo přetékání stránky; v širší
+  kartě zůstává plnou tabulkou. Řádky s údaji drží štítek i hodnotu na jednom řádku.
 
 - **Ruční blokace kalendáře z Airbnb se neimportují jako rezervace.** Airbnb feed
   vedle rezervací obsahuje i termíny, které provozovatel ručně zavřel (SUMMARY
