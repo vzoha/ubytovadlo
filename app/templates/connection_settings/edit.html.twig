@@ -72,6 +72,25 @@
                                        name="feed_url" value="{{ c.feedUrl }}" placeholder="https://…/calendar.ics">
                                 <button type="submit" class="btn btn-outline-secondary">Uložit feed</button>
                             </div>
+                            <details class="mt-1">
+                                <summary class="small text-muted" style="cursor:pointer;">Kde vzít tento odkaz</summary>
+                                <div class="small text-muted mt-1 ps-1">
+                                    {% if c.type.value == 'echalupy' %}
+                                        V administraci e-chalupy.cz otevřete <em>Export kalendáře (iCal)</em>. Nabídne
+                                        dva odkazy — vložte ten <strong>„s podrobnostmi"</strong> (obsahuje privátní
+                                        klíč). Odkaz „základní bez podrobností" sem nedávejte.
+                                    {% elseif c.type.value == 'airbnb' %}
+                                        V Airbnb otevřete <em>Kalendář → dostupnost → připojení kalendářů</em> a
+                                        zkopírujte odkaz na export kalendáře. Ručně zavřené termíny se nenačtou jako
+                                        rezervace, jen skutečné rezervace.
+                                    {% elseif c.type.value == 'booking' %}
+                                        V extranetu Booking.com otevřete <em>Kalendář → synchronizace kalendářů</em>
+                                        a zkopírujte odkaz u exportu kalendáře.
+                                    {% else %}
+                                        V administraci portálu najděte export kalendáře (iCal) a zkopírujte odkaz.
+                                    {% endif %}
+                                </div>
+                            </details>
                         </form>
                     {% endif %}
                 </div>
@@ -79,8 +98,7 @@
         </div>
         <div class="card-footer py-2 text-muted small">
             Vypnutý konektor pollery přeskočí. „Otestovat" jen ověří přístup, data nemění.
-            URL iCal feedu najdete v extranetu OTA v sekci exportu kalendáře — obsazenost
-            se z něj načte i bez MotoPressu.
+            Obsazenost se z feedu načte i bez MotoPressu.
         </div>
     </div>
 

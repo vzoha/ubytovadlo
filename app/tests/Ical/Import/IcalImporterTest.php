@@ -90,7 +90,7 @@ final class IcalImporterTest extends KernelTestCase
         return "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Test//EN\r\n" . implode("\r\n", $events) . "\r\nEND:VCALENDAR\r\n";
     }
 
-    private function event(string $uid, \DateTimeImmutable $start, ?\DateTimeImmutable $end = null, string $status = ''): string
+    private function event(string $uid, \DateTimeImmutable $start, ?\DateTimeImmutable $end = null, string $status = '', string $summary = ''): string
     {
         $lines = ['BEGIN:VEVENT', 'UID:' . $uid, 'DTSTART;VALUE=DATE:' . $start->format('Ymd')];
         if ($end !== null) {
@@ -98,6 +98,9 @@ final class IcalImporterTest extends KernelTestCase
         }
         if ($status !== '') {
             $lines[] = 'STATUS:' . $status;
+        }
+        if ($summary !== '') {
+            $lines[] = 'SUMMARY:' . $summary;
         }
         $lines[] = 'END:VEVENT';
 
@@ -192,6 +195,33 @@ final class IcalImporterTest extends KernelTestCase
         $this->importFeed($this->ics($this->event('a@booking.com', $this->start, $this->end, 'CANCELLED')));
 
         self::assertSame(ReservationStatus::CANCELLED, $this->reservations->findByIcalUid('a@booking.com')?->getStatus());
+    }
+
+    public function testSkipsAirbnbOwnerBlock(): void
+    {
+        // Airbnb feed: skutečná rezervace („Reserved") + ruční blokace kalendáře
+        // („Airbnb (Not available)"). Blokace se nesmí založit jako rezervace.
+        $result = $this->importFeed($this->ics(
+            $this->event('res@airbnb.com', $this->start, $this->end, '', 'Reserved'),
+            $this->event('block@airbnb.com', $this->start->modify('+30 days'), $this->end->modify('+30 days'), '', 'Airbnb (Not available)'),
+        ), ConnectorType::AIRBNB);
+
+        self::assertSame(1, $result->created);
+        self::assertNotNull($this->reservations->findByIcalUid('res@airbnb.com'));
+        self::assertNull($this->reservations->findByIcalUid('block@airbnb.com'));
+    }
+
+    public function testKeepsBookingNotAvailableEvent(): void
+    {
+        // Booking značí rezervaci i blokaci stejně („Not available") — u něj se
+        // nefiltruje, feed je jen sanity check obsazenosti.
+        $result = $this->importFeed(
+            $this->ics($this->event('a@booking.com', $this->start, $this->end, '', 'CLOSED - Not available')),
+            ConnectorType::BOOKING,
+        );
+
+        self::assertSame(1, $result->created);
+        self::assertNotNull($this->reservations->findByIcalUid('a@booking.com'));
     }
 
     public function testDoesNotCancelNonIcalReservation(): void

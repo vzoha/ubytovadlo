@@ -17,6 +17,10 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 - **Upozornění na vznik identifikované osoby.** Jakmile neplátci dorazí první provize
   z OTA (přeshraniční přijatá služba z EU), aplikace pošle e-mail, že se stal
   **identifikovanou osobou** podle §6h ZDPH a má **15 dnů** na přihlášku k registraci.
+- **Návod, kde vzít adresu kalendáře (iCal) portálu.** Průvodce i stránka Připojení
+  ukazují u každého kanálu, kde v jeho administraci najít odkaz na export kalendáře —
+  Booking.com, Airbnb, e-chalupy.cz a CS chalupy. U e-chalupy.cz zdůrazní, že se
+  vkládá export „s podrobnostmi" (s privátním klíčem), ne „základní".
 
 ### Změněno
 
@@ -36,6 +40,10 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Opraveno
 
+- **Ruční blokace kalendáře z Airbnb se neimportují jako rezervace.** Airbnb feed
+  vedle rezervací obsahuje i termíny, které provozovatel ručně zavřel (SUMMARY
+  „Airbnb (Not available)"). iCal import je přeskočí, takže nezakládají rezervaci
+  čekající na doplnění hosta. U Bookingu a eChalup se importuje vše jako obsazenost.
 - **Průvodce odškrtává jen skutečně vyplněné kroky.** Lišta kroků se řídí reálným
   stavem nastavení, ne pořadím — přeskočený krok zůstane neodškrtnutý, dokud ho
   nedoplníte.

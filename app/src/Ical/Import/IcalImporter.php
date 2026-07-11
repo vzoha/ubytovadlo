@@ -68,6 +68,9 @@ final class IcalImporter
         $seen = [];
 
         foreach ($events as $event) {
+            if ($this->isOwnerBlock($channel, $event)) {
+                continue;
+            }
             $occupancyEnd = $event->end ?? $event->start->modify('+1 day');
             if ($occupancyEnd < $from) {
                 continue;
@@ -150,6 +153,18 @@ final class IcalImporter
         }
 
         return $changed;
+    }
+
+    /**
+     * Airbnb feed míchá rezervace (SUMMARY „Reserved") s ručními blokacemi
+     * kalendáře (SUMMARY „Airbnb (Not available)"). Blokace nejsou rezervace —
+     * přeskakujeme je, ať nezakládají falešný „needs_details". Ostatní kanály
+     * (Booking, eChalupy) blokaci a rezervaci ve feedu nerozliší, tam bereme vše.
+     */
+    private function isOwnerBlock(Channel $channel, IcalEvent $event): bool
+    {
+        return $channel === Channel::AIRBNB
+            && stripos($event->summary, 'not available') !== false;
     }
 
     private function defaultBillingMode(Channel $channel): ?BillingMode

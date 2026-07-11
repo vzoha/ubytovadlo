@@ -132,6 +132,44 @@
                         </details>
                     </div>
 
+                    <p class="fw-semibold mb-2">Jak najít adresu kalendáře (iCal) portálu</p>
+                    <p class="small text-muted mb-2">
+                        Odkaz na kalendář říká aplikaci, které termíny má portál obsazené. Zkopírujete ho
+                        v portálu a vložíte u příslušného kanálu na stránce připojení.
+                    </p>
+                    <div class="mb-4">
+                        <details class="border rounded p-2 mb-2">
+                            <summary class="fw-semibold" style="cursor:pointer;">Booking.com</summary>
+                            <ol class="small text-muted mb-0 mt-2 ps-3">
+                                <li>V <strong>extranetu Booking.com</strong> otevřete <em>Kalendář → synchronizace kalendářů</em>.</li>
+                                <li>U <strong>exportu kalendáře</strong> zkopírujte odkaz (začíná <code>https://ical.booking.com/</code>).</li>
+                            </ol>
+                        </details>
+                        <details class="border rounded p-2 mb-2">
+                            <summary class="fw-semibold" style="cursor:pointer;">Airbnb</summary>
+                            <ol class="small text-muted mb-0 mt-2 ps-3">
+                                <li>V Airbnb otevřete <em>Kalendář → dostupnost → připojení kalendářů</em>.</li>
+                                <li>Zkopírujte odkaz na <strong>export kalendáře</strong> (obsahuje <code>/calendar/ical/</code>).</li>
+                                <li>Ručně zavřené (blokované) termíny se nenačtou jako rezervace — jen skutečné rezervace.</li>
+                            </ol>
+                        </details>
+                        <details class="border rounded p-2 mb-2">
+                            <summary class="fw-semibold" style="cursor:pointer;">e-chalupy.cz</summary>
+                            <ol class="small text-muted mb-0 mt-2 ps-3">
+                                <li>V administraci e-chalupy.cz otevřete <em>Export kalendáře (iCal)</em>.</li>
+                                <li>Nabídne dva odkazy — zkopírujte ten <strong>„s podrobnostmi"</strong> (obsahuje privátní klíč).</li>
+                                <li>Odkaz „základní bez podrobností" sem <strong>nevkládejte</strong>.</li>
+                            </ol>
+                        </details>
+                        <details class="border rounded p-2">
+                            <summary class="fw-semibold" style="cursor:pointer;">CS chalupy</summary>
+                            <ol class="small text-muted mb-0 mt-2 ps-3">
+                                <li>V administraci CS chalup najděte <em>export kalendáře (iCal)</em>.</li>
+                                <li>Zkopírujte nabídnutý odkaz.</li>
+                            </ol>
+                        </details>
+                    </div>
+
                     <p class="fw-semibold mb-2">Aktuální stav</p>
                     <ul class="list-group mb-4">
                         {% for c in connectors %}
