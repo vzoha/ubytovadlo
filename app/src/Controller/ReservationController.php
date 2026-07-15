@@ -31,6 +31,7 @@ use App\Form\ReservationManualType;
 use App\Invoice\BalanceCalculator;
 use App\Invoice\DepositConfig;
 use App\Invoice\PaymentStatusResolver;
+use App\Mail\GuestMessageTexts;
 use App\Mail\ReservationConfirmation;
 use App\Profit\ReservationProfitCalculator;
 use App\Repository\CleaningRepository;
@@ -68,6 +69,7 @@ class ReservationController extends AbstractController
         private readonly PaymentStatusResolver $paymentStatusResolver,
         private readonly DepositConfig $depositConfig,
         private readonly ReservationConfirmation $confirmation,
+        private readonly GuestMessageTexts $guestMessageTexts,
     ) {
     }
 
@@ -161,6 +163,9 @@ class ReservationController extends AbstractController
             'note_types' => NoteType::cases(),
             'deposit_applies' => $this->depositConfig->appliesTo($reservation->getBillingMode()),
             'deposit_amount' => $this->depositConfig->computeAmount($reservation->getPriceTotal()),
+            'quick_messages' => $reservation->getGuestPhone() !== null
+                ? $this->guestMessageTexts->forReservation($reservation)
+                : [],
         ]);
     }
 

@@ -17,9 +17,13 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 - **Rychlý kontakt na hosta z detailu rezervace.** U karty Host jsou tlačítka
   **Volat**, **SMS**, **WhatsApp** a **E-mail** — otevřou příslušnou aplikaci
   s předvyplněným číslem (nebo adresou). Telefon se zobrazuje v přehledném národním
-  tvaru (`776 123 456`). WhatsApp a SMS nabízí předvyplněnou **uvítací zprávu**
-  (oslovení v 5. pádu, termín příjezdu a odkaz na online check-in); přes rozbalovátko
-  lze místo ní otevřít prázdnou zprávu.
+  tvaru (`776 123 456`). WhatsApp a SMS ve výchozím stavu otevřou prázdnou zprávu;
+  přes rozbalovátko lze zprávu **předvyplnit rychlou zprávou** s dosazenými údaji
+  rezervace.
+- **Rychlé zprávy pro SMS a WhatsApp.** V **Nastavení → Rychlé zprávy** si založíš
+  vlastní krátké texty (např. „Uvítání", „Kód dveří", „Poděkování") s proměnnými
+  jako `{{ guest_first_name_vocative }}`. Zobrazí se v nabídce u tlačítek SMS a
+  WhatsApp na detailu rezervace a jejich pořadí lze měnit.
 - **Telefon hosta se ukládá v jednotném tvaru.** Zadané číslo se sjednotí na
   mezinárodní formát E.164 (`+420776123456`) bez ohledu na to, jak ho kdo napíše —
   s mezerami, pomlčkami, s předvolbou i bez ní. Díky tomu půjde nad číslem spolehlivě

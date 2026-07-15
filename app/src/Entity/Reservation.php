@@ -17,6 +17,7 @@ use App\Enum\ElectricitySource;
 use App\Enum\PurposeOfStay;
 use App\Enum\ReservationStatus;
 use App\Repository\ReservationRepository;
+use App\ValueObject\PhoneNumber;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -653,7 +654,13 @@ class Reservation
 
     public function setGuestPhone(?string $guestPhone): self
     {
-        $this->guestPhone = $guestPhone;
+        $phone = PhoneNumber::tryFromString($guestPhone);
+        if ($phone !== null) {
+            $this->guestPhone = $phone->e164();
+        } else {
+            $trimmed = trim((string) $guestPhone);
+            $this->guestPhone = $trimmed === '' ? null : $trimmed;
+        }
         $this->touch();
 
         return $this;

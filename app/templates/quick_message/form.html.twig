@@ -1,0 +1,55 @@
+{% extends 'settings/base.html.twig' %}
+
+{% block title %}{{ message.id ? 'Upravit rychlou zprávu' : 'Nová rychlá zpráva' }}{% endblock %}
+
+{% block settings_active %}quick_messages{% endblock %}
+
+{% block settings_content %}
+    <div class="d-flex align-items-center mb-3">
+        <a href="{{ path('quick_message_index') }}" class="btn btn-sm btn-outline-secondary me-3">← Zpět</a>
+        <h2 class="h5 mb-0">{{ message.id ? 'Upravit rychlou zprávu' : 'Nová rychlá zpráva' }}</h2>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            {{ form_start(form, { attr: { id: 'quick-message-form' } }) }}
+                <div class="mb-3">{{ form_row(form.label) }}</div>
+                <div class="mb-2">
+                    {{ form_label(form.body) }}
+                    {{ form_widget(form.body) }}
+                    {{ form_help(form.body) }}
+                    {{ form_errors(form.body) }}
+                </div>
+
+                <div class="mb-3">
+                    <div class="small text-muted mb-1">Proměnné (klikni pro vložení do textu):</div>
+                    {% for name, desc in variables %}
+                        <button type="button" class="btn btn-sm btn-outline-secondary mb-1 js-var" title="{{ desc }}">
+                            {{ '{{ ' ~ name ~ ' }}' }}
+                        </button>
+                    {% endfor %}
+                </div>
+
+                <button type="submit" class="btn btn-primary">Uložit</button>
+            {{ form_end(form) }}
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+    (function () {
+        const body = document.querySelector('#quick-message-form [name$="[body]"]');
+        if (!body) { return; }
+        document.querySelectorAll('.js-var').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                const token = btn.textContent.trim();
+                const start = body.selectionStart, end = body.selectionEnd;
+                body.value = body.value.slice(0, start) + token + body.value.slice(end);
+                body.focus();
+                body.selectionStart = body.selectionEnd = start + token.length;
+            });
+        });
+    })();
+</script>
+{% endblock %}

@@ -48,7 +48,7 @@ final class RoleAccessControlTest extends WebTestCase
         $this->assertForbidden('/rezervace');
         $this->assertForbidden('/ucty');
         $this->assertForbidden('/elektrina');
-        $this->assertForbidden('/uzivatele');
+        $this->assertForbidden('/nastaveni/uzivatele');
         $this->assertForbidden('/nastaveni/dodavatel');
     }
 
@@ -59,7 +59,7 @@ final class RoleAccessControlTest extends WebTestCase
         $this->assertAllowed('/rezervace');
         $this->assertAllowed('/ucty');
         $this->assertAllowed('/elektrina');
-        $this->assertForbidden('/uzivatele');
+        $this->assertForbidden('/nastaveni/uzivatele');
         $this->assertForbidden('/nastaveni/dodavatel');
     }
 
@@ -69,7 +69,7 @@ final class RoleAccessControlTest extends WebTestCase
 
         $this->assertAllowed('/rezervace');
         $this->assertAllowed('/elektrina');
-        $this->assertAllowed('/uzivatele');
+        $this->assertAllowed('/nastaveni/uzivatele');
         $this->assertAllowed('/nastaveni/dodavatel');
     }
 

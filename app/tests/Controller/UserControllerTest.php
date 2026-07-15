@@ -43,7 +43,7 @@ final class UserControllerTest extends WebTestCase
 
     public function testIndexListsUsers(): void
     {
-        $this->client->request('GET', '/uzivatele');
+        $this->client->request('GET', '/nastaveni/uzivatele');
 
         self::assertResponseIsSuccessful();
         self::assertStringContainsString('admin@example.com', (string) $this->client->getResponse()->getContent());
@@ -51,13 +51,13 @@ final class UserControllerTest extends WebTestCase
 
     public function testCreateUser(): void
     {
-        $this->post('/uzivatele/novy', 'user-create', [
+        $this->post('/nastaveni/uzivatele/novy', 'user-create', [
             'email' => 'spravce@example.com',
             'password' => 'tajneheslo1',
             'role' => UserRole::MANAGER->value,
         ]);
 
-        self::assertResponseRedirects('/uzivatele');
+        self::assertResponseRedirects('/nastaveni/uzivatele');
         $user = $this->repo()->findOneBy(['email' => 'spravce@example.com']);
         self::assertNotNull($user);
         self::assertSame(UserRole::MANAGER, $user->getRole());
@@ -65,7 +65,7 @@ final class UserControllerTest extends WebTestCase
 
     public function testCreateRejectsShortPassword(): void
     {
-        $this->post('/uzivatele/novy', 'user-create', [
+        $this->post('/nastaveni/uzivatele/novy', 'user-create', [
             'email' => 'kratke@example.com',
             'password' => 'krat',
             'role' => UserRole::MANAGER->value,
@@ -80,12 +80,12 @@ final class UserControllerTest extends WebTestCase
         $this->em->flush();
         $id = $cleaner->getId();
 
-        $this->post('/uzivatele/' . $id, 'user-update-' . $id, [
+        $this->post('/nastaveni/uzivatele/' . $id, 'user-update-' . $id, [
             'role' => UserRole::MANAGER->value,
             'active' => '1',
         ]);
 
-        self::assertResponseRedirects('/uzivatele');
+        self::assertResponseRedirects('/nastaveni/uzivatele');
         $this->em->clear();
         $reloaded = $this->repo()->find($id);
         self::assertNotNull($reloaded);
@@ -97,7 +97,7 @@ final class UserControllerTest extends WebTestCase
         $admin = $this->repo()->findOneBy(['email' => 'admin@example.com']);
         $id = $admin->getId();
 
-        $this->post('/uzivatele/' . $id, 'user-update-' . $id, [
+        $this->post('/nastaveni/uzivatele/' . $id, 'user-update-' . $id, [
             'role' => UserRole::MANAGER->value,
             'active' => '1',
         ]);
@@ -111,7 +111,7 @@ final class UserControllerTest extends WebTestCase
         $admin = $this->repo()->findOneBy(['email' => 'admin@example.com']);
         $id = $admin->getId();
 
-        $this->post('/uzivatele/' . $id . '/smazat', 'user-delete-' . $id, []);
+        $this->post('/nastaveni/uzivatele/' . $id . '/smazat', 'user-delete-' . $id, []);
 
         self::assertNotNull($this->repo()->find($id));
     }
@@ -122,7 +122,7 @@ final class UserControllerTest extends WebTestCase
         $this->em->flush();
         $id = $victim->getId();
 
-        $this->post('/uzivatele/' . $id . '/smazat', 'user-delete-' . $id, []);
+        $this->post('/nastaveni/uzivatele/' . $id . '/smazat', 'user-delete-' . $id, []);
 
         $this->em->clear();
         self::assertNull($this->repo()->find($id));
@@ -139,13 +139,13 @@ final class UserControllerTest extends WebTestCase
     }
 
     /**
-     * Vytáhne CSRF token příslušného formuláře ze stránky /uzivatele a odešle POST.
+     * Vytáhne CSRF token příslušného formuláře ze stránky /nastaveni/uzivatele a odešle POST.
      *
      * @param array<string, string|list<string>> $params
      */
     private function post(string $uri, string $tokenId, array $params): void
     {
-        $crawler = $this->client->request('GET', '/uzivatele');
+        $crawler = $this->client->request('GET', '/nastaveni/uzivatele');
         $selector = $tokenId === 'user-create'
             ? 'form[action$="/novy"] input[name="_token"]'
             : 'form[action$="' . $uri . '"] input[name="_token"]';

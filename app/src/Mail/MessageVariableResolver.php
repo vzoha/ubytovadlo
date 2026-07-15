@@ -67,10 +67,23 @@ final class MessageVariableResolver
     ) {
     }
 
+    /** Proměnné, které nedávají smysl v prostém textu (SMS/WhatsApp) — obrázky apod. */
+    private const NON_TEXT_VARIABLES = ['deposit_qr'];
+
     /** @return array<string, string> název => popis */
     public static function variables(): array
     {
         return self::VARIABLES;
+    }
+
+    /**
+     * Podmnožina proměnných vhodná pro prostý text (SMS/WhatsApp) — bez obrázků.
+     *
+     * @return array<string, string> název => popis
+     */
+    public static function plainTextVariables(): array
+    {
+        return array_diff_key(self::VARIABLES, array_flip(self::NON_TEXT_VARIABLES));
     }
 
     /**

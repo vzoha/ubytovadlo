@@ -19,6 +19,7 @@ use App\Entity\GuestDocument;
 use App\Entity\Invoice;
 use App\Entity\LedgerEntry;
 use App\Entity\Payment;
+use App\Entity\QuickMessage;
 use App\Entity\Reservation;
 use App\Entity\Setting;
 use App\Entity\User;
@@ -97,6 +98,7 @@ class DevSeedDemoCommand extends Command
 
         $this->seedSupport($input, $io);
         $this->seedAccounts($io);
+        $this->seedQuickMessages($io);
         $reservations = $this->seedReservations($io);
         $this->seedReservationIncomes($reservations, $io);
         $this->seedVatPeriods($io);
@@ -114,6 +116,7 @@ class DevSeedDemoCommand extends Command
             'invoice_line', 'invoice', 'cleaning', 'guest_document', 'airbnb_statement',
             'booking_monthly_invoice', 'vat_period', 'electricity_reading', 'electricity_tariff',
             'payment', 'email_log', 'reservation', 'app_user', 'setting', 'accommodation_profile',
+            'quick_message',
         ];
         $this->connection->executeStatement('SET FOREIGN_KEY_CHECKS = 0');
         foreach ($tables as $table) {
@@ -178,6 +181,23 @@ class DevSeedDemoCommand extends Command
 
         $this->em->flush();
         $io->writeln('  Účty, výdaje, převod a uzávěrka vytvořeny.');
+    }
+
+    /** Demo rychlé zprávy pro SMS/WhatsApp (neutrální texty s proměnnými). */
+    private function seedQuickMessages(SymfonyStyle $io): void
+    {
+        $messages = [
+            ['Uvítání', 'Dobrý den {{ guest_first_name_vocative }}, těšíme se na Vás {{ check_in }}. V případě dotazů jsme Vám k dispozici.'],
+            ['Online check-in', 'Dobrý den {{ guest_first_name_vocative }}, před příjezdem prosím vyplňte online check-in: {{ checkin_url }}'],
+            ['Poděkování', 'Dobrý den {{ guest_first_name_vocative }}, děkujeme za návštěvu a budeme se těšit příště. Budeme rádi za Vaši recenzi.'],
+        ];
+        foreach ($messages as $i => [$label, $body]) {
+            $message = new QuickMessage($label, $body);
+            $message->setSortOrder($i);
+            $this->em->persist($message);
+        }
+        $this->em->flush();
+        $io->writeln('  Rychlé zprávy vytvořeny.');
     }
 
     /**

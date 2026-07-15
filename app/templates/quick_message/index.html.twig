@@ -1,0 +1,53 @@
+{% extends 'settings/base.html.twig' %}
+
+{% block title %}Nastavení — rychlé zprávy{% endblock %}
+
+{% block settings_active %}quick_messages{% endblock %}
+
+{% block settings_content %}
+    <div class="d-flex justify-content-between align-items-center mb-2 gap-2 flex-wrap">
+        <h2 class="h5 mb-0">Rychlé zprávy</h2>
+        <a href="{{ path('quick_message_new') }}" class="btn btn-sm btn-primary">Přidat zprávu</a>
+    </div>
+    <p class="text-muted small">
+        Krátké texty pro rychlé předvyplnění <strong>SMS</strong> a <strong>WhatsApp</strong>
+        u tlačítek na detailu rezervace. V textu lze používat proměnné jako
+        <code>{{ '{{ guest_first_name_vocative }}' }}</code>.
+    </p>
+
+    {% if messages is empty %}
+        <div class="alert alert-light border text-muted">
+            Zatím žádná rychlá zpráva. <a href="{{ path('quick_message_new') }}">Přidej první</a> —
+            objeví se v nabídce u SMS a WhatsApp.
+        </div>
+    {% else %}
+        <div class="list-group">
+            {% for message in messages %}
+                <div class="list-group-item d-flex justify-content-between align-items-start gap-3">
+                    <div class="me-auto">
+                        <div class="fw-semibold">{{ message.label }}</div>
+                        <div class="small text-muted text-break">{{ message.body }}</div>
+                    </div>
+                    <div class="d-flex align-items-center gap-1 flex-shrink-0">
+                        <form method="post" action="{{ path('quick_message_move', {id: message.id}) }}">
+                            <input type="hidden" name="_token" value="{{ csrf_token('quick-message-move-' ~ message.id) }}">
+                            <input type="hidden" name="direction" value="up">
+                            <button type="submit" class="btn btn-sm btn-outline-secondary" title="Nahoru" {{ loop.first ? 'disabled' : '' }}>↑</button>
+                        </form>
+                        <form method="post" action="{{ path('quick_message_move', {id: message.id}) }}">
+                            <input type="hidden" name="_token" value="{{ csrf_token('quick-message-move-' ~ message.id) }}">
+                            <input type="hidden" name="direction" value="down">
+                            <button type="submit" class="btn btn-sm btn-outline-secondary" title="Dolů" {{ loop.last ? 'disabled' : '' }}>↓</button>
+                        </form>
+                        <a href="{{ path('quick_message_edit', {id: message.id}) }}" class="btn btn-sm btn-outline-primary">Upravit</a>
+                        <form method="post" action="{{ path('quick_message_delete', {id: message.id}) }}"
+                              onsubmit="return confirm('Smazat rychlou zprávu „{{ message.label|e('js') }}“?');">
+                            <input type="hidden" name="_token" value="{{ csrf_token('quick-message-delete-' ~ message.id) }}">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Smazat</button>
+                        </form>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endblock %}
