@@ -7,7 +7,7 @@
 {% block settings_content %}
     <div class="d-flex justify-content-between align-items-center mb-2 gap-2 flex-wrap">
         <h2 class="h5 mb-0">Rychlé zprávy</h2>
-        <a href="{{ path('quick_message_new') }}" class="btn btn-sm btn-primary">Přidat zprávu</a>
+        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#modalNewQuickMessage">Přidat zprávu</button>
     </div>
     <p class="text-muted small">
         Krátké texty pro rychlé předvyplnění <strong>SMS</strong> a <strong>WhatsApp</strong>
@@ -17,7 +17,8 @@
 
     {% if messages is empty %}
         <div class="alert alert-light border text-muted">
-            Zatím žádná rychlá zpráva. <a href="{{ path('quick_message_new') }}">Přidej první</a> —
+            Zatím žádná rychlá zpráva.
+            <button type="button" class="btn btn-link p-0 align-baseline" data-bs-toggle="modal" data-bs-target="#modalNewQuickMessage">Přidej první</button> —
             objeví se v nabídce u SMS a WhatsApp.
         </div>
     {% else %}
@@ -50,4 +51,58 @@
             {% endfor %}
         </div>
     {% endif %}
+
+    <div class="modal fade" id="modalNewQuickMessage" tabindex="-1" aria-labelledby="modalNewQuickMessageLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title h6 mb-0" id="modalNewQuickMessageLabel">Nová rychlá zpráva</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zavřít"></button>
+                </div>
+                {{ form_start(newForm, { attr: { id: 'quick-message-new-form' } }) }}
+                    <div class="modal-body">
+                        <div class="mb-3">{{ form_row(newForm.label) }}</div>
+                        <div class="mb-2">
+                            {{ form_label(newForm.body) }}
+                            {{ form_widget(newForm.body) }}
+                            {{ form_help(newForm.body) }}
+                            {{ form_errors(newForm.body) }}
+                        </div>
+                        <div class="mb-0">
+                            <div class="small text-muted mb-1">Proměnné (klikni pro vložení do textu):</div>
+                            {% for name, desc in variables %}
+                                <button type="button" class="btn btn-sm btn-outline-secondary mb-1 js-var" title="{{ desc }}">
+                                    {{ '{{ ' ~ name ~ ' }}' }}
+                                </button>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Zrušit</button>
+                        <button type="submit" class="btn btn-primary">Uložit</button>
+                    </div>
+                {{ form_end(newForm) }}
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+    (function () {
+        const form = document.querySelector('#quick-message-new-form');
+        if (!form) { return; }
+        const body = form.querySelector('[name$="[body]"]');
+        if (!body) { return; }
+        form.querySelectorAll('.js-var').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                const token = btn.textContent.trim();
+                const start = body.selectionStart, end = body.selectionEnd;
+                body.value = body.value.slice(0, start) + token + body.value.slice(end);
+                body.focus();
+                body.selectionStart = body.selectionEnd = start + token.length;
+            });
+        });
+    })();
+</script>
 {% endblock %}

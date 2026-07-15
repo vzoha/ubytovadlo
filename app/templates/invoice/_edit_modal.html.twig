@@ -1,0 +1,21 @@
+{# Modal úpravy faktury. Očekává: invoice. #}
+<div class="modal fade" id="editInvoice{{ invoice.id }}" tabindex="-1" aria-labelledby="editInvoice{{ invoice.id }}Label" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title h6 mb-0" id="editInvoice{{ invoice.id }}Label">Úprava faktury {{ invoice.number }}</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zavřít"></button>
+            </div>
+            <form method="post" action="{{ path('invoice_edit', {id: invoice.id}) }}">
+                <div class="modal-body">
+                    <input type="hidden" name="_token" value="{{ csrf_token('invoice-edit-' ~ invoice.id) }}">
+                    {% include 'invoice/_edit_fields.html.twig' %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Zrušit</button>
+                    <button class="btn btn-sm btn-primary">Uložit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

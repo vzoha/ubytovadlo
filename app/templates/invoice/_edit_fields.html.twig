@@ -1,0 +1,42 @@
+{# Pole úpravy faktury — sdílí modal (reservation/detail) i samostatná stránka. Očekává: invoice. #}
+<div class="mb-3">
+    <label class="form-label">Datum vystavení</label>
+    <input type="date" name="issued_at" class="form-control" required
+           value="{{ invoice.issuedAt|date('Y-m-d') }}">
+    <div class="form-text">Musí zůstat v roce {{ invoice.seriesYear }} kvůli číselné řadě.</div>
+</div>
+
+<div class="mb-3">
+    <label class="form-label">Datum splatnosti</label>
+    <input type="date" name="due_at" class="form-control" required
+           value="{{ invoice.dueAt|date('Y-m-d') }}">
+</div>
+
+<div class="mb-3">
+    <label class="form-label">Způsob platby</label>
+    <select name="payment_method" class="form-select">
+        {% set methods = ['převodem', 'hotově'] %}
+        {% if invoice.paymentMethod not in methods %}
+            <option value="{{ invoice.paymentMethod }}" selected>{{ invoice.paymentMethod }}</option>
+        {% endif %}
+        {% for method in methods %}
+            <option value="{{ method }}" {{ invoice.paymentMethod == method ? 'selected' }}>{{ method }}</option>
+        {% endfor %}
+    </select>
+    <div class="form-text">Hotovost odstraní z faktury číslo účtu i QR kód.</div>
+</div>
+
+<div class="mb-3">
+    <label class="form-label">Datum platby</label>
+    <input type="date" name="paid_at" class="form-control"
+           value="{{ invoice.paidAt ? invoice.paidAt|date('Y-m-d') : '' }}">
+    <div class="form-text">Prázdné = nezaplaceno.</div>
+</div>
+
+{% if invoice.originalCurrency %}
+    <div class="alert alert-warning small mb-0">
+        Kurz ČNB {{ invoice.exchangeRate }} ({{ invoice.exchangeRateDate|date('d. m. Y') }})
+        se při úpravě data <strong>nepřepočítává</strong>. Pokud jde o věcnou opravu kurzu,
+        fakturu zruš a vystav znovu.
+    </div>
+{% endif %}

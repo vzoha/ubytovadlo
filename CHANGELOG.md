@@ -8,6 +8,13 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Změněno
 
+- **Zadávání a úpravy přes vyskakovací okno.** Formuláře pro přidání a úpravu
+  záznamu se otevírají tlačítkem do dialogu, takže přehledové stránky vedou daty,
+  ne formuláři. Platí pro **Účty** (výdaj, příjem, převod, uzávěrka, nový účet,
+  úprava pohybu i účtu), **Elektřinu** (nový odečet), **detail rezervace**
+  (poznámka, připomínka, úprava faktury), **Uživatele** (nový uživatel) a
+  **Rychlé zprávy** (nová zpráva). Stránka Účty navíc vede zůstatky a tabulkou
+  pohybů hned pod nadpisem; úprava a mazání pohybu zůstává v řádku tabulky.
 - **Správa uživatelů je součástí Nastavení.** Uživatelé se otevírají jako záložka
   v sekci Nastavení (na adrese `/nastaveni/uzivatele`). Hlavní menu tak nese jen
   jednu položku pro administraci instance.
@@ -57,9 +64,11 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 - **Napojení na vlastní web (MotoPress) je upozaděné.** V Připojení i v průvodci je až
   za automatizační schránkou a odchozími e-maily a ve sbaleném bloku — vyžádá si ho jen
   ten, kdo prodává přes vlastní web s pluginem MotoPress.
-- **Detail rezervace řazený podle důležitosti.** Nahoře jsou pobyt, host a peníze,
-  hned pod nimi fakturace; check-in, ekonomika a provozní evidence (elektřina, úklid)
-  následují. V pobytu přibyl počet nocí. Karty se stejně řadí i na mobilu.
+- **Detail rezervace řazený podle důležitosti.** Nahoře jsou ve dvou sloupcích pobyt,
+  host a peníze vlevo, check-in, ekonomika a provozní evidence (elektřina, úklid) vpravo.
+  Fakturace je pod nimi na celou šířku, takže se tabulka faktur vejde v plné podobě;
+  na úzkém okně se každý řádek složí do dvou řádků (číslo · typ … částka nahoře,
+  stav · datum … akce dole). V pobytu přibyl počet nocí. Karty se stejně řadí i na mobilu.
 
 ### Opraveno
 

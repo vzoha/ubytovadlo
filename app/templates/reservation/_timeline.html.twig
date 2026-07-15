@@ -4,60 +4,11 @@
     <div class="card-header d-flex justify-content-between align-items-center">
         <span>Časová osa</span>
         <div class="d-flex gap-2">
-            <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#add-note">+ Poznámka</button>
-            <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#add-action">+ Připomínka</button>
+            <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#modalNote">+ Poznámka</button>
+            <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#modalReminder">+ Připomínka</button>
         </div>
     </div>
     <div class="card-body">
-        <div class="collapse mb-3" id="add-note">
-            <form method="post" action="{{ path('reservation_add_note', {id: reservation.id}) }}" class="row g-2 align-items-end">
-                <input type="hidden" name="_token" value="{{ csrf_token('note-' ~ reservation.id) }}">
-                <div class="col-sm-2">
-                    <label class="form-label small mb-1">Typ</label>
-                    <select name="type" class="form-select form-select-sm">
-                        {% for t in note_types %}
-                            <option value="{{ t.value }}">{{ t.icon }} {{ t.label }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-sm-3">
-                    <label class="form-label small mb-1">Kdy</label>
-                    <input type="datetime-local" name="occurred_at" class="form-control form-control-sm" value="{{ now|date('Y-m-d\\TH:i') }}">
-                </div>
-                <div class="col-sm-5">
-                    <label class="form-label small mb-1">Text</label>
-                    <input type="text" name="body" class="form-control form-control-sm" placeholder="Co se stalo…" required>
-                </div>
-                <div class="col-sm-2">
-                    <button class="btn btn-primary btn-sm w-100">Uložit</button>
-                </div>
-            </form>
-        </div>
-
-        <div class="collapse mb-3" id="add-action">
-            <form method="post" action="{{ path('reservation_add_action', {id: reservation.id}) }}" class="row g-2 align-items-end">
-                <input type="hidden" name="_token" value="{{ csrf_token('action-' ~ reservation.id) }}">
-                <div class="col-sm-2">
-                    <label class="form-label small mb-1">Druh</label>
-                    <select name="type" class="form-select form-select-sm">
-                        <option value="custom_reminder">⏰ Připomínka</option>
-                        <option value="custom_message">✉️ Zpráva hostovi</option>
-                    </select>
-                </div>
-                <div class="col-sm-3">
-                    <label class="form-label small mb-1">Termín</label>
-                    <input type="datetime-local" name="scheduled_for" class="form-control form-control-sm" value="{{ now|date('Y-m-d\\TH:i') }}" required>
-                </div>
-                <div class="col-sm-5">
-                    <label class="form-label small mb-1">Text</label>
-                    <input type="text" name="text" class="form-control form-control-sm" placeholder="Na co nezapomenout…" required>
-                </div>
-                <div class="col-sm-2">
-                    <button class="btn btn-primary btn-sm w-100">Naplánovat</button>
-                </div>
-            </form>
-        </div>
-
         {% if timeline is empty %}
             <p class="text-muted small mb-0">Zatím žádné události.</p>
         {% else %}
@@ -109,5 +60,76 @@
                 {% endfor %}
             </ul>
         {% endif %}
+    </div>
+</div>
+
+<div class="modal fade" id="modalNote" tabindex="-1" aria-labelledby="modalNoteLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title h6 mb-0" id="modalNoteLabel">Nová poznámka</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zavřít"></button>
+            </div>
+            <form method="post" action="{{ path('reservation_add_note', {id: reservation.id}) }}">
+                <div class="modal-body">
+                    <input type="hidden" name="_token" value="{{ csrf_token('note-' ~ reservation.id) }}">
+                    <div class="mb-2">
+                        <label class="form-label small mb-1">Typ</label>
+                        <select name="type" class="form-select form-select-sm">
+                            {% for t in note_types %}
+                                <option value="{{ t.value }}">{{ t.icon }} {{ t.label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small mb-1">Kdy</label>
+                        <input type="datetime-local" name="occurred_at" class="form-control form-control-sm" value="{{ now|date('Y-m-d\\TH:i') }}">
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label small mb-1">Text</label>
+                        <input type="text" name="body" class="form-control form-control-sm" placeholder="Co se stalo…" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Zrušit</button>
+                    <button class="btn btn-sm btn-primary">Uložit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalReminder" tabindex="-1" aria-labelledby="modalReminderLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title h6 mb-0" id="modalReminderLabel">Nová připomínka</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zavřít"></button>
+            </div>
+            <form method="post" action="{{ path('reservation_add_action', {id: reservation.id}) }}">
+                <div class="modal-body">
+                    <input type="hidden" name="_token" value="{{ csrf_token('action-' ~ reservation.id) }}">
+                    <div class="mb-2">
+                        <label class="form-label small mb-1">Druh</label>
+                        <select name="type" class="form-select form-select-sm">
+                            <option value="custom_reminder">⏰ Připomínka</option>
+                            <option value="custom_message">✉️ Zpráva hostovi</option>
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small mb-1">Termín</label>
+                        <input type="datetime-local" name="scheduled_for" class="form-control form-control-sm" value="{{ now|date('Y-m-d\\TH:i') }}" required>
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label small mb-1">Text</label>
+                        <input type="text" name="text" class="form-control form-control-sm" placeholder="Na co nezapomenout…" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Zrušit</button>
+                    <button class="btn btn-sm btn-primary">Naplánovat</button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>

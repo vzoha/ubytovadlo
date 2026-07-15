@@ -1,0 +1,47 @@
+{# Pole pro úpravu pohybu — sdílí modal (account/index, account/show) i samostatná stránka. #}
+<div class="row g-2">
+    <div class="col-md-6">
+        <label class="form-label small mb-0">{{ entry.type.value == 'transfer' ? 'Z účtu' : 'Účet' }}</label>
+        <select name="account" class="form-select form-select-sm">
+            {% for a in accounts %}
+                <option value="{{ a.id }}" {{ a.id == entry.account.id ? 'selected' }}>{{ a.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    {% if entry.type.value == 'transfer' %}
+        <div class="col-md-6">
+            <label class="form-label small mb-0">Na účet</label>
+            <select name="counter_account" class="form-select form-select-sm">
+                {% for a in accounts %}
+                    <option value="{{ a.id }}" {{ entry.counterAccount and a.id == entry.counterAccount.id ? 'selected' }}>{{ a.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    {% endif %}
+    {% if entry.type.value == 'expense' %}
+        <div class="col-md-6">
+            <label class="form-label small mb-0">Kategorie</label>
+            <select name="category" class="form-select form-select-sm">
+                {% for grp in expenseGroups %}
+                    <optgroup label="{{ grp.label }}">
+                        {% for c in categories|filter(c => c.group.value == grp.value) %}
+                            <option value="{{ c.value }}" {{ entry.category and c.value == entry.category.value ? 'selected' }}>{{ c.label }}</option>
+                        {% endfor %}
+                    </optgroup>
+                {% endfor %}
+            </select>
+        </div>
+    {% endif %}
+    <div class="col-md-6">
+        <label class="form-label small mb-0">Datum</label>
+        <input name="occurred_on" type="date" value="{{ entry.occurredOn|date('Y-m-d') }}" class="form-control form-control-sm">
+    </div>
+    <div class="col-md-6">
+        <label class="form-label small mb-0">Částka (Kč)</label>
+        <input name="amount" type="number" step="1" value="{{ entry.amountCzk }}" class="form-control form-control-sm" required>
+    </div>
+    <div class="col-12">
+        <label class="form-label small mb-0">Poznámka</label>
+        <input name="note" value="{{ entry.note }}" class="form-control form-control-sm">
+    </div>
+</div>

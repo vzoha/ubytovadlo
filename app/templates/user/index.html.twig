@@ -7,7 +7,7 @@
 {% block settings_content %}
 <div class="d-flex align-items-center justify-content-between mb-3">
     <h1 class="h4 mb-0">Uživatelé</h1>
-    <button class="btn btn-primary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#newUser">Přidat uživatele</button>
+    <button class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#modalNewUser">Přidat uživatele</button>
 </div>
 
 <p class="text-muted small">
@@ -16,31 +16,37 @@
     provoz i finance, <strong>Uklízečka</strong> jen úklid.
 </p>
 
-<div class="collapse mb-4" id="newUser">
-    <div class="card shadow-sm">
-        <div class="card-body">
-            <h2 class="h6 text-muted mb-3">Nový uživatel</h2>
-            <form method="post" action="{{ path('user_create') }}" class="row g-3 align-items-end">
-                <div class="col-md-4">
-                    <label for="newEmail" class="form-label">E-mail</label>
-                    <input type="email" name="email" id="newEmail" class="form-control" required>
+<div class="modal fade" id="modalNewUser" tabindex="-1" aria-labelledby="modalNewUserLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title h6 mb-0" id="modalNewUserLabel">Nový uživatel</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zavřít"></button>
+            </div>
+            <form method="post" action="{{ path('user_create') }}">
+                <div class="modal-body">
+                    <input type="hidden" name="_token" value="{{ csrf_token('user-create') }}">
+                    <div class="mb-3">
+                        <label for="newEmail" class="form-label">E-mail</label>
+                        <input type="email" name="email" id="newEmail" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="newPassword" class="form-label">Heslo</label>
+                        <input type="password" name="password" id="newPassword" class="form-control" required minlength="8" autocomplete="new-password">
+                    </div>
+                    <div class="mb-0">
+                        <label for="newRole" class="form-label">Role</label>
+                        <select name="role" id="newRole" class="form-select">
+                            {% for role in roles %}
+                                <option value="{{ role.value }}" {{ role.value == 'ROLE_USER' ? 'selected' }}>{{ role.label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
                 </div>
-                <div class="col-md-3">
-                    <label for="newPassword" class="form-label">Heslo</label>
-                    <input type="password" name="password" id="newPassword" class="form-control" required minlength="8" autocomplete="new-password">
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Zrušit</button>
+                    <button type="submit" class="btn btn-primary">Založit</button>
                 </div>
-                <div class="col-md-3">
-                    <label for="newRole" class="form-label">Role</label>
-                    <select name="role" id="newRole" class="form-select">
-                        {% for role in roles %}
-                            <option value="{{ role.value }}" {{ role.value == 'ROLE_USER' ? 'selected' }}>{{ role.label }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <button type="submit" class="btn btn-primary w-100">Založit</button>
-                </div>
-                <input type="hidden" name="_token" value="{{ csrf_token('user-create') }}">
             </form>
         </div>
     </div>

@@ -11,7 +11,7 @@
         <div class="text-end">
             <div class="small text-muted">Aktuální stav</div>
             <div class="fs-4 fw-bold {{ balance < 0 ? 'text-danger' : '' }}">{{ balance|number_format(0, ',', ' ') }} Kč</div>
-            <a class="btn btn-sm btn-outline-secondary py-0 mt-1" href="{{ path('account_edit', {id: account.id}) }}">Upravit účet</a>
+            <button type="button" class="btn btn-sm btn-outline-secondary py-0 mt-1" data-bs-toggle="modal" data-bs-target="#editAccount{{ account.id }}">Upravit účet</button>
         </div>
     </div>
 
@@ -70,12 +70,35 @@
                     </td>
                     <td class="text-end {{ effect < 0 ? 'text-danger' : 'text-success' }}">{{ effect|number_format(0, ',', ' ') }} Kč</td>
                     <td class="text-muted">{{ m.note }}</td>
-                    <td class="text-end"><a class="btn btn-sm btn-outline-secondary py-0" href="{{ path('account_entry_edit', {id: m.id}) }}">✎</a></td>
+                    <td class="text-end"><button type="button" class="btn btn-sm btn-outline-secondary py-0" data-bs-toggle="modal" data-bs-target="#editEntry{{ m.id }}">✎</button></td>
                 </tr>
             {% else %}
                 <tr><td colspan="6" class="text-muted">Žádné pohyby.</td></tr>
             {% endfor %}
             </tbody>
         </table>
+    </div>
+
+    {% for m in movements %}{% include 'account/_entry_edit_modal.html.twig' with {entry: m} %}{% endfor %}
+
+    <div class="modal fade" id="editAccount{{ account.id }}" tabindex="-1" aria-labelledby="editAccount{{ account.id }}Label" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title h6 mb-0" id="editAccount{{ account.id }}Label">Upravit účet</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zavřít"></button>
+                </div>
+                <form method="post" action="{{ path('account_edit', {id: account.id}) }}">
+                    <div class="modal-body">
+                        <input type="hidden" name="_token" value="{{ csrf_token('account-edit-' ~ account.id) }}">
+                        {% include 'account/_account_fields.html.twig' %}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Zrušit</button>
+                        <button class="btn btn-sm btn-primary">Uložit</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 {% endblock %}

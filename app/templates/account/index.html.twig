@@ -4,13 +4,21 @@
 
 {% block body %}
     {% import _self as f %}
-    <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
         <h1 class="h4 mb-0">Účty a cashflow</h1>
-        <div>
+        <div class="d-flex flex-wrap gap-2">
+            <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#modalExpense">+ Výdaj</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modalIncome">+ Příjem</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modalTransfer">Převod</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modalStatement">Uzávěrka</button>
             <a class="btn btn-sm btn-outline-secondary" href="{{ path('account_summary') }}">Měsíční souhrn</a>
         </div>
     </div>
 
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h2 class="h6 text-muted mb-0">Účty</h2>
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modalAccount">+ Nový účet</button>
+    </div>
     <div class="row g-3 mb-4">
         {% for card in cards %}
             <div class="col-12 col-md-4">
@@ -32,23 +40,8 @@
                 </div>
             </div>
         {% else %}
-            <div class="col-12 text-muted">Zatím žádné účty.</div>
+            <div class="col-12 text-muted">Zatím žádné účty. Přidej první přes <button type="button" class="btn btn-sm btn-link p-0 align-baseline" data-bs-toggle="modal" data-bs-target="#modalAccount">Nový účet</button>.</div>
         {% endfor %}
-    </div>
-
-    <div class="row g-3 mb-4">
-        <div class="col-12 col-lg-3">
-            {{ f.form_card('Nový výdaj', 'account_expense_add', 'account-expense', accounts, categories, 'expense', expenseGroups) }}
-        </div>
-        <div class="col-12 col-lg-3">
-            {{ f.form_card('Ostatní příjem', 'account_income_add', 'account-income', accounts, categories, 'income', expenseGroups) }}
-        </div>
-        <div class="col-12 col-lg-3">
-            {{ f.form_card('Převod mezi účty', 'account_transfer_add', 'account-transfer', accounts, categories, 'transfer', expenseGroups) }}
-        </div>
-        <div class="col-12 col-lg-3">
-            {{ f.form_card('Uzávěrka (reálný stav)', 'account_statement_add', 'account-statement', accounts, categories, 'statement', expenseGroups) }}
-        </div>
     </div>
 
     <div class="card mb-4">
@@ -98,7 +91,7 @@
                     </td>
                     <td class="text-muted">{{ m.note }}</td>
                     <td class="text-end text-nowrap">
-                        <a class="btn btn-sm btn-outline-secondary py-0" href="{{ path('account_entry_edit', {id: m.id}) }}">✎</a>
+                        <button type="button" class="btn btn-sm btn-outline-secondary py-0" data-bs-toggle="modal" data-bs-target="#editEntry{{ m.id }}">✎</button>
                         <form method="post" action="{{ path('account_expense_delete', {id: m.id}) }}" class="d-inline" onsubmit="return confirm('Smazat pohyb?')">
                             <input type="hidden" name="_token" value="{{ csrf_token('account-entry-delete-' ~ m.id) }}">
                             <button class="btn btn-sm btn-outline-danger py-0">×</button>
@@ -110,6 +103,7 @@
             {% endfor %}
             </tbody>
         </table>
+        {% for m in recent %}{% include 'account/_entry_edit_modal.html.twig' with {entry: m} %}{% endfor %}
         {% if pages > 1 %}
             <div class="card-footer d-flex justify-content-between align-items-center small">
                 <span class="text-muted">Strana {{ page }} / {{ pages }}</span>
@@ -175,81 +169,104 @@
     </div>
     {% endif %}
 
-    <div class="card">
-        <div class="card-header">Nový účet</div>
-        <div class="card-body">
-            <form method="post" action="{{ path('account_add') }}" class="row g-2 align-items-end">
-                <input type="hidden" name="_token" value="{{ csrf_token('account-new') }}">
-                <div class="col-md-4">
-                    <label class="form-label small mb-0">Název</label>
-                    <input name="name" class="form-control form-control-sm" required>
+    {{ f.entry_modal('modalExpense', 'Nový výdaj', 'account_expense_add', 'account-expense', accounts, categories, 'expense', expenseGroups) }}
+    {{ f.entry_modal('modalIncome', 'Ostatní příjem', 'account_income_add', 'account-income', accounts, categories, 'income', expenseGroups) }}
+    {{ f.entry_modal('modalTransfer', 'Převod mezi účty', 'account_transfer_add', 'account-transfer', accounts, categories, 'transfer', expenseGroups) }}
+    {{ f.entry_modal('modalStatement', 'Uzávěrka (reálný stav)', 'account_statement_add', 'account-statement', accounts, categories, 'statement', expenseGroups) }}
+
+    <div class="modal fade" id="modalAccount" tabindex="-1" aria-labelledby="modalAccountLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title h6 mb-0" id="modalAccountLabel">Nový účet</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zavřít"></button>
                 </div>
-                <div class="col-md-3">
-                    <label class="form-label small mb-0">Typ</label>
-                    <select name="type" class="form-select form-select-sm">
-                        {% for t in accountTypes %}<option value="{{ t.value }}">{{ t.label }}</option>{% endfor %}
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label small mb-0">Počáteční stav (Kč)</label>
-                    <input name="opening_balance" type="number" step="1" value="0" class="form-control form-control-sm">
-                </div>
-                <div class="col-md-2">
-                    <button class="btn btn-sm btn-primary w-100">Přidat</button>
-                </div>
-            </form>
+                <form method="post" action="{{ path('account_add') }}">
+                    <div class="modal-body">
+                        <input type="hidden" name="_token" value="{{ csrf_token('account-new') }}">
+                        <div class="mb-2">
+                            <label class="form-label small mb-0">Název</label>
+                            <input name="name" class="form-control form-control-sm" required>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small mb-0">Typ</label>
+                            <select name="type" class="form-select form-select-sm">
+                                {% for t in accountTypes %}<option value="{{ t.value }}">{{ t.label }}</option>{% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-0">
+                            <label class="form-label small mb-0">Počáteční stav (Kč)</label>
+                            <input name="opening_balance" type="number" step="1" value="0" class="form-control form-control-sm">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Zrušit</button>
+                        <button class="btn btn-sm btn-primary">Přidat účet</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
-    {% macro form_card(title, route, token, accounts, categories, kind, expenseGroups) %}
-        <div class="card h-100">
-            <div class="card-header py-1 small">{{ title }}</div>
-            <div class="card-body">
-                <form method="post" action="{{ path(route) }}">
-                    <input type="hidden" name="_token" value="{{ csrf_token(token) }}">
-                    <div class="mb-2">
-                        <label class="form-label small mb-0">{{ kind == 'transfer' ? 'Z účtu' : 'Účet' }}</label>
-                        <select name="account" class="form-select form-select-sm">
-                            {% for a in accounts %}<option value="{{ a.id }}">{{ a.name }}</option>{% endfor %}
-                        </select>
+    {% macro entry_modal(id, title, route, token, accounts, categories, kind, expenseGroups) %}
+        <div class="modal fade" id="{{ id }}" tabindex="-1" aria-labelledby="{{ id }}Label" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 class="modal-title h6 mb-0" id="{{ id }}Label">{{ title }}</h2>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zavřít"></button>
                     </div>
-                    {% if kind == 'transfer' %}
-                        <div class="mb-2">
-                            <label class="form-label small mb-0">Na účet</label>
-                            <select name="counter_account" class="form-select form-select-sm">
-                                {% for a in accounts %}<option value="{{ a.id }}">{{ a.name }}</option>{% endfor %}
-                            </select>
-                        </div>
-                    {% endif %}
-                    {% if kind == 'expense' %}
-                        <div class="mb-2">
-                            <label class="form-label small mb-0">Kategorie</label>
-                            <select name="category" class="form-select form-select-sm">
-                                {% for grp in expenseGroups %}
-                                    <optgroup label="{{ grp.label }}">
-                                        {% for c in categories|filter(c => c.group.value == grp.value) %}
-                                            <option value="{{ c.value }}">{{ c.label }}</option>
+                    <form method="post" action="{{ path(route) }}">
+                        <div class="modal-body">
+                            <input type="hidden" name="_token" value="{{ csrf_token(token) }}">
+                            <div class="mb-2">
+                                <label class="form-label small mb-0">{{ kind == 'transfer' ? 'Z účtu' : 'Účet' }}</label>
+                                <select name="account" class="form-select form-select-sm">
+                                    {% for a in accounts %}<option value="{{ a.id }}">{{ a.name }}</option>{% endfor %}
+                                </select>
+                            </div>
+                            {% if kind == 'transfer' %}
+                                <div class="mb-2">
+                                    <label class="form-label small mb-0">Na účet</label>
+                                    <select name="counter_account" class="form-select form-select-sm">
+                                        {% for a in accounts %}<option value="{{ a.id }}">{{ a.name }}</option>{% endfor %}
+                                    </select>
+                                </div>
+                            {% endif %}
+                            {% if kind == 'expense' %}
+                                <div class="mb-2">
+                                    <label class="form-label small mb-0">Kategorie</label>
+                                    <select name="category" class="form-select form-select-sm">
+                                        {% for grp in expenseGroups %}
+                                            <optgroup label="{{ grp.label }}">
+                                                {% for c in categories|filter(c => c.group.value == grp.value) %}
+                                                    <option value="{{ c.value }}">{{ c.label }}</option>
+                                                {% endfor %}
+                                            </optgroup>
                                         {% endfor %}
-                                    </optgroup>
-                                {% endfor %}
-                            </select>
+                                    </select>
+                                </div>
+                            {% endif %}
+                            <div class="row g-2 mb-2">
+                                <div class="col-6">
+                                    <label class="form-label small mb-0">{{ kind == 'statement' ? 'K datu' : 'Datum' }}</label>
+                                    <input name="{{ kind == 'statement' ? 'statement_date' : 'occurred_on' }}" type="date" value="{{ 'now'|date('Y-m-d') }}" class="form-control form-control-sm">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label small mb-0">{{ kind == 'statement' ? 'Reálný stav (Kč)' : 'Částka (Kč)' }}</label>
+                                    <input name="{{ kind == 'statement' ? 'actual_balance' : 'amount' }}" type="number" step="1" class="form-control form-control-sm" required>
+                                </div>
+                            </div>
+                            <div class="mb-0">
+                                <input name="note" class="form-control form-control-sm" placeholder="Poznámka">
+                            </div>
                         </div>
-                    {% endif %}
-                    <div class="row g-2 mb-2">
-                        <div class="col-6">
-                            <label class="form-label small mb-0">{{ kind == 'statement' ? 'K datu' : 'Datum' }}</label>
-                            <input name="{{ kind == 'statement' ? 'statement_date' : 'occurred_on' }}" type="date" value="{{ 'now'|date('Y-m-d') }}" class="form-control form-control-sm">
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Zrušit</button>
+                            <button class="btn btn-sm btn-primary">Uložit</button>
                         </div>
-                        <div class="col-6">
-                            <label class="form-label small mb-0">{{ kind == 'statement' ? 'Reálný stav (Kč)' : 'Částka (Kč)' }}</label>
-                            <input name="{{ kind == 'statement' ? 'actual_balance' : 'amount' }}" type="number" step="1" class="form-control form-control-sm" required>
-                        </div>
-                    </div>
-                    <div class="mb-2">
-                        <input name="note" class="form-control form-control-sm" placeholder="Poznámka">
-                    </div>
-                    <button class="btn btn-sm btn-primary w-100">Uložit</button>
-                </form>
+                    </form>
+                </div>
             </div>
         </div>
     {% endmacro %}

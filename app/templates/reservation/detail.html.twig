@@ -47,7 +47,7 @@
     {% endif %}
 
     <div class="row g-3">
-        {# Levý sloupec: kdo, kdy, peníze, faktura — nejčastěji sledované. #}
+        {# Levý sloupec: kdo, kdy, peníze — nejčastěji sledované. #}
         <div class="col-lg-6">
             <div class="card">
                 <div class="card-header">Pobyt</div>
@@ -264,119 +264,6 @@
                             </div>
                         </form>
                     {% endif %}
-                </div>
-            </div>
-
-            {% set invoices = invoices ?? [] %}
-            {% set has_deposit = false %}
-            {% set has_final = false %}
-            {% set has_full = false %}
-            {% for inv in invoices %}
-                {% if inv.type.value == 'deposit' %}{% set has_deposit = true %}{% endif %}
-                {% if inv.type.value == 'final' %}{% set has_final = true %}{% endif %}
-                {% if inv.type.value == 'full' %}{% set has_full = true %}{% endif %}
-            {% endfor %}
-
-            <div class="card mt-3 invoice-card">
-                <div class="card-header d-flex justify-content-between align-items-center gap-2 flex-wrap">
-                    <span>Fakturace</span>
-                    <span class="text-muted small">
-                        {{ reservation.billingMode ? reservation.billingMode.label : 'fakturační režim není nastaven' }}
-                        {% if reservation.motopressPaymentGateway %}· MotoPress gateway <code>{{ reservation.motopressPaymentGateway }}</code>{% endif %}
-                    </span>
-                </div>
-                <div class="card-body">
-                    <form method="post" action="{{ path('reservation_set_billing_mode', {id: reservation.id}) }}" class="mb-3">
-                        <input type="hidden" name="_token" value="{{ csrf_token('billing-mode-' ~ reservation.id) }}">
-                        <div class="input-group input-group-sm">
-                            <label class="input-group-text" for="bm">Režim</label>
-                            <select name="billing_mode" id="bm" class="form-select">
-                                <option value="">— neurčeno —</option>
-                                {% for mode in billing_modes %}
-                                    <option value="{{ mode.value }}" {{ reservation.billingMode == mode ? 'selected' : '' }}>{{ mode.label }}</option>
-                                {% endfor %}
-                            </select>
-                            <button class="btn btn-outline-secondary">Uložit režim</button>
-                        </div>
-                    </form>
-
-                    {% if invoices is empty %}
-                        <p class="text-muted small mb-2">Žádné faktury zatím nebyly vystaveny.</p>
-                    {% else %}
-                        <table class="table table-sm align-middle mb-2 invoice-table">
-                            <thead class="small text-muted">
-                            <tr><th>Číslo</th><th>Typ</th><th class="text-end">Částka</th><th>Vystaveno</th><th>Stav</th><th></th></tr>
-                            </thead>
-                            <tbody>
-                            {% for inv in invoices %}
-                                <tr>
-                                    <td class="inv-number" data-label="Číslo"><a href="{{ path('invoice_pdf', {id: inv.id}) }}" target="_blank">{{ inv.number }}</a></td>
-                                    <td class="inv-type" data-label="Typ">{{ inv.type.label }}</td>
-                                    <td class="inv-amount text-end text-nowrap" data-label="Částka">{{ inv.totalAmount|number_format(2, ',', ' ') }} {{ inv.currency == 'CZK' ? 'Kč' : inv.currency }}</td>
-                                    <td class="inv-issued text-nowrap" data-label="Vystaveno">{{ inv.issuedAt|date('d. m. Y') }}</td>
-                                    <td class="inv-status" data-label="Stav">
-                                        {% if inv.isPaid %}
-                                            <span class="badge text-bg-success">Zaplaceno {{ inv.paidAt|date('d. m. Y') }}</span>
-                                        {% else %}
-                                            <span class="badge text-bg-warning">Splatnost {{ inv.dueAt|date('d. m. Y') }}</span>
-                                        {% endif %}
-                                    </td>
-                                    <td class="inv-actions text-end">
-                                        <div class="d-flex gap-1 justify-content-end flex-wrap">
-                                            <a href="{{ path('invoice_edit', {id: inv.id}) }}" class="btn btn-sm btn-outline-secondary">Upravit</a>
-                                            {% if reservation.guestEmail %}
-                                                <form method="post" action="{{ path('invoice_send_email', {id: inv.id}) }}"
-                                                      onsubmit="return confirm('Poslat fakturu {{ inv.number }} hostovi na {{ reservation.guestEmail }}?');">
-                                                    <input type="hidden" name="_token" value="{{ csrf_token('invoice-email-' ~ inv.id) }}">
-                                                    <button class="btn btn-sm btn-outline-primary">Poslat e-mailem</button>
-                                                </form>
-                                            {% endif %}
-                                            {% if not inv.isPaid %}
-                                                <form method="post" action="{{ path('invoice_mark_paid', {id: inv.id}) }}">
-                                                    <input type="hidden" name="_token" value="{{ csrf_token('invoice-paid-' ~ inv.id) }}">
-                                                    <button class="btn btn-sm btn-outline-success">Zaplaceno</button>
-                                                </form>
-                                            {% endif %}
-                                        </div>
-                                    </td>
-                                </tr>
-                            {% endfor %}
-                            </tbody>
-                        </table>
-                    {% endif %}
-
-                    <div class="mt-3 d-flex gap-2 flex-wrap">
-                        {% set mode = reservation.billingMode %}
-                        {% if mode and mode.value == 'standard_with_deposit' and deposit_applies %}
-                            {% if not has_deposit %}
-                                {% if deposit_amount %}
-                                    <form method="post" action="{{ path('invoice_issue_deposit', {id: reservation.id}) }}">
-                                        <input type="hidden" name="_token" value="{{ csrf_token('invoice-deposit-' ~ reservation.id) }}">
-                                        <button class="btn btn-sm btn-primary">Vystavit zálohu ({{ deposit_amount|number_format(0, ',', ' ') }} Kč)</button>
-                                    </form>
-                                {% else %}
-                                    <p class="text-muted small mb-0">Doplň cenu rezervace, aby šlo vystavit zálohu.</p>
-                                {% endif %}
-                            {% endif %}
-                            {% if has_deposit and not has_final %}
-                                <form method="post" action="{{ path('invoice_issue_final', {id: reservation.id}) }}">
-                                    <input type="hidden" name="_token" value="{{ csrf_token('invoice-final-' ~ reservation.id) }}">
-                                    <button class="btn btn-sm btn-primary">Vystavit doplatek</button>
-                                </form>
-                            {% endif %}
-                        {% elseif mode and mode.value == 'waived' %}
-                            <p class="text-muted small mb-0">Fakturace prominuta — pobyt bez vystavení faktury.</p>
-                        {% elseif mode %}
-                            {% if not has_full %}
-                                <form method="post" action="{{ path('invoice_issue_full', {id: reservation.id}) }}">
-                                    <input type="hidden" name="_token" value="{{ csrf_token('invoice-full-' ~ reservation.id) }}">
-                                    <button class="btn btn-sm btn-primary">Vystavit fakturu na celou částku</button>
-                                </form>
-                            {% endif %}
-                        {% else %}
-                            <p class="text-muted small mb-0">Nastav fakturační režim a tlačítka pro vystavení faktury se objeví.</p>
-                        {% endif %}
-                    </div>
                 </div>
             </div>
         </div>
@@ -611,6 +498,120 @@
         </div>
     </div>
 
+    {% set invoices = invoices ?? [] %}
+    {% set has_deposit = false %}
+    {% set has_final = false %}
+    {% set has_full = false %}
+    {% for inv in invoices %}
+        {% if inv.type.value == 'deposit' %}{% set has_deposit = true %}{% endif %}
+        {% if inv.type.value == 'final' %}{% set has_final = true %}{% endif %}
+        {% if inv.type.value == 'full' %}{% set has_full = true %}{% endif %}
+    {% endfor %}
+
+    <div class="card mt-3 invoice-card">
+        <div class="card-header d-flex justify-content-between align-items-center gap-2 flex-wrap">
+            <span>Fakturace</span>
+            <span class="text-muted small">
+                {{ reservation.billingMode ? reservation.billingMode.label : 'fakturační režim není nastaven' }}
+                {% if reservation.motopressPaymentGateway %}· MotoPress gateway <code>{{ reservation.motopressPaymentGateway }}</code>{% endif %}
+            </span>
+        </div>
+        <div class="card-body">
+            <form method="post" action="{{ path('reservation_set_billing_mode', {id: reservation.id}) }}" class="mb-3">
+                <input type="hidden" name="_token" value="{{ csrf_token('billing-mode-' ~ reservation.id) }}">
+                <div class="input-group input-group-sm">
+                    <label class="input-group-text" for="bm">Režim</label>
+                    <select name="billing_mode" id="bm" class="form-select">
+                        <option value="">— neurčeno —</option>
+                        {% for mode in billing_modes %}
+                            <option value="{{ mode.value }}" {{ reservation.billingMode == mode ? 'selected' : '' }}>{{ mode.label }}</option>
+                        {% endfor %}
+                    </select>
+                    <button class="btn btn-outline-secondary">Uložit režim</button>
+                </div>
+            </form>
+
+            {% if invoices is empty %}
+                <p class="text-muted small mb-2">Žádné faktury zatím nebyly vystaveny.</p>
+            {% else %}
+                <table class="table table-sm align-middle mb-2 invoice-table">
+                        <thead class="small text-muted">
+                        <tr><th>Číslo</th><th>Typ</th><th class="text-end inv-amount">Částka</th><th>Vystaveno</th><th>Stav</th><th></th></tr>
+                        </thead>
+                        <tbody>
+                        {% for inv in invoices %}
+                            <tr>
+                                <td class="inv-number"><a href="{{ path('invoice_pdf', {id: inv.id}) }}" target="_blank">{{ inv.number }}</a></td>
+                                <td class="inv-type">{{ inv.type.label }}</td>
+                                <td class="inv-amount text-end text-nowrap">{{ inv.totalAmount|number_format(2, ',', ' ') }} {{ inv.currency == 'CZK' ? 'Kč' : inv.currency }}</td>
+                                <td class="inv-issued text-nowrap">{{ inv.issuedAt|date('d. m. Y') }}</td>
+                                <td class="inv-status">
+                                    {% if inv.isPaid %}
+                                        <span class="badge text-bg-success">Zaplaceno {{ inv.paidAt|date('d. m. Y') }}</span>
+                                    {% else %}
+                                        <span class="badge text-bg-warning">Splatnost {{ inv.dueAt|date('d. m. Y') }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="inv-actions text-end">
+                                    <div class="d-flex gap-1 justify-content-end flex-wrap">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#editInvoice{{ inv.id }}">Upravit</button>
+                                        {% if reservation.guestEmail %}
+                                            <form method="post" action="{{ path('invoice_send_email', {id: inv.id}) }}"
+                                                  onsubmit="return confirm('Poslat fakturu {{ inv.number }} hostovi na {{ reservation.guestEmail }}?');">
+                                                <input type="hidden" name="_token" value="{{ csrf_token('invoice-email-' ~ inv.id) }}">
+                                                <button class="btn btn-sm btn-outline-primary">Poslat e-mailem</button>
+                                            </form>
+                                        {% endif %}
+                                        {% if not inv.isPaid %}
+                                            <form method="post" action="{{ path('invoice_mark_paid', {id: inv.id}) }}">
+                                                <input type="hidden" name="_token" value="{{ csrf_token('invoice-paid-' ~ inv.id) }}">
+                                                <button class="btn btn-sm btn-outline-success">Zaplaceno</button>
+                                            </form>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+            {% endif %}
+            {% for inv in invoices %}{% include 'invoice/_edit_modal.html.twig' with {invoice: inv} %}{% endfor %}
+
+            <div class="mt-3 d-flex gap-2 flex-wrap">
+                {% set mode = reservation.billingMode %}
+                {% if mode and mode.value == 'standard_with_deposit' and deposit_applies %}
+                    {% if not has_deposit %}
+                        {% if deposit_amount %}
+                            <form method="post" action="{{ path('invoice_issue_deposit', {id: reservation.id}) }}">
+                                <input type="hidden" name="_token" value="{{ csrf_token('invoice-deposit-' ~ reservation.id) }}">
+                                <button class="btn btn-sm btn-primary">Vystavit zálohu ({{ deposit_amount|number_format(0, ',', ' ') }} Kč)</button>
+                            </form>
+                        {% else %}
+                            <p class="text-muted small mb-0">Doplň cenu rezervace, aby šlo vystavit zálohu.</p>
+                        {% endif %}
+                    {% endif %}
+                    {% if has_deposit and not has_final %}
+                        <form method="post" action="{{ path('invoice_issue_final', {id: reservation.id}) }}">
+                            <input type="hidden" name="_token" value="{{ csrf_token('invoice-final-' ~ reservation.id) }}">
+                            <button class="btn btn-sm btn-primary">Vystavit doplatek</button>
+                        </form>
+                    {% endif %}
+                {% elseif mode and mode.value == 'waived' %}
+                    <p class="text-muted small mb-0">Fakturace prominuta — pobyt bez vystavení faktury.</p>
+                {% elseif mode %}
+                    {% if not has_full %}
+                        <form method="post" action="{{ path('invoice_issue_full', {id: reservation.id}) }}">
+                            <input type="hidden" name="_token" value="{{ csrf_token('invoice-full-' ~ reservation.id) }}">
+                            <button class="btn btn-sm btn-primary">Vystavit fakturu na celou částku</button>
+                        </form>
+                    {% endif %}
+                {% else %}
+                    <p class="text-muted small mb-0">Nastav fakturační režim a tlačítka pro vystavení faktury se objeví.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
     {{ include('reservation/_timeline.html.twig') }}
 
     <div class="mt-4">
@@ -620,11 +621,14 @@
 
 {% block stylesheets %}
     <style>
-        /* Karta faktur je dotazovací kontejner — tabulka se přizpůsobí své šířce,
-           ne šířce okna (funguje i v úzkém půlsloupci na desktopu). */
+        /* Karta faktur je dotazovací kontejner — tabulka se skládá podle vlastní
+           šířky (na celé šířce zůstává plná tabulka, v úzkém okně se složí). */
         .invoice-card { container-type: inline-size; }
 
-        /* Faktury: v úzké kartě se řádek tabulky složí do dvou řádků —
+        /* Odsazení částky od sloupce Vystaveno, ať se čísla nelepí. */
+        .invoice-table .inv-amount { padding-right: 2rem; }
+
+        /* Faktury: v úzkém okně se řádek tabulky složí do dvou řádků —
            1. řádek: číslo · typ … částka, 2. řádek: stav · datum … akce. */
         @container (max-width: 560px) {
             .invoice-table thead { display: none; }
@@ -645,7 +649,7 @@
             .invoice-table .inv-number { order: 1; font-weight: 600; }
             .invoice-table .inv-type { order: 2; color: var(--bs-secondary-color); font-size: 0.875rem; }
             .invoice-table .inv-type::before { content: "· "; }
-            .invoice-table .inv-amount { order: 3; margin-left: auto; font-weight: 600; }
+            .invoice-table .inv-amount { order: 3; margin-left: auto; font-weight: 600; padding-right: 0; }
             /* 2. řádek: stav + datum vlevo, akce vpravo. */
             .invoice-table .inv-status { order: 5; }
             .invoice-table .inv-issued { order: 6; color: var(--bs-secondary-color); font-size: 0.8125rem; }

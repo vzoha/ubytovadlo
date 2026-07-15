@@ -1,0 +1,21 @@
+{# Modal pro úpravu pohybu. Očekává: entry, accounts, categories, expenseGroups. #}
+<div class="modal fade" id="editEntry{{ entry.id }}" tabindex="-1" aria-labelledby="editEntry{{ entry.id }}Label" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title h6 mb-0" id="editEntry{{ entry.id }}Label">Upravit {{ entry.type.label|lower }}</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zavřít"></button>
+            </div>
+            <form method="post" action="{{ path('account_entry_edit', {id: entry.id}) }}">
+                <div class="modal-body">
+                    <input type="hidden" name="_token" value="{{ csrf_token('account-entry-edit-' ~ entry.id) }}">
+                    {% include 'account/_entry_fields.html.twig' %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Zrušit</button>
+                    <button class="btn btn-sm btn-primary">Uložit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

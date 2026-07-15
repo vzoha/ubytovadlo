@@ -3,48 +3,20 @@
 {% block title %}Elektřina{% endblock %}
 
 {% block body %}
-    <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
         <h1 class="h3 mb-0">Elektřina — odečty</h1>
-        <form method="post" action="{{ path('electricity_rebalance') }}">
-            <input type="hidden" name="_token" value="{{ csrf_token('electricity-rebalance') }}">
-            <button class="btn btn-outline-secondary btn-sm">Přepočítat alokaci</button>
-        </form>
+        <div class="d-flex gap-2">
+            <button class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#modalReading">+ Nový odečet</button>
+            <form method="post" action="{{ path('electricity_rebalance') }}">
+                <input type="hidden" name="_token" value="{{ csrf_token('electricity-rebalance') }}">
+                <button class="btn btn-outline-secondary btn-sm">Přepočítat alokaci</button>
+            </form>
+        </div>
     </div>
 
     <div class="row g-3">
-        <div class="col-md-5">
+        <div class="col-lg-4">
             <div class="card">
-                <div class="card-header">Nový odečet</div>
-                <div class="card-body">
-                    <form method="post" action="{{ path('electricity_create') }}">
-                        <input type="hidden" name="_token" value="{{ csrf_token('electricity-reading') }}">
-                        <div class="mb-2">
-                            <label class="form-label small mb-1">Datum odečtu</label>
-                            <input type="date" name="read_at" required class="form-control form-control-sm" value="{{ 'now'|date('Y-m-d') }}">
-                        </div>
-                        <div class="row g-2">
-                            <div class="col">
-                                <label class="form-label small mb-1">VT stav (kWh)</label>
-                                <input type="number" name="vt_meter" required min="0" class="form-control form-control-sm">
-                            </div>
-                            <div class="col">
-                                <label class="form-label small mb-1">NT stav (kWh)</label>
-                                <input type="number" name="nt_meter" required min="0" class="form-control form-control-sm">
-                            </div>
-                        </div>
-                        <div class="mt-2">
-                            <label class="form-label small mb-1">Poznámka</label>
-                            <input type="text" name="note" class="form-control form-control-sm" placeholder="např. po pobytu Novák">
-                        </div>
-                        <button class="btn btn-primary btn-sm mt-3 w-100">Uložit odečet</button>
-                        <p class="text-muted small mb-0 mt-2">
-                            Po uložení se automaticky přepočítá alokace spotřeby na rezervace v intervalu.
-                        </p>
-                    </form>
-                </div>
-            </div>
-
-            <div class="card mt-3">
                 <div class="card-header">Tarify</div>
                 <div class="card-body p-0">
                     <table class="table table-sm mb-0">
@@ -67,7 +39,7 @@
             </div>
         </div>
 
-        <div class="col-md-7">
+        <div class="col-lg-8">
             <div class="card">
                 <div class="card-header">Historie odečtů ({{ readings|length }})</div>
                 <div class="card-body p-0">
@@ -108,5 +80,46 @@
 
     <div class="mt-4">
         <a href="{{ path('dashboard') }}" class="btn btn-outline-secondary btn-sm">← Zpět na přehled</a>
+    </div>
+
+    <div class="modal fade" id="modalReading" tabindex="-1" aria-labelledby="modalReadingLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title h6 mb-0" id="modalReadingLabel">Nový odečet</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zavřít"></button>
+                </div>
+                <form method="post" action="{{ path('electricity_create') }}">
+                    <div class="modal-body">
+                        <input type="hidden" name="_token" value="{{ csrf_token('electricity-reading') }}">
+                        <div class="mb-2">
+                            <label class="form-label small mb-1">Datum odečtu</label>
+                            <input type="date" name="read_at" required class="form-control form-control-sm" value="{{ 'now'|date('Y-m-d') }}">
+                        </div>
+                        <div class="row g-2">
+                            <div class="col">
+                                <label class="form-label small mb-1">VT stav (kWh)</label>
+                                <input type="number" name="vt_meter" required min="0" class="form-control form-control-sm">
+                            </div>
+                            <div class="col">
+                                <label class="form-label small mb-1">NT stav (kWh)</label>
+                                <input type="number" name="nt_meter" required min="0" class="form-control form-control-sm">
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <label class="form-label small mb-1">Poznámka</label>
+                            <input type="text" name="note" class="form-control form-control-sm" placeholder="např. po pobytu Novák">
+                        </div>
+                        <p class="text-muted small mb-0 mt-2">
+                            Po uložení se automaticky přepočítá alokace spotřeby na rezervace v intervalu.
+                        </p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Zrušit</button>
+                        <button class="btn btn-sm btn-primary">Uložit odečet</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 {% endblock %}

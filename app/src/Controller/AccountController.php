@@ -162,6 +162,10 @@ class AccountController extends AbstractController
             'balance' => $this->balances->balance($account, new \DateTimeImmutable('today')),
             'movements' => $this->ledger->findTouchingAccount($account),
             'statements' => $statements,
+            'accounts' => $this->accounts->findOrdered(),
+            'categories' => ExpenseCategory::cases(),
+            'expenseGroups' => ExpenseGroup::cases(),
+            'accountTypes' => AccountType::cases(),
         ]);
     }
 

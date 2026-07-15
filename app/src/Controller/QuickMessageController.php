@@ -32,8 +32,14 @@ class QuickMessageController extends AbstractController
     #[Route('/nastaveni/rychle-zpravy', name: 'quick_message_index', methods: ['GET'])]
     public function index(): Response
     {
+        $newForm = $this->createForm(QuickMessageType::class, new QuickMessage('', ''), [
+            'action' => $this->generateUrl('quick_message_new'),
+        ]);
+
         return $this->render('quick_message/index.html.twig', [
             'messages' => $this->messages->findOrdered(),
+            'newForm' => $newForm->createView(),
+            'variables' => MessageVariableResolver::plainTextVariables(),
         ]);
     }
 
