@@ -5,12 +5,12 @@
 {% block body %}
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h1 class="h3 mb-0">Ekonomika {{ year }}</h1>
-        <div class="d-flex gap-2 align-items-center">
-            <a href="{{ path('recreation_fee_report', {year: year}) }}" class="btn btn-sm btn-outline-secondary">Rekreační poplatek</a>
+        <div class="d-flex gap-3 align-items-center">
+            <a href="{{ path('recreation_fee_report', {year: year}) }}" class="text-decoration-none small text-nowrap">Rekreační poplatek →</a>
             <div class="btn-group">
                 {% for y in years %}
                     <a href="{{ path('economics_overview', {year: y}) }}"
-                       class="btn btn-sm {{ y == year ? 'btn-primary' : 'btn-outline-primary' }}">{{ y }}</a>
+                       class="btn btn-sm btn-outline-secondary {{ y == year ? 'active' : '' }}">{{ y }}</a>
                 {% endfor %}
             </div>
         </div>
@@ -166,7 +166,7 @@
     <div class="card mt-4">
         <div class="card-header d-flex justify-content-between align-items-center">
             <span>Obecné výdaje <span class="small text-muted">(provozní, mimo pobyty)</span></span>
-            <a href="{{ path('account_index') }}" class="btn btn-sm btn-outline-secondary">Účty a výdaje</a>
+            <a href="{{ path('account_index') }}" class="text-decoration-none small text-nowrap">Účty a výdaje →</a>
         </div>
         {% if generalExpenses.byCategory is empty %}
             <div class="card-body text-muted small mb-0">Za rok {{ year }} nejsou zapsané žádné provozní výdaje.</div>

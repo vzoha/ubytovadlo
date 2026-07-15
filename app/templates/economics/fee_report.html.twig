@@ -9,7 +9,7 @@
         <div class="btn-group">
             {% for y in years %}
                 <a href="{{ path('recreation_fee_report', {year: y}) }}"
-                   class="btn btn-sm {{ y == year ? 'btn-primary' : 'btn-outline-primary' }}">{{ y }}</a>
+                   class="btn btn-sm btn-outline-secondary {{ y == year ? 'active' : '' }}">{{ y }}</a>
             {% endfor %}
         </div>
     </div>
