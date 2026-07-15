@@ -3,9 +3,10 @@
 {% block title %}Rezervace #{{ reservation.id }}{% endblock %}
 
 {% block body %}
+    <a href="{{ path('reservation_list') }}" class="text-decoration-none small">← Rezervace</a>
     <div class="d-flex justify-content-between align-items-start mb-3 gap-2 flex-wrap">
         <div>
-            <h1 class="h3 mb-0">{{ reservation.guestName ?? ('Rezervace #' ~ reservation.id) }}</h1>
+            <h1 class="h3 mb-0 mt-1">{{ reservation.guestName ?? ('Rezervace #' ~ reservation.id) }}</h1>
             <div class="text-muted">
                 {{ reservation.channel.label }}
                 {% if reservation.externalId %}· kód <code>{{ reservation.externalId }}</code>{% endif %}
@@ -613,10 +614,6 @@
     </div>
 
     {{ include('reservation/_timeline.html.twig') }}
-
-    <div class="mt-4">
-        <a href="{{ path('reservation_list') }}" class="btn btn-outline-secondary btn-sm">← Zpět na seznam</a>
-    </div>
 {% endblock %}
 
 {% block stylesheets %}
