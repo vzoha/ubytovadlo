@@ -185,6 +185,7 @@ class AccountController extends AbstractController
         $this->em->persist($entry);
         $this->em->flush();
         $this->addFlash('success', 'Výdaj zapsán.');
+        $this->warnIfOutsideWindow($entry->getOccurredOn(), $account);
 
         return $this->redirectToRoute('account_index');
     }
@@ -196,16 +197,18 @@ class AccountController extends AbstractController
             throw $this->createAccessDeniedException();
         }
 
+        $account = $this->requireAccount($request->request->get('account'));
         $entry = new LedgerEntry(
             LedgerEntryType::INCOME,
             $this->parseDate($request->request->get('occurred_on')),
             $this->parseAmount($request->request->get('amount')),
-            $this->requireAccount($request->request->get('account')),
+            $account,
         );
         $entry->setNote($this->parseNote($request->request->get('note')));
         $this->em->persist($entry);
         $this->em->flush();
         $this->addFlash('success', 'Příjem zapsán.');
+        $this->warnIfOutsideWindow($entry->getOccurredOn(), $account);
 
         return $this->redirectToRoute('account_index');
     }
@@ -236,6 +239,7 @@ class AccountController extends AbstractController
         $this->em->persist($entry);
         $this->em->flush();
         $this->addFlash('success', 'Převod zapsán.');
+        $this->warnIfOutsideWindow($entry->getOccurredOn(), $from, $to);
 
         return $this->redirectToRoute('account_index');
     }
@@ -343,6 +347,7 @@ class AccountController extends AbstractController
             }
             $this->em->flush();
             $this->addFlash('success', 'Pohyb upraven.');
+            $this->warnIfOutsideWindow($entry->getOccurredOn(), $entry->getAccount(), ...array_filter([$entry->getCounterAccount()]));
 
             return $this->redirectToRoute('account_index');
         }
@@ -416,6 +421,28 @@ class AccountController extends AbstractController
             return new \DateTimeImmutable($raw);
         } catch (\Exception) {
             return null;
+        }
+    }
+
+    /**
+     * Stav účtu počítá jen pohyby v okně [openingDate účtu, dnes]. Pohyb datovaný
+     * mimo okno se do stavu nezapočítá — upozorni, ať uživatel netápe, proč se
+     * zůstatek po zápisu nezměnil.
+     */
+    private function warnIfOutsideWindow(\DateTimeImmutable $occurredOn, Account ...$accounts): void
+    {
+        foreach ($accounts as $account) {
+            if ($occurredOn < $account->getOpeningDate()) {
+                $this->addFlash('warning', sprintf(
+                    'Datum je před založením účtu „%s" (%s) — pohyb se do jeho stavu nezapočítá. Uprav datum pohybu nebo počáteční datum účtu.',
+                    $account->getName(),
+                    $account->getOpeningDate()->format('j. n. Y'),
+                ));
+            }
+        }
+
+        if ($occurredOn > new \DateTimeImmutable('today')) {
+            $this->addFlash('warning', 'Datum je v budoucnosti — pohyb se do stavu účtu započítá, až daný den nastane.');
         }
     }
 

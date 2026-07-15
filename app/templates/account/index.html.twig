@@ -238,7 +238,7 @@
                     <div class="row g-2 mb-2">
                         <div class="col-6">
                             <label class="form-label small mb-0">{{ kind == 'statement' ? 'K datu' : 'Datum' }}</label>
-                            <input name="{{ kind == 'statement' ? 'statement_date' : 'occurred_on' }}" type="date" class="form-control form-control-sm">
+                            <input name="{{ kind == 'statement' ? 'statement_date' : 'occurred_on' }}" type="date" value="{{ 'now'|date('Y-m-d') }}" class="form-control form-control-sm">
                         </div>
                         <div class="col-6">
                             <label class="form-label small mb-0">{{ kind == 'statement' ? 'Reálný stav (Kč)' : 'Částka (Kč)' }}</label>

@@ -8,6 +8,16 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Přidáno
 
+- **Rychlý kontakt na hosta z detailu rezervace.** U karty Host jsou tlačítka
+  **Volat**, **SMS**, **WhatsApp** a **E-mail** — otevřou příslušnou aplikaci
+  s předvyplněným číslem (nebo adresou). Telefon se zobrazuje v přehledném národním
+  tvaru (`776 123 456`). WhatsApp a SMS nabízí předvyplněnou **uvítací zprávu**
+  (oslovení v 5. pádu, termín příjezdu a odkaz na online check-in); přes rozbalovátko
+  lze místo ní otevřít prázdnou zprávu.
+- **Telefon hosta se ukládá v jednotném tvaru.** Zadané číslo se sjednotí na
+  mezinárodní formát E.164 (`+420776123456`) bez ohledu na to, jak ho kdo napíše —
+  s mezerami, pomlčkami, s předvolbou i bez ní. Díky tomu půjde nad číslem spolehlivě
+  postavit odkazy na volání, SMS i WhatsApp.
 - **Podklad rekreačního poplatku pro obec.** V **Ekonomice** je pod tlačítkem
   **Rekreační poplatek** roční přehled pobytů s počtem poplatníků (dospělých; děti
   jsou osvobozené), nocí a částkou k odvodu — zvlášť za uskutečněné pobyty a celkem
@@ -42,6 +52,12 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
   následují. V pobytu přibyl počet nocí. Karty se stejně řadí i na mobilu.
 
 ### Opraveno
+
+- **Pohyb mimo období účtu už tiše nezmizí ze stavu.** Stav účtu počítá pohyby
+  od jeho počátečního data po dnešek. Když zapíšeš výdaj, příjem nebo převod
+  s datem před založením účtu (nebo v budoucnosti), aplikace na to upozorní —
+  takový pohyb se do stavu nezapočítá a víš proč. Formuláře pohybů mají navíc
+  datum předvyplněné na dnešek.
 
 - **Detail rezervace se vejde na mobil.** V úzké kartě se řádek tabulky faktur složí
   do dvou řádků (číslo a částka, pod tím stav a akce) místo přetékání stránky; v širší

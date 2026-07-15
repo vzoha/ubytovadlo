@@ -106,6 +106,37 @@ final class AccountControllerTest extends WebTestCase
         self::assertStringContainsString('1 500 Kč', $body);
     }
 
+    public function testExpenseBeforeOpeningDateWarnsAndDoesNotChangeBalance(): void
+    {
+        // Účet založen k 2026-01-01; pohyb datovaný dřív spadne mimo okno stavu.
+        $crawler = $this->client->request('GET', '/ucty');
+        $form = $crawler->filter('form[action="/ucty/vydaj"]')->form();
+        $form['account'] = (string) $this->bank->getId();
+        $form['occurred_on'] = '2025-12-01';
+        $form['amount'] = '300';
+        $form['category'] = 'maintenance';
+        $this->client->submit($form);
+
+        $this->client->followRedirect();
+        $body = (string) $this->client->getResponse()->getContent();
+        self::assertStringContainsString('před založením účtu', $body);
+        // Stav se nezměnil: pohyb je mimo okno → pořád 1000.
+        self::assertStringContainsString('1 000 Kč', $body);
+    }
+
+    public function testFutureDatedIncomeWarns(): void
+    {
+        $crawler = $this->client->request('GET', '/ucty');
+        $form = $crawler->filter('form[action="/ucty/prijem"]')->form();
+        $form['account'] = (string) $this->bank->getId();
+        $form['occurred_on'] = '2099-01-01';
+        $form['amount'] = '500';
+        $this->client->submit($form);
+
+        $this->client->followRedirect();
+        self::assertStringContainsString('v budoucnosti', (string) $this->client->getResponse()->getContent());
+    }
+
     public function testAddStatementShowsDifference(): void
     {
         $crawler = $this->client->request('GET', '/ucty');
