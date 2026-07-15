@@ -27,7 +27,7 @@
                 <form method="post" action="{{ path('reservation_confirm', {id: reservation.id}) }}" class="mt-2"
                       onsubmit="return confirm('Potvrdit rezervaci a poslat hostovi potvrzovací e-mail?');">
                     <input type="hidden" name="_token" value="{{ csrf_token('confirm-' ~ reservation.id) }}">
-                    <button type="submit" class="btn btn-sm btn-outline-success">
+                    <button type="submit" class="btn btn-sm btn-outline-primary">
                         {{ already_confirmed ? 'Poslat potvrzení znovu' : 'Potvrdit a poslat hostovi' }}
                     </button>
                 </form>
@@ -88,7 +88,7 @@
             <div class="card mt-3">
                 <div class="card-header d-flex justify-content-between">
                     <span>Host</span>
-                    <a href="{{ path('reservation_details', {id: reservation.id}) }}" class="btn btn-sm btn-link p-0">Upravit</a>
+                    <a href="{{ path('reservation_details', {id: reservation.id}) }}" class="text-decoration-none small">Upravit →</a>
                 </div>
                 <div class="card-body">
                     {% set phone = reservation.guestPhone|phone %}
@@ -226,7 +226,7 @@
                                         {% if r.originType.value == 'manual_payment' %}
                                             <form method="post" action="{{ path('reservation_delete_payment', {id: r.id}) }}" onsubmit="return confirm('Smazat platbu?')">
                                                 <input type="hidden" name="_token" value="{{ csrf_token('payment-delete-' ~ r.id) }}">
-                                                <button class="btn btn-sm btn-link text-danger p-0" title="Smazat platbu">×</button>
+                                                <button class="btn btn-sm btn-outline-danger py-0" title="Smazat platbu">×</button>
                                             </form>
                                         {% endif %}
                                     </span>
@@ -308,11 +308,11 @@
                     {% endif %}
 
                     <div class="d-flex gap-2 flex-wrap">
-                        <a href="{{ checkin_url }}" target="_blank" class="btn btn-sm btn-outline-primary">Otevřít jako host</a>
+                        <a href="{{ checkin_url }}" target="_blank" class="btn btn-sm btn-outline-secondary">Otevřít jako host ↗</a>
                         {% if reservation.checkinCompletedAt %}
                             <form method="post" action="{{ path('reservation_reset_checkin', {id: reservation.id}) }}" onsubmit="return confirm('Opravdu znovu otevřít check-in?');">
                                 <input type="hidden" name="_token" value="{{ csrf_token('reset-checkin-' ~ reservation.id) }}">
-                                <button class="btn btn-sm btn-outline-warning">Znovu otevřít</button>
+                                <button class="btn btn-sm btn-outline-primary">Znovu otevřít</button>
                             </form>
                         {% endif %}
                     </div>
@@ -528,7 +528,7 @@
                             <option value="{{ mode.value }}" {{ reservation.billingMode == mode ? 'selected' : '' }}>{{ mode.label }}</option>
                         {% endfor %}
                     </select>
-                    <button class="btn btn-outline-secondary">Uložit režim</button>
+                    <button class="btn btn-outline-primary">Uložit režim</button>
                 </div>
             </form>
 
@@ -555,7 +555,7 @@
                                 </td>
                                 <td class="inv-actions text-end">
                                     <div class="d-flex gap-1 justify-content-end flex-wrap">
-                                        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#editInvoice{{ inv.id }}">Upravit</button>
+                                        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editInvoice{{ inv.id }}">✎ Upravit</button>
                                         {% if reservation.guestEmail %}
                                             <form method="post" action="{{ path('invoice_send_email', {id: inv.id}) }}"
                                                   onsubmit="return confirm('Poslat fakturu {{ inv.number }} hostovi na {{ reservation.guestEmail }}?');">

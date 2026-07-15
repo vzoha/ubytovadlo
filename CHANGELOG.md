@@ -8,6 +8,20 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Změněno
 
+- **Jednotný vizuální jazyk tlačítek a odkazů.** Z každého ovládacího prvku je
+  na první pohled poznat, co udělá: **modré tlačítko** mění data (plné = hlavní
+  akce, orámované = vedlejší), s ikonou `+` pro nový záznam a `✎` pro úpravu v
+  okně; **šedé tlačítko** je neutrální (filtr, export, kopírovat, náhled);
+  **červené `×`** maže; **zelené** potvrzuje stav (zaplaceno, hotovo); a **odkaz
+  se šipkou `→`** přejde na jinou stránku (`↗` na externí). Uplatněno napříč
+  přehledy, detailem rezervace, fakturací, účty, ekonomikou, DPH, nastavením i
+  check-inem.
+- **Jednotná navigace zpět a nadpisy.** Odkaz zpět je vždy nad nadpisem a
+  pojmenovaný podle cíle (`← Rezervace`, `← Účty`, `← Ekonomika`); přehledové
+  stránky dostupné z hlavního menu (Elektřina, Úklid, Ubyport) tlačítko zpět
+  nemají. Nadpisy stránek mají jednotnou velikost. Podstránkové formuláře nesou
+  dvojici **Uložit** a **Zrušit**.
+
 - **Zadávání a úpravy přes vyskakovací okno.** Formuláře pro přidání a úpravu
   záznamu se otevírají tlačítkem do dialogu, takže přehledové stránky vedou daty,
   ne formuláři. Platí pro **Účty** (výdaj, příjem, převod, uzávěrka, nový účet,

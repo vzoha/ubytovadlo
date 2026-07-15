@@ -64,7 +64,7 @@
                                     <form method="post" action="{{ path('electricity_delete', {id: r.id}) }}"
                                           onsubmit="return confirm('Smazat odečet z {{ r.readAt|date('d. m. Y') }}?')">
                                         <input type="hidden" name="_token" value="{{ csrf_token('electricity-delete-' ~ r.id) }}">
-                                        <button class="btn btn-sm btn-link text-danger p-0">smazat</button>
+                                        <button class="btn btn-sm btn-outline-danger py-0" title="Smazat odečet">×</button>
                                     </form>
                                 </td>
                             </tr>

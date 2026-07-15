@@ -55,7 +55,7 @@
                             </div>
                             {% if not isCompleted %}
                                 <div class="d-flex gap-2">
-                                    <a class="btn btn-sm btn-outline-secondary" href="{{ path('checkin_host_edit', {token: reservation.checkinToken, id: g.id}) }}">Upravit</a>
+                                    <a class="btn btn-sm btn-outline-primary" href="{{ path('checkin_host_edit', {token: reservation.checkinToken, id: g.id}) }}">Upravit</a>
                                     <form method="post" action="{{ path('checkin_host_delete', {token: reservation.checkinToken, id: g.id}) }}" onsubmit="return confirm('Opravdu smazat tohoto hosta?');">
                                         <input type="hidden" name="_token" value="{{ csrf_token('checkin_delete_' ~ g.id) }}">
                                         <button type="submit" class="btn btn-sm btn-outline-danger">Smazat</button>

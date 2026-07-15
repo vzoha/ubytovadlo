@@ -5,19 +5,19 @@
 {% block body %}
     {% import _self as f %}
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
-        <h1 class="h4 mb-0">Účty a cashflow</h1>
-        <div class="d-flex flex-wrap gap-2">
+        <h1 class="h3 mb-0">Účty a cashflow</h1>
+        <div class="d-flex flex-wrap align-items-center gap-2">
             <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#modalExpense">+ Výdaj</button>
-            <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modalIncome">+ Příjem</button>
-            <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modalTransfer">Převod</button>
-            <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modalStatement">Uzávěrka</button>
-            <a class="btn btn-sm btn-outline-secondary" href="{{ path('account_summary') }}">Měsíční souhrn</a>
+            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalIncome">+ Příjem</button>
+            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalTransfer">+ Převod</button>
+            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalStatement">+ Uzávěrka</button>
+            <a class="ms-1 text-decoration-none small text-nowrap" href="{{ path('account_summary') }}">Měsíční souhrn →</a>
         </div>
     </div>
 
     <div class="d-flex justify-content-between align-items-center mb-2">
         <h2 class="h6 text-muted mb-0">Účty</h2>
-        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modalAccount">+ Nový účet</button>
+        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalAccount">+ Nový účet</button>
     </div>
     <div class="row g-3 mb-4">
         {% for card in cards %}
@@ -63,7 +63,7 @@
                 <div class="col"><input type="date" name="from" value="{{ filter.from ? filter.from|date('Y-m-d') }}" class="form-control form-control-sm"></div>
                 <div class="col"><input type="date" name="to" value="{{ filter.to ? filter.to|date('Y-m-d') }}" class="form-control form-control-sm"></div>
                 <div class="col"><button class="btn btn-sm btn-outline-secondary">Filtrovat</button></div>
-                <div class="col"><a class="btn btn-sm btn-outline-primary" href="{{ path('account_export_csv', app.request.query.all|filter((v, k) => k != 'page')) }}">CSV</a></div>
+                <div class="col"><a class="btn btn-sm btn-outline-secondary" href="{{ path('account_export_csv', app.request.query.all|filter((v, k) => k != 'page')) }}">CSV</a></div>
             </form>
         </div>
         <table class="table table-sm table-hover align-middle mb-0 small">
@@ -91,7 +91,7 @@
                     </td>
                     <td class="text-muted">{{ m.note }}</td>
                     <td class="text-end text-nowrap">
-                        <button type="button" class="btn btn-sm btn-outline-secondary py-0" data-bs-toggle="modal" data-bs-target="#editEntry{{ m.id }}">✎</button>
+                        <button type="button" class="btn btn-sm btn-outline-primary py-0" data-bs-toggle="modal" data-bs-target="#editEntry{{ m.id }}">✎</button>
                         <form method="post" action="{{ path('account_expense_delete', {id: m.id}) }}" class="d-inline" onsubmit="return confirm('Smazat pohyb?')">
                             <input type="hidden" name="_token" value="{{ csrf_token('account-entry-delete-' ~ m.id) }}">
                             <button class="btn btn-sm btn-outline-danger py-0">×</button>
@@ -161,7 +161,7 @@
                     <td><a class="text-decoration-none" href="{{ path('reservation_detail', {id: i.reservation.id}) }}">{{ i.reservation.guestName ?? ('#' ~ i.reservation.id) }}</a></td>
                     <td>{{ i.reservation.channel.value }}</td>
                     <td class="text-end text-muted">{{ i.amountCzk|number_format(0, ',', ' ') }} Kč</td>
-                    <td class="text-end"><a class="btn btn-sm btn-outline-primary py-0" href="{{ path('reservation_detail', {id: i.reservation.id}) }}">Zadat výplatu</a></td>
+                    <td class="text-end"><a class="text-decoration-none text-nowrap small" href="{{ path('reservation_detail', {id: i.reservation.id}) }}">Zadat výplatu →</a></td>
                 </tr>
             {% endfor %}
             </tbody>

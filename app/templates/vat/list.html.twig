@@ -70,7 +70,7 @@
                             {% endif %}
                         </td>
                         <td class="text-end">
-                            <a href="{{ path('vat_detail', {year: s.year, month: '%02d'|format(s.month)}) }}" class="btn btn-sm btn-outline-primary">Detail</a>
+                            <a href="{{ path('vat_detail', {year: s.year, month: '%02d'|format(s.month)}) }}" class="text-decoration-none small text-nowrap">Detail →</a>
                         </td>
                     </tr>
                 {% endfor %}

@@ -128,7 +128,7 @@
                             {% if ps %}<span class="badge text-bg-{{ ps.badge }}">{{ ps.label }}</span>{% else %}<span class="text-muted">—</span>{% endif %}
                         </td>
                         <td class="text-end">
-                            <a href="{{ path('reservation_detail', {id: r.id}) }}" class="btn btn-sm btn-outline-primary">Detail</a>
+                            <a href="{{ path('reservation_detail', {id: r.id}) }}" class="text-decoration-none small text-nowrap">Detail →</a>
                         </td>
                     </tr>
                 {% endfor %}

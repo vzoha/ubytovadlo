@@ -139,7 +139,7 @@
                                 <div class="text-danger small mb-2">Δ {{ summary.bookingDelta|number_format(2, ',', ' ') }} {{ summary.invoice.currency }} (rezervace {{ summary.bookingReservationSum|number_format(2, ',', ' ') }})</div>
                             {% endif %}
                         {% endif %}
-                        <a href="{{ path('vat_booking_invoice_pdf', {id: summary.invoice.id}) }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                        <a href="{{ path('vat_booking_invoice_pdf', {id: summary.invoice.id}) }}" target="_blank" class="btn btn-sm btn-outline-secondary">
                             📄 Otevřít PDF
                         </a>
                     {% else %}
@@ -192,10 +192,10 @@
                                     </span>
                                     <span class="d-flex gap-1">
                                         {% if s %}
-                                            <a href="{{ path('vat_airbnb_statement_pdf', {id: s.id}) }}" target="_blank" class="btn btn-sm btn-outline-primary">📄</a>
+                                            <a href="{{ path('vat_airbnb_statement_pdf', {id: s.id}) }}" target="_blank" class="btn btn-sm btn-outline-secondary">📄</a>
                                             <form method="post" action="{{ path('vat_airbnb_statement_delete', {id: s.id}) }}" onsubmit="return confirm('Smazat Airbnb receipt?');" class="d-inline">
                                                 <input type="hidden" name="_token" value="{{ csrf_token('vat-airbnb-delete-' ~ s.id) }}">
-                                                <button class="btn btn-sm btn-outline-danger" type="submit">✕</button>
+                                                <button class="btn btn-sm btn-outline-danger py-0" type="submit">×</button>
                                             </form>
                                         {% else %}
                                             <a href="{{ path('vat_airbnb_upload', {year: summary.year, month: '%02d'|format(summary.month), reservation: r.id}) }}" class="btn btn-sm btn-warning">Nahrát</a>
@@ -216,7 +216,7 @@
                                         <a href="{{ path('vat_airbnb_statement_pdf', {id: s.id}) }}" target="_blank" class="btn btn-sm btn-outline-primary">📄</a>
                                         <form method="post" action="{{ path('vat_airbnb_statement_delete', {id: s.id}) }}" onsubmit="return confirm('Smazat Airbnb receipt?');" class="d-inline">
                                             <input type="hidden" name="_token" value="{{ csrf_token('vat-airbnb-delete-' ~ s.id) }}">
-                                            <button class="btn btn-sm btn-outline-danger" type="submit">✕</button>
+                                            <button class="btn btn-sm btn-outline-danger py-0" type="submit">×</button>
                                         </form>
                                     </span>
                                 </li>
