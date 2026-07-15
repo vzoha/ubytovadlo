@@ -33,7 +33,6 @@
                         <li class="nav-item"><a class="nav-link" href="{{ path('ubyport_index') }}">Ubyport</a></li>
                     {% endif %}
                     {% if is_granted('ROLE_ADMIN') %}
-                        <li class="nav-item"><a class="nav-link" href="{{ path('user_index') }}">Uživatelé</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ path('general_settings_edit') }}">Nastavení</a></li>
                     {% endif %}
                 </ul>

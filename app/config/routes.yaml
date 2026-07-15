@@ -9,3 +9,11 @@
 
 controllers:
     resource: routing.controllers
+
+# Přesměrování ze staré adresy na Uživatele v sekci nastavení.
+user_index_legacy:
+    path: /uzivatele
+    controller: Symfony\Bundle\FrameworkBundle\Controller\RedirectController::redirectAction
+    defaults:
+        route: user_index
+        permanent: true

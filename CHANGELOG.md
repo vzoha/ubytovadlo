@@ -6,6 +6,12 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ## [Unreleased]
 
+### Změněno
+
+- **Správa uživatelů je součástí Nastavení.** Uživatelé se otevírají jako záložka
+  v sekci Nastavení (na adrese `/nastaveni/uzivatele`). Hlavní menu tak nese jen
+  jednu položku pro administraci instance.
+
 ### Přidáno
 
 - **Rychlý kontakt na hosta z detailu rezervace.** U karty Host jsou tlačítka

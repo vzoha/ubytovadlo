@@ -26,7 +26,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
  * Správa uživatelů — matice role × doplňková práva. Jen pro admina.
  */
 #[IsGranted('ROLE_ADMIN')]
-#[Route('/uzivatele')]
+#[Route('/nastaveni/uzivatele')]
 class UserController extends AbstractController
 {
     private const MIN_PASSWORD_LENGTH = 8;

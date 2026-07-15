@@ -1,8 +1,10 @@
-{% extends 'base.html.twig' %}
+{% extends 'settings/base.html.twig' %}
 
 {% block title %}Uživatelé — {{ brand_name }}{% endblock %}
 
-{% block body %}
+{% block settings_active %}users{% endblock %}
+
+{% block settings_content %}
 <div class="d-flex align-items-center justify-content-between mb-3">
     <h1 class="h4 mb-0">Uživatelé</h1>
     <button class="btn btn-primary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#newUser">Přidat uživatele</button>

@@ -44,7 +44,6 @@ security:
         - { path: ^/dev/mrz, roles: PUBLIC_ACCESS }
         - { path: ^/logout, roles: ROLE_CLEANER }
         - { path: ^/profil, roles: ROLE_CLEANER }
-        - { path: ^/uzivatele, roles: ROLE_ADMIN }
         - { path: ^/nastaveni, roles: ROLE_ADMIN }
         - { path: ^/uklid, roles: ROLE_CLEANER }
         - { path: ^/, roles: ROLE_USER }
