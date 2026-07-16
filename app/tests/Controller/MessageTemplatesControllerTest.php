@@ -73,6 +73,39 @@ final class MessageTemplatesControllerTest extends WebTestCase
         self::assertSame('Vítejte u nás', $template->getSubject());
     }
 
+    public function testOffsetTimingSavesSignedDaysAndHour(): void
+    {
+        $crawler = $this->client->request('GET', '/nastaveni/zpravy/pre_arrival');
+        $form = $crawler->selectButton('Uložit')->form();
+        $form['message_template[timingMode]'] = 'offset';
+        $form['message_template[offsetDays]'] = '2';
+        $form['message_template[offsetDirection]'] = 'after';
+        $form['message_template[sendAt]'] = '08:30';
+        $this->client->submit($form);
+
+        self::assertResponseRedirects('/nastaveni/zpravy/pre_arrival');
+
+        $template = static::getContainer()->get(MessageTemplateRepository::class)->findByKind(MessageKind::PRE_ARRIVAL);
+        self::assertNotNull($template);
+        self::assertSame(2, $template->getOffsetDays());
+        self::assertSame('08:30', $template->getSendAt());
+    }
+
+    public function testExactTimingClearsHourAndOffset(): void
+    {
+        $crawler = $this->client->request('GET', '/nastaveni/zpravy/pre_arrival');
+        $form = $crawler->selectButton('Uložit')->form();
+        $form['message_template[timingMode]'] = 'exact';
+        $this->client->submit($form);
+
+        self::assertResponseRedirects('/nastaveni/zpravy/pre_arrival');
+
+        $template = static::getContainer()->get(MessageTemplateRepository::class)->findByKind(MessageKind::PRE_ARRIVAL);
+        self::assertNotNull($template);
+        self::assertSame(0, $template->getOffsetDays());
+        self::assertNull($template->getSendAt());
+    }
+
     public function testPreviewRendersSampleData(): void
     {
         $this->client->request('POST', '/nastaveni/zpravy/pre_arrival/nahled', [

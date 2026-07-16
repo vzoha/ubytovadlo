@@ -29,29 +29,34 @@
                             <div class="form-text" id="mode-help"></div>
                         </div>
 
-                        {% if form.offsetDays is defined %}
+                        {% if form.timingMode is defined %}
                             <div class="mb-3" id="timing-block">
                                 <label class="form-label mb-1">Kdy odeslat</label>
-                                <div class="row g-2">
-                                    <div class="col-6 col-sm-3">
+                                <div class="mb-2" style="max-width: 14rem">
+                                    {{ form_label(form.anchor) }}
+                                    {{ form_widget(form.anchor) }}
+                                </div>
+
+                                <div class="ms-1">
+                                    {{ form_widget(form.timingMode) }}
+                                </div>
+
+                                <div class="row g-2 mt-1 ms-2" id="offset-fields">
+                                    <div class="col-4">
                                         {{ form_label(form.offsetDays) }}
                                         {{ form_widget(form.offsetDays) }}
                                     </div>
-                                    <div class="col-6 col-sm-3">
+                                    <div class="col-4">
                                         {{ form_label(form.offsetDirection) }}
                                         {{ form_widget(form.offsetDirection) }}
                                     </div>
-                                    <div class="col-6 col-sm-3">
-                                        {{ form_label(form.anchor) }}
-                                        {{ form_widget(form.anchor) }}
-                                    </div>
-                                    <div class="col-6 col-sm-3">
+                                    <div class="col-4">
                                         {{ form_label(form.sendAt) }}
                                         {{ form_widget(form.sendAt) }}
                                     </div>
                                 </div>
-                                <div class="alert alert-light border small mt-2 mb-1 py-2" id="timing-summary"></div>
-                                <div class="form-text">{{ form.sendAt.vars.help }}</div>
+
+                                <div class="alert alert-light border small mt-2 mb-0 py-2" id="timing-summary"></div>
                                 {{ form_errors(form.offsetDays) }}
                                 {{ form_errors(form.sendAt) }}
                             </div>
@@ -160,6 +165,10 @@
             const anchorSel = form.querySelector('[name$="[anchor]"]');
             const timeInp = form.querySelector('[name$="[sendAt]"]');
             const summary = document.getElementById('timing-summary');
+            const offsetFields = document.getElementById('offset-fields');
+            const timingModes = form.querySelectorAll('[name$="[timingMode]"]');
+            const exactRadio = form.querySelector('[name$="[timingMode]"][value="exact"]');
+            const exactLabel = exactRadio ? form.querySelector('label[for="' + exactRadio.id + '"]') : null;
             const ANCHOR = {
                 check_in: { before: 'příjezdem', after: 'příjezdu', event: 'příjezdu' },
                 check_out: { before: 'odjezdem', after: 'odjezdu', event: 'odjezdu' },
@@ -167,24 +176,31 @@
             };
             function days(n) { if (n === 1) return '1 den'; if (n >= 2 && n <= 4) return n + ' dny'; return n + ' dní'; }
             function fmtTime(t) { const m = t.match(/^(\d{1,2}):(\d{2})$/); return m ? (parseInt(m[1], 10) + ':' + m[2]) : t; }
-            function updateSummary() {
+            function isExact() { const c = form.querySelector('[name$="[timingMode]"]:checked'); return !c || c.value === 'exact'; }
+
+            function updateTiming() {
                 const a = ANCHOR[anchorSel.value] || ANCHOR.check_in;
-                const n = Math.abs(parseInt(offDays.value, 10) || 0);
-                const t = (timeInp.value || '').trim();
+                if (exactLabel) exactLabel.textContent = 'V přesný čas ' + a.event;
+                offsetFields.style.display = isExact() ? 'none' : '';
+
                 let s;
-                if (n === 0) {
-                    s = t ? ('v den ' + a.event + ' v ' + fmtTime(t)) : ('v přesný čas ' + a.event);
+                if (isExact()) {
+                    s = 'v přesný čas ' + a.event;
                 } else {
+                    const n = Math.abs(parseInt(offDays.value, 10) || 0);
+                    const t = fmtTime((timeInp.value || '').trim());
                     const dir = offDir.value === 'after' ? ('po ' + a.after) : ('před ' + a.before);
-                    s = days(n) + ' ' + dir + (t ? (' v ' + fmtTime(t)) : (' v čas ' + a.event));
+                    const shift = n === 0 ? ('v den ' + a.event) : (days(n) + ' ' + dir);
+                    s = shift + (t ? (' v ' + t) : '');
                 }
                 summary.textContent = 'Odešle se ' + s + '.';
             }
             [offDays, offDir, anchorSel, timeInp].forEach(function (el) {
-                el.addEventListener('input', updateSummary);
-                el.addEventListener('change', updateSummary);
+                el.addEventListener('input', updateTiming);
+                el.addEventListener('change', updateTiming);
             });
-            updateSummary();
+            timingModes.forEach(function (m) { m.addEventListener('change', updateTiming); });
+            updateTiming();
 
             function toggleTiming() {
                 const checked = form.querySelector('[name$="[mode]"]:checked');

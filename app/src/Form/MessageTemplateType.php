@@ -21,6 +21,7 @@ use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\Form\FormError;
 use Symfony\Component\Form\FormEvent;
 use Symfony\Component\Form\FormEvents;
 use Symfony\Component\OptionsResolver\OptionsResolver;
@@ -30,8 +31,11 @@ use Symfony\Component\Validator\Constraints\Regex;
 
 /**
  * Editace zprávy hostovi — režim odesílání, časování na ose (u plánovaných druhů)
- * a text (předmět + tělo v Markdownu s proměnnými). Časování se v UI zadává jako
- * směr + počet dní vůči kotvě; do entity se skládá do znaménkového posunu.
+ * a text (předmět + tělo v Markdownu s proměnnými).
+ *
+ * Časování má dvě podoby: „v přesný čas kotvy" (v okamžik objednávky/příjezdu/
+ * odjezdu — posun 0, bez hodiny) nebo „posun o dní vůči kotvě v konkrétní hodinu".
+ * Do entity se skládá na posun (znaménkový) + hodinu (`null` = přesný čas).
  *
  * @extends AbstractType<MessageTemplate>
  */
@@ -39,6 +43,8 @@ class MessageTemplateType extends AbstractType
 {
     private const DIRECTION_BEFORE = 'before';
     private const DIRECTION_AFTER = 'after';
+    private const TIMING_EXACT = 'exact';
+    private const TIMING_OFFSET = 'offset';
 
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
@@ -65,7 +71,7 @@ class MessageTemplateType extends AbstractType
         $builder->addEventListener(FormEvents::SUBMIT, [$this, 'onSubmit']);
     }
 
-    /** Časovací pole má jen plánovaný druh zprávy; předvyplní směr + počet dní z posunu. */
+    /** Časovací pole má jen plánovaný druh zprávy; předvyplní volbu z uloženého času. */
     public function onPreSetData(FormEvent $event): void
     {
         $template = $event->getData();
@@ -75,8 +81,22 @@ class MessageTemplateType extends AbstractType
         }
 
         $offset = $template->getOffsetDays() ?? 0;
+        $exact = $template->getSendAt() === null;
 
         $form
+            ->add('anchor', EnumType::class, [
+                'class' => TimingAnchor::class,
+                'label' => 'Vůči',
+                'choice_label' => fn (TimingAnchor $a) => ucfirst($a->label()),
+                'placeholder' => false,
+            ])
+            ->add('timingMode', ChoiceType::class, [
+                'mapped' => false,
+                'label' => false,
+                'expanded' => true,
+                'choices' => ['V přesný čas příjezdu' => self::TIMING_EXACT, 'Pár dní před nebo po' => self::TIMING_OFFSET],
+                'data' => $exact ? self::TIMING_EXACT : self::TIMING_OFFSET,
+            ])
             ->add('offsetDays', IntegerType::class, [
                 'mapped' => false,
                 'label' => 'Počet dní',
@@ -90,33 +110,43 @@ class MessageTemplateType extends AbstractType
                 'choices' => ['před' => self::DIRECTION_BEFORE, 'po' => self::DIRECTION_AFTER],
                 'data' => $offset > 0 ? self::DIRECTION_AFTER : self::DIRECTION_BEFORE,
             ])
-            ->add('anchor', EnumType::class, [
-                'class' => TimingAnchor::class,
-                'label' => 'Vůči',
-                'choice_label' => fn (TimingAnchor $a) => ucfirst($a->label()),
-                'placeholder' => false,
-            ])
             ->add('sendAt', TextType::class, [
+                'mapped' => false,
                 'label' => 'V hodin',
                 'required' => false,
+                'data' => $template->getSendAt(),
                 'attr' => ['placeholder' => '09:00'],
-                'help' => 'Prázdné = v přesný čas té události (objednávky, příjezdu nebo odjezdu).',
                 'constraints' => [new Regex(pattern: '/^([01]?\d|2[0-3]):[0-5]\d$/', message: 'Zadej čas ve tvaru HH:MM.')],
             ]);
     }
 
-    /** Složí směr + počet dní do znaménkového posunu na entitě. */
+    /** Podle zvolené varianty složí posun a hodinu na entitě. */
     public function onSubmit(FormEvent $event): void
     {
         $template = $event->getData();
         $form = $event->getForm();
-        if (!$template instanceof MessageTemplate || !$form->has('offsetDays')) {
+        if (!$template instanceof MessageTemplate || !$form->has('timingMode')) {
+            return;
+        }
+
+        // V přesný čas kotvy: v den události (posun 0), bez pevné hodiny.
+        if ($form->get('timingMode')->getData() === self::TIMING_EXACT) {
+            $template->setOffsetDays(0);
+            $template->setSendAt(null);
+
             return;
         }
 
         $days = abs((int) $form->get('offsetDays')->getData());
-        $direction = $form->get('offsetDirection')->getData();
-        $template->setOffsetDays($direction === self::DIRECTION_AFTER ? $days : -$days);
+        $template->setOffsetDays($form->get('offsetDirection')->getData() === self::DIRECTION_AFTER ? $days : -$days);
+
+        $sendAt = trim((string) $form->get('sendAt')->getData());
+        if ($sendAt === '') {
+            $form->get('sendAt')->addError(new FormError('Zadej hodinu odeslání.'));
+
+            return;
+        }
+        $template->setSendAt($sendAt);
     }
 
     public function configureOptions(OptionsResolver $resolver): void

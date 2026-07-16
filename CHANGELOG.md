@@ -63,8 +63,8 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 - **Nastavitelné časování a režim zpráv hostům.** U každé plánované zprávy (žádost
   o zálohu, před příjezdem, po pobytu, připomínka doplatku) se v **Nastavení →
-  Šablony zpráv** volí, **kdy** odejde — počet dní před/po příjezdu, odjezdu nebo
-  objednávce a hodina odeslání (prázdná hodina = přesný čas té události). Každá
+  Šablony zpráv** volí, **kdy** odejde — buď v přesný čas té události (objednávky,
+  příjezdu nebo odjezdu), nebo pár dní před/po ní v konkrétní hodinu. Každá
   zpráva má jeden ze tří **režimů**: *Automaticky* (odešle se sama v naplánovaný
   čas), *Ručně* (objeví se na časové ose rezervace a odešleš ji tlačítkem
   **Odeslat**), *Vypnuto* (na osu se vůbec nezaloží). U konkrétní rezervace lze
