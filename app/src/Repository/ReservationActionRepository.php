@@ -42,6 +42,25 @@ class ReservationActionRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    /**
+     * Otevřené (naplánované) akce jedné rezervace — vstup pro událostmi řízené
+     * uzavírání akcí, jejichž cíl se splnil dřív, než jim nadešel čas.
+     *
+     * @return ReservationAction[]
+     */
+    public function findOpenForReservation(Reservation $reservation): array
+    {
+        return $this->createQueryBuilder('a')
+            ->andWhere('a.reservation = :r')
+            ->andWhere('a.status = :planned')
+            ->setParameter('r', $reservation)
+            ->setParameter('planned', ActionStatus::PLANNED)
+            ->orderBy('a.scheduledFor', 'ASC')
+            ->addOrderBy('a.id', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
     public function hasOfType(Reservation $reservation, ActionType $type): bool
     {
         $count = (int) $this->createQueryBuilder('a')

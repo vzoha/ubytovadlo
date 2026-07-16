@@ -31,6 +31,7 @@ use App\Vat\CnbExchangeRateClient;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\TestCase;
+use Psr\EventDispatcher\EventDispatcherInterface;
 
 #[AllowMockObjectsWithoutExpectations]
 final class InvoiceServicePaymentMethodTest extends TestCase
@@ -76,6 +77,7 @@ final class InvoiceServicePaymentMethodTest extends TestCase
             $issuerProvider,
             $this->createMock(IncomeUpserter::class),
             new DepositConfig($settings),
+            $this->createMock(EventDispatcherInterface::class),
         );
     }
 

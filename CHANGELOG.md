@@ -6,6 +6,15 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ## [Unreleased]
 
+### Opraveno
+
+- **Splněná timeline akce se zavře hned, ne až v její termín.** Vystavení
+  doplatkové faktury a připomínku doplatku uzavře přímo událost — jakmile je
+  faktura vystavená nebo doplatek uhrazený, akce zmizí z otevřených, aniž by se
+  čekalo na cron v jejím naplánovaném čase. Zaplacená rezervace tak nezobrazuje
+  budoucí akce jako otevřené a hostovi se neposílá připomínka doplatku, který už
+  zaplatil.
+
 ### Změněno
 
 - **Jednotný vizuální jazyk tlačítek a odkazů.** Z každého ovládacího prvku je

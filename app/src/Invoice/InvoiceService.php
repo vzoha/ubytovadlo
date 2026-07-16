@@ -19,8 +19,10 @@ use App\Enum\BillingMode;
 use App\Enum\Channel;
 use App\Enum\InvoiceType;
 use App\Repository\InvoiceRepository;
+use App\Reservation\Event\ReservationFinancialsChangedEvent;
 use App\Vat\CnbExchangeRateClient;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\EventDispatcher\EventDispatcherInterface;
 
 /**
  * Orchestrace vystavení faktur. Tři vstupní body podle toku:
@@ -49,6 +51,7 @@ class InvoiceService
         private readonly IssuerProfileProvider $issuerProvider,
         private readonly IncomeUpserter $incomeUpserter,
         private readonly DepositConfig $depositConfig,
+        private readonly EventDispatcherInterface $dispatcher,
     ) {
     }
 
@@ -103,6 +106,10 @@ class InvoiceService
         $this->fillBankPayment($invoice);
         $this->persist($invoice);
 
+        // Doplatková faktura je vystavena → timeline akce "vystavit doplatek"
+        // se tím splnila; listener ji uzavře bez čekání na cron.
+        $this->dispatcher->dispatch(new ReservationFinancialsChangedEvent($reservation));
+
         return $invoice;
     }
 
@@ -153,6 +160,9 @@ class InvoiceService
         // Úhrada faktury může změnit reálný příjem rezervace (u přímé objednávky
         // je to reálný příjem, u OTA aspoň zpřesní odhad).
         $this->incomeUpserter->recompute($invoice->getReservation());
+
+        // Zaplacením se může doplatek srovnat → připomínka doplatku je zbytečná.
+        $this->dispatcher->dispatch(new ReservationFinancialsChangedEvent($invoice->getReservation()));
     }
 
     public function regeneratePdf(Invoice $invoice): void

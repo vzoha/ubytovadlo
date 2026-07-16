@@ -26,7 +26,9 @@ use App\Repository\AccountRepository;
 use App\Repository\InvoiceRepository;
 use App\Repository\PaymentRepository;
 use App\Repository\ReservationReceiptRepository;
+use App\Reservation\Event\ReservationFinancialsChangedEvent;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\EventDispatcher\EventDispatcherInterface;
 
 /**
  * Udržuje dílčí přijaté platby rezervace (ReservationReceipt) — jeden řádek na
@@ -52,6 +54,7 @@ class IncomeUpserter
         private readonly InvoiceRepository $invoices,
         private readonly AccountRepository $accounts,
         private readonly CurrencyConverter $converter,
+        private readonly EventDispatcherInterface $dispatcher,
     ) {
     }
 
@@ -130,6 +133,9 @@ class IncomeUpserter
         $payment->setManuallyOverridden(true);
         $this->em->persist($payment);
         $this->em->flush();
+
+        // Platba mohla doplatek srovnat → připomínka doplatku je zbytečná.
+        $this->dispatcher->dispatch(new ReservationFinancialsChangedEvent($reservation));
 
         return $payment;
     }

@@ -60,7 +60,7 @@ class ReservationActionExecutor
         return match ($action->getType()) {
             ActionType::ISSUE_FINAL_INVOICE => $this->resolveIf(
                 $action,
-                $this->invoices->findFirstByReservationAndType($reservation, InvoiceType::FINAL) !== null,
+                $this->finalInvoiceIssued($reservation),
                 'Doplatková faktura vystavena.',
             ),
             ActionType::BALANCE_REMINDER => $this->handleBalanceReminder($action),
@@ -72,6 +72,43 @@ class ReservationActionExecutor
             // Ruční připomínky (CUSTOM_REMINDER) řeší majitelka sama.
             default => false,
         };
+    }
+
+    /**
+     * Uzavře akci, jejíž cíl je už splněný, dřív než jí nadejde čas — pro
+     * událostmi řízené uklízení (vystavena faktura / dorazila platba). Na rozdíl
+     * od execute() nikdy nic neodešle: připomínku doplatku jen zavře, když je
+     * uhrazeno; neposílá ji, když uhrazeno není. Nesplněné či cizí typy nechá být.
+     *
+     * @return bool true, pokud akce změnila stav (a je třeba flush)
+     */
+    public function closeIfSatisfied(ReservationAction $action): bool
+    {
+        $reservation = $action->getReservation();
+
+        return match ($action->getType()) {
+            ActionType::ISSUE_FINAL_INVOICE => $this->resolveIf(
+                $action,
+                $this->finalInvoiceIssued($reservation),
+                'Doplatková faktura vystavena.',
+            ),
+            ActionType::BALANCE_REMINDER => $this->resolveIf(
+                $action,
+                $this->balanceSettled($reservation),
+                'Doplatek uhrazen.',
+            ),
+            default => false,
+        };
+    }
+
+    private function finalInvoiceIssued(Reservation $reservation): bool
+    {
+        return $this->invoices->findFirstByReservationAndType($reservation, InvoiceType::FINAL) !== null;
+    }
+
+    private function balanceSettled(Reservation $reservation): bool
+    {
+        return $this->balance->forReservation($reservation)?->isSettled() ?? false;
     }
 
     /**
@@ -137,7 +174,7 @@ class ReservationActionExecutor
     private function handleBalanceReminder(ReservationAction $action): bool
     {
         $reservation = $action->getReservation();
-        if ($this->balance->forReservation($reservation)?->isSettled() ?? false) {
+        if ($this->balanceSettled($reservation)) {
             $action->markDone('Doplatek uhrazen.');
 
             return true;
