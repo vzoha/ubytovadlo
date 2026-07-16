@@ -116,7 +116,7 @@
                     {% for row in awaiting %}
                         {% set r = row.reservation %}
                         <tr>
-                            <td class="small">{{ r.ubyportExportedAt|date('d. m. Y H:i') }}</td>
+                            <td class="small">{{ r.ubyportReport.exportedAt|date('d. m. Y H:i') }}</td>
                             <td class="small">
                                 <a href="{{ path('reservation_detail', {id: r.id}) }}">
                                     {{ r.checkIn|date('d. m.') }} – {{ r.checkOut|date('d. m. Y') }}
@@ -198,7 +198,7 @@
                 {% for row in reported %}
                     {% set r = row.reservation %}
                     <tr>
-                        <td class="small">{{ r.ubyportConfirmedAt|date('d. m. Y H:i') }}</td>
+                        <td class="small">{{ r.ubyportReport.confirmedAt|date('d. m. Y H:i') }}</td>
                         <td class="small">
                             <a href="{{ path('reservation_detail', {id: r.id}) }}">
                                 {{ r.checkIn|date('d. m.') }} – {{ r.checkOut ? r.checkOut|date('d. m. Y') : '?' }}
@@ -206,11 +206,11 @@
                         </td>
                         <td>{{ _self.guest_list(row) }}</td>
                         <td class="small">
-                            {% if r.ubyportReceiptFilename %}
+                            {% if r.ubyportReport.receiptFilename %}
                                 <a class="btn btn-sm btn-outline-secondary" href="{{ path('ubyport_receipt_download', {id: r.id}) }}">PDF</a>
-                                {% if r.ubyportReceiptAccepted is not null %}
-                                    <span class="badge {{ r.ubyportReceiptRejected ? 'text-bg-warning' : 'text-bg-success' }}">
-                                        {{ r.ubyportReceiptAccepted }} přijato{% if r.ubyportReceiptRejected %}, {{ r.ubyportReceiptRejected }} ne{% endif %}
+                                {% if r.ubyportReport.receiptAccepted is not null %}
+                                    <span class="badge {{ r.ubyportReport.receiptRejected ? 'text-bg-warning' : 'text-bg-success' }}">
+                                        {{ r.ubyportReport.receiptAccepted }} přijato{% if r.ubyportReport.receiptRejected %}, {{ r.ubyportReport.receiptRejected }} ne{% endif %}
                                     </span>
                                 {% endif %}
                             {% else %}

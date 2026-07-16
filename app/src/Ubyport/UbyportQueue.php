@@ -78,8 +78,8 @@ final class UbyportQueue
         $isComplete = $missing === [];
 
         $state = match (true) {
-            $reservation->getUbyportConfirmedAt() !== null => UbyportRow::STATE_REPORTED,
-            $reservation->getUbyportExportedAt() !== null => UbyportRow::STATE_AWAITING_RECEIPT,
+            $reservation->getUbyportReport()->getConfirmedAt() !== null => UbyportRow::STATE_REPORTED,
+            $reservation->getUbyportReport()->getExportedAt() !== null => UbyportRow::STATE_AWAITING_RECEIPT,
             $isComplete => UbyportRow::STATE_TO_REPORT,
             default => UbyportRow::STATE_INCOMPLETE,
         };

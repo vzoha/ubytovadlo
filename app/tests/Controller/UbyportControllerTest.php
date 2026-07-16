@@ -146,7 +146,7 @@ final class UbyportControllerTest extends WebTestCase
         self::assertStringContainsString('windows-1250', (string) $response->headers->get('Content-Type'));
         self::assertStringContainsString('.unl', (string) $response->headers->get('Content-Disposition'));
 
-        self::assertNotNull($this->reload($rid)->getUbyportExportedAt(), 'export musí označit rezervaci jako exportovanou');
+        self::assertNotNull($this->reload($rid)->getUbyportReport()->getExportedAt(), 'export musí označit rezervaci jako exportovanou');
     }
 
     public function testExportedReservationWaitsForReceipt(): void
@@ -177,7 +177,7 @@ final class UbyportControllerTest extends WebTestCase
         $this->client->request('POST', '/ubyport/' . $rid . '/oznacit', ['_token' => $token]);
 
         self::assertResponseRedirects('/ubyport');
-        self::assertNotNull($this->reload($rid)->getUbyportConfirmedAt(), 'ruční potvrzení označí jako nahlášené');
+        self::assertNotNull($this->reload($rid)->getUbyportReport()->getConfirmedAt(), 'ruční potvrzení označí jako nahlášené');
     }
 
     public function testUnreportReturnsReservationToQueue(): void
@@ -194,7 +194,7 @@ final class UbyportControllerTest extends WebTestCase
 
         self::assertResponseRedirects('/ubyport');
         $reloaded = $this->reload($rid);
-        self::assertNull($reloaded->getUbyportConfirmedAt(), 'vrátit zpět = smazat potvrzení');
-        self::assertNull($reloaded->getUbyportExportedAt(), 'vrátit zpět = smazat i export');
+        self::assertNull($reloaded->getUbyportReport()->getConfirmedAt(), 'vrátit zpět = smazat potvrzení');
+        self::assertNull($reloaded->getUbyportReport()->getExportedAt(), 'vrátit zpět = smazat i export');
     }
 }

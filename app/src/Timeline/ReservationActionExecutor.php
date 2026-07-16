@@ -226,7 +226,7 @@ class ReservationActionExecutor
      */
     private function handleUbyport(ReservationAction $action): bool
     {
-        if ($action->getReservation()->getUbyportExportedAt() !== null) {
+        if ($action->getReservation()->getUbyportReport()->getExportedAt() !== null) {
             $action->markDone('Host nahlášen na Ubyport.');
 
             return true;

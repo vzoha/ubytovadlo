@@ -194,7 +194,7 @@ class UbyportController extends AbstractController
     #[Route('/ubyport/{id}/dorucenka/soubor', name: 'ubyport_receipt_download', methods: ['GET'], requirements: ['id' => '\d+'])]
     public function downloadReceipt(Reservation $reservation): BinaryFileResponse
     {
-        $filename = $reservation->getUbyportReceiptFilename();
+        $filename = $reservation->getUbyportReport()->getReceiptFilename();
         if ($filename === null) {
             throw new NotFoundHttpException();
         }

@@ -93,12 +93,12 @@ class ReservationTimelineBuilder
             $items[] = TimelineItem::event($reservation->getCheckinCompletedAt(), '📋', 'Host dokončil online check-in');
         }
 
-        if ($reservation->getUbyportExportedAt() !== null) {
-            $items[] = TimelineItem::event($reservation->getUbyportExportedAt(), '🛂', 'Nahlášeno na Ubyport');
+        if ($reservation->getUbyportReport()->getExportedAt() !== null) {
+            $items[] = TimelineItem::event($reservation->getUbyportReport()->getExportedAt(), '🛂', 'Nahlášeno na Ubyport');
         }
 
-        if ($reservation->getUbyportConfirmedAt() !== null) {
-            $items[] = TimelineItem::event($reservation->getUbyportConfirmedAt(), '🛂', 'Ubyport potvrzen (doručenka)');
+        if ($reservation->getUbyportReport()->getConfirmedAt() !== null) {
+            $items[] = TimelineItem::event($reservation->getUbyportReport()->getConfirmedAt(), '🛂', 'Ubyport potvrzen (doručenka)');
         }
 
         if ($reservation->getPayoutSentAt() !== null) {

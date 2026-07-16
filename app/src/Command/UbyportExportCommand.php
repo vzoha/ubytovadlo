@@ -107,7 +107,7 @@ class UbyportExportCommand extends Command
             foreach ($docs as $doc) {
                 $doc->markUbyportReported($generatedAt);
                 $reservation = $doc->getReservation();
-                if ($reservation->getUbyportExportedAt() === null) {
+                if ($reservation->getUbyportReport()->getExportedAt() === null) {
                     $reservation->markUbyportExported($generatedAt);
                 }
             }

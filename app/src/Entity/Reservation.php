@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use App\Entity\Embeddable\ElectricityUsage;
+use App\Entity\Embeddable\UbyportReport;
 use App\Entity\Embeddable\VatReverseCharge;
 use App\Enum\BillingMode;
 use App\Enum\Channel;
@@ -193,22 +194,8 @@ class Reservation
     private PurposeOfStay $ubyportPurposeOfStay = PurposeOfStay::TURISTIKA;
 
     // Ubyport — stav nahlášení per rezervace (UNL = vždy jedna rezervace).
-    // exportedAt = stažen UNL; confirmedAt = nahrána doručenka (nebo ruční potvrzení).
-    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
-    private ?\DateTimeImmutable $ubyportExportedAt = null;
-
-    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
-    private ?\DateTimeImmutable $ubyportConfirmedAt = null;
-
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $ubyportReceiptFilename = null;
-
-    /** Počet přijatých / nepřijatých záznamů vyparsovaný z doručenky (kontrola). */
-    #[ORM\Column(type: Types::INTEGER, nullable: true)]
-    private ?int $ubyportReceiptAccepted = null;
-
-    #[ORM\Column(type: Types::INTEGER, nullable: true)]
-    private ?int $ubyportReceiptRejected = null;
+    #[ORM\Embedded(class: UbyportReport::class, columnPrefix: false)]
+    private UbyportReport $ubyportReport;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeImmutable $createdAt;
@@ -225,6 +212,7 @@ class Reservation
         $this->checkIn = $checkIn;
         $this->electricity = new ElectricityUsage();
         $this->vatReverseCharge = new VatReverseCharge();
+        $this->ubyportReport = new UbyportReport();
         $this->createdAt = new \DateTimeImmutable();
         $this->updatedAt = $this->createdAt;
     }
@@ -868,37 +856,17 @@ class Reservation
         return $this;
     }
 
-    public function getUbyportExportedAt(): ?\DateTimeImmutable
+    public function getUbyportReport(): UbyportReport
     {
-        return $this->ubyportExportedAt;
+        return $this->ubyportReport;
     }
 
     public function markUbyportExported(\DateTimeImmutable $at): self
     {
-        $this->ubyportExportedAt = $at;
+        $this->ubyportReport = $this->ubyportReport->exported($at);
         $this->touch();
 
         return $this;
-    }
-
-    public function getUbyportConfirmedAt(): ?\DateTimeImmutable
-    {
-        return $this->ubyportConfirmedAt;
-    }
-
-    public function getUbyportReceiptFilename(): ?string
-    {
-        return $this->ubyportReceiptFilename;
-    }
-
-    public function getUbyportReceiptAccepted(): ?int
-    {
-        return $this->ubyportReceiptAccepted;
-    }
-
-    public function getUbyportReceiptRejected(): ?int
-    {
-        return $this->ubyportReceiptRejected;
     }
 
     /**
@@ -912,11 +880,7 @@ class Reservation
         ?int $accepted = null,
         ?int $rejected = null,
     ): self {
-        $this->ubyportConfirmedAt = $at;
-        $this->ubyportReceiptFilename = $filename;
-        $this->ubyportReceiptAccepted = $accepted;
-        $this->ubyportReceiptRejected = $rejected;
-        $this->ubyportExportedAt ??= $at;
+        $this->ubyportReport = $this->ubyportReport->confirmed($at, $filename, $accepted, $rejected);
         $this->touch();
 
         return $this;
@@ -925,11 +889,7 @@ class Reservation
     /** Vrátí rezervaci zpět do fronty k nahlášení (smaže export i doručenku). */
     public function resetUbyport(): self
     {
-        $this->ubyportExportedAt = null;
-        $this->ubyportConfirmedAt = null;
-        $this->ubyportReceiptFilename = null;
-        $this->ubyportReceiptAccepted = null;
-        $this->ubyportReceiptRejected = null;
+        $this->ubyportReport = new UbyportReport();
         $this->touch();
 
         return $this;
