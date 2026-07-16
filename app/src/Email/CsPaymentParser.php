@@ -46,7 +46,7 @@ class CsPaymentParser
             throw new \InvalidArgumentException('E-mail nevypadá jako notifikace ČS "Přišla platba".');
         }
 
-        $text = $this->normalize($email->textBody);
+        $text = EmailText::normalizeWhitespace($email->textBody);
 
         return new CsPaymentData(
             incoming: $this->isIncoming($text),
@@ -129,13 +129,5 @@ class CsPaymentParser
         $clean = str_replace(',', '.', $clean);
 
         return Money::normalize((float) $clean);
-    }
-
-    private function normalize(string $text): string
-    {
-        $text = str_replace(["\xc2\xa0", "\xe2\x80\xaf"], ' ', $text);
-        $text = preg_replace('/[ \t]+/u', ' ', $text) ?? $text;
-
-        return trim($text);
     }
 }

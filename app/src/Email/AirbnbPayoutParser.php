@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace App\Email;
 
 use App\Email\Dto\AirbnbPayoutData;
+use App\Formatting\CzechCalendar;
 
 /**
  * Parsuje Airbnb e-mail "Poslali jsme ti výplatu ve výši …".
@@ -22,13 +23,6 @@ class AirbnbPayoutParser
 {
     private const FROM_ADDRESS = 'automated@airbnb.com';
     private const SUBJECT_PATTERN = '/Poslali jsme ti\s+v[ýy]platu/u';
-
-    /** Genitiv českých měsíců, jak je Airbnb uvádí ("dne 29. května"). */
-    private const MONTHS = [
-        'ledna' => 1, 'února' => 2, 'března' => 3, 'dubna' => 4,
-        'května' => 5, 'června' => 6, 'července' => 7, 'srpna' => 8,
-        'září' => 9, 'října' => 10, 'listopadu' => 11, 'prosince' => 12,
-    ];
 
     public function supports(EmailMessage $email): bool
     {
@@ -46,7 +40,7 @@ class AirbnbPayoutParser
             throw new \InvalidArgumentException('E-mail does not look like an Airbnb payout notification.');
         }
 
-        $text = $this->normalize($email->textBody);
+        $text = EmailText::normalizeWhitespace($email->textBody);
         $reference = $email->date;
 
         return new AirbnbPayoutData(
@@ -127,11 +121,12 @@ class AirbnbPayoutParser
     private function monthFromName(string $name): int
     {
         $key = mb_strtolower(trim($name));
-        if (!isset(self::MONTHS[$key])) {
+        $months = CzechCalendar::genitiveMonths();
+        if (!isset($months[$key])) {
             throw new \RuntimeException("Unknown Czech month name: $name");
         }
 
-        return self::MONTHS[$key];
+        return $months[$key];
     }
 
     /**
@@ -158,14 +153,6 @@ class AirbnbPayoutParser
         }
 
         return $best ?? new \DateTimeImmutable(sprintf('%04d-%02d-%02d', $referenceYear, $month, $day));
-    }
-
-    private function normalize(string $text): string
-    {
-        $text = str_replace(["\xc2\xa0", "\xe2\x80\xaf"], ' ', $text); // nbsp + narrow nbsp
-        $text = preg_replace('/[ \t]+/u', ' ', $text) ?? $text;
-
-        return trim($text);
     }
 
     private function parseCzNumber(string $s): float

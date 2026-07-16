@@ -34,4 +34,19 @@ final class CzechCalendar
     {
         return self::NAMES;
     }
+
+    /**
+     * Genitiv názvů měsíců → číslo (1–12), jak je uvádějí české e-maily
+     * ("29. května", "dne 3. dubna"). Pro parsování Airbnb i Booking notifikací.
+     *
+     * @return array<string, int>
+     */
+    public static function genitiveMonths(): array
+    {
+        return [
+            'ledna' => 1, 'února' => 2, 'března' => 3, 'dubna' => 4,
+            'května' => 5, 'června' => 6, 'července' => 7, 'srpna' => 8,
+            'září' => 9, 'října' => 10, 'listopadu' => 11, 'prosince' => 12,
+        ];
+    }
 }

@@ -8,6 +8,10 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Změněno
 
+- **Sdílené utility pro parsování e-mailů.** Čištění bílých znaků z e-mailů
+  (`EmailText::normalizeWhitespace`) a genitiv názvů měsíců
+  (`CzechCalendar::genitiveMonths`) mají jedno místo, ze kterého čerpají parsery
+  Airbnb, Booking i ČS notifikací.
 - **Rozpoznání provizní OTA na jednom místě.** `Channel::isOta()` říká, jestli
   je kanál provizní OTA (Booking, Airbnb) — řídí `needs_details` tok, provizi a
   reverse-charge DPH. eChalupy a CS chalupy sem nepatří, jsou to jen iCal feedy

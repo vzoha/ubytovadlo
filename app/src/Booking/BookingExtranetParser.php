@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Booking;
 
+use App\Formatting\CzechCalendar;
 use App\Reservation\GuestRequestKeywords;
 
 /**
@@ -21,21 +22,6 @@ use App\Reservation\GuestRequestKeywords;
  */
 class BookingExtranetParser
 {
-    private const CZECH_GENITIVE_MONTHS = [
-        'ledna' => 1,
-        'února' => 2,
-        'března' => 3,
-        'dubna' => 4,
-        'května' => 5,
-        'června' => 6,
-        'července' => 7,
-        'srpna' => 8,
-        'září' => 9,
-        'října' => 10,
-        'listopadu' => 11,
-        'prosince' => 12,
-    ];
-
     public function parse(string $raw): BookingExtranetData
     {
         $data = new BookingExtranetData();
@@ -157,7 +143,7 @@ class BookingExtranetParser
         if (preg_match('/(\d{1,2})\.\s*([\p{L}]+)\s+(\d{4})/u', $value, $m) !== 1) {
             return null;
         }
-        $month = self::CZECH_GENITIVE_MONTHS[mb_strtolower($m[2])] ?? null;
+        $month = CzechCalendar::genitiveMonths()[mb_strtolower($m[2])] ?? null;
         if ($month === null) {
             return null;
         }

@@ -35,7 +35,7 @@ class AirbnbReservationParser
             throw new \InvalidArgumentException('E-mail does not look like an Airbnb reservation confirmation.');
         }
 
-        $text = $this->normalize($email->textBody);
+        $text = EmailText::normalizeWhitespace($email->textBody);
         $reference = $email->date;
 
         $name = $this->extractName($email->subject, $text);
@@ -98,14 +98,6 @@ class AirbnbReservationParser
         }
 
         return [false, null];
-    }
-
-    private function normalize(string $text): string
-    {
-        $text = str_replace(["\xc2\xa0", "\xe2\x80\xaf"], ' ', $text); // nbsp + narrow nbsp
-        $text = preg_replace('/[ \t]+/u', ' ', $text) ?? $text;
-
-        return trim($text);
     }
 
     private function extractName(string $subject, string $text): string
