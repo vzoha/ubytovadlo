@@ -56,11 +56,11 @@ class AirbnbPayoutParser
     private function extractPayoutAmount(string $text): float
     {
         if (preg_match('/Dnes jsme ti odeslali částku\s+([\d\s\xc2\xa0]+,\d{2})/u', $text, $m)) {
-            return $this->parseCzNumber($m[1]);
+            return EmailText::parseCzechNumber($m[1]);
         }
         // Fallback na předmět/tělo: "výplatu ve výši 2 500,00 Kč"
         if (preg_match('/ve výši\s+([\d\s\xc2\xa0]+,\d{2})/u', $text, $m)) {
-            return $this->parseCzNumber($m[1]);
+            return EmailText::parseCzechNumber($m[1]);
         }
         throw new \RuntimeException('Cannot extract Airbnb payout amount.');
     }
@@ -153,13 +153,5 @@ class AirbnbPayoutParser
         }
 
         return $best ?? new \DateTimeImmutable(sprintf('%04d-%02d-%02d', $referenceYear, $month, $day));
-    }
-
-    private function parseCzNumber(string $s): float
-    {
-        $s = preg_replace('/[\s\xc2\xa0]+/', '', $s) ?? $s;
-        $s = str_replace(',', '.', $s);
-
-        return (float) $s;
     }
 }

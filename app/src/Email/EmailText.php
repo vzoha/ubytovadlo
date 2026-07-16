@@ -28,4 +28,15 @@ final class EmailText
 
         return trim($text);
     }
+
+    /**
+     * Číslo v českém formátu ("2 500,00", s pevnou mezerou jako oddělovačem tisíců)
+     * na float — odstraní mezery a nbsp, čárku převede na tečku.
+     */
+    public static function parseCzechNumber(string $raw): float
+    {
+        $clean = preg_replace('/[\s\xc2\xa0]+/', '', $raw) ?? $raw;
+
+        return (float) str_replace(',', '.', $clean);
+    }
 }

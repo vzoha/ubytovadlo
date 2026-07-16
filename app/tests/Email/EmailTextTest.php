@@ -32,4 +32,11 @@ final class EmailTextTest extends TestCase
     {
         self::assertSame('text', EmailText::normalizeWhitespace('   text   '));
     }
+
+    public function testParseCzechNumber(): void
+    {
+        self::assertSame(2500.0, EmailText::parseCzechNumber('2 500,00'));
+        self::assertSame(1234.5, EmailText::parseCzechNumber("1\xc2\xa0234,50"));
+        self::assertSame(99.0, EmailText::parseCzechNumber('99'));
+    }
 }

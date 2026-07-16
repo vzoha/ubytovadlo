@@ -195,9 +195,9 @@ class AirbnbReservationParser
     {
         $pricePerNight = $nights = $subtotal = null;
         if (preg_match('/Host zaplatil\s+([\d\s\xc2\xa0]+,\d{2})\s*Kč\s*x\s*(\d+)\s*(?:noc|noci|nocí)\s+([\d\s\xc2\xa0]+,\d{2})/u', $text, $m)) {
-            $pricePerNight = $this->parseCzNumber($m[1]);
+            $pricePerNight = EmailText::parseCzechNumber($m[1]);
             $nights = (int) $m[2];
-            $subtotal = $this->parseCzNumber($m[3]);
+            $subtotal = EmailText::parseCzechNumber($m[3]);
         }
 
         return [$pricePerNight, $nights, $subtotal];
@@ -206,7 +206,7 @@ class AirbnbReservationParser
     private function extractAmount(string $text, string $pattern): ?float
     {
         if (preg_match($pattern, $text, $m)) {
-            return $this->parseCzNumber($m[1]);
+            return EmailText::parseCzechNumber($m[1]);
         }
 
         return null;
@@ -228,13 +228,5 @@ class AirbnbReservationParser
         }
 
         return null;
-    }
-
-    private function parseCzNumber(string $s): float
-    {
-        $s = preg_replace('/[\s\xc2\xa0]+/', '', $s) ?? $s;
-        $s = str_replace(',', '.', $s);
-
-        return (float) $s;
     }
 }
