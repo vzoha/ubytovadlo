@@ -31,10 +31,9 @@
 
                         {% if form.timingMode is defined %}
                             <div class="mb-3" id="timing-block">
-                                <label class="form-label mb-1">Kdy odeslat</label>
-                                <div class="mb-2" style="max-width: 14rem">
-                                    {{ form_label(form.anchor) }}
-                                    {{ form_widget(form.anchor) }}
+                                <div class="d-flex align-items-center gap-2 mb-2">
+                                    <label class="form-label mb-0 text-nowrap" for="{{ form.anchor.vars.id }}">Kdy odeslat vůči</label>
+                                    <div style="max-width: 12rem">{{ form_widget(form.anchor) }}</div>
                                 </div>
 
                                 <div class="ms-1">
