@@ -17,6 +17,7 @@ use App\Entity\InvoiceLine;
 use App\Entity\Reservation;
 use App\Enum\BillingMode;
 use App\Enum\InvoiceType;
+use App\Formatting\CountryNames;
 use App\Formatting\Money;
 use App\Repository\InvoiceRepository;
 use App\Reservation\Event\ReservationFinancialsChangedEvent;
@@ -328,27 +329,7 @@ class InvoiceService
             return null;
         }
 
-        return match ($code) {
-            'DE' => 'Německo',
-            'SK' => 'Slovensko',
-            'AT' => 'Rakousko',
-            'PL' => 'Polsko',
-            'HU' => 'Maďarsko',
-            'NL' => 'Nizozemsko',
-            'BE' => 'Belgie',
-            'FR' => 'Francie',
-            'IT' => 'Itálie',
-            'ES' => 'Španělsko',
-            'GB' => 'Velká Británie',
-            'IE' => 'Irsko',
-            'DK' => 'Dánsko',
-            'SE' => 'Švédsko',
-            'NO' => 'Norsko',
-            'FI' => 'Finsko',
-            'CH' => 'Švýcarsko',
-            'US' => 'USA',
-            default => $code,
-        };
+        return CountryNames::czech($code);
     }
 
     private function persist(Invoice $invoice): void
