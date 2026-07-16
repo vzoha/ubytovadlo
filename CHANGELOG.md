@@ -8,6 +8,10 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Změněno
 
+- **Rozpoznání provizní OTA na jednom místě.** `Channel::isOta()` říká, jestli
+  je kanál provizní OTA (Booking, Airbnb) — řídí `needs_details` tok, provizi a
+  reverse-charge DPH. eChalupy a CS chalupy sem nepatří, jsou to jen iCal feedy
+  obsazenosti.
 - **Práce s peněžní částkou má jedno místo.** `App\Formatting\Money` sjednocuje
   převod částky na kanonický decimal tvar pro uložení (`normalize`), převod
   uživatelského vstupu „1 234,50" na číslo (`parse`), symbol měny (`symbol` —
