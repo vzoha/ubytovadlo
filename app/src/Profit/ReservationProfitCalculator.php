@@ -101,7 +101,7 @@ final class ReservationProfitCalculator
         $recreationFeeCzk = sprintf('%d.00', $feePerAdultNight * $r->getGuestsAdult() * $nights);
 
         $commissionCzk = $this->resolveCommissionCzk($r);
-        $vatCzk = $r->getVatAmountCzk() ?? '0.00';
+        $vatCzk = $r->getVatReverseCharge()->getAmountCzk() ?? '0.00';
 
         // Plátce DPH má z reverse charge z provize nárok na odpočet → v přiznání se
         // vyruší, není to reálný náklad. Provize samotná nákladem zůstává.
@@ -163,7 +163,7 @@ final class ReservationProfitCalculator
         }
 
         // Jen záloha (nebo žádná faktura) → odhad z ceny rezervace.
-        $czk = $this->converter->toCzk($r->getPriceTotal(), $r->getPriceCurrency(), $r->getVatCnbRate());
+        $czk = $this->converter->toCzk($r->getPriceTotal(), $r->getPriceCurrency(), $r->getVatReverseCharge()->getCnbRate());
         if ($czk === null) {
             return [null, false];
         }
@@ -180,7 +180,7 @@ final class ReservationProfitCalculator
      */
     private function invoiceTotalCzk(Reservation $r, Invoice $invoice): ?array
     {
-        $czk = $this->converter->toCzk($invoice->getTotalAmount(), $invoice->getCurrency(), $invoice->getExchangeRate() ?? $r->getVatCnbRate());
+        $czk = $this->converter->toCzk($invoice->getTotalAmount(), $invoice->getCurrency(), $invoice->getExchangeRate() ?? $r->getVatReverseCharge()->getCnbRate());
         if ($czk === null) {
             return null;
         }
@@ -191,14 +191,14 @@ final class ReservationProfitCalculator
     private function resolveCommissionCzk(Reservation $r): string
     {
         // vatBaseCzk = provize přepočtená do CZK (základ pro reverse charge) — preferovaný zdroj.
-        if ($r->getVatBaseCzk() !== null) {
-            return $r->getVatBaseCzk();
+        if ($r->getVatReverseCharge()->getBaseCzk() !== null) {
+            return $r->getVatReverseCharge()->getBaseCzk();
         }
         $commission = $r->getCommissionAmount();
         if ($commission === null) {
             return '0.00';
         }
 
-        return $this->converter->toCzk($commission, $r->getCommissionCurrency(), $r->getVatCnbRate()) ?? '0.00';
+        return $this->converter->toCzk($commission, $r->getCommissionCurrency(), $r->getVatReverseCharge()->getCnbRate()) ?? '0.00';
     }
 }

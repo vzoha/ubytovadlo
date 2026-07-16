@@ -13,6 +13,7 @@ namespace App\Tests\Controller;
 
 use App\Entity\AirbnbStatement;
 use App\Entity\BookingMonthlyInvoice;
+use App\Entity\Embeddable\VatReverseCharge;
 use App\Entity\Invoice;
 use App\Entity\InvoiceLine;
 use App\Entity\Reservation;
@@ -165,9 +166,11 @@ final class DashboardControllerTest extends WebTestCase
         $r->setStatus(ReservationStatus::COMPLETED);
         $r->setCommissionAmount('20.00');
         $r->setCommissionCurrency('EUR');
-        $r->setVatBaseCzk('500.00');
-        $r->setVatAmountCzk('105.00');
-        $r->setVatDuzp($target->modify('last day of this month'));
+        $r->setVatReverseCharge(new VatReverseCharge(
+            duzp: $target->modify('last day of this month'),
+            baseCzk: '500.00',
+            amountCzk: '105.00',
+        ));
         $this->em->persist($r);
         $this->em->flush();
 

@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use App\Entity\Embeddable\ElectricityUsage;
+use App\Entity\Embeddable\VatReverseCharge;
 use App\Enum\BillingMode;
 use App\Enum\Channel;
 use App\Enum\PurposeOfStay;
@@ -118,23 +119,10 @@ class Reservation
     #[ORM\Column(length: 64, nullable: true)]
     private ?string $payoutReference = null;
 
-    // Reverse charge DPH (identifikovaná osoba § 6h ZDPH).
-    // base = provize od OTA převedená kurzem ČNB k duzp (u Airbnb v CZK = base = commissionAmount).
-    // vat = base × 0.21. Bez nároku na odpočet.
-    #[ORM\Column(type: Types::DATE_IMMUTABLE, nullable: true)]
-    private ?\DateTimeImmutable $vatDuzp = null;
-
-    #[ORM\Column(type: Types::DECIMAL, precision: 14, scale: 8, nullable: true)]
-    private ?string $vatCnbRate = null;
-
-    #[ORM\Column(type: Types::DATE_IMMUTABLE, nullable: true)]
-    private ?\DateTimeImmutable $vatCnbRateDate = null;
-
-    #[ORM\Column(type: Types::DECIMAL, precision: 12, scale: 2, nullable: true)]
-    private ?string $vatBaseCzk = null;
-
-    #[ORM\Column(type: Types::DECIMAL, precision: 12, scale: 2, nullable: true)]
-    private ?string $vatAmountCzk = null;
+    // Reverse charge DPH (identifikovaná osoba § 6h ZDPH) — přepočet provize OTA
+    // kurzem ČNB k DUZP; base × 21 % bez nároku na odpočet.
+    #[ORM\Embedded(class: VatReverseCharge::class, columnPrefix: false)]
+    private VatReverseCharge $vatReverseCharge;
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $guestName = null;
@@ -236,6 +224,7 @@ class Reservation
         $this->channel = $channel;
         $this->checkIn = $checkIn;
         $this->electricity = new ElectricityUsage();
+        $this->vatReverseCharge = new VatReverseCharge();
         $this->createdAt = new \DateTimeImmutable();
         $this->updatedAt = $this->createdAt;
     }
@@ -551,66 +540,14 @@ class Reservation
         return $this;
     }
 
-    public function getVatDuzp(): ?\DateTimeImmutable
+    public function getVatReverseCharge(): VatReverseCharge
     {
-        return $this->vatDuzp;
+        return $this->vatReverseCharge;
     }
 
-    public function setVatDuzp(?\DateTimeImmutable $vatDuzp): self
+    public function setVatReverseCharge(VatReverseCharge $vatReverseCharge): self
     {
-        $this->vatDuzp = $vatDuzp;
-        $this->touch();
-
-        return $this;
-    }
-
-    public function getVatCnbRate(): ?string
-    {
-        return $this->vatCnbRate;
-    }
-
-    public function setVatCnbRate(?string $vatCnbRate): self
-    {
-        $this->vatCnbRate = $vatCnbRate;
-        $this->touch();
-
-        return $this;
-    }
-
-    public function getVatCnbRateDate(): ?\DateTimeImmutable
-    {
-        return $this->vatCnbRateDate;
-    }
-
-    public function setVatCnbRateDate(?\DateTimeImmutable $vatCnbRateDate): self
-    {
-        $this->vatCnbRateDate = $vatCnbRateDate;
-        $this->touch();
-
-        return $this;
-    }
-
-    public function getVatBaseCzk(): ?string
-    {
-        return $this->vatBaseCzk;
-    }
-
-    public function setVatBaseCzk(?string $vatBaseCzk): self
-    {
-        $this->vatBaseCzk = $vatBaseCzk;
-        $this->touch();
-
-        return $this;
-    }
-
-    public function getVatAmountCzk(): ?string
-    {
-        return $this->vatAmountCzk;
-    }
-
-    public function setVatAmountCzk(?string $vatAmountCzk): self
-    {
-        $this->vatAmountCzk = $vatAmountCzk;
+        $this->vatReverseCharge = $vatReverseCharge;
         $this->touch();
 
         return $this;

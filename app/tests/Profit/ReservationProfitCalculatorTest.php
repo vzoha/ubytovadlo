@@ -14,6 +14,7 @@ namespace App\Tests\Profit;
 use App\Entity\Cleaning;
 use App\Entity\ElectricityTariff;
 use App\Entity\Embeddable\ElectricityUsage;
+use App\Entity\Embeddable\VatReverseCharge;
 use App\Entity\Invoice;
 use App\Entity\InvoiceLine;
 use App\Entity\Reservation;
@@ -85,8 +86,7 @@ class ReservationProfitCalculatorTest extends KernelTestCase
     {
         $r = $this->makeReservation(Channel::BOOKING, '2026-04-13', '2026-04-16', adults: 2);
         $r->setPriceTotal('100.00')->setPriceCurrency('EUR');
-        $r->setVatCnbRate('24.36000000');
-        $r->setVatBaseCzk('365.40')->setVatAmountCzk('76.73');
+        $r->setVatReverseCharge(new VatReverseCharge(cnbRate: '24.36000000', baseCzk: '365.40', amountCzk: '76.73'));
         $this->em->flush();
 
         $p = $this->calculator->calculate($r);
@@ -110,8 +110,7 @@ class ReservationProfitCalculatorTest extends KernelTestCase
         // Stejná Booking rezervace jako odhad výše, ale u plátce se RC z provize odečte.
         $r = $this->makeReservation(Channel::BOOKING, '2026-04-13', '2026-04-16', adults: 2);
         $r->setPriceTotal('100.00')->setPriceCurrency('EUR');
-        $r->setVatCnbRate('24.36000000');
-        $r->setVatBaseCzk('365.40')->setVatAmountCzk('76.73');
+        $r->setVatReverseCharge(new VatReverseCharge(cnbRate: '24.36000000', baseCzk: '365.40', amountCzk: '76.73'));
         $this->em->flush();
 
         $p = $this->calculator->calculate($r);
@@ -159,7 +158,7 @@ class ReservationProfitCalculatorTest extends KernelTestCase
         // částka v EUR. Příjem se musí přepočítat kurzem, ne brát jako CZK.
         $r = $this->makeReservation(Channel::BOOKING, '2024-08-24', '2024-08-26', adults: 2);
         $r->setPriceTotal('174.24')->setPriceCurrency('EUR');
-        $r->setVatCnbRate('25.03000000');
+        $r->setVatReverseCharge(new VatReverseCharge(cnbRate: '25.03000000'));
         $invoice = $this->makeInvoice($r, InvoiceType::FULL, '174.24');
         $invoice->setCurrency('EUR');
         $this->em->flush();
@@ -205,7 +204,7 @@ class ReservationProfitCalculatorTest extends KernelTestCase
         $a->setPriceTotal('4000.00')->setPriceCurrency('CZK');
         $b = $this->makeReservation(Channel::BOOKING, '2026-08-10', '2026-08-12', adults: 3);
         $b->setPriceTotal('200.00')->setPriceCurrency('EUR');
-        $b->setVatCnbRate('25.00000000');
+        $b->setVatReverseCharge(new VatReverseCharge(cnbRate: '25.00000000'));
         $this->em->flush();
 
         $batch = $this->calculator->calculateBatch([$a, $b]);

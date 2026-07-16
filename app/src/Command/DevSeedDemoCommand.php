@@ -16,6 +16,7 @@ use App\Entity\Account;
 use App\Entity\BalanceStatement;
 use App\Entity\ElectricityTariff;
 use App\Entity\Embeddable\ElectricityUsage;
+use App\Entity\Embeddable\VatReverseCharge;
 use App\Entity\GuestDocument;
 use App\Entity\Invoice;
 use App\Entity\LedgerEntry;
@@ -348,12 +349,14 @@ class DevSeedDemoCommand extends Command
             $commissionEur = $this->money((float) $s['price'] * 0.15);
             $r->setCommissionAmount($commissionEur);
             $r->setCommissionCurrency('EUR');
-            $r->setVatCnbRate(self::EUR_RATE);
-            $r->setVatCnbRateDate($duzp);
             $baseCzk = $this->money((float) $commissionEur * (float) self::EUR_RATE);
-            $r->setVatBaseCzk($baseCzk);
-            $r->setVatAmountCzk($this->money((float) $baseCzk * 0.21));
-            $r->setVatDuzp($duzp);
+            $r->setVatReverseCharge(new VatReverseCharge(
+                duzp: $duzp,
+                cnbRate: self::EUR_RATE,
+                cnbRateDate: $duzp,
+                baseCzk: $baseCzk,
+                amountCzk: $this->money((float) $baseCzk * 0.21),
+            ));
 
             return;
         }
@@ -363,9 +366,11 @@ class DevSeedDemoCommand extends Command
         $r->setCommissionAmount($commissionCzk);
         $r->setCommissionCurrency('CZK');
         $r->setNetPayout($this->money((float) $s['price'] - (float) $commissionCzk));
-        $r->setVatBaseCzk($commissionCzk);
-        $r->setVatAmountCzk($this->money((float) $commissionCzk * 0.21));
-        $r->setVatDuzp($duzp);
+        $r->setVatReverseCharge(new VatReverseCharge(
+            duzp: $duzp,
+            baseCzk: $commissionCzk,
+            amountCzk: $this->money((float) $commissionCzk * 0.21),
+        ));
 
         // Reálná výplata u uskutečněných pobytů (→ faktura se vystaví rovnou jako uhrazená).
         if ($r->getStatus() === ReservationStatus::COMPLETED && isset($s['out'])) {
@@ -496,17 +501,17 @@ class DevSeedDemoCommand extends Command
         $byMonth = [];
         $reservations = $this->em->getRepository(Reservation::class)->findAll();
         foreach ($reservations as $r) {
-            if ($r->getVatDuzp() === null || $r->getVatAmountCzk() === null) {
+            if ($r->getVatReverseCharge()->getDuzp() === null || $r->getVatReverseCharge()->getAmountCzk() === null) {
                 continue;
             }
-            $key = $r->getVatDuzp()->format('Y-m');
+            $key = $r->getVatReverseCharge()->getDuzp()->format('Y-m');
             // Budoucí DUZP (potvrzené nadcházející OTA) do DPH ještě nepatří — služba nebyla přijata.
             if ($key > (new \DateTimeImmutable('today'))->format('Y-m')) {
                 continue;
             }
             $byMonth[$key] ??= ['base' => '0.00', 'vat' => '0.00'];
-            $byMonth[$key]['base'] = bcadd($byMonth[$key]['base'], $r->getVatBaseCzk() ?? '0.00', 2);
-            $byMonth[$key]['vat'] = bcadd($byMonth[$key]['vat'], $r->getVatAmountCzk(), 2);
+            $byMonth[$key]['base'] = bcadd($byMonth[$key]['base'], $r->getVatReverseCharge()->getBaseCzk() ?? '0.00', 2);
+            $byMonth[$key]['vat'] = bcadd($byMonth[$key]['vat'], $r->getVatReverseCharge()->getAmountCzk(), 2);
         }
 
         $currentMonth = (new \DateTimeImmutable('today'))->format('Y-m');

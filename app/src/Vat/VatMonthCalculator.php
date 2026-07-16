@@ -38,7 +38,7 @@ final class VatMonthCalculator
         $bookingSum = 0.0;
         $airbnbSum = 0.0;
         foreach ($reservations as $r) {
-            $sumBase += (float) ($r->getVatBaseCzk() ?? 0);
+            $sumBase += (float) ($r->getVatReverseCharge()->getBaseCzk() ?? 0);
             $commission = (float) ($r->getCommissionAmount() ?? 0);
             match ($r->getChannel()) {
                 Channel::BOOKING => $bookingSum += $commission,

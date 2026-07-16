@@ -254,13 +254,13 @@
                         <td>{{ r.guestName ?? '(nedoplněno)' }}</td>
                         <td class="text-end">{{ r.commissionAmount|number_format(2, ',', ' ') }} {{ r.commissionCurrency ?? 'CZK' }}</td>
                         <td class="text-end small text-muted">
-                            {% if r.vatCnbRate %}
-                                {{ r.vatCnbRate|number_format(3, ',', ' ') }}<br>
-                                <span class="text-muted">{{ r.vatCnbRateDate|date('d. m.') }}</span>
+                            {% if r.vatReverseCharge.cnbRate %}
+                                {{ r.vatReverseCharge.cnbRate|number_format(3, ',', ' ') }}<br>
+                                <span class="text-muted">{{ r.vatReverseCharge.cnbRateDate|date('d. m.') }}</span>
                             {% else %}—{% endif %}
                         </td>
-                        <td class="text-end">{{ r.vatBaseCzk ? r.vatBaseCzk|number_format(2, ',', ' ') : '—' }}</td>
-                        <td class="text-end"><strong>{{ r.vatAmountCzk ? r.vatAmountCzk|number_format(2, ',', ' ') : '—' }}</strong></td>
+                        <td class="text-end">{{ r.vatReverseCharge.baseCzk ? r.vatReverseCharge.baseCzk|number_format(2, ',', ' ') : '—' }}</td>
+                        <td class="text-end"><strong>{{ r.vatReverseCharge.amountCzk ? r.vatReverseCharge.amountCzk|number_format(2, ',', ' ') : '—' }}</strong></td>
                         <td class="text-end">
                             <a href="{{ path('reservation_detail', {id: r.id}) }}" class="btn btn-sm btn-outline-secondary">↗</a>
                         </td>

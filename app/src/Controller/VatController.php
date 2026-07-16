@@ -129,16 +129,16 @@ class VatController extends AbstractController
                 ], ';', '"', '');
             }
             foreach ($summary->reservations as $r) {
-                if ($r->getVatBaseCzk() === null) {
+                if ($r->getVatReverseCharge()->getBaseCzk() === null) {
                     continue;
                 }
                 fputcsv($out, [
                     'Vstup — provize ' . $r->getChannel()->label(),
                     $r->getExternalId() ?? ('rezervace ' . $r->getId()),
-                    $r->getVatDuzp()?->format('Y-m-d') ?? '',
+                    $r->getVatReverseCharge()->getDuzp()?->format('Y-m-d') ?? '',
                     $r->getGuestName() ?? '',
-                    $r->getVatBaseCzk(),
-                    $r->getVatAmountCzk() ?? '',
+                    $r->getVatReverseCharge()->getBaseCzk(),
+                    $r->getVatReverseCharge()->getAmountCzk() ?? '',
                     '21',
                 ], ';', '"', '');
             }

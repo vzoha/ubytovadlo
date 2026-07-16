@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Vat;
 
+use App\Entity\Embeddable\VatReverseCharge;
 use App\Entity\Reservation;
 use App\Enum\Channel;
 use App\Formatting\Money;
@@ -52,24 +53,27 @@ class VatCalculator
         }
 
         $duzp = $this->resolveDuzp($reservation, $checkOut);
-        $reservation->setVatDuzp($duzp);
-
         $commission = (float) $reservation->getCommissionAmount();
         $commissionCurrency = $reservation->getCommissionCurrency() ?? 'CZK';
 
         if ($commissionCurrency === 'CZK') {
             $baseCzk = $commission;
-            $reservation->setVatCnbRate(null);
-            $reservation->setVatCnbRateDate(null);
+            $cnbRate = null;
+            $cnbRateDate = null;
         } else {
             $rate = $this->cnb->getRate($commissionCurrency, $duzp);
             $baseCzk = $commission * $rate->rate;
-            $reservation->setVatCnbRate(number_format($rate->rate, 8, '.', ''));
-            $reservation->setVatCnbRateDate($rate->validFor);
+            $cnbRate = number_format($rate->rate, 8, '.', '');
+            $cnbRateDate = $rate->validFor;
         }
 
-        $reservation->setVatBaseCzk(Money::normalize($baseCzk));
-        $reservation->setVatAmountCzk(Money::normalize($baseCzk * self::VAT_RATE));
+        $reservation->setVatReverseCharge(new VatReverseCharge(
+            duzp: $duzp,
+            cnbRate: $cnbRate,
+            cnbRateDate: $cnbRateDate,
+            baseCzk: Money::normalize($baseCzk),
+            amountCzk: Money::normalize($baseCzk * self::VAT_RATE),
+        ));
 
         return true;
     }

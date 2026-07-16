@@ -62,10 +62,10 @@ class VatRecalculateCommand extends Command
                     $r->getId(),
                     $r->getChannel()->value,
                     $r->getCheckOut()?->format('Y-m-d'),
-                    $r->getVatBaseCzk(),
-                    $r->getVatAmountCzk(),
-                    $r->getVatCnbRate() ?? '—',
-                    $r->getVatCnbRateDate()?->format('Y-m-d') ?? '—',
+                    $r->getVatReverseCharge()->getBaseCzk(),
+                    $r->getVatReverseCharge()->getAmountCzk(),
+                    $r->getVatReverseCharge()->getCnbRate() ?? '—',
+                    $r->getVatReverseCharge()->getCnbRateDate()?->format('Y-m-d') ?? '—',
                 ));
                 $changed++;
             } else {

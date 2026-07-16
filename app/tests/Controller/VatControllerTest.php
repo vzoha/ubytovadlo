@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace App\Tests\Controller;
 
 use App\Entity\BookingMonthlyInvoice;
+use App\Entity\Embeddable\VatReverseCharge;
 use App\Entity\Reservation;
 use App\Entity\Setting;
 use App\Entity\User;
@@ -59,11 +60,13 @@ final class VatControllerTest extends WebTestCase
         $reservation->setPriceCurrency('EUR');
         $reservation->setCommissionAmount('82.42');
         $reservation->setCommissionCurrency('EUR');
-        $reservation->setVatDuzp(new \DateTimeImmutable('2026-04-30'));
-        $reservation->setVatCnbRate('24.36000000');
-        $reservation->setVatCnbRateDate(new \DateTimeImmutable('2026-04-30'));
-        $reservation->setVatBaseCzk('2007.75');
-        $reservation->setVatAmountCzk('421.63');
+        $reservation->setVatReverseCharge(new VatReverseCharge(
+            duzp: new \DateTimeImmutable('2026-04-30'),
+            cnbRate: '24.36000000',
+            cnbRateDate: new \DateTimeImmutable('2026-04-30'),
+            baseCzk: '2007.75',
+            amountCzk: '421.63',
+        ));
         $this->em->persist($reservation);
 
         $invoice = new BookingMonthlyInvoice(
@@ -209,8 +212,7 @@ final class VatControllerTest extends WebTestCase
         $r->setExternalId('HMMNOP56QR');
         $r->setCommissionAmount('102.00');
         $r->setCommissionCurrency('CZK');
-        $r->setVatBaseCzk('3400.00');
-        $r->setVatAmountCzk('714.00');
+        $r->setVatReverseCharge(new VatReverseCharge(baseCzk: '3400.00', amountCzk: '714.00'));
         $this->em->persist($r);
         $this->em->flush();
 

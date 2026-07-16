@@ -317,27 +317,27 @@ class IncomeUpserter
     /** Hrubá částka pobytu v CZK (cena hosta) — základ pro odhad OTA výplaty. */
     private function grossCzk(Reservation $reservation): ?string
     {
-        return $this->converter->toCzk($reservation->getPriceTotal(), $reservation->getPriceCurrency(), $reservation->getVatCnbRate());
+        return $this->converter->toCzk($reservation->getPriceTotal(), $reservation->getPriceCurrency(), $reservation->getVatReverseCharge()->getCnbRate());
     }
 
     /** Provize OTA v CZK (základ pro net). Bez známé provize = 0. */
     private function commissionCzk(Reservation $reservation): string
     {
-        if ($reservation->getVatBaseCzk() !== null) {
-            return $reservation->getVatBaseCzk();
+        if ($reservation->getVatReverseCharge()->getBaseCzk() !== null) {
+            return $reservation->getVatReverseCharge()->getBaseCzk();
         }
         $commission = $reservation->getCommissionAmount();
         if ($commission === null) {
             return '0.00';
         }
 
-        return $this->converter->toCzk($commission, $reservation->getCommissionCurrency(), $reservation->getVatCnbRate()) ?? '0.00';
+        return $this->converter->toCzk($commission, $reservation->getCommissionCurrency(), $reservation->getVatReverseCharge()->getCnbRate()) ?? '0.00';
     }
 
     /** Částka faktury v CZK; EUR přes kurz faktury, fallback uložený ČNB kurz rezervace. */
     private function invoiceCzk(Reservation $reservation, Invoice $invoice): ?string
     {
-        return $this->converter->toCzk($invoice->getTotalAmount(), $invoice->getCurrency(), $invoice->getExchangeRate() ?? $reservation->getVatCnbRate());
+        return $this->converter->toCzk($invoice->getTotalAmount(), $invoice->getCurrency(), $invoice->getExchangeRate() ?? $reservation->getVatReverseCharge()->getCnbRate());
     }
 
     private function accountForInvoice(Invoice $invoice): ?Account
