@@ -13,6 +13,7 @@ namespace App\Tests\Profit;
 
 use App\Entity\Cleaning;
 use App\Entity\ElectricityTariff;
+use App\Entity\Embeddable\ElectricityUsage;
 use App\Entity\Invoice;
 use App\Entity\InvoiceLine;
 use App\Entity\Reservation;
@@ -54,7 +55,7 @@ class ReservationProfitCalculatorTest extends KernelTestCase
         // Zrcadlí CSV výpočet: výdaje = elektřina + úklid + rekreační + provize + DPH.
         $r = $this->makeReservation(Channel::WEB, '2026-03-20', '2026-03-22', adults: 2);
         $r->setPriceTotal('4455.00')->setPriceCurrency('CZK');
-        $r->setVtKwh(146)->setNtKwh(86);
+        $r->setElectricity(new ElectricityUsage(146, 86));
         $this->em->persist(new ElectricityTariff(new \DateTimeImmutable('2026-01-01'), '5.75', '3.80'));
         // Cleaning (Barča, 400 Kč pro 2 hosty) auto-vytváří ReservationCleaningListener
         $this->makeInvoice($r, InvoiceType::FULL, '4455.00');

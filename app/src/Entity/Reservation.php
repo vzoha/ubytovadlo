@@ -11,9 +11,9 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Entity\Embeddable\ElectricityUsage;
 use App\Enum\BillingMode;
 use App\Enum\Channel;
-use App\Enum\ElectricitySource;
 use App\Enum\PurposeOfStay;
 use App\Enum\ReservationStatus;
 use App\Repository\ReservationRepository;
@@ -191,14 +191,8 @@ class Reservation
 
     // Elektřina — evidenční (hostům neúčtujeme, je v ceně). Plní ElectricityAllocator
     // z odečtů. measured = rezervace pokryta vlastními odečty před+po, allocated = rozpočet.
-    #[ORM\Column(type: Types::INTEGER, nullable: true)]
-    private ?int $vtKwh = null;
-
-    #[ORM\Column(type: Types::INTEGER, nullable: true)]
-    private ?int $ntKwh = null;
-
-    #[ORM\Column(length: 16, enumType: ElectricitySource::class, nullable: true)]
-    private ?ElectricitySource $electricitySource = null;
+    #[ORM\Embedded(class: ElectricityUsage::class, columnPrefix: false)]
+    private ElectricityUsage $electricity;
 
     // Ubyport — veřejný check-in link pro hosta + účel pobytu na rezervaci.
     #[ORM\Column(length: 64, nullable: true)]
@@ -241,6 +235,7 @@ class Reservation
     {
         $this->channel = $channel;
         $this->checkIn = $checkIn;
+        $this->electricity = new ElectricityUsage();
         $this->createdAt = new \DateTimeImmutable();
         $this->updatedAt = $this->createdAt;
     }
@@ -853,49 +848,14 @@ class Reservation
         return $this;
     }
 
-    public function getVtKwh(): ?int
+    public function getElectricity(): ElectricityUsage
     {
-        return $this->vtKwh;
+        return $this->electricity;
     }
 
-    public function setVtKwh(?int $vtKwh): self
+    public function setElectricity(ElectricityUsage $electricity): self
     {
-        $this->vtKwh = $vtKwh;
-        $this->touch();
-
-        return $this;
-    }
-
-    public function getNtKwh(): ?int
-    {
-        return $this->ntKwh;
-    }
-
-    public function setNtKwh(?int $ntKwh): self
-    {
-        $this->ntKwh = $ntKwh;
-        $this->touch();
-
-        return $this;
-    }
-
-    public function getTotalKwh(): ?int
-    {
-        if ($this->vtKwh === null && $this->ntKwh === null) {
-            return null;
-        }
-
-        return ($this->vtKwh ?? 0) + ($this->ntKwh ?? 0);
-    }
-
-    public function getElectricitySource(): ?ElectricitySource
-    {
-        return $this->electricitySource;
-    }
-
-    public function setElectricitySource(?ElectricitySource $electricitySource): self
-    {
-        $this->electricitySource = $electricitySource;
+        $this->electricity = $electricity;
         $this->touch();
 
         return $this;

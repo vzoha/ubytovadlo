@@ -15,6 +15,7 @@ use App\Cashflow\IncomeUpserter;
 use App\Entity\Account;
 use App\Entity\BalanceStatement;
 use App\Entity\ElectricityTariff;
+use App\Entity\Embeddable\ElectricityUsage;
 use App\Entity\GuestDocument;
 use App\Entity\Invoice;
 use App\Entity\LedgerEntry;
@@ -28,7 +29,6 @@ use App\Enum\AccountType;
 use App\Enum\Channel;
 use App\Enum\CleaningType;
 use App\Enum\DocumentType;
-use App\Enum\ElectricitySource;
 use App\Enum\ExpenseCategory;
 use App\Enum\LedgerEntryType;
 use App\Enum\PaymentSource;
@@ -304,9 +304,7 @@ class DevSeedDemoCommand extends Command
         $r->setNeedsBabyCot($s['cot'] ?? false);
 
         if (isset($s['vtKwh'])) {
-            $r->setVtKwh($s['vtKwh']);
-            $r->setNtKwh($s['ntKwh']);
-            $r->setElectricitySource(ElectricitySource::MEASURED);
+            $r->setElectricity(ElectricityUsage::measured($s['vtKwh'], $s['ntKwh']));
         }
 
         $this->applyOtaCommissionAndVat($r, $s);

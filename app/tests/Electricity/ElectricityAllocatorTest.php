@@ -14,6 +14,7 @@ namespace App\Tests\Electricity;
 use App\Entity\AirbnbStatement;
 use App\Entity\BookingMonthlyInvoice;
 use App\Entity\ElectricityReading;
+use App\Entity\Embeddable\ElectricityUsage;
 use App\Entity\Invoice;
 use App\Entity\InvoiceLine;
 use App\Entity\Reservation;
@@ -60,9 +61,9 @@ class ElectricityAllocatorTest extends KernelTestCase
         self::assertSame(1, $stats->intervals);
         self::assertSame(1, $stats->reservations);
         $this->em->refresh($r);
-        self::assertSame(120, $r->getVtKwh());
-        self::assertSame(60, $r->getNtKwh());
-        self::assertSame(ElectricitySource::ALLOCATED, $r->getElectricitySource());
+        self::assertSame(120, $r->getElectricity()->getVtKwh());
+        self::assertSame(60, $r->getElectricity()->getNtKwh());
+        self::assertSame(ElectricitySource::ALLOCATED, $r->getElectricity()->getSource());
     }
 
     public function testWinterStayGetsMoreThanSummerStay(): void
@@ -78,17 +79,17 @@ class ElectricityAllocatorTest extends KernelTestCase
         $this->em->refresh($summer);
 
         // Stejně dlouhé pobyty, ale zimní má mnohem vyšší faktor → dostane víc.
-        self::assertGreaterThan($summer->getVtKwh(), $winter->getVtKwh());
-        self::assertGreaterThan($summer->getNtKwh(), $winter->getNtKwh());
+        self::assertGreaterThan($summer->getElectricity()->getVtKwh(), $winter->getElectricity()->getVtKwh());
+        self::assertGreaterThan($summer->getElectricity()->getNtKwh(), $winter->getElectricity()->getNtKwh());
         // Součet musí sedět na celou spotřebu intervalu (zaokrouhlovací zbytek řešen).
-        self::assertSame(300, $winter->getVtKwh() + $summer->getVtKwh());
-        self::assertSame(150, $winter->getNtKwh() + $summer->getNtKwh());
+        self::assertSame(300, $winter->getElectricity()->getVtKwh() + $summer->getElectricity()->getVtKwh());
+        self::assertSame(150, $winter->getElectricity()->getNtKwh() + $summer->getElectricity()->getNtKwh());
     }
 
     public function testMeasuredReservationIsSkipped(): void
     {
         $a = $this->makeReservation('2026-03-01', '2026-03-03');
-        $a->setVtKwh(99)->setNtKwh(11)->setElectricitySource(ElectricitySource::MEASURED);
+        $a->setElectricity(ElectricityUsage::measured(99, 11));
         $b = $this->makeReservation('2026-03-10', '2026-03-12');
         $this->makeReading('2026-02-28', 0, 0);
         $this->makeReading('2026-03-15', 200, 100);
@@ -98,10 +99,10 @@ class ElectricityAllocatorTest extends KernelTestCase
 
         $this->em->refresh($a);
         $this->em->refresh($b);
-        self::assertSame(99, $a->getVtKwh(), 'measured rezervace zůstala beze změny');
-        self::assertSame(ElectricitySource::MEASURED, $a->getElectricitySource());
-        self::assertSame(200, $b->getVtKwh(), 'b dostala celou spotřebu intervalu');
-        self::assertSame(100, $b->getNtKwh());
+        self::assertSame(99, $a->getElectricity()->getVtKwh(), 'measured rezervace zůstala beze změny');
+        self::assertSame(ElectricitySource::MEASURED, $a->getElectricity()->getSource());
+        self::assertSame(200, $b->getElectricity()->getVtKwh(), 'b dostala celou spotřebu intervalu');
+        self::assertSame(100, $b->getElectricity()->getNtKwh());
         self::assertSame(1, $stats->skippedMeasured);
     }
 
@@ -122,8 +123,8 @@ class ElectricityAllocatorTest extends KernelTestCase
 
         // 1.20× větší skupina → o 20 % víc kWh. Při ratio 1:1.2 by měli dostat
         // 100/220 = 45 % vs 120/220 = 55 % (zhruba).
-        self::assertGreaterThan($couple->getTotalKwh(), $family->getTotalKwh());
-        $ratio = $family->getTotalKwh() / $couple->getTotalKwh();
+        self::assertGreaterThan($couple->getElectricity()->getTotalKwh(), $family->getElectricity()->getTotalKwh());
+        $ratio = $family->getElectricity()->getTotalKwh() / $couple->getElectricity()->getTotalKwh();
         self::assertEqualsWithDelta(1.20, $ratio, 0.05);
     }
 

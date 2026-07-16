@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace App\Service\Electricity;
 
 use App\Entity\ElectricityReading;
+use App\Entity\Embeddable\ElectricityUsage;
 use App\Enum\ElectricitySource;
 use App\Repository\ElectricityReadingRepository;
 use App\Repository\ReservationRepository;
@@ -95,7 +96,7 @@ final class ElectricityAllocator
         $skippedMeasured = 0;
 
         foreach ($stays as $r) {
-            if ($r->getElectricitySource() === ElectricitySource::MEASURED) {
+            if ($r->getElectricity()->getSource() === ElectricitySource::MEASURED) {
                 $skippedMeasured++;
                 continue;
             }
@@ -131,9 +132,7 @@ final class ElectricityAllocator
                 $allocatedVt += $vt;
                 $allocatedNt += $nt;
             }
-            $item['r']->setVtKwh($vt);
-            $item['r']->setNtKwh($nt);
-            $item['r']->setElectricitySource(ElectricitySource::ALLOCATED);
+            $item['r']->setElectricity(ElectricityUsage::allocated($vt, $nt));
         }
 
         return new AllocationStats(reservations: count($weighted), skippedMeasured: $skippedMeasured);

@@ -388,12 +388,12 @@
                 </div>
             </div>
 
-            {% if reservation.totalKwh is not null %}
+            {% if reservation.electricity.totalKwh is not null %}
                 <div class="card mt-3">
                     <div class="card-header d-flex justify-content-between">
                         <span>Elektřina</span>
                         <span class="small text-muted">
-                            {% if reservation.electricitySource.value == 'measured' %}
+                            {% if reservation.electricity.source.value == 'measured' %}
                                 <span class="badge text-bg-success">odečteno</span>
                             {% else %}
                                 <span class="badge text-bg-secondary">rozpočteno</span>
@@ -403,16 +403,16 @@
                     <div class="card-body">
                         <dl class="row mb-0">
                             <dt class="col-5">Spotřeba VT</dt>
-                            <dd class="col-7 text-end">{{ reservation.vtKwh ?? 0 }} kWh</dd>
+                            <dd class="col-7 text-end">{{ reservation.electricity.vtKwh ?? 0 }} kWh</dd>
                             <dt class="col-5">Spotřeba NT</dt>
-                            <dd class="col-7 text-end">{{ reservation.ntKwh ?? 0 }} kWh</dd>
+                            <dd class="col-7 text-end">{{ reservation.electricity.ntKwh ?? 0 }} kWh</dd>
                             <dt class="col-5">Celkem</dt>
-                            <dd class="col-7 text-end fw-bold">{{ reservation.totalKwh }} kWh</dd>
+                            <dd class="col-7 text-end fw-bold">{{ reservation.electricity.totalKwh }} kWh</dd>
                             {% if reservation.checkOut %}
                                 {% set nights = reservation.checkIn.diff(reservation.checkOut).days %}
                                 {% if nights > 0 %}
                                     <dt class="col-5">Na noc</dt>
-                                    <dd class="col-7 text-end">{{ (reservation.totalKwh / nights)|number_format(1, ',', ' ') }} kWh/noc</dd>
+                                    <dd class="col-7 text-end">{{ (reservation.electricity.totalKwh / nights)|number_format(1, ',', ' ') }} kWh/noc</dd>
                                 {% endif %}
                             {% endif %}
                             {% if electricity_cost %}

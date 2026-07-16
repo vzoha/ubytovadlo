@@ -27,7 +27,8 @@ final class ElectricityCostCalculator
 
     public function cost(Reservation $r): ?ElectricityCost
     {
-        if ($r->getVtKwh() === null && $r->getNtKwh() === null) {
+        $electricity = $r->getElectricity();
+        if ($electricity->getTotalKwh() === null) {
             return null;
         }
         $forDate = $r->getCheckOut() ?? $r->getCheckIn();
@@ -37,8 +38,8 @@ final class ElectricityCostCalculator
         }
         $vtRate = (float) $tariff->getVtRate();
         $ntRate = (float) $tariff->getNtRate();
-        $vtCzk = $vtRate * (float) ($r->getVtKwh() ?? 0);
-        $ntCzk = $ntRate * (float) ($r->getNtKwh() ?? 0);
+        $vtCzk = $vtRate * (float) ($electricity->getVtKwh() ?? 0);
+        $ntCzk = $ntRate * (float) ($electricity->getNtKwh() ?? 0);
 
         return new ElectricityCost(
             vtCzk: $vtCzk,
