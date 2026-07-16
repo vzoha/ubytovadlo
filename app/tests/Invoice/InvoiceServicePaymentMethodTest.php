@@ -32,6 +32,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\TestCase;
 use Psr\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\Clock\Clock;
 
 #[AllowMockObjectsWithoutExpectations]
 final class InvoiceServicePaymentMethodTest extends TestCase
@@ -78,6 +79,7 @@ final class InvoiceServicePaymentMethodTest extends TestCase
             $this->createMock(IncomeUpserter::class),
             new DepositConfig($settings),
             $this->createMock(EventDispatcherInterface::class),
+            new Clock(),
         );
     }
 

@@ -23,6 +23,7 @@ use App\Mail\MessageScheduleResolver;
 use App\Mail\MessageTemplateProvider;
 use App\Repository\ReservationActionRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\Clock\ClockInterface;
 
 /**
  * Zakládá automatické akce na časovou osu rezervace. Idempotentní — akci daného
@@ -40,6 +41,7 @@ class ReservationActionPlanner
         private readonly DepositConfig $depositConfig,
         private readonly MessageTemplateProvider $templates,
         private readonly MessageScheduleResolver $schedule,
+        private readonly ClockInterface $clock,
     ) {
     }
 
@@ -54,7 +56,7 @@ class ReservationActionPlanner
 
         // Pobyt už dávno skončil — nemá smysl plánovat budoucí akce zpětně.
         $end = $reservation->getCheckOut() ?? $reservation->getCheckIn();
-        if ($end < new \DateTimeImmutable('today')) {
+        if ($end < $this->clock->now()->setTime(0, 0)) {
             return 0;
         }
 

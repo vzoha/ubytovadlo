@@ -23,6 +23,7 @@ use App\Reservation\Event\ReservationFinancialsChangedEvent;
 use App\Vat\CnbExchangeRateClient;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\Clock\ClockInterface;
 
 /**
  * Orchestrace vystavení faktur. Tři vstupní body podle toku:
@@ -52,7 +53,14 @@ class InvoiceService
         private readonly IncomeUpserter $incomeUpserter,
         private readonly DepositConfig $depositConfig,
         private readonly EventDispatcherInterface $dispatcher,
+        private readonly ClockInterface $clock,
     ) {
+    }
+
+    /** Dnešní datum (půlnoc) — výchozí datum vystavení/úhrady faktury. */
+    private function today(): \DateTimeImmutable
+    {
+        return $this->clock->now()->setTime(0, 0);
     }
 
     public function issueDeposit(Reservation $reservation, ?\DateTimeImmutable $issuedAt = null): Invoice
@@ -62,7 +70,7 @@ class InvoiceService
         $this->assertNotYetIssued($reservation, InvoiceType::DEPOSIT);
         // Nad už vystavenou fakturou na celou částku nemá záloha co dělat.
         $this->assertNotYetIssued($reservation, InvoiceType::FULL);
-        $issuedAt ??= new \DateTimeImmutable('today');
+        $issuedAt ??= $this->today();
 
         // Výše zálohy je fixní částka nebo procento z ceny (CZK) dle nastavení.
         $amount = $this->depositConfig->computeAmount($reservation->getPriceTotal());
@@ -92,7 +100,7 @@ class InvoiceService
         if ($reservation->getPriceTotal() === null) {
             throw new \LogicException('Reservation nemá priceTotal — nelze vystavit doplatek.');
         }
-        $issuedAt ??= new \DateTimeImmutable('today');
+        $issuedAt ??= $this->today();
 
         $invoice = $this->buildInvoice($reservation, InvoiceType::FINAL, $issuedAt, $issuedAt->modify('+' . self::DUE_DAYS_DEFAULT . ' days'));
         $invoice->setParentInvoice($deposit);
@@ -123,7 +131,7 @@ class InvoiceService
         if ($reservation->getPriceTotal() === null) {
             throw new \LogicException('Reservation nemá priceTotal — nelze vystavit fakturu.');
         }
-        $issuedAt ??= new \DateTimeImmutable('today');
+        $issuedAt ??= $this->today();
 
         $dueDays = $reservation->getBillingMode() === BillingMode::FKSP ? self::DUE_DAYS_FKSP : self::DUE_DAYS_DEFAULT;
         $invoice = $this->buildInvoice($reservation, InvoiceType::FULL, $issuedAt, $issuedAt->modify('+' . $dueDays . ' days'));
@@ -152,7 +160,7 @@ class InvoiceService
 
     public function markPaid(Invoice $invoice, ?\DateTimeImmutable $paidAt = null): void
     {
-        $invoice->setPaidAt($paidAt ?? new \DateTimeImmutable('today'));
+        $invoice->setPaidAt($paidAt ?? $this->today());
         $path = $this->pdfRenderer->renderToFile($invoice);
         $invoice->setPdfPath($path);
         $this->em->flush();
