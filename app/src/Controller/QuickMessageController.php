@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Controller\Concern\ChecksCsrf;
 use App\Entity\QuickMessage;
 use App\Form\QuickMessageType;
 use App\Mail\MessageVariableResolver;
@@ -23,6 +24,8 @@ use Symfony\Component\Routing\Attribute\Route;
 
 class QuickMessageController extends AbstractController
 {
+    use ChecksCsrf;
+
     public function __construct(
         private readonly QuickMessageRepository $messages,
         private readonly EntityManagerInterface $em,
@@ -89,9 +92,7 @@ class QuickMessageController extends AbstractController
     #[Route('/nastaveni/rychle-zpravy/{id}/smazat', name: 'quick_message_delete', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function delete(QuickMessage $message, Request $request): Response
     {
-        if (!$this->isCsrfTokenValid('quick-message-delete-' . $message->getId(), (string) $request->request->get('_token'))) {
-            throw $this->createAccessDeniedException();
-        }
+        $this->assertCsrf($request, 'quick-message-delete-' . $message->getId());
 
         $this->em->remove($message);
         $this->em->flush();
@@ -103,9 +104,7 @@ class QuickMessageController extends AbstractController
     #[Route('/nastaveni/rychle-zpravy/{id}/posun', name: 'quick_message_move', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function move(QuickMessage $message, Request $request): Response
     {
-        if (!$this->isCsrfTokenValid('quick-message-move-' . $message->getId(), (string) $request->request->get('_token'))) {
-            throw $this->createAccessDeniedException();
-        }
+        $this->assertCsrf($request, 'quick-message-move-' . $message->getId());
 
         $direction = (string) $request->request->get('direction');
         $ordered = $this->messages->findOrdered();

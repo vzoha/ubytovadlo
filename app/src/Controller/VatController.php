@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Controller\Concern\ChecksCsrf;
 use App\Entity\AirbnbStatement;
 use App\Entity\BookingMonthlyInvoice;
 use App\Entity\Reservation;
@@ -38,6 +39,8 @@ use Symfony\Component\Routing\Attribute\Route;
 
 class VatController extends AbstractController
 {
+    use ChecksCsrf;
+
     public function __construct(
         private readonly ReservationRepository $reservations,
         private readonly BookingMonthlyInvoiceRepository $invoices,
@@ -220,9 +223,7 @@ class VatController extends AbstractController
     #[Route('/dph/airbnb-statement/{id}/delete', name: 'vat_airbnb_statement_delete', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function airbnbStatementDelete(AirbnbStatement $statement, Request $request): Response
     {
-        if (!$this->isCsrfTokenValid('vat-airbnb-delete-' . $statement->getId(), (string) $request->request->get('_token'))) {
-            throw $this->createAccessDeniedException();
-        }
+        $this->assertCsrf($request, 'vat-airbnb-delete-' . $statement->getId());
 
         $year = (int) $statement->getPeriodTo()->format('Y');
         $month = (int) $statement->getPeriodTo()->format('m');
@@ -283,9 +284,7 @@ class VatController extends AbstractController
     #[Route('/dph/{year}-{month}/mark-filed', name: 'vat_mark_filed', methods: ['POST'], requirements: ['year' => '\d{4}', 'month' => '\d{2}'])]
     public function markFiled(int $year, int $month, Request $request): Response
     {
-        if (!$this->isCsrfTokenValid('vat-file-' . $year . '-' . $month, (string) $request->request->get('_token'))) {
-            throw $this->createAccessDeniedException();
-        }
+        $this->assertCsrf($request, 'vat-file-' . $year . '-' . $month);
 
         $filedAtInput = trim((string) $request->request->get('filed_at', ''));
         $paidAtInput = trim((string) $request->request->get('paid_at', ''));

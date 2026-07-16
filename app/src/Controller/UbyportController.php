@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Controller\Concern\ChecksCsrf;
 use App\Entity\Reservation;
 use App\Repository\AccommodationProfileRepository;
 use App\Ubyport\UbyportQueue;
@@ -39,6 +40,8 @@ use Symfony\Component\Routing\Attribute\Route;
  */
 class UbyportController extends AbstractController
 {
+    use ChecksCsrf;
+
     public function __construct(
         private readonly AccommodationProfileRepository $profiles,
         private readonly UbyportQueue $queue,
@@ -79,9 +82,7 @@ class UbyportController extends AbstractController
     #[Route('/ubyport/{id}/export', name: 'ubyport_export', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function export(Reservation $reservation, Request $request): Response
     {
-        if (!$this->isCsrfTokenValid('ubyport-export-' . $reservation->getId(), (string) $request->request->get('_token'))) {
-            throw $this->createAccessDeniedException();
-        }
+        $this->assertCsrf($request, 'ubyport-export-' . $reservation->getId());
 
         $profile = $this->profiles->getSingleton();
         if ($profile === null) {
@@ -125,9 +126,7 @@ class UbyportController extends AbstractController
     #[Route('/ubyport/{id}/dorucenka', name: 'ubyport_receipt_upload', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function uploadReceipt(Reservation $reservation, Request $request): Response
     {
-        if (!$this->isCsrfTokenValid('ubyport-receipt-' . $reservation->getId(), (string) $request->request->get('_token'))) {
-            throw $this->createAccessDeniedException();
-        }
+        $this->assertCsrf($request, 'ubyport-receipt-' . $reservation->getId());
 
         $file = $request->files->get('receipt');
         if (!$file instanceof UploadedFile) {
@@ -183,9 +182,7 @@ class UbyportController extends AbstractController
     #[Route('/ubyport/{id}/oznacit', name: 'ubyport_confirm_manual', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function confirmManual(Reservation $reservation, Request $request): Response
     {
-        if (!$this->isCsrfTokenValid('ubyport-confirm-' . $reservation->getId(), (string) $request->request->get('_token'))) {
-            throw $this->createAccessDeniedException();
-        }
+        $this->assertCsrf($request, 'ubyport-confirm-' . $reservation->getId());
 
         $reservation->confirmUbyportReported(new \DateTimeImmutable());
         $this->em->flush();
@@ -213,9 +210,7 @@ class UbyportController extends AbstractController
     #[Route('/ubyport/{id}/vratit', name: 'ubyport_unreport', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function unreport(Reservation $reservation, Request $request): Response
     {
-        if (!$this->isCsrfTokenValid('ubyport-unreport-' . $reservation->getId(), (string) $request->request->get('_token'))) {
-            throw $this->createAccessDeniedException();
-        }
+        $this->assertCsrf($request, 'ubyport-unreport-' . $reservation->getId());
 
         $reservation->resetUbyport();
         foreach ($this->queue->foreignersOf($reservation) as $g) {

@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Controller\Concern\ChecksCsrf;
 use App\Entity\Invoice;
 use App\Entity\Reservation;
 use App\Enum\GuestMessageStatus;
@@ -30,6 +31,8 @@ use Symfony\Component\Routing\Attribute\Route;
 
 class InvoiceController extends AbstractController
 {
+    use ChecksCsrf;
+
     public function __construct(
         private readonly InvoiceService $invoices,
         private readonly InvoiceRepository $invoiceRepo,
@@ -238,12 +241,5 @@ class InvoiceController extends AbstractController
         $response->headers->set('Content-Type', 'application/pdf');
 
         return $response;
-    }
-
-    private function assertCsrf(Request $request, string $tokenId): void
-    {
-        if (!$this->isCsrfTokenValid($tokenId, (string) $request->request->get('_token'))) {
-            throw $this->createAccessDeniedException();
-        }
     }
 }

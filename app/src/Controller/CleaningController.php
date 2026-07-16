@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Controller\Concern\ChecksCsrf;
 use App\Entity\Cleaning;
 use App\Repository\CleaningRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -21,6 +22,8 @@ use Symfony\Component\Routing\Attribute\Route;
 
 class CleaningController extends AbstractController
 {
+    use ChecksCsrf;
+
     public function __construct(
         private readonly CleaningRepository $cleanings,
         private readonly EntityManagerInterface $em,
@@ -44,9 +47,7 @@ class CleaningController extends AbstractController
     #[Route('/uklid/{id}/zaplaceno', name: 'cleaning_mark_paid', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function markPaid(Cleaning $cleaning, Request $request): Response
     {
-        if (!$this->isCsrfTokenValid('cleaning-paid-' . $cleaning->getId(), (string) $request->request->get('_token'))) {
-            throw $this->createAccessDeniedException();
-        }
+        $this->assertCsrf($request, 'cleaning-paid-' . $cleaning->getId());
 
         $cleaning->setPaidAt(new \DateTimeImmutable());
         $this->em->flush();

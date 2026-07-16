@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Controller\Concern\ChecksCsrf;
 use App\Entity\ElectricityReading;
 use App\Repository\ElectricityReadingRepository;
 use App\Repository\ElectricityTariffRepository;
@@ -23,6 +24,8 @@ use Symfony\Component\Routing\Attribute\Route;
 
 class ElectricityController extends AbstractController
 {
+    use ChecksCsrf;
+
     public function __construct(
         private readonly ElectricityReadingRepository $readings,
         private readonly ElectricityTariffRepository $tariffs,
@@ -43,9 +46,7 @@ class ElectricityController extends AbstractController
     #[Route('/elektrina/odecet', name: 'electricity_create', methods: ['POST'])]
     public function create(Request $request): Response
     {
-        if (!$this->isCsrfTokenValid('electricity-reading', (string) $request->request->get('_token'))) {
-            throw $this->createAccessDeniedException();
-        }
+        $this->assertCsrf($request, 'electricity-reading');
 
         $dateRaw = trim((string) $request->request->get('read_at', ''));
         $vt = (string) $request->request->get('vt_meter', '');
@@ -94,9 +95,7 @@ class ElectricityController extends AbstractController
     #[Route('/elektrina/odecet/{id}/smazat', name: 'electricity_delete', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function delete(ElectricityReading $reading, Request $request): Response
     {
-        if (!$this->isCsrfTokenValid('electricity-delete-' . $reading->getId(), (string) $request->request->get('_token'))) {
-            throw $this->createAccessDeniedException();
-        }
+        $this->assertCsrf($request, 'electricity-delete-' . $reading->getId());
 
         $date = $reading->getReadAt();
         $this->em->remove($reading);
@@ -111,9 +110,7 @@ class ElectricityController extends AbstractController
     #[Route('/elektrina/rebalance', name: 'electricity_rebalance', methods: ['POST'])]
     public function rebalance(Request $request): Response
     {
-        if (!$this->isCsrfTokenValid('electricity-rebalance', (string) $request->request->get('_token'))) {
-            throw $this->createAccessDeniedException();
-        }
+        $this->assertCsrf($request, 'electricity-rebalance');
 
         $stats = $this->allocator->rebalanceAll();
         $this->addFlash('success', sprintf(

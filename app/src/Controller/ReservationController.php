@@ -13,6 +13,7 @@ namespace App\Controller;
 
 use App\Booking\BookingExtranetParser;
 use App\Cashflow\IncomeUpserter;
+use App\Controller\Concern\ChecksCsrf;
 use App\Entity\Reservation;
 use App\Entity\ReservationAction;
 use App\Entity\ReservationNote;
@@ -54,6 +55,8 @@ use Symfony\Component\Routing\Attribute\Route;
 
 class ReservationController extends AbstractController
 {
+    use ChecksCsrf;
+
     public function __construct(
         private readonly ReservationRepository $reservations,
         private readonly InvoiceRepository $invoices,
@@ -175,9 +178,7 @@ class ReservationController extends AbstractController
     #[Route('/reservation/{id}/cleaning', name: 'reservation_set_cleaning', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function setCleaning(Reservation $reservation, Request $request): Response
     {
-        if (!$this->isCsrfTokenValid('cleaning-' . $reservation->getId(), (string) $request->request->get('_token'))) {
-            throw $this->createAccessDeniedException();
-        }
+        $this->assertCsrf($request, 'cleaning-' . $reservation->getId());
 
         $cleaning = $this->cleanings->findForReservation($reservation);
         if ($cleaning === null) {
@@ -218,9 +219,7 @@ class ReservationController extends AbstractController
     #[Route('/reservation/{id}/payout', name: 'reservation_record_payout', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function recordPayout(Reservation $reservation, Request $request): Response
     {
-        if (!$this->isCsrfTokenValid('payout-' . $reservation->getId(), (string) $request->request->get('_token'))) {
-            throw $this->createAccessDeniedException();
-        }
+        $this->assertCsrf($request, 'payout-' . $reservation->getId());
 
         // Ruční výplata je OTA koncept (Airbnb/Booking) — u web rezervace host platí
         // přímo a příjem se drží z faktur, ne z výplaty.
@@ -252,9 +251,7 @@ class ReservationController extends AbstractController
     #[Route('/reservation/{id}/payment', name: 'reservation_record_payment', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function recordPayment(Reservation $reservation, Request $request): Response
     {
-        if (!$this->isCsrfTokenValid('payment-' . $reservation->getId(), (string) $request->request->get('_token'))) {
-            throw $this->createAccessDeniedException();
-        }
+        $this->assertCsrf($request, 'payment-' . $reservation->getId());
 
         // Ruční platba hosta je web/přímý koncept — u OTA platí host platformě
         // a reálné peníze řeší „Reálná výplata".
@@ -287,9 +284,7 @@ class ReservationController extends AbstractController
     #[Route('/reservation/payment/{id}/delete', name: 'reservation_delete_payment', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function deletePayment(ReservationReceipt $receipt, Request $request): Response
     {
-        if (!$this->isCsrfTokenValid('payment-delete-' . $receipt->getId(), (string) $request->request->get('_token'))) {
-            throw $this->createAccessDeniedException();
-        }
+        $this->assertCsrf($request, 'payment-delete-' . $receipt->getId());
 
         if ($receipt->getOriginType() !== ReceiptOrigin::MANUAL_PAYMENT) {
             throw $this->createNotFoundException();
@@ -333,9 +328,7 @@ class ReservationController extends AbstractController
     #[Route('/reservation/{id}/billing-mode', name: 'reservation_set_billing_mode', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function setBillingMode(Reservation $reservation, Request $request): Response
     {
-        if (!$this->isCsrfTokenValid('billing-mode-' . $reservation->getId(), (string) $request->request->get('_token'))) {
-            throw $this->createAccessDeniedException();
-        }
+        $this->assertCsrf($request, 'billing-mode-' . $reservation->getId());
 
         $value = (string) $request->request->get('billing_mode', '');
         $reservation->setBillingMode($value !== '' ? BillingMode::tryFrom($value) : null);
@@ -349,9 +342,7 @@ class ReservationController extends AbstractController
     #[Route('/reservation/{id}/import-booking', name: 'reservation_import_booking', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function importBooking(Reservation $reservation, Request $request, BookingExtranetParser $parser): Response
     {
-        if (!$this->isCsrfTokenValid('import-booking-' . $reservation->getId(), (string) $request->request->get('_token'))) {
-            throw $this->createAccessDeniedException();
-        }
+        $this->assertCsrf($request, 'import-booking-' . $reservation->getId());
         if ($reservation->getChannel() !== Channel::BOOKING) {
             throw $this->createNotFoundException();
         }
@@ -373,9 +364,7 @@ class ReservationController extends AbstractController
     #[Route('/reservation/{id}/reset-checkin', name: 'reservation_reset_checkin', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function resetCheckin(Reservation $reservation, Request $request): Response
     {
-        if (!$this->isCsrfTokenValid('reset-checkin-' . $reservation->getId(), (string) $request->request->get('_token'))) {
-            throw $this->createAccessDeniedException();
-        }
+        $this->assertCsrf($request, 'reset-checkin-' . $reservation->getId());
 
         $reservation->resetCheckin();
         $this->em->flush();
@@ -387,9 +376,7 @@ class ReservationController extends AbstractController
     #[Route('/reservation/{id}/confirm', name: 'reservation_confirm', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function confirm(Reservation $reservation, Request $request): Response
     {
-        if (!$this->isCsrfTokenValid('confirm-' . $reservation->getId(), (string) $request->request->get('_token'))) {
-            throw $this->createAccessDeniedException();
-        }
+        $this->assertCsrf($request, 'confirm-' . $reservation->getId());
 
         $result = $this->confirmation->confirm($reservation, true);
 
@@ -407,9 +394,7 @@ class ReservationController extends AbstractController
     #[Route('/reservation/{id}/note', name: 'reservation_add_note', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function addNote(Reservation $reservation, Request $request): Response
     {
-        if (!$this->isCsrfTokenValid('note-' . $reservation->getId(), (string) $request->request->get('_token'))) {
-            throw $this->createAccessDeniedException();
-        }
+        $this->assertCsrf($request, 'note-' . $reservation->getId());
 
         $body = trim((string) $request->request->get('body', ''));
         if ($body === '') {
@@ -445,9 +430,7 @@ class ReservationController extends AbstractController
     #[Route('/reservation/{id}/action', name: 'reservation_add_action', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function addAction(Reservation $reservation, Request $request): Response
     {
-        if (!$this->isCsrfTokenValid('action-' . $reservation->getId(), (string) $request->request->get('_token'))) {
-            throw $this->createAccessDeniedException();
-        }
+        $this->assertCsrf($request, 'action-' . $reservation->getId());
 
         // Ručně lze přidat jen připomínku nebo ad-hoc zprávu hostovi.
         $type = ActionType::tryFrom((string) $request->request->get('type', '')) ?? ActionType::CUSTOM_REMINDER;
@@ -483,9 +466,7 @@ class ReservationController extends AbstractController
     #[Route('/reservation/action/{id}/reschedule', name: 'reservation_action_reschedule', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function rescheduleAction(ReservationAction $action, Request $request): Response
     {
-        if (!$this->isCsrfTokenValid('action-edit-' . $action->getId(), (string) $request->request->get('_token'))) {
-            throw $this->createAccessDeniedException();
-        }
+        $this->assertCsrf($request, 'action-edit-' . $action->getId());
 
         $whenRaw = trim((string) $request->request->get('scheduled_for', ''));
         try {
@@ -505,9 +486,7 @@ class ReservationController extends AbstractController
     #[Route('/reservation/action/{id}/cancel', name: 'reservation_action_cancel', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function cancelAction(ReservationAction $action, Request $request): Response
     {
-        if (!$this->isCsrfTokenValid('action-edit-' . $action->getId(), (string) $request->request->get('_token'))) {
-            throw $this->createAccessDeniedException();
-        }
+        $this->assertCsrf($request, 'action-edit-' . $action->getId());
 
         $action->cancel();
         $this->em->flush();
@@ -519,9 +498,7 @@ class ReservationController extends AbstractController
     #[Route('/reservation/action/{id}/done', name: 'reservation_action_done', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function markActionDone(ReservationAction $action, Request $request): Response
     {
-        if (!$this->isCsrfTokenValid('action-edit-' . $action->getId(), (string) $request->request->get('_token'))) {
-            throw $this->createAccessDeniedException();
-        }
+        $this->assertCsrf($request, 'action-edit-' . $action->getId());
 
         $action->markDone('Vyřízeno ručně.');
         $this->em->flush();
@@ -533,9 +510,7 @@ class ReservationController extends AbstractController
     #[Route('/reservation/action/{id}/send', name: 'reservation_action_send', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function sendActionMessage(ReservationAction $action, Request $request): Response
     {
-        if (!$this->isCsrfTokenValid('action-edit-' . $action->getId(), (string) $request->request->get('_token'))) {
-            throw $this->createAccessDeniedException();
-        }
+        $this->assertCsrf($request, 'action-edit-' . $action->getId());
 
         if ($this->actionExecutor->sendNow($action)) {
             $this->em->flush();

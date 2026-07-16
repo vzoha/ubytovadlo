@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Controller\Concern\ChecksCsrf;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -24,6 +25,8 @@ use Symfony\Component\Routing\Attribute\Route;
  */
 class ProfileController extends AbstractController
 {
+    use ChecksCsrf;
+
     private const MIN_PASSWORD_LENGTH = 8;
 
     public function __construct(
@@ -53,9 +56,7 @@ class ProfileController extends AbstractController
 
     private function changePassword(User $user, Request $request): void
     {
-        if (!$this->isCsrfTokenValid('profile-password', (string) $request->request->get('_token'))) {
-            throw $this->createAccessDeniedException();
-        }
+        $this->assertCsrf($request, 'profile-password');
 
         $current = (string) $request->request->get('current_password');
         $new = (string) $request->request->get('new_password');

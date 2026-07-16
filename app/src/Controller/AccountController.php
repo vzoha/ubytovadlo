@@ -14,6 +14,7 @@ namespace App\Controller;
 use App\Cashflow\AccountBalanceCalculator;
 use App\Cashflow\BalanceStatementReconciler;
 use App\Cashflow\CashflowSummary;
+use App\Controller\Concern\ChecksCsrf;
 use App\Entity\Account;
 use App\Entity\BalanceStatement;
 use App\Entity\LedgerEntry;
@@ -38,6 +39,8 @@ use Symfony\Component\Routing\Attribute\Route;
  */
 class AccountController extends AbstractController
 {
+    use ChecksCsrf;
+
     public function __construct(
         private readonly AccountRepository $accounts,
         private readonly LedgerEntryRepository $ledger,
@@ -172,9 +175,7 @@ class AccountController extends AbstractController
     #[Route('/ucty/vydaj', name: 'account_expense_add', methods: ['POST'])]
     public function addExpense(Request $request): Response
     {
-        if (!$this->isCsrfTokenValid('account-expense', (string) $request->request->get('_token'))) {
-            throw $this->createAccessDeniedException();
-        }
+        $this->assertCsrf($request, 'account-expense');
 
         $account = $this->requireAccount($request->request->get('account'));
         $category = ExpenseCategory::tryFrom((string) $request->request->get('category', ''));
@@ -197,9 +198,7 @@ class AccountController extends AbstractController
     #[Route('/ucty/prijem', name: 'account_income_add', methods: ['POST'])]
     public function addIncome(Request $request): Response
     {
-        if (!$this->isCsrfTokenValid('account-income', (string) $request->request->get('_token'))) {
-            throw $this->createAccessDeniedException();
-        }
+        $this->assertCsrf($request, 'account-income');
 
         $account = $this->requireAccount($request->request->get('account'));
         $entry = new LedgerEntry(
@@ -220,9 +219,7 @@ class AccountController extends AbstractController
     #[Route('/ucty/prevod', name: 'account_transfer_add', methods: ['POST'])]
     public function addTransfer(Request $request): Response
     {
-        if (!$this->isCsrfTokenValid('account-transfer', (string) $request->request->get('_token'))) {
-            throw $this->createAccessDeniedException();
-        }
+        $this->assertCsrf($request, 'account-transfer');
 
         $from = $this->requireAccount($request->request->get('account'));
         $to = $this->requireAccount($request->request->get('counter_account'));
@@ -251,9 +248,7 @@ class AccountController extends AbstractController
     #[Route('/ucty/uzaverka', name: 'account_statement_add', methods: ['POST'])]
     public function addStatement(Request $request): Response
     {
-        if (!$this->isCsrfTokenValid('account-statement', (string) $request->request->get('_token'))) {
-            throw $this->createAccessDeniedException();
-        }
+        $this->assertCsrf($request, 'account-statement');
 
         $account = $this->requireAccount($request->request->get('account'));
         $statement = new BalanceStatement(
@@ -274,9 +269,7 @@ class AccountController extends AbstractController
     #[Route('/ucty/uzaverka/{id}/korekce', name: 'account_statement_correction', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function createCorrection(BalanceStatement $statement, Request $request): Response
     {
-        if (!$this->isCsrfTokenValid('account-correction-' . $statement->getId(), (string) $request->request->get('_token'))) {
-            throw $this->createAccessDeniedException();
-        }
+        $this->assertCsrf($request, 'account-correction-' . $statement->getId());
 
         $entry = $this->reconciler->createCorrection($statement);
         $this->addFlash(
@@ -290,9 +283,7 @@ class AccountController extends AbstractController
     #[Route('/ucty/novy', name: 'account_add', methods: ['POST'])]
     public function addAccount(Request $request): Response
     {
-        if (!$this->isCsrfTokenValid('account-new', (string) $request->request->get('_token'))) {
-            throw $this->createAccessDeniedException();
-        }
+        $this->assertCsrf($request, 'account-new');
 
         $name = trim((string) $request->request->get('name'));
         $type = AccountType::tryFrom((string) $request->request->get('type', ''));
@@ -314,9 +305,7 @@ class AccountController extends AbstractController
     #[Route('/ucty/vydaj/{id}/smazat', name: 'account_expense_delete', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function deleteEntry(LedgerEntry $entry, Request $request): Response
     {
-        if (!$this->isCsrfTokenValid('account-entry-delete-' . $entry->getId(), (string) $request->request->get('_token'))) {
-            throw $this->createAccessDeniedException();
-        }
+        $this->assertCsrf($request, 'account-entry-delete-' . $entry->getId());
 
         $this->em->remove($entry);
         $this->em->flush();
@@ -329,9 +318,7 @@ class AccountController extends AbstractController
     public function editEntry(LedgerEntry $entry, Request $request): Response
     {
         if ($request->isMethod('POST')) {
-            if (!$this->isCsrfTokenValid('account-entry-edit-' . $entry->getId(), (string) $request->request->get('_token'))) {
-                throw $this->createAccessDeniedException();
-            }
+            $this->assertCsrf($request, 'account-entry-edit-' . $entry->getId());
 
             $entry->setOccurredOn($this->parseDate($request->request->get('occurred_on')));
             $entry->setAmountCzk($this->parseAmount($request->request->get('amount')));
@@ -368,9 +355,7 @@ class AccountController extends AbstractController
     public function editAccount(Account $account, Request $request): Response
     {
         if ($request->isMethod('POST')) {
-            if (!$this->isCsrfTokenValid('account-edit-' . $account->getId(), (string) $request->request->get('_token'))) {
-                throw $this->createAccessDeniedException();
-            }
+            $this->assertCsrf($request, 'account-edit-' . $account->getId());
 
             $name = trim((string) $request->request->get('name'));
             $type = AccountType::tryFrom((string) $request->request->get('type', ''));

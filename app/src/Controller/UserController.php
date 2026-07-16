@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Controller\Concern\ChecksCsrf;
 use App\Entity\User;
 use App\Enum\UserRole;
 use App\Repository\UserRepository;
@@ -29,6 +30,8 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[Route('/nastaveni/uzivatele')]
 class UserController extends AbstractController
 {
+    use ChecksCsrf;
+
     private const MIN_PASSWORD_LENGTH = 8;
 
     public function __construct(
@@ -50,9 +53,7 @@ class UserController extends AbstractController
     #[Route('/novy', name: 'user_create', methods: ['POST'])]
     public function create(Request $request): Response
     {
-        if (!$this->isCsrfTokenValid('user-create', (string) $request->request->get('_token'))) {
-            throw $this->createAccessDeniedException();
-        }
+        $this->assertCsrf($request, 'user-create');
 
         $email = strtolower(trim((string) $request->request->get('email')));
         $password = (string) $request->request->get('password');
@@ -87,9 +88,7 @@ class UserController extends AbstractController
     #[Route('/{id}', name: 'user_update', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function update(User $user, Request $request): Response
     {
-        if (!$this->isCsrfTokenValid('user-update-' . $user->getId(), (string) $request->request->get('_token'))) {
-            throw $this->createAccessDeniedException();
-        }
+        $this->assertCsrf($request, 'user-update-' . $user->getId());
 
         $role = UserRole::tryFrom((string) $request->request->get('role', '')) ?? $user->getRole();
         $active = $request->request->getBoolean('active');
@@ -116,9 +115,7 @@ class UserController extends AbstractController
     #[Route('/{id}/heslo', name: 'user_reset_password', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function resetPassword(User $user, Request $request): Response
     {
-        if (!$this->isCsrfTokenValid('user-password-' . $user->getId(), (string) $request->request->get('_token'))) {
-            throw $this->createAccessDeniedException();
-        }
+        $this->assertCsrf($request, 'user-password-' . $user->getId());
 
         $password = (string) $request->request->get('password');
         if (\strlen($password) < self::MIN_PASSWORD_LENGTH) {
@@ -137,9 +134,7 @@ class UserController extends AbstractController
     #[Route('/{id}/smazat', name: 'user_delete', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function delete(User $user, Request $request): Response
     {
-        if (!$this->isCsrfTokenValid('user-delete-' . $user->getId(), (string) $request->request->get('_token'))) {
-            throw $this->createAccessDeniedException();
-        }
+        $this->assertCsrf($request, 'user-delete-' . $user->getId());
 
         if ($this->isSelf($user)) {
             $this->addFlash('danger', 'Vlastní účet smazat nelze.');
