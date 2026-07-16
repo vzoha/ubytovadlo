@@ -44,6 +44,14 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Přidáno
 
+- **Nastavitelné časování a režim zpráv hostům.** U každé plánované zprávy (žádost
+  o zálohu, před příjezdem, po pobytu, připomínka doplatku) se v **Nastavení →
+  Šablony zpráv** volí, **kdy** odejde — počet dní před/po příjezdu, odjezdu nebo
+  objednávce a hodina odeslání. Každá zpráva má jeden ze tří **režimů**:
+  *Automaticky* (odešle se sama v naplánovaný čas), *Jen návrh* (objeví se na
+  časové ose rezervace a odešleš ji ručně tlačítkem **Odeslat**), *Vypnuto* (na osu
+  se vůbec nezaloží). U konkrétní rezervace lze zprávu na časové ose kdykoli
+  odložit, zrušit nebo odeslat dřív.
 - **Rychlý kontakt na hosta z detailu rezervace.** U karty Host jsou tlačítka
   **Volat**, **SMS**, **WhatsApp** a **E-mail** — otevřou příslušnou aplikaci
   s předvyplněným číslem (nebo adresou). Telefon se zobrazuje v přehledném národním

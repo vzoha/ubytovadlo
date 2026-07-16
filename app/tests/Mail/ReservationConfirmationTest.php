@@ -19,6 +19,7 @@ use App\Enum\GuestMessageStatus;
 use App\Enum\MessageKind;
 use App\Enum\OwnerNotificationType;
 use App\Enum\ReservationStatus;
+use App\Enum\SendMode;
 use App\Mail\GuestMessageSender;
 use App\Mail\MessageTemplateProvider;
 use App\Mail\ReservationConfirmation;
@@ -143,7 +144,8 @@ final class ReservationConfirmationTest extends TestCase
 
     private function template(bool $enabled): MessageTemplate
     {
-        return (new MessageTemplate(MessageKind::RESERVATION_CONFIRMED, 'Předmět', 'Tělo'))->setEnabled($enabled);
+        return (new MessageTemplate(MessageKind::RESERVATION_CONFIRMED, 'Předmět', 'Tělo'))
+            ->setMode($enabled ? SendMode::AUTO : SendMode::OFF);
     }
 
     private function sent(Reservation $reservation): GuestMessage

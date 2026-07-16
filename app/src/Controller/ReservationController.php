@@ -19,6 +19,7 @@ use App\Entity\ReservationNote;
 use App\Entity\ReservationReceipt;
 use App\Entity\User;
 use App\Enum\ActionOrigin;
+use App\Enum\ActionStatus;
 use App\Enum\ActionType;
 use App\Enum\BillingMode;
 use App\Enum\Channel;
@@ -41,6 +42,7 @@ use App\Repository\ReservationReceiptRepository;
 use App\Repository\ReservationRepository;
 use App\Service\Cleaning\CleaningPriceList;
 use App\Service\Electricity\ElectricityCostCalculator;
+use App\Timeline\ReservationActionExecutor;
 use App\Timeline\ReservationActionPlanner;
 use App\Timeline\ReservationTimelineBuilder;
 use Doctrine\ORM\EntityManagerInterface;
@@ -70,6 +72,7 @@ class ReservationController extends AbstractController
         private readonly DepositConfig $depositConfig,
         private readonly ReservationConfirmation $confirmation,
         private readonly GuestMessageTexts $guestMessageTexts,
+        private readonly ReservationActionExecutor $actionExecutor,
     ) {
     }
 
@@ -523,6 +526,27 @@ class ReservationController extends AbstractController
         $action->markDone('Vyřízeno ručně.');
         $this->em->flush();
         $this->addFlash('success', 'Akce označena jako hotová.');
+
+        return $this->redirectToRoute('reservation_detail', ['id' => $action->getReservation()->getId()]);
+    }
+
+    #[Route('/reservation/action/{id}/send', name: 'reservation_action_send', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function sendActionMessage(ReservationAction $action, Request $request): Response
+    {
+        if (!$this->isCsrfTokenValid('action-edit-' . $action->getId(), (string) $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+
+        if ($this->actionExecutor->sendNow($action)) {
+            $this->em->flush();
+        }
+
+        $result = $action->getResult();
+        if ($action->getStatus() === ActionStatus::DONE) {
+            $this->addFlash('success', $result ?? 'Zpráva odeslána hostovi.');
+        } else {
+            $this->addFlash('warning', $result ?? 'Zprávu se nepodařilo odeslat.');
+        }
 
         return $this->redirectToRoute('reservation_detail', ['id' => $action->getReservation()->getId()]);
     }

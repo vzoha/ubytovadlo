@@ -40,6 +40,12 @@
 
                             {% if item.isOpenAction %}
                                 <div class="d-flex gap-1 mt-1 flex-wrap align-items-center">
+                                    {% if item.action.type.sendsGuestMessage %}
+                                        <form method="post" action="{{ path('reservation_action_send', {id: item.action.id}) }}" class="d-inline" onsubmit="return confirm('Odeslat zprávu hostovi teď?');">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('action-edit-' ~ item.action.id) }}">
+                                            <button class="btn btn-outline-primary btn-sm py-0">Odeslat</button>
+                                        </form>
+                                    {% endif %}
                                     <form method="post" action="{{ path('reservation_action_done', {id: item.action.id}) }}" class="d-inline">
                                         <input type="hidden" name="_token" value="{{ csrf_token('action-edit-' ~ item.action.id) }}">
                                         <button class="btn btn-outline-success btn-sm py-0">Hotovo</button>

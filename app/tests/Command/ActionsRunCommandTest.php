@@ -22,6 +22,7 @@ use App\Enum\ActionType;
 use App\Enum\Channel;
 use App\Enum\InvoiceType;
 use App\Enum\MessageKind;
+use App\Enum\SendMode;
 use App\Mail\MailSettingsProvider;
 use App\Mail\MessageTemplateDefaults;
 use App\Repository\SettingRepository;
@@ -102,10 +103,55 @@ final class ActionsRunCommandTest extends KernelTestCase
 
     public function testGuestMessageInWindowWithoutEmailSkipped(): void
     {
-        // Stejné okno, ale host nemá e-mail → zprávu nelze poslat → SKIPPED.
+        // Stejné okno a zapnuté automatické odesílání, ale host nemá e-mail →
+        // zprávu nelze poslat → SKIPPED.
+        $this->enableTemplate(MessageKind::PRE_ARRIVAL);
+
         $r = new Reservation(Channel::WEB, new \DateTimeImmutable('+5 days'));
         $r->setCheckOut(new \DateTimeImmutable('+7 days'));
         $r->setGuestName('No Email Host');
+        $this->em->persist($r);
+        $msg = new ReservationAction($r, ActionType::PRE_ARRIVAL_MESSAGE, new \DateTimeImmutable('-1 hour'));
+        $this->em->persist($msg);
+        $this->em->flush();
+
+        $this->tester->execute([]);
+
+        $this->em->refresh($msg);
+        self::assertSame(ActionStatus::SKIPPED, $msg->getStatus());
+    }
+
+    public function testDraftGuestMessageWaitsInsteadOfSending(): void
+    {
+        // Režim „jen návrh": zpráva je v okně a host má e-mail, přesto ji cron
+        // sám neodešle — zůstane naplánovaná k ručnímu odeslání.
+        $this->setTemplateMode(MessageKind::PRE_ARRIVAL, SendMode::DRAFT);
+
+        $r = new Reservation(Channel::WEB, new \DateTimeImmutable('+5 days'));
+        $r->setCheckOut(new \DateTimeImmutable('+7 days'));
+        $r->setGuestName('Draft Host');
+        $r->setGuestEmail('draft@example.com');
+        $this->em->persist($r);
+        $msg = new ReservationAction($r, ActionType::PRE_ARRIVAL_MESSAGE, new \DateTimeImmutable('-1 hour'));
+        $this->em->persist($msg);
+        $this->em->flush();
+
+        $this->tester->execute([]);
+
+        $this->em->refresh($msg);
+        self::assertSame(ActionStatus::PLANNED, $msg->getStatus());
+        self::assertNull($this->em->getRepository(GuestMessage::class)->findOneBy(['reservation' => $r]));
+    }
+
+    public function testDisabledGuestMessageIsSkipped(): void
+    {
+        // Vypnutá zpráva se v okně přeskočí (neodešle, ani nečeká).
+        $this->setTemplateMode(MessageKind::PRE_ARRIVAL, SendMode::OFF);
+
+        $r = new Reservation(Channel::WEB, new \DateTimeImmutable('+5 days'));
+        $r->setCheckOut(new \DateTimeImmutable('+7 days'));
+        $r->setGuestName('Off Host');
+        $r->setGuestEmail('off@example.com');
         $this->em->persist($r);
         $msg = new ReservationAction($r, ActionType::PRE_ARRIVAL_MESSAGE, new \DateTimeImmutable('-1 hour'));
         $this->em->persist($msg);
@@ -134,8 +180,13 @@ final class ActionsRunCommandTest extends KernelTestCase
 
     private function enableTemplate(MessageKind $kind): void
     {
+        $this->setTemplateMode($kind, SendMode::AUTO);
+    }
+
+    private function setTemplateMode(MessageKind $kind, SendMode $mode): void
+    {
         $template = MessageTemplateDefaults::for($kind);
-        $template->setEnabled(true);
+        $template->setMode($mode);
         $this->em->persist($template);
         $this->em->flush();
     }

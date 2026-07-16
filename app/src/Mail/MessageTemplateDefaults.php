@@ -13,18 +13,30 @@ namespace App\Mail;
 
 use App\Entity\MessageTemplate;
 use App\Enum\MessageKind;
+use App\Enum\SendMode;
+use App\Enum\TimingAnchor;
 
 /**
- * Výchozí texty šablon e-mailů (předmět + tělo v Markdownu s proměnnými). Slouží
- * jako základ pro čerstvou instanci — provozovatel je v UI přepíše a override se
- * uloží do DB. Záměrně neutrální, bez konkrétní instance.
+ * Výchozí šablony e-mailů hostům — text (předmět + tělo v Markdownu s proměnnými),
+ * výchozí režim odesílání i časování na ose rezervace. Slouží jako základ pro
+ * čerstvou instanci: provozovatel je v UI přepíše a override se uloží do DB.
+ * Plánované zprávy startují jako návrh (objeví se na ose, nic se samo neodešle),
+ * ostatní vypnuté — provozovatel je zapne, až bude chtít.
+ *
+ * @see SendMode
  */
 final class MessageTemplateDefaults
 {
-    /** @var array<string, array{subject: string, body: string}> */
+    /**
+     * @var array<string, array{subject: string, body: string, mode: SendMode, anchor?: TimingAnchor, offsetDays?: int, sendAt?: ?string}>
+     */
     private const DEFAULTS = [
         'reservation_request' => [
             'subject' => 'Rezervace {{ variable_symbol }} — zbývá zaplatit zálohu · {{ accommodation_name }}',
+            'mode' => SendMode::DRAFT,
+            'anchor' => TimingAnchor::CREATED,
+            'offsetDays' => 0,
+            'sendAt' => null,
             'body' => <<<'MD'
                 Dobrý den, {{ guest_first_name_vocative }},
 
@@ -45,6 +57,7 @@ final class MessageTemplateDefaults
         ],
         'reservation_confirmed' => [
             'subject' => 'Rezervace potvrzena — {{ accommodation_name }}, příjezd {{ check_in }}',
+            'mode' => SendMode::OFF,
             'body' => <<<'MD'
                 Dobrý den, {{ guest_first_name_vocative }},
 
@@ -61,6 +74,10 @@ final class MessageTemplateDefaults
         ],
         'pre_arrival' => [
             'subject' => 'Těšíme se na vás — {{ accommodation_name }}, příjezd {{ check_in }}',
+            'mode' => SendMode::DRAFT,
+            'anchor' => TimingAnchor::CHECK_IN,
+            'offsetDays' => -3,
+            'sendAt' => '09:00',
             'body' => <<<'MD'
                 Dobrý den, {{ guest_first_name_vocative }},
 
@@ -80,6 +97,10 @@ final class MessageTemplateDefaults
         ],
         'post_stay' => [
             'subject' => 'Děkujeme za návštěvu — {{ accommodation_name }}',
+            'mode' => SendMode::DRAFT,
+            'anchor' => TimingAnchor::CHECK_OUT,
+            'offsetDays' => 1,
+            'sendAt' => '10:00',
             'body' => <<<'MD'
                 Dobrý den, {{ guest_first_name_vocative }},
 
@@ -92,6 +113,10 @@ final class MessageTemplateDefaults
         ],
         'balance_reminder' => [
             'subject' => 'Doplatek za pobyt — {{ accommodation_name }}',
+            'mode' => SendMode::DRAFT,
+            'anchor' => TimingAnchor::CHECK_IN,
+            'offsetDays' => 0,
+            'sendAt' => '12:00',
             'body' => <<<'MD'
                 Dobrý den, {{ guest_first_name_vocative }},
 
@@ -104,6 +129,7 @@ final class MessageTemplateDefaults
         ],
         'invoice' => [
             'subject' => 'Faktura č. {{ invoice_number }} — {{ accommodation_name }}',
+            'mode' => SendMode::OFF,
             'body' => <<<'MD'
                 Dobrý den, {{ guest_first_name_vocative }},
 
@@ -114,6 +140,7 @@ final class MessageTemplateDefaults
         ],
         'custom' => [
             'subject' => 'Zpráva — {{ accommodation_name }}',
+            'mode' => SendMode::OFF,
             'body' => <<<'MD'
                 Dobrý den, {{ guest_first_name_vocative }},
 
@@ -127,6 +154,12 @@ final class MessageTemplateDefaults
         $default = self::DEFAULTS[$kind->value]
             ?? throw new \LogicException(sprintf('Chybí výchozí šablona pro druh zprávy „%s".', $kind->value));
 
-        return new MessageTemplate($kind, $default['subject'], $default['body']);
+        $template = new MessageTemplate($kind, $default['subject'], $default['body']);
+        $template->setMode($default['mode']);
+        if (isset($default['anchor'])) {
+            $template->setTiming($default['anchor'], $default['offsetDays'], $default['sendAt']);
+        }
+
+        return $template;
     }
 }

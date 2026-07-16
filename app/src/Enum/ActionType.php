@@ -63,4 +63,10 @@ enum ActionType: string
             default => false,
         };
     }
+
+    /** Akce, kterou lze z osy ručně odeslat hostovi e-mailem (má svou šablonu). */
+    public function sendsGuestMessage(): bool
+    {
+        return $this->isGuestMessage() || $this === self::BALANCE_REMINDER;
+    }
 }

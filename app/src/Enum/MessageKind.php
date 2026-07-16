@@ -53,6 +53,15 @@ enum MessageKind: string
         };
     }
 
+    /** Zpráva se plánuje na osu rezervace, takže má nastavitelný režim a časování. */
+    public function isScheduled(): bool
+    {
+        return match ($this) {
+            self::RESERVATION_REQUEST, self::PRE_ARRIVAL, self::POST_STAY, self::BALANCE_REMINDER => true,
+            default => false,
+        };
+    }
+
     /** Mapování naplánované akce na druh zprávy (null = akce není zpráva hostovi). */
     public static function fromActionType(ActionType $type): ?self
     {

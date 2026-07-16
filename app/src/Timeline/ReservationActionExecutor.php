@@ -20,6 +20,7 @@ use App\Enum\InvoiceType;
 use App\Enum\MessageKind;
 use App\Enum\OwnerNotificationType;
 use App\Enum\PaymentStatus;
+use App\Enum\SendMode;
 use App\Invoice\BalanceCalculator;
 use App\Invoice\PaymentStatusResolver;
 use App\Mail\GuestMessageSender;
@@ -151,11 +152,40 @@ class ReservationActionExecutor
             return false;
         }
 
-        // Auto zprávy ctí vypnutou šablonu; custom je ruční, pošle se vždy.
-        if ($kind !== MessageKind::CUSTOM && !$this->templates->for($kind)->isEnabled()) {
-            $action->markSkipped('Šablona zprávy je vypnutá — neodesláno.');
+        // Custom je ruční, pošle se vždy. Ostatní ctí režim: vypnutá se přeskočí,
+        // „jen návrh" zůstane na ose k ručnímu odeslání (cron ji sám neodešle).
+        if ($kind !== MessageKind::CUSTOM) {
+            $mode = $this->templates->for($kind)->getMode();
+            if ($mode === SendMode::OFF) {
+                $action->markSkipped('Zpráva je vypnutá — neodesláno.');
+
+                return true;
+            }
+            if ($mode === SendMode::DRAFT) {
+                return false;
+            }
+        }
+
+        if (!$this->sender->canSend($action->getReservation())) {
+            $action->markSkipped('Host nemá e-mail — zpráva neodeslána.');
 
             return true;
+        }
+
+        return $this->dispatch($action, $kind, $this->customOverride($action, $kind));
+    }
+
+    /**
+     * Ruční odeslání zprávy z časové osy (tlačítko u návrhu) — přeskočí režim
+     * i okno platnosti, odešle rovnou. Respektuje jen chybějící e-mail hosta.
+     *
+     * @return bool true, pokud akce změnila stav (a je třeba flush)
+     */
+    public function sendNow(ReservationAction $action): bool
+    {
+        $kind = MessageKind::fromActionType($action->getType());
+        if ($kind === null) {
+            return false;
         }
 
         if (!$this->sender->canSend($action->getReservation())) {
@@ -180,7 +210,10 @@ class ReservationActionExecutor
             return true;
         }
 
-        if (!$this->templates->for(MessageKind::BALANCE_REMINDER)->isEnabled() || !$this->sender->canSend($reservation)) {
+        // Připomínku pošle sám jen v režimu AUTO; „jen návrh"/vypnuto nechá akci
+        // otevřenou k ručnímu vyřízení.
+        if ($this->templates->for(MessageKind::BALANCE_REMINDER)->getMode() !== SendMode::AUTO
+            || !$this->sender->canSend($reservation)) {
             return false;
         }
 

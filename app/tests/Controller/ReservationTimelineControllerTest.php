@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Controller;
 
+use App\Entity\GuestMessage;
 use App\Entity\Reservation;
 use App\Entity\ReservationAction;
 use App\Entity\ReservationNote;
@@ -18,8 +19,11 @@ use App\Entity\User;
 use App\Enum\ActionStatus;
 use App\Enum\ActionType;
 use App\Enum\Channel;
+use App\Enum\MessageKind;
 use App\Enum\ReservationStatus;
+use App\Mail\MailSettingsProvider;
 use App\Repository\ReservationActionRepository;
+use App\Repository\SettingRepository;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -39,6 +43,7 @@ final class ReservationTimelineControllerTest extends WebTestCase
         \assert($em instanceof EntityManagerInterface);
         $this->em = $em;
 
+        $this->em->createQuery('DELETE FROM ' . GuestMessage::class . ' g')->execute();
         $this->em->createQuery('DELETE FROM ' . ReservationAction::class . ' a')->execute();
         $this->em->createQuery('DELETE FROM ' . ReservationNote::class . ' n')->execute();
         $this->em->createQuery('DELETE FROM ' . Reservation::class . ' r')->execute();
@@ -96,6 +101,32 @@ final class ReservationTimelineControllerTest extends WebTestCase
 
         $repo = static::getContainer()->get(ReservationActionRepository::class);
         self::assertSame(ActionStatus::CANCELLED, $repo->find($action->getId())->getStatus());
+    }
+
+    public function testSendActionDeliversMessageToGuest(): void
+    {
+        $container = static::getContainer();
+        $container->get(SettingRepository::class)->set(MailSettingsProvider::SENDER_EMAIL, 'odesilatel@example.cz');
+
+        $r = $this->reservation();
+        $r->setGuestEmail('host@example.com');
+        $action = new ReservationAction($r, ActionType::PRE_ARRIVAL_MESSAGE, new \DateTimeImmutable('+1 day'));
+        $this->em->persist($action);
+        $this->em->flush();
+
+        $crawler = $this->client->request('GET', '/reservation/' . $r->getId());
+        $form = $crawler->filter('form[action$="/action/' . $action->getId() . '/send"]')->form();
+        $this->client->submit($form);
+
+        self::assertResponseRedirects('/reservation/' . $r->getId());
+
+        $repo = static::getContainer()->get(ReservationActionRepository::class);
+        self::assertSame(ActionStatus::DONE, $repo->find($action->getId())->getStatus());
+
+        $sent = $this->em->getRepository(GuestMessage::class)->findOneBy(['reservation' => $r]);
+        self::assertNotNull($sent);
+        self::assertSame(MessageKind::PRE_ARRIVAL, $sent->getKind());
+        self::assertSame('host@example.com', $sent->getToEmail());
     }
 
     private function reservation(): Reservation

@@ -16,6 +16,7 @@ use App\Enum\GuestMessageStatus;
 use App\Enum\MessageKind;
 use App\Enum\OwnerNotificationType;
 use App\Enum\ReservationStatus;
+use App\Enum\SendMode;
 use App\Notification\OwnerNotifier;
 use App\Repository\GuestMessageRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -84,7 +85,7 @@ class ReservationConfirmation
         if ($explicit) {
             return null;
         }
-        if (!$this->templates->for(MessageKind::RESERVATION_CONFIRMED)->isEnabled()) {
+        if ($this->templates->for(MessageKind::RESERVATION_CONFIRMED)->getMode() === SendMode::OFF) {
             return 'Šablona potvrzení je vypnutá — neodesláno.';
         }
         if ($this->messages->hasSent($reservation, MessageKind::RESERVATION_CONFIRMED)) {

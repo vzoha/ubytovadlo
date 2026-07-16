@@ -22,7 +22,35 @@
             <div class="card">
                 <div class="card-body">
                     {{ form_start(form, { attr: { id: 'template-form' } }) }}
-                        <div class="mb-3">{{ form_row(form.enabled) }}</div>
+                        <div class="mb-3">
+                            {{ form_label(form.mode) }}
+                            {{ form_widget(form.mode) }}
+                            {{ form_errors(form.mode) }}
+                            <div class="form-text" id="mode-help"></div>
+                        </div>
+
+                        {% if form.offsetDays is defined %}
+                            <div class="mb-3">
+                                <label class="form-label">Kdy odeslat</label>
+                                <div class="row g-2 align-items-end">
+                                    <div class="col-4">{{ form_widget(form.offsetDays) }}</div>
+                                    <div class="col-4">{{ form_widget(form.offsetDirection) }}</div>
+                                    <div class="col-4">{{ form_widget(form.anchor) }}</div>
+                                </div>
+                                <div class="row g-2 align-items-end mt-1">
+                                    <div class="col-4">
+                                        {{ form_label(form.sendAt) }}
+                                        {{ form_widget(form.sendAt) }}
+                                    </div>
+                                    <div class="col-8">
+                                        <div class="form-text">{{ form.sendAt.vars.help }}</div>
+                                    </div>
+                                </div>
+                                {{ form_errors(form.offsetDays) }}
+                                {{ form_errors(form.sendAt) }}
+                            </div>
+                        {% endif %}
+
                         <div class="mb-3">{{ form_row(form.subject) }}</div>
                         <div class="mb-2">
                             {{ form_label(form.bodyMarkdown) }}
@@ -109,6 +137,15 @@
         body.addEventListener('input', schedule);
         document.getElementById('btn-refresh-preview').addEventListener('click', refresh);
         refresh();
+
+        const help = document.getElementById('mode-help');
+        const modes = form.querySelectorAll('[name$="[mode]"]');
+        function showModeHelp() {
+            const checked = form.querySelector('[name$="[mode]"]:checked');
+            help.textContent = checked ? (checked.dataset.help || '') : '';
+        }
+        modes.forEach(function (m) { m.addEventListener('change', showModeHelp); });
+        showModeHelp();
     })();
 </script>
 {% endblock %}

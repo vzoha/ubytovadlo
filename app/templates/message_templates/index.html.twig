@@ -19,9 +19,12 @@
                 <div class="me-3">
                     <div class="fw-semibold">{{ row.kind.label }}</div>
                     <div class="small text-muted">{{ row.kind.description }}</div>
+                    {% if row.kind.isScheduled and row.template.timingSummary %}
+                        <div class="small text-muted mt-1">🕑 {{ row.template.timingSummary }}</div>
+                    {% endif %}
                 </div>
-                <span class="badge rounded-pill bg-{{ row.template.enabled ? 'success' : 'secondary' }} flex-shrink-0">
-                    {{ row.template.enabled ? 'Odesílá se' : 'Vypnuto' }}
+                <span class="badge rounded-pill text-bg-{{ row.template.mode.badge }} flex-shrink-0">
+                    {{ row.template.mode.label }}
                 </span>
             </a>
         {% endfor %}
