@@ -6,64 +6,6 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ## [Unreleased]
 
-### Změněno
-
-- **Zpracování příchozích e-mailů přes handlery.** Každý typ e-mailu (Airbnb
-  rezervace a výplata, Booking trigger a měsíční faktura, platba z banky) má
-  vlastní handler, který rozhodne, jestli e-mail patří jemu, ke kterému konektoru
-  se váže, a promítne ho do domény. `EmailDispatcher` jen najde odpovídající
-  handler a deleguje — nový typ e-mailu znamená přidat handler.
-- **Sdílené utility pro parsování e-mailů.** Čištění bílých znaků z e-mailů
-  (`EmailText::normalizeWhitespace`) a genitiv názvů měsíců
-  (`CzechCalendar::genitiveMonths`) mají jedno místo, ze kterého čerpají parsery
-  Airbnb, Booking i ČS notifikací.
-- **Rozpoznání provizní OTA na jednom místě.** `Channel::isOta()` říká, jestli
-  je kanál provizní OTA (Booking, Airbnb) — řídí `needs_details` tok, provizi a
-  reverse-charge DPH. eChalupy a CS chalupy sem nepatří, jsou to jen iCal feedy
-  obsazenosti.
-- **Práce s peněžní částkou má jedno místo.** `App\Formatting\Money` sjednocuje
-  převod částky na kanonický decimal tvar pro uložení (`normalize`), převod
-  uživatelského vstupu „1 234,50" na číslo (`parse`), symbol měny (`symbol` —
-  CZK jako „Kč") i zobrazení (`format`). Fakturace, DPH, cashflow, MotoPress i
-  parsování e-mailů částky odvozují odsud, takže se všude počítají a zobrazují
-  stejně.
-
-### Opraveno
-
-- **Splněná timeline akce se zavře hned, ne až v její termín.** Vystavení
-  doplatkové faktury a připomínku doplatku uzavře přímo událost — jakmile je
-  faktura vystavená nebo doplatek uhrazený, akce zmizí z otevřených, aniž by se
-  čekalo na cron v jejím naplánovaném čase. Zaplacená rezervace tak nezobrazuje
-  budoucí akce jako otevřené a hostovi se neposílá připomínka doplatku, který už
-  zaplatil.
-
-### Změněno
-
-- **Jednotný vizuální jazyk tlačítek a odkazů.** Z každého ovládacího prvku je
-  na první pohled poznat, co udělá: **modré tlačítko** mění data (plné = hlavní
-  akce, orámované = vedlejší), s ikonou `+` pro nový záznam a `✎` pro úpravu v
-  okně; **šedé tlačítko** je neutrální (filtr, export, kopírovat, náhled);
-  **červené `×`** maže; **zelené** potvrzuje stav (zaplaceno, hotovo); a **odkaz
-  se šipkou `→`** přejde na jinou stránku (`↗` na externí). Uplatněno napříč
-  přehledy, detailem rezervace, fakturací, účty, ekonomikou, DPH, nastavením i
-  check-inem.
-- **Jednotná navigace zpět a nadpisy.** Odkaz zpět je vždy nad nadpisem a
-  pojmenovaný podle cíle (`← Rezervace`, `← Účty`, `← Ekonomika`); přehledové
-  stránky dostupné z hlavního menu (Elektřina, Úklid, Ubyport) tlačítko zpět
-  nemají. Nadpisy stránek mají jednotnou velikost. Podstránkové formuláře nesou
-  dvojici **Uložit** a **Zrušit**.
-
-- **Zadávání a úpravy přes vyskakovací okno.** Formuláře pro přidání a úpravu
-  záznamu se otevírají tlačítkem do dialogu, takže přehledové stránky vedou daty,
-  ne formuláři. Platí pro **Účty** (výdaj, příjem, převod, uzávěrka, nový účet,
-  úprava pohybu i účtu), **Elektřinu** (nový odečet), **detail rezervace**
-  (poznámka, připomínka, úprava faktury), **Uživatele** (nový uživatel) a
-  **Rychlé zprávy** (nová zpráva). Stránka Účty navíc vede zůstatky a tabulkou
-  pohybů hned pod nadpisem; úprava a mazání pohybu zůstává v řádku tabulky.
-- **Správa uživatelů je součástí Nastavení.** Uživatelé se otevírají jako záložka
-  v sekci Nastavení (na adrese `/nastaveni/uzivatele`). Hlavní menu tak nese jen
-  jednu položku pro administraci instance.
-
 ### Přidáno
 
 - **Nastavitelné časování a režim zpráv hostům.** U každé plánované zprávy (žádost
@@ -104,6 +46,48 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Změněno
 
+- **Zpracování příchozích e-mailů přes handlery.** Každý typ e-mailu (Airbnb
+  rezervace a výplata, Booking trigger a měsíční faktura, platba z banky) má
+  vlastní handler, který rozhodne, jestli e-mail patří jemu, ke kterému konektoru
+  se váže, a promítne ho do domény. `EmailDispatcher` jen najde odpovídající
+  handler a deleguje — nový typ e-mailu znamená přidat handler.
+- **Sdílené utility pro parsování e-mailů.** Čištění bílých znaků z e-mailů
+  (`EmailText::normalizeWhitespace`) a genitiv názvů měsíců
+  (`CzechCalendar::genitiveMonths`) mají jedno místo, ze kterého čerpají parsery
+  Airbnb, Booking i ČS notifikací.
+- **Rozpoznání provizní OTA na jednom místě.** `Channel::isOta()` říká, jestli
+  je kanál provizní OTA (Booking, Airbnb) — řídí `needs_details` tok, provizi a
+  reverse-charge DPH. eChalupy a CS chalupy sem nepatří, jsou to jen iCal feedy
+  obsazenosti.
+- **Práce s peněžní částkou má jedno místo.** `App\Formatting\Money` sjednocuje
+  převod částky na kanonický decimal tvar pro uložení (`normalize`), převod
+  uživatelského vstupu „1 234,50" na číslo (`parse`), symbol měny (`symbol` —
+  CZK jako „Kč") i zobrazení (`format`). Fakturace, DPH, cashflow, MotoPress i
+  parsování e-mailů částky odvozují odsud, takže se všude počítají a zobrazují
+  stejně.
+- **Jednotný vizuální jazyk tlačítek a odkazů.** Z každého ovládacího prvku je
+  na první pohled poznat, co udělá: **modré tlačítko** mění data (plné = hlavní
+  akce, orámované = vedlejší), s ikonou `+` pro nový záznam a `✎` pro úpravu v
+  okně; **šedé tlačítko** je neutrální (filtr, export, kopírovat, náhled);
+  **červené `×`** maže; **zelené** potvrzuje stav (zaplaceno, hotovo); a **odkaz
+  se šipkou `→`** přejde na jinou stránku (`↗` na externí). Uplatněno napříč
+  přehledy, detailem rezervace, fakturací, účty, ekonomikou, DPH, nastavením i
+  check-inem.
+- **Jednotná navigace zpět a nadpisy.** Odkaz zpět je vždy nad nadpisem a
+  pojmenovaný podle cíle (`← Rezervace`, `← Účty`, `← Ekonomika`); přehledové
+  stránky dostupné z hlavního menu (Elektřina, Úklid, Ubyport) tlačítko zpět
+  nemají. Nadpisy stránek mají jednotnou velikost. Podstránkové formuláře nesou
+  dvojici **Uložit** a **Zrušit**.
+- **Zadávání a úpravy přes vyskakovací okno.** Formuláře pro přidání a úpravu
+  záznamu se otevírají tlačítkem do dialogu, takže přehledové stránky vedou daty,
+  ne formuláři. Platí pro **Účty** (výdaj, příjem, převod, uzávěrka, nový účet,
+  úprava pohybu i účtu), **Elektřinu** (nový odečet), **detail rezervace**
+  (poznámka, připomínka, úprava faktury), **Uživatele** (nový uživatel) a
+  **Rychlé zprávy** (nová zpráva). Stránka Účty navíc vede zůstatky a tabulkou
+  pohybů hned pod nadpisem; úprava a mazání pohybu zůstává v řádku tabulky.
+- **Správa uživatelů je součástí Nastavení.** Uživatelé se otevírají jako záložka
+  v sekci Nastavení (na adrese `/nastaveni/uzivatele`). Hlavní menu tak nese jen
+  jednu položku pro administraci instance.
 - **Přehled DPH se přepočítává sám.** Denní úloha přepočítá reverse charge z provizí
   (základ a kurz ČNB) na rezervacích s provizí, takže měsíční přehled i připomínka
   pracují s aktuálními čísly bez ručního spuštění.
@@ -125,16 +109,20 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Opraveno
 
+- **Splněná timeline akce se zavře hned, ne až v její termín.** Vystavení
+  doplatkové faktury a připomínku doplatku uzavře přímo událost — jakmile je
+  faktura vystavená nebo doplatek uhrazený, akce zmizí z otevřených, aniž by se
+  čekalo na cron v jejím naplánovaném čase. Zaplacená rezervace tak nezobrazuje
+  budoucí akce jako otevřené a hostovi se neposílá připomínka doplatku, který už
+  zaplatil.
 - **Pohyb mimo období účtu už tiše nezmizí ze stavu.** Stav účtu počítá pohyby
   od jeho počátečního data po dnešek. Když zapíšeš výdaj, příjem nebo převod
   s datem před založením účtu (nebo v budoucnosti), aplikace na to upozorní —
   takový pohyb se do stavu nezapočítá a víš proč. Formuláře pohybů mají navíc
   datum předvyplněné na dnešek.
-
 - **Detail rezervace se vejde na mobil.** V úzké kartě se řádek tabulky faktur složí
   do dvou řádků (číslo a částka, pod tím stav a akce) místo přetékání stránky; v širší
   kartě zůstává plnou tabulkou. Řádky s údaji drží štítek i hodnotu na jednom řádku.
-
 - **Ruční blokace kalendáře z Airbnb se neimportují jako rezervace.** Airbnb feed
   vedle rezervací obsahuje i termíny, které provozovatel ručně zavřel (SUMMARY
   „Airbnb (Not available)"). iCal import je přeskočí, takže nezakládají rezervaci
