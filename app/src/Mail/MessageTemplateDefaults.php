@@ -20,8 +20,8 @@ use App\Enum\TimingAnchor;
  * Výchozí šablony e-mailů hostům — text (předmět + tělo v Markdownu s proměnnými),
  * výchozí režim odesílání i časování na ose rezervace. Slouží jako základ pro
  * čerstvou instanci: provozovatel je v UI přepíše a override se uloží do DB.
- * Plánované zprávy startují jako návrh (objeví se na ose, nic se samo neodešle),
- * ostatní vypnuté — provozovatel je zapne, až bude chtít.
+ * Plánované zprávy startují v režimu ruční (objeví se na ose, nic se samo
+ * neodešle), ostatní vypnuté — provozovatel je zapne, až bude chtít.
  *
  * @see SendMode
  */

@@ -18,6 +18,9 @@ use App\Entity\Reservation;
  * Spočítá okamžik odeslání zprávy z jejího časování (kotva + posun ve dnech +
  * hodina) a konkrétní rezervace. Vrátí null, když šablona nemá časování nebo
  * rezervace danou kotvu postrádá (typicky chybějící odjezd).
+ *
+ * Prázdná hodina znamená „v přesný čas události": u objednávky přesný čas
+ * objednávky, u příjezdu/odjezdu čas příjezdu/odjezdu z rezervace (je-li znám).
  */
 class MessageScheduleResolver
 {
@@ -39,7 +42,15 @@ class MessageScheduleResolver
         $sendAt = $template->getSendAt();
         if ($sendAt !== null) {
             [$h, $m] = array_map('intval', explode(':', $sendAt));
-            $when = $when->setTime($h, $m);
+
+            return $when->setTime($h, $m);
+        }
+
+        // Prázdná hodina → přesný čas události (u příjezdu/odjezdu z rezervace,
+        // u objednávky nese přesný čas už samotná kotva).
+        $eventTime = $anchor->timeFor($reservation);
+        if ($eventTime !== null) {
+            return $when->setTime((int) $eventTime->format('H'), (int) $eventTime->format('i'));
         }
 
         return $when;

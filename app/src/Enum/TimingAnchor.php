@@ -53,6 +53,26 @@ enum TimingAnchor: string
         };
     }
 
+    /** Přivlastňovací tvar (2. pád) — „v přesný čas příjezdu", „v den odjezdu". */
+    public function event(): string
+    {
+        return match ($this) {
+            self::CHECK_IN => 'příjezdu',
+            self::CHECK_OUT => 'odjezdu',
+            self::CREATED => 'objednávky',
+        };
+    }
+
+    /** Přesný čas dané události na rezervaci (čas příjezdu/odjezdu), pokud je znám. */
+    public function timeFor(Reservation $reservation): ?\DateTimeImmutable
+    {
+        return match ($this) {
+            self::CHECK_IN => $reservation->getCheckInTime(),
+            self::CHECK_OUT => $reservation->getCheckOutTime(),
+            self::CREATED => null,
+        };
+    }
+
     /** Datum kotvy pro danou rezervaci (null, pokud rezervace tento bod nemá). */
     public function dateFor(Reservation $reservation): ?\DateTimeImmutable
     {

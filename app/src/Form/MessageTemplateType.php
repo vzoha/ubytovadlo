@@ -86,7 +86,7 @@ class MessageTemplateType extends AbstractType
             ])
             ->add('offsetDirection', ChoiceType::class, [
                 'mapped' => false,
-                'label' => 'Směr',
+                'label' => 'Před / po',
                 'choices' => ['před' => self::DIRECTION_BEFORE, 'po' => self::DIRECTION_AFTER],
                 'data' => $offset > 0 ? self::DIRECTION_AFTER : self::DIRECTION_BEFORE,
             ])
@@ -100,7 +100,7 @@ class MessageTemplateType extends AbstractType
                 'label' => 'V hodin',
                 'required' => false,
                 'attr' => ['placeholder' => '09:00'],
-                'help' => 'Prázdné = v přesný čas objednávky.',
+                'help' => 'Prázdné = v přesný čas té události (objednávky, příjezdu nebo odjezdu).',
                 'constraints' => [new Regex(pattern: '/^([01]?\d|2[0-3]):[0-5]\d$/', message: 'Zadej čas ve tvaru HH:MM.')],
             ]);
     }

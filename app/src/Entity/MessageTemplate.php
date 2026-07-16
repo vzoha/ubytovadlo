@@ -178,18 +178,20 @@ class MessageTemplate
         }
 
         $offset = $this->offsetDays ?? 0;
-        $days = abs($offset);
-        $when = match (true) {
-            $offset < 0 => sprintf('%s před %s', self::days($days), $this->anchor->before()),
-            $offset > 0 => sprintf('%s po %s', self::days($days), $this->anchor->after()),
-            default => sprintf('v den — %s', $this->anchor->label()),
-        };
+        $event = $this->anchor->event();
+        $time = $this->sendAt !== null ? ltrim($this->sendAt, '0') : null;
 
-        if ($this->sendAt !== null) {
-            $when .= ' v ' . ltrim($this->sendAt, '0');
+        if ($offset === 0) {
+            return $time !== null
+                ? sprintf('v den %s v %s', $event, $time)
+                : sprintf('v přesný čas %s', $event);
         }
 
-        return $when;
+        $shift = $offset > 0
+            ? sprintf('%s po %s', self::days(abs($offset)), $this->anchor->after())
+            : sprintf('%s před %s', self::days(abs($offset)), $this->anchor->before());
+
+        return $time !== null ? sprintf('%s v %s', $shift, $time) : sprintf('%s v čas %s', $shift, $event);
     }
 
     private static function days(int $n): string

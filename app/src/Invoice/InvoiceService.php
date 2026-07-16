@@ -16,7 +16,6 @@ use App\Entity\Invoice;
 use App\Entity\InvoiceLine;
 use App\Entity\Reservation;
 use App\Enum\BillingMode;
-use App\Enum\Channel;
 use App\Enum\InvoiceType;
 use App\Formatting\Money;
 use App\Repository\InvoiceRepository;
@@ -280,7 +279,7 @@ class InvoiceService
 
     private function isOtaIntermediated(Reservation $reservation): bool
     {
-        return in_array($reservation->getChannel(), [Channel::BOOKING, Channel::AIRBNB], true)
+        return $reservation->getChannel()->isOta()
             || in_array($reservation->getBillingMode(), [BillingMode::BOOKING_COM, BillingMode::AIRBNB], true);
     }
 

@@ -27,7 +27,7 @@ enum SendMode: string
     {
         return match ($this) {
             self::AUTO => 'Automaticky',
-            self::DRAFT => 'Jen návrh',
+            self::DRAFT => 'Ručně',
             self::OFF => 'Vypnuto',
         };
     }
@@ -36,9 +36,15 @@ enum SendMode: string
     {
         return match ($this) {
             self::AUTO => 'V naplánovaný čas se e-mail odešle sám.',
-            self::DRAFT => 'Zpráva čeká na časové ose rezervace, odešleš ji ručně tlačítkem.',
+            self::DRAFT => 'Zpráva čeká na časové ose rezervace, odešleš ji tlačítkem.',
             self::OFF => 'Zpráva se nezakládá ani neplánuje.',
         };
+    }
+
+    /** Časování (kdy odeslat) má smysl nastavovat jen u zpráv, které se plánují. */
+    public function usesTiming(): bool
+    {
+        return $this !== self::OFF;
     }
 
     public function badge(): string

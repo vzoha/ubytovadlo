@@ -32,4 +32,20 @@ enum Channel: string
             self::DIRECT => 'Přímá',
         };
     }
+
+    /**
+     * Provizní OTA, kde rezervaci zakládá portál a údaje hosta i provizi tahá
+     * majitelka z extranetu (Booking, Airbnb). Řídí `needs_details` tok, provizi
+     * a reverse-charge DPH.
+     *
+     * eChalupy a CS chalupy sem nepatří — jsou to jen iCal feedy obsazenosti bez
+     * údajů hosta a provize.
+     */
+    public function isOta(): bool
+    {
+        return match ($this) {
+            self::BOOKING, self::AIRBNB => true,
+            default => false,
+        };
+    }
 }

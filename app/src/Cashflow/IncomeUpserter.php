@@ -17,7 +17,6 @@ use App\Entity\Invoice;
 use App\Entity\Reservation;
 use App\Entity\ReservationReceipt;
 use App\Enum\AccountType;
-use App\Enum\Channel;
 use App\Enum\IncomeSource;
 use App\Enum\InvoiceType;
 use App\Enum\ReceiptOrigin;
@@ -312,7 +311,7 @@ class IncomeUpserter
 
     private function isOta(Reservation $reservation): bool
     {
-        return \in_array($reservation->getChannel(), [Channel::AIRBNB, Channel::BOOKING], true);
+        return $reservation->getChannel()->isOta();
     }
 
     /** Hrubá částka pobytu v CZK (cena hosta) — základ pro odhad OTA výplaty. */

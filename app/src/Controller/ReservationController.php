@@ -224,7 +224,7 @@ class ReservationController extends AbstractController
 
         // Ruční výplata je OTA koncept (Airbnb/Booking) — u web rezervace host platí
         // přímo a příjem se drží z faktur, ne z výplaty.
-        if (!\in_array($reservation->getChannel(), [Channel::AIRBNB, Channel::BOOKING], true)) {
+        if (!$reservation->getChannel()->isOta()) {
             $this->addFlash('warning', 'Reálná výplata se zadává jen u OTA rezervací (Airbnb/Booking).');
 
             return $this->redirectToRoute('reservation_detail', ['id' => $reservation->getId()]);
@@ -258,7 +258,7 @@ class ReservationController extends AbstractController
 
         // Ruční platba hosta je web/přímý koncept — u OTA platí host platformě
         // a reálné peníze řeší „Reálná výplata".
-        if (\in_array($reservation->getChannel(), [Channel::AIRBNB, Channel::BOOKING], true)) {
+        if ($reservation->getChannel()->isOta()) {
             $this->addFlash('warning', 'U OTA rezervací zadej reálnou výplatu, ne platbu hosta.');
 
             return $this->redirectToRoute('reservation_detail', ['id' => $reservation->getId()]);

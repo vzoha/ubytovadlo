@@ -51,7 +51,7 @@ final class MessageScheduleResolverTest extends TestCase
         self::assertSame('2026-08-15 10:00', $when->format('Y-m-d H:i'));
     }
 
-    public function testEmptyHourKeepsAnchorTime(): void
+    public function testEmptyHourOnCreatedKeepsExactOrderTime(): void
     {
         $reservation = new Reservation(Channel::WEB, new \DateTimeImmutable('2026-08-10'));
         $template = $this->template()->setTiming(TimingAnchor::CREATED, 0, null);
@@ -60,6 +60,19 @@ final class MessageScheduleResolverTest extends TestCase
 
         self::assertNotNull($when);
         self::assertEquals($reservation->getCreatedAt(), $when);
+    }
+
+    public function testEmptyHourOnCheckInUsesArrivalTime(): void
+    {
+        // Prázdná hodina u příjezdu → přesný čas příjezdu z rezervace.
+        $reservation = new Reservation(Channel::WEB, new \DateTimeImmutable('2026-08-10 00:00'));
+        $reservation->setCheckInTime(new \DateTimeImmutable('14:30'));
+        $template = $this->template()->setTiming(TimingAnchor::CHECK_IN, 0, null);
+
+        $when = $this->resolver->resolve($template, $reservation);
+
+        self::assertNotNull($when);
+        self::assertSame('2026-08-10 14:30', $when->format('Y-m-d H:i'));
     }
 
     public function testMissingAnchorDateYieldsNull(): void

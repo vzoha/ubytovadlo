@@ -228,7 +228,7 @@ class DashboardController extends AbstractController
             if ($mode !== null && !$mode->isInvoiced()) {
                 continue;
             }
-            $isOta = in_array($r->getChannel(), [Channel::BOOKING, Channel::AIRBNB], true);
+            $isOta = $r->getChannel()->isOta();
             $checkOut = $r->getCheckOut() ?? $r->getCheckIn();
             $rows[] = [
                 'reservation' => $r,

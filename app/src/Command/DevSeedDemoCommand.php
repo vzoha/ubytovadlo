@@ -340,7 +340,7 @@ class DevSeedDemoCommand extends Command
     /** @param array<string, mixed> $s */
     private function applyOtaCommissionAndVat(Reservation $r, array $s): void
     {
-        if (($s['needsDetails'] ?? false) || !\in_array($r->getChannel(), [Channel::BOOKING, Channel::AIRBNB], true)) {
+        if (($s['needsDetails'] ?? false) || !$r->getChannel()->isOta()) {
             return;
         }
         $duzp = new \DateTimeImmutable($s['in']);

@@ -153,7 +153,7 @@ class ReservationActionExecutor
         }
 
         // Custom je ruční, pošle se vždy. Ostatní ctí režim: vypnutá se přeskočí,
-        // „jen návrh" zůstane na ose k ručnímu odeslání (cron ji sám neodešle).
+        // ruční zůstane na ose k odeslání tlačítkem (cron ji sám neodešle).
         if ($kind !== MessageKind::CUSTOM) {
             $mode = $this->templates->for($kind)->getMode();
             if ($mode === SendMode::OFF) {
@@ -210,7 +210,7 @@ class ReservationActionExecutor
             return true;
         }
 
-        // Připomínku pošle sám jen v režimu AUTO; „jen návrh"/vypnuto nechá akci
+        // Připomínku pošle sám jen v režimu AUTO; ruční/vypnuto nechá akci
         // otevřenou k ručnímu vyřízení.
         if ($this->templates->for(MessageKind::BALANCE_REMINDER)->getMode() !== SendMode::AUTO
             || !$this->sender->canSend($reservation)) {

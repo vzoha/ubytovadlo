@@ -30,22 +30,28 @@
                         </div>
 
                         {% if form.offsetDays is defined %}
-                            <div class="mb-3">
-                                <label class="form-label">Kdy odeslat</label>
-                                <div class="row g-2 align-items-end">
-                                    <div class="col-4">{{ form_widget(form.offsetDays) }}</div>
-                                    <div class="col-4">{{ form_widget(form.offsetDirection) }}</div>
-                                    <div class="col-4">{{ form_widget(form.anchor) }}</div>
-                                </div>
-                                <div class="row g-2 align-items-end mt-1">
-                                    <div class="col-4">
+                            <div class="mb-3" id="timing-block">
+                                <label class="form-label mb-1">Kdy odeslat</label>
+                                <div class="row g-2">
+                                    <div class="col-6 col-sm-3">
+                                        {{ form_label(form.offsetDays) }}
+                                        {{ form_widget(form.offsetDays) }}
+                                    </div>
+                                    <div class="col-6 col-sm-3">
+                                        {{ form_label(form.offsetDirection) }}
+                                        {{ form_widget(form.offsetDirection) }}
+                                    </div>
+                                    <div class="col-6 col-sm-3">
+                                        {{ form_label(form.anchor) }}
+                                        {{ form_widget(form.anchor) }}
+                                    </div>
+                                    <div class="col-6 col-sm-3">
                                         {{ form_label(form.sendAt) }}
                                         {{ form_widget(form.sendAt) }}
                                     </div>
-                                    <div class="col-8">
-                                        <div class="form-text">{{ form.sendAt.vars.help }}</div>
-                                    </div>
                                 </div>
+                                <div class="alert alert-light border small mt-2 mb-1 py-2" id="timing-summary"></div>
+                                <div class="form-text">{{ form.sendAt.vars.help }}</div>
                                 {{ form_errors(form.offsetDays) }}
                                 {{ form_errors(form.sendAt) }}
                             </div>
@@ -146,6 +152,47 @@
         }
         modes.forEach(function (m) { m.addEventListener('change', showModeHelp); });
         showModeHelp();
+
+        const timingBlock = document.getElementById('timing-block');
+        if (timingBlock) {
+            const offDays = form.querySelector('[name$="[offsetDays]"]');
+            const offDir = form.querySelector('[name$="[offsetDirection]"]');
+            const anchorSel = form.querySelector('[name$="[anchor]"]');
+            const timeInp = form.querySelector('[name$="[sendAt]"]');
+            const summary = document.getElementById('timing-summary');
+            const ANCHOR = {
+                check_in: { before: 'příjezdem', after: 'příjezdu', event: 'příjezdu' },
+                check_out: { before: 'odjezdem', after: 'odjezdu', event: 'odjezdu' },
+                created: { before: 'objednávkou', after: 'objednávce', event: 'objednávky' },
+            };
+            function days(n) { if (n === 1) return '1 den'; if (n >= 2 && n <= 4) return n + ' dny'; return n + ' dní'; }
+            function fmtTime(t) { const m = t.match(/^(\d{1,2}):(\d{2})$/); return m ? (parseInt(m[1], 10) + ':' + m[2]) : t; }
+            function updateSummary() {
+                const a = ANCHOR[anchorSel.value] || ANCHOR.check_in;
+                const n = Math.abs(parseInt(offDays.value, 10) || 0);
+                const t = (timeInp.value || '').trim();
+                let s;
+                if (n === 0) {
+                    s = t ? ('v den ' + a.event + ' v ' + fmtTime(t)) : ('v přesný čas ' + a.event);
+                } else {
+                    const dir = offDir.value === 'after' ? ('po ' + a.after) : ('před ' + a.before);
+                    s = days(n) + ' ' + dir + (t ? (' v ' + fmtTime(t)) : (' v čas ' + a.event));
+                }
+                summary.textContent = 'Odešle se ' + s + '.';
+            }
+            [offDays, offDir, anchorSel, timeInp].forEach(function (el) {
+                el.addEventListener('input', updateSummary);
+                el.addEventListener('change', updateSummary);
+            });
+            updateSummary();
+
+            function toggleTiming() {
+                const checked = form.querySelector('[name$="[mode]"]:checked');
+                timingBlock.style.display = (checked && checked.value === 'off') ? 'none' : '';
+            }
+            modes.forEach(function (m) { m.addEventListener('change', toggleTiming); });
+            toggleTiming();
+        }
     })();
 </script>
 {% endblock %}
