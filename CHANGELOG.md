@@ -8,6 +8,11 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Změněno
 
+- **Zpracování příchozích e-mailů přes handlery.** Každý typ e-mailu (Airbnb
+  rezervace a výplata, Booking trigger a měsíční faktura, platba z banky) má
+  vlastní handler, který rozhodne, jestli e-mail patří jemu, ke kterému konektoru
+  se váže, a promítne ho do domény. `EmailDispatcher` jen najde odpovídající
+  handler a deleguje — nový typ e-mailu znamená přidat handler.
 - **Sdílené utility pro parsování e-mailů.** Čištění bílých znaků z e-mailů
   (`EmailText::normalizeWhitespace`) a genitiv názvů měsíců
   (`CzechCalendar::genitiveMonths`) mají jedno místo, ze kterého čerpají parsery

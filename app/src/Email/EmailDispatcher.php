@@ -11,45 +11,34 @@ declare(strict_types=1);
 
 namespace App\Email;
 
-use App\Cashflow\IncomeUpserter;
 use App\Connector\ConnectorManager;
-use App\Email\Dto\AirbnbParsedReservation;
-use App\Email\Dto\AirbnbPayoutData;
-use App\Email\Dto\BookingTriggerData;
+use App\Email\Handler\EmailHandler;
 use App\Entity\EmailLog;
-use App\Entity\Reservation;
-use App\Enum\Channel;
 use App\Enum\ConnectorType;
-use App\Enum\OwnerNotificationType;
-use App\Enum\ReservationStatus;
-use App\Formatting\Money;
-use App\Notification\OwnerNotifier;
-use App\Payment\PaymentProcessor;
 use App\Repository\EmailLogRepository;
-use App\Repository\InvoiceRepository;
-use App\Repository\ReservationRepository;
-use App\Vat\BookingInvoiceImporter;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\Attribute\AutowireIterator;
 
+/**
+ * Zpracuje příchozí e-mail: najde handler, který ho podporuje, a nechá ho e-mail
+ * promítnout do domény. Sám drží jen idempotenci (podle messageId), kontrolu
+ * zapnutého konektoru a evidenci jeho aktivity. Nový typ e-mailu = nový
+ * `EmailHandler`, bez zásahu do dispatcheru.
+ */
 class EmailDispatcher
 {
+    /**
+     * @param iterable<EmailHandler> $handlers
+     */
     public function __construct(
         private readonly EmailLogRepository $emailLogs,
-        private readonly ReservationRepository $reservations,
-        private readonly AirbnbReservationParser $airbnbParser,
-        private readonly AirbnbPayoutParser $airbnbPayoutParser,
-        private readonly BookingTriggerParser $bookingParser,
-        private readonly BookingInvoiceImporter $bookingInvoiceImporter,
-        private readonly CsPaymentParser $csPaymentParser,
-        private readonly PaymentProcessor $paymentProcessor,
-        private readonly InvoiceRepository $invoices,
-        private readonly IncomeUpserter $incomeUpserter,
-        private readonly OwnerNotifier $notifier,
         private readonly ConnectorManager $connectors,
         private readonly EntityManagerInterface $em,
         private readonly LoggerInterface $logger,
+        #[AutowireIterator('app.email_handler')]
+        private readonly iterable $handlers,
     ) {
     }
 
@@ -79,8 +68,9 @@ class EmailDispatcher
         $log->setSubject($email->subject);
         $this->em->persist($log);
 
-        $connectorType = $this->connectorType($email);
-        if ($connectorType !== null) {
+        $handler = $this->handlerFor($email);
+        if ($handler !== null) {
+            $connectorType = $handler->connectorType();
             if (!$this->connectors->isEnabled($connectorType)) {
                 $log->markIgnored(sprintf('Konektor „%s" je vypnutý', $connectorType->label()));
 
@@ -92,30 +82,8 @@ class EmailDispatcher
         }
 
         try {
-            if ($this->airbnbParser->supports($email)) {
-                $reservation = $this->upsertAirbnb($this->airbnbParser->parse($email));
-                $log->markProcessed($reservation);
-            } elseif ($this->airbnbPayoutParser->supports($email)) {
-                $data = $this->airbnbPayoutParser->parse($email);
-                $reservation = $this->applyAirbnbPayout($data);
-                if ($reservation !== null) {
-                    $log->markProcessed($reservation);
-                } else {
-                    $log->markIgnored(sprintf('Payout for unknown reservation %s', $data->confirmationCode));
-                }
-            } elseif ($this->bookingParser->supports($email)) {
-                $reservation = $this->upsertBooking($this->bookingParser->parse($email));
-                $log->markProcessed($reservation);
-            } elseif ($this->bookingInvoiceImporter->supports($email)) {
-                $this->bookingInvoiceImporter->import($email, $log);
-                $log->markProcessed();
-            } elseif ($this->csPaymentParser->supports($email)) {
-                $result = $this->paymentProcessor->process($this->csPaymentParser->parse($email), $email);
-                if ($result->reservation !== null) {
-                    $log->markProcessed($result->reservation);
-                } else {
-                    $log->markIgnored($result->ignoredReason);
-                }
+            if ($handler !== null) {
+                $handler->handle($email, $log);
             } else {
                 $log->markIgnored('No parser matched');
             }
@@ -133,127 +101,23 @@ class EmailDispatcher
         return $log;
     }
 
-    private function upsertAirbnb(AirbnbParsedReservation $data): Reservation
-    {
-        $reservation = $this->reservations->findByExternalId(Channel::AIRBNB, $data->confirmationCode)
-            ?? new Reservation(Channel::AIRBNB, $data->checkIn);
-
-        $isNew = $reservation->getId() === null;
-        if ($isNew) {
-            $reservation->setExternalId($data->confirmationCode);
-            $this->em->persist($reservation);
-            $this->notifier->notify(OwnerNotificationType::NEW_RESERVATION, $reservation);
-        }
-
-        // Data z e-mailu aplikujeme jen na novou rezervaci nebo když ještě
-        // nebyla majitelkou potvrzena (NEEDS_DETAILS). Tím respektujeme
-        // ruční úpravy provedené v UI po prvním importu.
-        if ($isNew || $reservation->getStatus() === ReservationStatus::NEEDS_DETAILS) {
-            $reservation->setCheckIn($data->checkIn);
-            $reservation->setCheckOut($data->checkOut);
-            $reservation->setCheckInTime($data->checkInTime);
-            $reservation->setCheckOutTime($data->checkOutTime);
-            $reservation->setGuestsAdult($data->guestsAdult);
-            $reservation->setGuestsChild($data->guestsChild);
-            $reservation->setGuestsInfant($data->guestsInfant);
-            $reservation->setGuestName($data->guestName);
-            $reservation->setGuestRegion($data->guestRegion);
-
-            if ($data->priceTotal !== null) {
-                $reservation->setPriceTotal(Money::normalize($data->priceTotal));
-                $reservation->setPriceCurrency('CZK');
-            }
-            if ($data->hostCommission !== null) {
-                $reservation->setCommissionAmount(Money::normalize($data->hostCommission));
-                $reservation->setCommissionCurrency('CZK');
-            }
-            if ($data->netPayout !== null) {
-                $reservation->setNetPayout(Money::normalize($data->netPayout));
-            }
-            if ($data->hasPet) {
-                $reservation->setHasPet(true);
-            }
-            if ($data->petsNote !== null) {
-                $reservation->setPetsNote($data->petsNote);
-            }
-        }
-
-        // Airbnb e-mail nedává adresu, takže zůstává needs_details, dokud ji nedoplníme.
-        if ($reservation->getStatus() === ReservationStatus::NEEDS_DETAILS && $reservation->hasGuestAddress()) {
-            $reservation->setStatus(ReservationStatus::CONFIRMED);
-        }
-
-        return $reservation;
-    }
-
-    /**
-     * Napáruje reálnou Airbnb výplatu na rezervaci podle potvrzujícího kódu.
-     * Uloží částku a datum odeslání a — pokud už existuje faktura hostovi —
-     * nastaví na ní datum úhrady na den odeslání výplaty (reálný příjem peněz).
-     * Vrací null, pokud rezervace zatím v DB není (potvrzovací e-mail nedorazil).
-     */
-    private function applyAirbnbPayout(AirbnbPayoutData $data): ?Reservation
-    {
-        $reservation = $this->reservations->findByExternalId(Channel::AIRBNB, $data->confirmationCode);
-        if ($reservation === null) {
-            return null;
-        }
-
-        $reservation->setPayoutAmount(Money::normalize($data->payoutAmount));
-        $reservation->setPayoutSentAt($data->payoutSentAt);
-        if ($data->payoutReference !== null) {
-            $reservation->setPayoutReference($data->payoutReference);
-        }
-
-        // Datum úhrady na faktuře = den, kdy Airbnb peníze odeslal. Nastavujeme
-        // jen na dosud neuhrazené faktury, ruční označení nepřepisujeme.
-        foreach ($this->invoices->findForReservation($reservation) as $invoice) {
-            if (!$invoice->isPaid()) {
-                $invoice->setPaidAt($data->payoutSentAt);
-            }
-        }
-
-        // Výplata (net po provizi) je reálný příjem na účet — přepočítej ReservationIncome.
-        $this->incomeUpserter->recompute($reservation);
-
-        return $reservation;
-    }
-
     /**
      * Kterému konektoru zpráva patří (podle odesílatele), nebo null když žádnému.
-     * Stejné pořadí jako zpracování — Airbnb rezervace i výplata spadají pod Airbnb,
-     * Booking trigger i měsíční faktura pod Booking, platební notifikace pod banku.
      * Poller si tím ověří, jestli zprávu vůbec zpracovávat (vypnutý konektor přeskočí).
      */
     public function connectorType(EmailMessage $email): ?ConnectorType
     {
-        return match (true) {
-            $this->airbnbParser->supports($email), $this->airbnbPayoutParser->supports($email) => ConnectorType::AIRBNB,
-            $this->bookingParser->supports($email), $this->bookingInvoiceImporter->supports($email) => ConnectorType::BOOKING,
-            $this->csPaymentParser->supports($email) => ConnectorType::BANK_CS,
-            default => null,
-        };
+        return $this->handlerFor($email)?->connectorType();
     }
 
-    private function upsertBooking(BookingTriggerData $data): Reservation
+    private function handlerFor(EmailMessage $email): ?EmailHandler
     {
-        $reservation = $this->reservations->findByExternalId(Channel::BOOKING, $data->reservationId)
-            ?? new Reservation(Channel::BOOKING, $data->checkIn);
-
-        $isNew = $reservation->getId() === null;
-        if ($isNew) {
-            $reservation->setExternalId($data->reservationId);
-            $this->em->persist($reservation);
-            $this->notifier->notify(OwnerNotificationType::NEW_RESERVATION, $reservation);
+        foreach ($this->handlers as $handler) {
+            if ($handler->supports($email)) {
+                return $handler;
+            }
         }
 
-        // Booking e-mail neobsahuje žádné údaje hosta — zůstává needs_details
-        // dokud je majitelka nedoplní z extranetu. checkIn aktualizujeme jen
-        // dokud nebyla rezervace potvrzena, aby se nepřepisovala ručně opravená data.
-        if ($isNew || $reservation->getStatus() === ReservationStatus::NEEDS_DETAILS) {
-            $reservation->setCheckIn($data->checkIn);
-        }
-
-        return $reservation;
+        return null;
     }
 }

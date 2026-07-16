@@ -20,6 +20,11 @@ use App\Email\CsPaymentParser;
 use App\Email\EmailDispatcher;
 use App\Email\EmailMessage;
 use App\Email\EmlReader;
+use App\Email\Handler\AirbnbPayoutHandler;
+use App\Email\Handler\AirbnbReservationHandler;
+use App\Email\Handler\BookingInvoiceHandler;
+use App\Email\Handler\BookingTriggerHandler;
+use App\Email\Handler\CsPaymentHandler;
 use App\Entity\EmailLog;
 use App\Entity\Reservation;
 use App\Enum\Channel;
@@ -83,21 +88,21 @@ final class EmailDispatcherTest extends TestCase
             new NullLogger(),
         );
 
+        $notifier = $this->makeOwnerNotifier();
+        $handlers = [
+            new AirbnbReservationHandler($airbnb, $this->reservations, $notifier, $this->em),
+            new AirbnbPayoutHandler(new AirbnbPayoutParser(), $this->reservations, $this->invoices, $this->createMock(IncomeUpserter::class)),
+            new BookingTriggerHandler(new BookingTriggerParser(), $this->reservations, $notifier, $this->em),
+            new BookingInvoiceHandler($bookingInvoiceImporter),
+            new CsPaymentHandler(new CsPaymentParser(), $this->paymentProcessor),
+        ];
+
         return new EmailDispatcher(
             $this->emailLogs,
-            $this->reservations,
-            $airbnb,
-            new AirbnbPayoutParser(),
-            new BookingTriggerParser(),
-            $bookingInvoiceImporter,
-            new CsPaymentParser(),
-            $this->paymentProcessor,
-            $this->invoices,
-            $this->createMock(IncomeUpserter::class),
-            $this->makeOwnerNotifier(),
             $connectors,
             $this->em,
             new NullLogger(),
+            $handlers,
         );
     }
 
