@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace App\Email;
 
 use App\Email\Dto\CsPaymentData;
+use App\Formatting\Money;
 
 /**
  * Parsuje e-mailovou notifikaci České spořitelny "Přišla platba". Ta nese vše pro
@@ -127,7 +128,7 @@ class CsPaymentParser
         $clean = preg_replace('/[\s\x{00a0}]+/u', '', $raw) ?? $raw;
         $clean = str_replace(',', '.', $clean);
 
-        return number_format((float) $clean, 2, '.', '');
+        return Money::normalize((float) $clean);
     }
 
     private function normalize(string $text): string

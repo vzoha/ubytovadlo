@@ -13,6 +13,7 @@ namespace App\Invoice;
 
 use App\Enum\BillingMode;
 use App\Enum\DepositMode;
+use App\Formatting\Money;
 use App\Repository\SettingRepository;
 
 /**
@@ -118,6 +119,6 @@ final class DepositConfig
 
     private static function format(float $amount): string
     {
-        return number_format($amount, 2, '.', '');
+        return Money::normalize($amount);
     }
 }

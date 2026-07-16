@@ -16,6 +16,7 @@ use App\Entity\Cleaning;
 use App\Entity\Invoice;
 use App\Entity\Reservation;
 use App\Enum\InvoiceType;
+use App\Formatting\Money;
 use App\Invoice\TaxProfileConfig;
 use App\Repository\CleaningRepository;
 use App\Repository\InvoiceRepository;
@@ -93,7 +94,7 @@ final class ReservationProfitCalculator
         [$income, $isEstimate] = $this->resolveIncome($r, $invoices);
 
         $electricity = $this->electricityCost->cost($r);
-        $electricityCzk = $electricity !== null ? number_format($electricity->totalCzk, 2, '.', '') : '0.00';
+        $electricityCzk = $electricity !== null ? Money::normalize($electricity->totalCzk) : '0.00';
 
         $cleaningCzk = $cleaning !== null ? sprintf('%d.00', $cleaning->getCostCzk()) : '0.00';
 

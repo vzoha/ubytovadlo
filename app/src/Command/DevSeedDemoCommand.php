@@ -33,6 +33,7 @@ use App\Enum\ExpenseCategory;
 use App\Enum\LedgerEntryType;
 use App\Enum\PaymentSource;
 use App\Enum\ReservationStatus;
+use App\Formatting\Money;
 use App\Invoice\InvoiceService;
 use App\Repository\CleaningRepository;
 use Doctrine\DBAL\Connection;
@@ -530,7 +531,7 @@ class DevSeedDemoCommand extends Command
 
     private function money(float $value): string
     {
-        return number_format($value, 2, '.', '');
+        return Money::normalize($value);
     }
 
     /**

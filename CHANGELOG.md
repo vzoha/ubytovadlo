@@ -6,6 +6,15 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ## [Unreleased]
 
+### Změněno
+
+- **Práce s peněžní částkou má jedno místo.** `App\Formatting\Money` sjednocuje
+  převod částky na kanonický decimal tvar pro uložení (`normalize`), převod
+  uživatelského vstupu „1 234,50" na číslo (`parse`), symbol měny (`symbol` —
+  CZK jako „Kč") i zobrazení (`format`). Fakturace, DPH, cashflow, MotoPress i
+  parsování e-mailů částky odvozují odsud, takže se všude počítají a zobrazují
+  stejně.
+
 ### Opraveno
 
 - **Splněná timeline akce se zavře hned, ne až v její termín.** Vystavení
@@ -47,11 +56,11 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 - **Nastavitelné časování a režim zpráv hostům.** U každé plánované zprávy (žádost
   o zálohu, před příjezdem, po pobytu, připomínka doplatku) se v **Nastavení →
   Šablony zpráv** volí, **kdy** odejde — počet dní před/po příjezdu, odjezdu nebo
-  objednávce a hodina odeslání. Každá zpráva má jeden ze tří **režimů**:
-  *Automaticky* (odešle se sama v naplánovaný čas), *Jen návrh* (objeví se na
-  časové ose rezervace a odešleš ji ručně tlačítkem **Odeslat**), *Vypnuto* (na osu
-  se vůbec nezaloží). U konkrétní rezervace lze zprávu na časové ose kdykoli
-  odložit, zrušit nebo odeslat dřív.
+  objednávce a hodina odeslání (prázdná hodina = přesný čas té události). Každá
+  zpráva má jeden ze tří **režimů**: *Automaticky* (odešle se sama v naplánovaný
+  čas), *Ručně* (objeví se na časové ose rezervace a odešleš ji tlačítkem
+  **Odeslat**), *Vypnuto* (na osu se vůbec nezaloží). U konkrétní rezervace lze
+  zprávu na časové ose kdykoli odložit, zrušit nebo odeslat dřív.
 - **Rychlý kontakt na hosta z detailu rezervace.** U karty Host jsou tlačítka
   **Volat**, **SMS**, **WhatsApp** a **E-mail** — otevřou příslušnou aplikaci
   s předvyplněným číslem (nebo adresou). Telefon se zobrazuje v přehledném národním

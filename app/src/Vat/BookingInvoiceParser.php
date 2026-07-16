@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Vat;
 
+use App\Formatting\Money;
 use Smalot\PdfParser\Parser as PdfParser;
 
 class BookingInvoiceParser
@@ -115,6 +116,6 @@ class BookingInvoiceParser
             throw new \RuntimeException(sprintf('Cannot parse amount "%s"', $raw));
         }
 
-        return number_format((float) $cleaned, 2, '.', '');
+        return Money::normalize((float) $cleaned);
     }
 }

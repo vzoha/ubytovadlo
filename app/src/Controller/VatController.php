@@ -17,6 +17,7 @@ use App\Entity\Reservation;
 use App\Entity\VatPeriod;
 use App\Enum\Channel;
 use App\Form\AirbnbStatementUploadType;
+use App\Formatting\Money;
 use App\Invoice\TaxProfileConfig;
 use App\Repository\AirbnbStatementRepository;
 use App\Repository\BookingMonthlyInvoiceRepository;
@@ -189,7 +190,7 @@ class VatController extends AbstractController
                 $statement = new AirbnbStatement(
                     $data['periodFrom'],
                     $data['periodTo'],
-                    number_format((float) $data['commissionCzk'], 2, '.', ''),
+                    Money::normalize((float) $data['commissionCzk']),
                     $this->moveAirbnbStatementPdf($pdfFile, $year, $month),
                 );
                 $statement->setNotes($data['notes'] ?? null);
@@ -303,22 +304,21 @@ class VatController extends AbstractController
 
         $paidAmount = null;
         if ($paidAmountInput !== '') {
-            $normalized = str_replace([' ', ','], ['', '.'], $paidAmountInput);
-            if (!is_numeric($normalized)) {
+            $paidAmount = Money::parse($paidAmountInput);
+            if ($paidAmount === null) {
                 $this->addFlash('danger', 'Neplatná částka úhrady.');
 
                 return $this->redirectToRoute('vat_detail', ['year' => $year, 'month' => sprintf('%02d', $month)]);
             }
-            $paidAmount = number_format((float) $normalized, 2, '.', '');
         }
 
         $summary = $this->calculator->summarize($year, $month);
         $liability = $summary->liability($this->taxProfile->current());
         $period = $this->periods->findOrCreate($year, $month);
-        $period->setSumBaseCzk(number_format($summary->sumBaseCzk, 2, '.', ''));
-        $period->setSumVatCzk(number_format($summary->sumVatCzk, 2, '.', ''));
-        $period->setOutputVatCzk($this->taxProfile->current()->chargesOutputVat() ? number_format($liability->outputVatCzk, 2, '.', '') : null);
-        $period->setInputDeductibleCzk($this->taxProfile->current()->chargesOutputVat() ? number_format($liability->deductibleVatCzk, 2, '.', '') : null);
+        $period->setSumBaseCzk(Money::normalize($summary->sumBaseCzk));
+        $period->setSumVatCzk(Money::normalize($summary->sumVatCzk));
+        $period->setOutputVatCzk($this->taxProfile->current()->chargesOutputVat() ? Money::normalize($liability->outputVatCzk) : null);
+        $period->setInputDeductibleCzk($this->taxProfile->current()->chargesOutputVat() ? Money::normalize($liability->deductibleVatCzk) : null);
         $period->setFiledAt($filedAt);
         $period->setPaidAt($paidAt);
         $period->setPaidAmountCzk($paidAmount);

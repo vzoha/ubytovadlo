@@ -13,6 +13,7 @@ namespace App\Vat;
 
 use App\Entity\Reservation;
 use App\Enum\Channel;
+use App\Formatting\Money;
 
 /**
  * Spočítá DPH pro reverse charge nad provizí OTA (identifikovaná osoba, §6h ZDPH).
@@ -67,8 +68,8 @@ class VatCalculator
             $reservation->setVatCnbRateDate($rate->validFor);
         }
 
-        $reservation->setVatBaseCzk(number_format($baseCzk, 2, '.', ''));
-        $reservation->setVatAmountCzk(number_format($baseCzk * self::VAT_RATE, 2, '.', ''));
+        $reservation->setVatBaseCzk(Money::normalize($baseCzk));
+        $reservation->setVatAmountCzk(Money::normalize($baseCzk * self::VAT_RATE));
 
         return true;
     }

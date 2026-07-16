@@ -22,6 +22,7 @@ use App\Enum\Channel;
 use App\Enum\ConnectorType;
 use App\Enum\OwnerNotificationType;
 use App\Enum\ReservationStatus;
+use App\Formatting\Money;
 use App\Notification\OwnerNotifier;
 use App\Payment\PaymentProcessor;
 use App\Repository\EmailLogRepository;
@@ -159,15 +160,15 @@ class EmailDispatcher
             $reservation->setGuestRegion($data->guestRegion);
 
             if ($data->priceTotal !== null) {
-                $reservation->setPriceTotal(number_format($data->priceTotal, 2, '.', ''));
+                $reservation->setPriceTotal(Money::normalize($data->priceTotal));
                 $reservation->setPriceCurrency('CZK');
             }
             if ($data->hostCommission !== null) {
-                $reservation->setCommissionAmount(number_format($data->hostCommission, 2, '.', ''));
+                $reservation->setCommissionAmount(Money::normalize($data->hostCommission));
                 $reservation->setCommissionCurrency('CZK');
             }
             if ($data->netPayout !== null) {
-                $reservation->setNetPayout(number_format($data->netPayout, 2, '.', ''));
+                $reservation->setNetPayout(Money::normalize($data->netPayout));
             }
             if ($data->hasPet) {
                 $reservation->setHasPet(true);
@@ -198,7 +199,7 @@ class EmailDispatcher
             return null;
         }
 
-        $reservation->setPayoutAmount(number_format($data->payoutAmount, 2, '.', ''));
+        $reservation->setPayoutAmount(Money::normalize($data->payoutAmount));
         $reservation->setPayoutSentAt($data->payoutSentAt);
         if ($data->payoutReference !== null) {
             $reservation->setPayoutReference($data->payoutReference);

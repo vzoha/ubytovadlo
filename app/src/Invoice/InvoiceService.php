@@ -18,6 +18,7 @@ use App\Entity\Reservation;
 use App\Enum\BillingMode;
 use App\Enum\Channel;
 use App\Enum\InvoiceType;
+use App\Formatting\Money;
 use App\Repository\InvoiceRepository;
 use App\Reservation\Event\ReservationFinancialsChangedEvent;
 use App\Vat\CnbExchangeRateClient;
@@ -228,7 +229,7 @@ class InvoiceService
         $currency = $reservation->getPriceCurrency();
 
         if ($currency === 'CZK') {
-            return number_format((float) $amount, 2, '.', '');
+            return Money::normalize((float) $amount);
         }
 
         $rate = $this->cnb->getRate($currency, $issuedAt);

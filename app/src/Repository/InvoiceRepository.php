@@ -14,6 +14,7 @@ namespace App\Repository;
 use App\Entity\Invoice;
 use App\Entity\Reservation;
 use App\Enum\InvoiceType;
+use App\Formatting\Money;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -179,8 +180,8 @@ class InvoiceRepository extends ServiceEntityRepository
             ->getSingleResult();
 
         return [
-            'base' => number_format((float) ($row['base'] ?? 0), 2, '.', ''),
-            'vat' => number_format((float) ($row['vat'] ?? 0), 2, '.', ''),
+            'base' => Money::normalize((float) ($row['base'] ?? 0)),
+            'vat' => Money::normalize((float) ($row['vat'] ?? 0)),
         ];
     }
 

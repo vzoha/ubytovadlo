@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace App\Mail;
 
 use App\Entity\Reservation;
+use App\Formatting\Money;
 use App\Invoice\BalanceCalculator;
 use App\Invoice\DepositPayment;
 use App\Invoice\DepositPaymentBuilder;
@@ -129,7 +130,7 @@ final class MessageVariableResolver
             'guests_child' => (string) $reservation->getGuestsChild(),
             'price_total' => $this->money($reservation->getPriceTotal(), $reservation->getPriceCurrency()),
             'balance_due' => $balance !== null && $balance->remaining > 0.0
-                ? $this->money(number_format($balance->remaining, 2, '.', ''), 'CZK')
+                ? $this->money(Money::normalize($balance->remaining), 'CZK')
                 : '',
             'channel' => $reservation->getChannel()->label(),
             'accommodation_name' => $profile?->getNazev() ?? '',
@@ -198,7 +199,7 @@ final class MessageVariableResolver
         }
         $formatted = number_format((float) $amount, 0, ',', "\u{00a0}");
 
-        return $formatted . "\u{00a0}" . ($currency === 'CZK' ? 'Kč' : $currency);
+        return $formatted . "\u{00a0}" . Money::symbol($currency);
     }
 
     private function address(?\App\Entity\AccommodationProfile $profile): string

@@ -14,6 +14,7 @@ namespace App\Entity;
 use App\Enum\InvoiceType;
 use App\Enum\PdfSource;
 use App\Enum\TaxProfile;
+use App\Formatting\Money;
 use App\Repository\InvoiceRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -321,7 +322,7 @@ class Invoice
 
     public function getCurrencyLabel(): string
     {
-        return $this->currency === 'CZK' ? 'Kč' : $this->currency;
+        return Money::symbol($this->currency);
     }
 
     public function setCurrency(string $currency): self

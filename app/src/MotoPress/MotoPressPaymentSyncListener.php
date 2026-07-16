@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\MotoPress;
 
+use App\Formatting\Money;
 use App\Payment\Event\PaymentSettledEvent;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
@@ -83,6 +84,6 @@ class MotoPressPaymentSyncListener
             return null;
         }
 
-        return number_format((float) $value, 2, '.', '');
+        return Money::normalize((float) $value);
     }
 }

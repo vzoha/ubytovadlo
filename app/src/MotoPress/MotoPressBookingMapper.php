@@ -13,6 +13,7 @@ namespace App\MotoPress;
 
 use App\Entity\Reservation;
 use App\Enum\ReservationStatus;
+use App\Formatting\Money;
 use App\Reservation\GuestRequestKeywords;
 
 /**
@@ -130,7 +131,7 @@ class MotoPressBookingMapper
         }
 
         if (isset($data['total_price']) && $this->fill($isNew, $reservation->getPriceTotal())) {
-            $reservation->setPriceTotal(number_format((float) $data['total_price'], 2, '.', ''));
+            $reservation->setPriceTotal(Money::normalize((float) $data['total_price']));
             $reservation->setPriceCurrency(is_string($data['currency'] ?? null) && $data['currency'] !== '' ? (string) $data['currency'] : 'CZK');
         }
 
