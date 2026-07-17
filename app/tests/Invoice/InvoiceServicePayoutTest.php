@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace App\Tests\Invoice;
 
 use App\Cashflow\IncomeUpserter;
+use App\Entity\Embeddable\Address;
 use App\Entity\Reservation;
 use App\Enum\BillingMode;
 use App\Enum\Channel;
@@ -96,9 +97,7 @@ final class InvoiceServicePayoutTest extends TestCase
         $r = new Reservation(Channel::AIRBNB, new \DateTimeImmutable('2026-05-28'));
         $r->setCheckOut(new \DateTimeImmutable('2026-05-30'));
         $r->setGuestName('Eva Marková');
-        $r->setGuestStreet('Nějaká 1');
-        $r->setGuestCity('Praha');
-        $r->setGuestZip('11000');
+        $r->setGuestAddress(new Address('Nějaká 1', 'Praha', '11000'));
         $r->setStatus(ReservationStatus::CONFIRMED);
         $r->setBillingMode(BillingMode::AIRBNB);
         $r->setPriceTotal('3298.00');

@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Command;
 
+use App\Entity\Embeddable\Address;
 use App\Entity\Reservation;
 use App\Enum\BillingMode;
 use App\Enum\Channel;
@@ -59,9 +60,7 @@ class InvoiceSmokeCommand extends Command
         $r = new Reservation($channel, new \DateTimeImmutable('2026-06-01'));
         $r->setCheckOut(new \DateTimeImmutable('2026-06-05'));
         $r->setGuestName($name);
-        $r->setGuestStreet('Testovací 42');
-        $r->setGuestCity('Praha');
-        $r->setGuestZip('11000');
+        $r->setGuestAddress(new Address('Testovací 42', 'Praha', '11000'));
         $r->setStatus(ReservationStatus::CONFIRMED);
         $r->setBillingMode($mode);
         $r->setPriceTotal($total);

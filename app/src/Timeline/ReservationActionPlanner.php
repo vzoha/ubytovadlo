@@ -81,7 +81,7 @@ class ReservationActionPlanner
         }
 
         // Ubyport — jen u cizinců (host z jiné země než ČR), lhůta 3 dny od příjezdu.
-        $country = $reservation->getGuestCountry();
+        $country = $reservation->getGuestAddress()->getCountry();
         if ($country !== null && $country !== 'CZ') {
             $added += $this->ensure($reservation, ActionType::UBYPORT_EXPORT, $this->at($checkIn, '+1 day', '09:00'));
         }

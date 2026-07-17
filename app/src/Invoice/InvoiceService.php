@@ -219,10 +219,11 @@ class InvoiceService
     private function copyCustomerSnapshot(Reservation $reservation, Invoice $invoice): void
     {
         $invoice->setCustomerName($reservation->getGuestName() ?? '');
-        $invoice->setCustomerStreet($reservation->getGuestStreet());
-        $invoice->setCustomerCity($reservation->getGuestCity());
-        $invoice->setCustomerZip($reservation->getGuestZip());
-        $invoice->setCustomerCountry($this->countryLabel($reservation->getGuestCountry()));
+        $address = $reservation->getGuestAddress();
+        $invoice->setCustomerStreet($address->getStreet());
+        $invoice->setCustomerCity($address->getCity());
+        $invoice->setCustomerZip($address->getZip());
+        $invoice->setCustomerCountry($this->countryLabel($address->getCountry()));
         $invoice->setCustomerCompanyName($reservation->getGuestCompanyName());
         $invoice->setCustomerIco($reservation->getGuestIco());
         $invoice->setCustomerDic($reservation->getGuestDic());

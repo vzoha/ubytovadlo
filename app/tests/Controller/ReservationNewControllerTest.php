@@ -80,7 +80,7 @@ final class ReservationNewControllerTest extends WebTestCase
         self::assertSame(BillingMode::ADMIN_BOOKING, $reservation->getBillingMode());
         self::assertSame('8500.50', $reservation->getPriceTotal());
         self::assertSame('CZK', $reservation->getPriceCurrency());
-        self::assertSame('CZ', $reservation->getGuestCountry());
+        self::assertSame('CZ', $reservation->getGuestAddress()->getCountry());
         self::assertTrue($reservation->isGuestsSplitManually());
         self::assertSame('2026-08-14', $reservation->getCheckOut()?->format('Y-m-d'));
     }

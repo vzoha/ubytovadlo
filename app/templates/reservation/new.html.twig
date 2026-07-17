@@ -24,10 +24,10 @@
         <div class="col-md-6">{{ form_row(form.guestPhone) }}</div>
 
         <div class="col-md-12"><hr><h6 class="text-muted mb-0">Fakturační adresa <span class="fw-normal">(pro fakturu; lze doplnit později)</span></h6></div>
-        <div class="col-md-6">{{ form_row(form.guestStreet) }}</div>
-        <div class="col-md-2">{{ form_row(form.guestZip) }}</div>
-        <div class="col-md-4">{{ form_row(form.guestCity) }}</div>
-        <div class="col-md-4">{{ form_row(form.guestCountry) }}</div>
+        <div class="col-md-6">{{ form_row(form.guestAddress.street) }}</div>
+        <div class="col-md-2">{{ form_row(form.guestAddress.zip) }}</div>
+        <div class="col-md-4">{{ form_row(form.guestAddress.city) }}</div>
+        <div class="col-md-4">{{ form_row(form.guestAddress.country) }}</div>
 
         <div class="col-md-12"><hr><h6 class="text-muted mb-0">Firma <span class="fw-normal">(pokud chce host fakturovat na firmu)</span></h6></div>
         <div class="col-md-6">{{ form_row(form.guestCompanyName) }}</div>

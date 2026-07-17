@@ -26,6 +26,7 @@ use App\Email\Handler\BookingInvoiceHandler;
 use App\Email\Handler\BookingTriggerHandler;
 use App\Email\Handler\CsPaymentHandler;
 use App\Entity\EmailLog;
+use App\Entity\Embeddable\Address;
 use App\Entity\Reservation;
 use App\Enum\Channel;
 use App\Enum\EmailLogStatus;
@@ -200,8 +201,7 @@ final class EmailDispatcherTest extends TestCase
         $existing = new Reservation(Channel::AIRBNB, new \DateTimeImmutable('2026-09-07'));
         $existing->setExternalId('HMABCD12EF');
         $existing->setGuestName('Manually Edited Name');
-        $existing->setGuestStreet('Some street 1');
-        $existing->setGuestCity('Praha');
+        $existing->setGuestAddress(new Address('Some street 1', 'Praha'));
         $existing->setStatus(ReservationStatus::CONFIRMED);
 
         $reflection = new \ReflectionProperty($existing, 'id');
@@ -213,8 +213,8 @@ final class EmailDispatcherTest extends TestCase
         $this->dispatcher->dispatch($email);
 
         self::assertSame('Manually Edited Name', $existing->getGuestName());
-        self::assertSame('Some street 1', $existing->getGuestStreet());
-        self::assertSame('Praha', $existing->getGuestCity());
+        self::assertSame('Some street 1', $existing->getGuestAddress()->getStreet());
+        self::assertSame('Praha', $existing->getGuestAddress()->getCity());
         self::assertSame(ReservationStatus::CONFIRMED, $existing->getStatus());
     }
 

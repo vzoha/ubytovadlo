@@ -35,9 +35,9 @@ final class MotoPressBookingMapperTest extends TestCase
         self::assertSame('Jan Novak', $reservation->getGuestName());
         self::assertSame('jan.novak@example.cz', $reservation->getGuestEmail());
         self::assertSame('+420777123456', $reservation->getGuestPhone());
-        self::assertSame('Hlavni 12', $reservation->getGuestStreet());
-        self::assertSame('Praha', $reservation->getGuestCity());
-        self::assertSame('110 00', $reservation->getGuestZip());
+        self::assertSame('Hlavni 12', $reservation->getGuestAddress()->getStreet());
+        self::assertSame('Praha', $reservation->getGuestAddress()->getCity());
+        self::assertSame('110 00', $reservation->getGuestAddress()->getZip());
         self::assertSame(2, $reservation->getGuestsAdult());
         self::assertSame(1, $reservation->getGuestsChild());
         self::assertSame('14000.00', $reservation->getPriceTotal());

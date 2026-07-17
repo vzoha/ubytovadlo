@@ -96,26 +96,28 @@ class MotoPressBookingMapper
             $reservation->setGuestPhone((string) $customer['phone']);
         }
 
+        $address = $reservation->getGuestAddress();
         $street = trim((string) ($customer['address1'] ?? ''));
         $address2 = trim((string) ($customer['address2'] ?? ''));
         if ($address2 !== '') {
             $street = $street !== '' ? $street . ' ' . $address2 : $address2;
         }
-        if ($street !== '' && $this->fill($isNew, $reservation->getGuestStreet())) {
-            $reservation->setGuestStreet($street);
+        if ($street !== '' && $this->fill($isNew, $address->getStreet())) {
+            $address = $address->withStreet($street);
         }
         $city = trim((string) ($customer['city'] ?? ''));
-        if ($city !== '' && $this->fill($isNew, $reservation->getGuestCity())) {
-            $reservation->setGuestCity($city);
+        if ($city !== '' && $this->fill($isNew, $address->getCity())) {
+            $address = $address->withCity($city);
         }
         $zip = trim((string) ($customer['zip'] ?? ''));
-        if ($zip !== '' && $this->fill($isNew, $reservation->getGuestZip())) {
-            $reservation->setGuestZip($this->normalizeZip($zip));
+        if ($zip !== '' && $this->fill($isNew, $address->getZip())) {
+            $address = $address->withZip($this->normalizeZip($zip));
         }
         $country = trim((string) ($customer['country'] ?? ''));
-        if ($country !== '' && $this->fill($isNew, $reservation->getGuestCountry())) {
-            $reservation->setGuestCountry($country);
+        if ($country !== '' && $this->fill($isNew, $address->getCountry())) {
+            $address = $address->withCountry($country);
         }
+        $reservation->setGuestAddress($address);
 
         $accommodations = is_array($data['reserved_accommodations'] ?? null) ? $data['reserved_accommodations'] : [];
         [$adults, $children] = $this->sumGuests($accommodations);

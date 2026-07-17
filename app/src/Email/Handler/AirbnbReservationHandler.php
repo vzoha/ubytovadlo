@@ -100,7 +100,7 @@ final class AirbnbReservationHandler implements EmailHandler
         }
 
         // Airbnb e-mail nedává adresu, takže zůstává needs_details, dokud ji nedoplníme.
-        if ($reservation->getStatus() === ReservationStatus::NEEDS_DETAILS && $reservation->hasGuestAddress()) {
+        if ($reservation->getStatus() === ReservationStatus::NEEDS_DETAILS && !$reservation->getGuestAddress()->isEmpty()) {
             $reservation->setStatus(ReservationStatus::CONFIRMED);
         }
 

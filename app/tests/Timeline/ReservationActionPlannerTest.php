@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Timeline;
 
+use App\Entity\Embeddable\Address;
 use App\Entity\MessageTemplate;
 use App\Entity\Reservation;
 use App\Entity\ReservationAction;
@@ -136,7 +137,7 @@ final class ReservationActionPlannerTest extends KernelTestCase
         $r->setCheckOut(new \DateTimeImmutable('+12 days'));
         $r->setStatus(ReservationStatus::CONFIRMED);
         $r->setBillingMode($mode);
-        $r->setGuestCountry($country);
+        $r->setGuestAddress(new Address(country: $country));
         $this->em->persist($r);
         $this->em->flush();
 

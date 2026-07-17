@@ -69,8 +69,8 @@ class CheckinController extends AbstractController
         $reservation = $this->resolveReservation($token);
         $this->guardEditable($reservation);
 
-        if ($reservation->getGuestCountry() === null || $reservation->getGuestCountry() === '') {
-            $reservation->setGuestCountry('CZ');
+        if ($reservation->getGuestAddress()->getCountry() === null) {
+            $reservation->setGuestAddress($reservation->getGuestAddress()->withCountry('CZ'));
         }
 
         $form = $this->createForm(CheckinBillingType::class, $reservation);
@@ -301,6 +301,6 @@ class CheckinController extends AbstractController
     private function hasBillingAddress(Reservation $reservation): bool
     {
         return trim((string) $reservation->getGuestName()) !== ''
-            && trim((string) $reservation->getGuestStreet()) !== '';
+            && $reservation->getGuestAddress()->getStreet() !== null;
     }
 }

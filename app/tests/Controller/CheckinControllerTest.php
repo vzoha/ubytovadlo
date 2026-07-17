@@ -333,9 +333,9 @@ final class CheckinControllerTest extends WebTestCase
 
         $form = $crawler->selectButton('Uložit')->form([
             'checkin_billing[guestName]' => 'Jan Novák',
-            'checkin_billing[guestStreet]' => 'Dlouhá 5',
-            'checkin_billing[guestZip]' => '110 00',
-            'checkin_billing[guestCity]' => 'Praha',
+            'checkin_billing[guestAddress][street]' => 'Dlouhá 5',
+            'checkin_billing[guestAddress][zip]' => '110 00',
+            'checkin_billing[guestAddress][city]' => 'Praha',
         ]);
         $this->client->submit($form);
 
@@ -344,7 +344,7 @@ final class CheckinControllerTest extends WebTestCase
         $this->em->clear();
         $reservation = static::getContainer()->get(ReservationRepository::class)->find($this->reservation->getId());
         self::assertSame('Jan Novák', $reservation->getGuestName());
-        self::assertSame('Dlouhá 5', $reservation->getGuestStreet());
+        self::assertSame('Dlouhá 5', $reservation->getGuestAddress()->getStreet());
 
         // Po doplnění už index billing nenabízí jako chybějící.
         $this->client->request('GET', '/checkin/' . $token);

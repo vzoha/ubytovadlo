@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Entity\Embeddable\Address;
 use App\Entity\Embeddable\ElectricityUsage;
 use App\Entity\Embeddable\UbyportReport;
 use App\Entity\Embeddable\VatReverseCharge;
@@ -134,18 +135,8 @@ class Reservation
     #[ORM\Column(length: 64, nullable: true)]
     private ?string $guestPhone = null;
 
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $guestStreet = null;
-
-    #[ORM\Column(length: 128, nullable: true)]
-    private ?string $guestCity = null;
-
-    #[ORM\Column(length: 16, nullable: true)]
-    private ?string $guestZip = null;
-
-    /** ISO 3166-1 alpha-2 ("CZ", "DE"). Z MotoPressu jako 2-pisemny kod. */
-    #[ORM\Column(length: 2, nullable: true)]
-    private ?string $guestCountry = null;
+    #[ORM\Embedded(class: Address::class, columnPrefix: 'guest_')]
+    private Address $guestAddress;
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $guestCompanyName = null;
@@ -210,6 +201,7 @@ class Reservation
     {
         $this->channel = $channel;
         $this->checkIn = $checkIn;
+        $this->guestAddress = new Address();
         $this->electricity = new ElectricityUsage();
         $this->vatReverseCharge = new VatReverseCharge();
         $this->ubyportReport = new UbyportReport();
@@ -586,73 +578,20 @@ class Reservation
         return $this;
     }
 
-    public function getGuestStreet(): ?string
+    public function getGuestAddress(): Address
     {
-        return $this->guestStreet;
+        return $this->guestAddress;
     }
 
-    public function setGuestStreet(?string $guestStreet): self
+    public function setGuestAddress(Address $guestAddress): self
     {
-        $this->guestStreet = $guestStreet;
-        $this->touch();
-
-        return $this;
-    }
-
-    public function getGuestCity(): ?string
-    {
-        return $this->guestCity;
-    }
-
-    public function setGuestCity(?string $guestCity): self
-    {
-        $this->guestCity = $guestCity;
-        $this->touch();
-
-        return $this;
-    }
-
-    public function getGuestZip(): ?string
-    {
-        return $this->guestZip;
-    }
-
-    public function setGuestZip(?string $guestZip): self
-    {
-        $this->guestZip = $guestZip;
-        $this->touch();
-
-        return $this;
-    }
-
-    public function getGuestCountry(): ?string
-    {
-        return $this->guestCountry;
-    }
-
-    public function setGuestCountry(?string $guestCountry): self
-    {
-        $normalized = $guestCountry !== null ? strtoupper(trim($guestCountry)) : null;
-        $this->guestCountry = $normalized === '' ? null : $normalized;
-        $this->touch();
-
-        return $this;
-    }
-
-    public function hasGuestAddress(): bool
-    {
-        return $this->guestStreet !== null || $this->guestCity !== null || $this->guestZip !== null;
-    }
-
-    public function getGuestAddressFormatted(): ?string
-    {
-        if (!$this->hasGuestAddress()) {
-            return null;
+        if ($this->guestAddress->equals($guestAddress)) {
+            return $this;
         }
-        $cityZip = trim(($this->guestZip ?? '') . ' ' . ($this->guestCity ?? ''));
-        $parts = array_filter([$this->guestStreet, $cityZip !== '' ? $cityZip : null], static fn (?string $p): bool => $p !== null && $p !== '');
+        $this->guestAddress = $guestAddress;
+        $this->touch();
 
-        return implode(', ', $parts);
+        return $this;
     }
 
     public function getGuestCompanyName(): ?string

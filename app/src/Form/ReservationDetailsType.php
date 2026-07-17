@@ -45,23 +45,7 @@ class ReservationDetailsType extends AbstractType
                 'label' => 'Telefon',
                 'required' => false,
             ])
-            ->add('guestStreet', TextType::class, [
-                'label' => 'Ulice a č. p.',
-                'required' => false,
-            ])
-            ->add('guestZip', TextType::class, [
-                'label' => 'PSČ',
-                'required' => false,
-            ])
-            ->add('guestCity', TextType::class, [
-                'label' => 'Město',
-                'required' => false,
-            ])
-            ->add('guestCountry', TextType::class, [
-                'label' => 'Země (ISO kód, např. CZ, DE, SK)',
-                'required' => false,
-                'attr' => ['maxlength' => 2, 'placeholder' => 'CZ'],
-            ])
+            ->add('guestAddress', AddressType::class)
             ->add('guestCompanyName', TextType::class, [
                 'label' => 'Firma (volitelné)',
                 'required' => false,

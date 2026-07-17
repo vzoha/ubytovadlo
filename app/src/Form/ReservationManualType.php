@@ -60,14 +60,19 @@ class ReservationManualType extends ReservationDetailsType
                 'placeholder' => 'Zvolit později',
                 'choice_label' => static fn (BillingMode $mode): string => $mode->label(),
             ])
-            // Přepsání zděděného textového pole ISO kódu na výběr země (host se
-            // vyplňuje ručně, ne z Booking extranetu) — čeština, časté země první.
-            ->add('guestCountry', CountryType::class, [
-                'label' => 'Země',
-                'required' => false,
-                'placeholder' => false,
-                'preferred_choices' => ['CZ', 'SK', 'DE', 'AT', 'PL'],
-                'choice_translation_locale' => 'cs',
+            // Země jako výběr, ne ISO kód (host se vyplňuje ručně, ne z Booking
+            // extranetu) — čeština, časté země první.
+            ->add('guestAddress', AddressType::class, [
+                'country_type' => CountryType::class,
+                'field_options' => [
+                    'country' => [
+                        'label' => 'Země',
+                        'required' => false,
+                        'placeholder' => false,
+                        'preferred_choices' => ['CZ', 'SK', 'DE', 'AT', 'PL'],
+                        'choice_translation_locale' => 'cs',
+                    ],
+                ],
             ]);
     }
 }

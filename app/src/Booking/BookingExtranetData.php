@@ -72,18 +72,20 @@ final class BookingExtranetData
         if ($this->guestPhone !== null && $reservation->getGuestPhone() === null) {
             $reservation->setGuestPhone($this->guestPhone);
         }
+        $address = $reservation->getGuestAddress();
         if ($this->guestStreet !== null) {
-            $reservation->setGuestStreet($this->guestStreet);
+            $address = $address->withStreet($this->guestStreet);
         }
         if ($this->guestCity !== null) {
-            $reservation->setGuestCity($this->guestCity);
+            $address = $address->withCity($this->guestCity);
         }
         if ($this->guestZip !== null) {
-            $reservation->setGuestZip($this->guestZip);
+            $address = $address->withZip($this->guestZip);
         }
         if ($this->guestCountry !== null) {
-            $reservation->setGuestCountry($this->guestCountry);
+            $address = $address->withCountry($this->guestCountry);
         }
+        $reservation->setGuestAddress($address);
         if ($this->notes !== null) {
             $existing = $reservation->getNotes();
             $reservation->setNotes($existing !== null && $existing !== '' ? $existing . "\n" . $this->notes : $this->notes);

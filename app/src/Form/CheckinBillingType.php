@@ -52,25 +52,13 @@ class CheckinBillingType extends AbstractType
                 'required' => false,
                 'attr' => ['id' => 'billing-dic'],
             ])
-            ->add('guestStreet', TextType::class, [
-                'label' => 'Ulice a č. p.',
-                'required' => true,
-                'attr' => ['id' => 'billing-street'],
-            ])
-            ->add('guestZip', TextType::class, [
-                'label' => 'PSČ',
-                'required' => true,
-                'attr' => ['id' => 'billing-zip'],
-            ])
-            ->add('guestCity', TextType::class, [
-                'label' => 'Město',
-                'required' => true,
-                'attr' => ['id' => 'billing-city'],
-            ])
-            ->add('guestCountry', TextType::class, [
-                'label' => 'Země (ISO kód)',
-                'required' => false,
-                'attr' => ['id' => 'billing-country', 'maxlength' => 2, 'placeholder' => 'CZ'],
+            ->add('guestAddress', AddressType::class, [
+                'field_options' => [
+                    'street' => ['label' => 'Ulice a č. p.', 'required' => true],
+                    'zip' => ['label' => 'PSČ', 'required' => true],
+                    'city' => ['label' => 'Město', 'required' => true],
+                    'country' => ['label' => 'Země (ISO kód)', 'required' => false, 'attr' => ['maxlength' => 2, 'placeholder' => 'CZ']],
+                ],
             ])
             ->add('guestEmail', EmailType::class, [
                 'label' => 'E-mail (kam poslat fakturu)',

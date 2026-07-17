@@ -100,7 +100,7 @@ class ReservationController extends AbstractController
     public function new(Request $request): Response
     {
         $reservation = new Reservation(Channel::DIRECT, new \DateTimeImmutable('today'));
-        $reservation->setGuestCountry('CZ');
+        $reservation->setGuestAddress($reservation->getGuestAddress()->withCountry('CZ'));
         $form = $this->createForm(ReservationManualType::class, $reservation);
         $form->handleRequest($request);
 

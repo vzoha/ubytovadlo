@@ -27,10 +27,10 @@
                             <div class="col-md-7">{{ form_row(form.guestCompanyName) }}</div>
                             <div class="col-md-6">{{ form_row(form.guestDic) }}</div>
 
-                            <div class="col-12">{{ form_row(form.guestStreet) }}</div>
-                            <div class="col-md-3">{{ form_row(form.guestZip) }}</div>
-                            <div class="col-md-6">{{ form_row(form.guestCity) }}</div>
-                            <div class="col-md-3">{{ form_row(form.guestCountry) }}</div>
+                            <div class="col-12">{{ form_row(form.guestAddress.street) }}</div>
+                            <div class="col-md-3">{{ form_row(form.guestAddress.zip) }}</div>
+                            <div class="col-md-6">{{ form_row(form.guestAddress.city) }}</div>
+                            <div class="col-md-3">{{ form_row(form.guestAddress.country) }}</div>
 
                             <div class="col-12">{{ form_row(form.guestEmail) }}</div>
                         </div>
@@ -56,10 +56,10 @@
         var aresUrl = {{ path('checkin_ares', {token: token})|json_encode|raw }};
         var IDS = {
             company: '{{ form.guestCompanyName.vars.id }}',
-            street: '{{ form.guestStreet.vars.id }}',
-            city: '{{ form.guestCity.vars.id }}',
-            zip: '{{ form.guestZip.vars.id }}',
-            country: '{{ form.guestCountry.vars.id }}',
+            street: '{{ form.guestAddress.street.vars.id }}',
+            city: '{{ form.guestAddress.city.vars.id }}',
+            zip: '{{ form.guestAddress.zip.vars.id }}',
+            country: '{{ form.guestAddress.country.vars.id }}',
             dic: '{{ form.guestDic.vars.id }}'
         };
 
