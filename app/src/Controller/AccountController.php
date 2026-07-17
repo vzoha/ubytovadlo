@@ -15,6 +15,7 @@ use App\Cashflow\AccountBalanceCalculator;
 use App\Cashflow\BalanceStatementReconciler;
 use App\Cashflow\CashflowSummary;
 use App\Controller\Concern\ChecksCsrf;
+use App\Controller\Concern\ParsesRequestInput;
 use App\Entity\Account;
 use App\Entity\BalanceStatement;
 use App\Entity\LedgerEntry;
@@ -40,6 +41,7 @@ use Symfony\Component\Routing\Attribute\Route;
 class AccountController extends AbstractController
 {
     use ChecksCsrf;
+    use ParsesRequestInput;
 
     public function __construct(
         private readonly AccountRepository $accounts,
@@ -401,18 +403,6 @@ class AccountController extends AbstractController
     }
 
     /** Datum z uživatelského vstupu; nevalidní (např. `?from=2026-99-99`) → null místo 500. */
-    private function parseDateOrNull(string $raw): ?\DateTimeImmutable
-    {
-        if ($raw === '') {
-            return null;
-        }
-        try {
-            return new \DateTimeImmutable($raw);
-        } catch (\Exception) {
-            return null;
-        }
-    }
-
     /**
      * Stav účtu počítá jen pohyby v okně [openingDate účtu, dnes]. Pohyb datovaný
      * mimo okno se do stavu nezapočítá — upozorni, ať uživatel netápe, proč se
@@ -450,9 +440,10 @@ class AccountController extends AbstractController
         return $this->parseDateOrNull(trim((string) $value)) ?? new \DateTimeImmutable('today');
     }
 
+    /** Pohyby na účtech se vedou v celých korunách. Nečitelný vstup = 0 (volající hlídá > 0). */
     private function parseAmount(mixed $value): int
     {
-        return (int) round((float) str_replace([' ', ','], ['', '.'], (string) $value));
+        return (int) round((float) ($this->parseAmountOrNull((string) $value) ?? '0'));
     }
 
     private function parseNote(mixed $value): ?string

@@ -14,6 +14,7 @@ namespace App\Controller;
 use App\Booking\BookingExtranetParser;
 use App\Cashflow\IncomeUpserter;
 use App\Controller\Concern\ChecksCsrf;
+use App\Controller\Concern\ParsesRequestInput;
 use App\Entity\Reservation;
 use App\Entity\ReservationAction;
 use App\Entity\ReservationNote;
@@ -57,6 +58,7 @@ use Symfony\Component\Routing\Attribute\Route;
 class ReservationController extends AbstractController
 {
     use ChecksCsrf;
+    use ParsesRequestInput;
 
     public function __construct(
         private readonly ReservationRepository $reservations,
@@ -193,10 +195,11 @@ class ReservationController extends AbstractController
 
         $paidRaw = trim((string) $request->request->get('paid_at', ''));
         if ($paidRaw !== '') {
-            try {
-                $cleaning->setPaidAt(new \DateTimeImmutable($paidRaw));
-            } catch (\Throwable) {
+            $paidAt = $this->parseDateOrNull($paidRaw);
+            if ($paidAt === null) {
                 $this->addFlash('warning', 'Neplatné datum vyplacení — ostatní změny uloženy.');
+            } else {
+                $cleaning->setPaidAt($paidAt);
             }
         } else {
             $cleaning->setPaidAt(null);
@@ -221,19 +224,14 @@ class ReservationController extends AbstractController
             return $this->redirectToRoute('reservation_detail', ['id' => $reservation->getId()]);
         }
 
-        $amount = number_format((float) str_replace([' ', ','], ['', '.'], (string) $request->request->get('amount')), 2, '.', '');
-        if ((float) $amount <= 0) {
+        $amount = $this->parseAmountOrNull($request->request->getString('amount'));
+        if ($amount === null || (float) $amount <= 0) {
             $this->addFlash('warning', 'Zadej částku výplaty.');
 
             return $this->redirectToRoute('reservation_detail', ['id' => $reservation->getId()]);
         }
 
-        try {
-            $dateRaw = trim((string) $request->request->get('received_on', ''));
-            $receivedOn = $dateRaw !== '' ? new \DateTimeImmutable($dateRaw) : new \DateTimeImmutable('today');
-        } catch (\Exception) {
-            $receivedOn = new \DateTimeImmutable('today');
-        }
+        $receivedOn = $this->parseDateOrNull($request->request->getString('received_on')) ?? new \DateTimeImmutable('today');
         $this->incomeUpserter->recordManualPayout($reservation, $amount, $receivedOn);
         $this->addFlash('success', 'Výplata zaznamenána — příjem rezervace zpřesněn.');
 
@@ -253,20 +251,14 @@ class ReservationController extends AbstractController
             return $this->redirectToRoute('reservation_detail', ['id' => $reservation->getId()]);
         }
 
-        $amount = number_format((float) str_replace([' ', ','], ['', '.'], (string) $request->request->get('amount')), 2, '.', '');
-        if ((float) $amount <= 0) {
+        $amount = $this->parseAmountOrNull($request->request->getString('amount'));
+        if ($amount === null || (float) $amount <= 0) {
             $this->addFlash('warning', 'Zadej částku platby.');
 
             return $this->redirectToRoute('reservation_detail', ['id' => $reservation->getId()]);
         }
 
-        try {
-            $dateRaw = trim((string) $request->request->get('received_on', ''));
-            $receivedOn = $dateRaw !== '' ? new \DateTimeImmutable($dateRaw) : new \DateTimeImmutable('today');
-        } catch (\Exception) {
-            $receivedOn = new \DateTimeImmutable('today');
-        }
-
+        $receivedOn = $this->parseDateOrNull($request->request->getString('received_on')) ?? new \DateTimeImmutable('today');
         $this->incomeUpserter->recordManualPayment($reservation, $amount, $receivedOn);
         $this->addFlash('success', 'Platba zaznamenána.');
 
@@ -400,10 +392,11 @@ class ReservationController extends AbstractController
 
         $occurredRaw = trim((string) $request->request->get('occurred_at', ''));
         if ($occurredRaw !== '') {
-            try {
-                $note->setOccurredAt(new \DateTimeImmutable($occurredRaw));
-            } catch (\Throwable) {
+            $occurredAt = $this->parseDateOrNull($occurredRaw);
+            if ($occurredAt === null) {
                 $this->addFlash('warning', 'Neplatné datum — použit aktuální čas.');
+            } else {
+                $note->setOccurredAt($occurredAt);
             }
         }
 
@@ -438,9 +431,8 @@ class ReservationController extends AbstractController
         }
 
         $whenRaw = trim((string) $request->request->get('scheduled_for', ''));
-        try {
-            $when = $whenRaw !== '' ? new \DateTimeImmutable($whenRaw) : new \DateTimeImmutable();
-        } catch (\Throwable) {
+        $when = $whenRaw !== '' ? $this->parseDateOrNull($whenRaw) : new \DateTimeImmutable();
+        if ($when === null) {
             $this->addFlash('warning', 'Neplatné datum termínu.');
 
             return $this->redirectToRoute('reservation_detail', ['id' => $reservation->getId()]);
@@ -460,15 +452,16 @@ class ReservationController extends AbstractController
     {
         $this->assertCsrf($request, 'action-edit-' . $action->getId());
 
+        // Prázdný vstup znamená „teď" (`new \DateTimeImmutable('')`), tak to drž.
         $whenRaw = trim((string) $request->request->get('scheduled_for', ''));
-        try {
-            $action->reschedule(new \DateTimeImmutable($whenRaw));
-        } catch (\Throwable) {
+        $when = $whenRaw !== '' ? $this->parseDateOrNull($whenRaw) : new \DateTimeImmutable();
+        if ($when === null) {
             $this->addFlash('warning', 'Neplatné datum.');
 
             return $this->redirectToRoute('reservation_detail', ['id' => $action->getReservation()->getId()]);
         }
 
+        $action->reschedule($when);
         $this->em->flush();
         $this->addFlash('success', 'Akce odložena.');
 

@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Controller\Concern\ChecksCsrf;
+use App\Controller\Concern\ParsesRequestInput;
 use App\Entity\ElectricityReading;
 use App\Repository\ElectricityReadingRepository;
 use App\Repository\ElectricityTariffRepository;
@@ -25,6 +26,7 @@ use Symfony\Component\Routing\Attribute\Route;
 class ElectricityController extends AbstractController
 {
     use ChecksCsrf;
+    use ParsesRequestInput;
 
     public function __construct(
         private readonly ElectricityReadingRepository $readings,
@@ -59,9 +61,8 @@ class ElectricityController extends AbstractController
             return $this->redirectToRoute('electricity_index');
         }
 
-        try {
-            $date = new \DateTimeImmutable($dateRaw);
-        } catch (\Throwable) {
+        $date = $this->parseDateOrNull($dateRaw);
+        if ($date === null) {
             $this->addFlash('warning', 'Neplatné datum.');
 
             return $this->redirectToRoute('electricity_index');
