@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Ares;
 
+use App\Formatting\CzechZip;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -64,7 +65,7 @@ class AresClient
             companyName: $data['obchodniJmeno'] ?? null,
             street: $this->composeStreet($sidlo),
             city: $sidlo['nazevObce'] ?? null,
-            zip: $this->formatZip($sidlo['psc'] ?? null),
+            zip: CzechZip::format($sidlo['psc'] ?? null),
             country: $sidlo['kodStatu'] ?? 'CZ',
             dic: $data['dic'] ?? null,
         );
@@ -86,18 +87,5 @@ class AresClient
         }
 
         return $number !== '' ? $base . ' ' . $number : $base;
-    }
-
-    private function formatZip(int|string|null $psc): ?string
-    {
-        if ($psc === null) {
-            return null;
-        }
-        $digits = preg_replace('/\D/', '', (string) $psc) ?? '';
-        if (\strlen($digits) !== 5) {
-            return $digits !== '' ? $digits : null;
-        }
-
-        return substr($digits, 0, 3) . ' ' . substr($digits, 3);
     }
 }

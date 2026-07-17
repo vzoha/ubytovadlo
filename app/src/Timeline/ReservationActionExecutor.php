@@ -56,14 +56,9 @@ class ReservationActionExecutor
     public function execute(ReservationAction $action, ?\DateTimeImmutable $now = null): bool
     {
         $now ??= new \DateTimeImmutable();
-        $reservation = $action->getReservation();
 
         return match ($action->getType()) {
-            ActionType::ISSUE_FINAL_INVOICE => $this->resolveIf(
-                $action,
-                $this->finalInvoiceIssued($reservation),
-                'Doplatková faktura vystavena.',
-            ),
+            ActionType::ISSUE_FINAL_INVOICE => $this->resolveFinalInvoice($action),
             ActionType::BALANCE_REMINDER => $this->handleBalanceReminder($action),
             ActionType::UBYPORT_EXPORT => $this->handleUbyport($action),
             ActionType::RESERVATION_REQUEST_MESSAGE => $this->handleDepositRequest($action, $now),
@@ -88,11 +83,7 @@ class ReservationActionExecutor
         $reservation = $action->getReservation();
 
         return match ($action->getType()) {
-            ActionType::ISSUE_FINAL_INVOICE => $this->resolveIf(
-                $action,
-                $this->finalInvoiceIssued($reservation),
-                'Doplatková faktura vystavena.',
-            ),
+            ActionType::ISSUE_FINAL_INVOICE => $this->resolveFinalInvoice($action),
             ActionType::BALANCE_REMINDER => $this->resolveIf(
                 $action,
                 $this->balanceSettled($reservation),
@@ -299,6 +290,16 @@ class ReservationActionExecutor
         };
 
         return $now > $deadline;
+    }
+
+    /** Vystavená doplatková faktura akci uzavře — ať už jí nadešel čas, nebo ji zavírá událost. */
+    private function resolveFinalInvoice(ReservationAction $action): bool
+    {
+        return $this->resolveIf(
+            $action,
+            $this->finalInvoiceIssued($action->getReservation()),
+            'Doplatková faktura vystavena.',
+        );
     }
 
     private function resolveIf(ReservationAction $action, bool $done, string $message): bool

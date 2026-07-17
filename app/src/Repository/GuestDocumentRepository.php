@@ -117,6 +117,39 @@ class GuestDocumentRepository extends ServiceEntityRepository
     }
 
     /**
+     * Potvrzení cizinci pro víc rezervací najednou — Ubyport fronta je čte pro
+     * celý seznam, dotaz na každou rezervaci zvlášť by rostl s délkou fronty.
+     *
+     * @param list<Reservation> $reservations
+     *
+     * @return array<int, list<GuestDocument>> klíč = ID rezervace
+     */
+    public function findConfirmedForeignersGroupedByReservation(array $reservations): array
+    {
+        if ($reservations === []) {
+            return [];
+        }
+
+        /** @var GuestDocument[] $rows */
+        $rows = $this->createQueryBuilder('g')
+            ->andWhere('g.reservation IN (:rs)')
+            ->andWhere('g.isCzechCitizen = false')
+            ->andWhere('g.confirmedAt IS NOT NULL')
+            ->setParameter('rs', $reservations)
+            ->orderBy('g.lastName', 'ASC')
+            ->addOrderBy('g.firstName', 'ASC')
+            ->getQuery()
+            ->getResult();
+
+        $byReservation = [];
+        foreach ($rows as $doc) {
+            $byReservation[(int) $doc->getReservation()->getId()][] = $doc;
+        }
+
+        return $byReservation;
+    }
+
+    /**
      * @return GuestDocument[]
      */
     public function findByReservation(Reservation $reservation): array

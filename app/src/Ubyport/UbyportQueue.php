@@ -34,9 +34,12 @@ final class UbyportQueue
      */
     public function rows(\DateTimeImmutable $today): array
     {
+        $reservations = $this->reservations->findWithConfirmedForeigners();
+        $foreignersByReservation = $this->documents->findConfirmedForeignersGroupedByReservation($reservations);
+
         $rows = [];
-        foreach ($this->reservations->findWithConfirmedForeigners() as $reservation) {
-            $foreigners = $this->foreignersOf($reservation);
+        foreach ($reservations as $reservation) {
+            $foreigners = $foreignersByReservation[(int) $reservation->getId()] ?? [];
             if ($foreigners === []) {
                 continue;
             }

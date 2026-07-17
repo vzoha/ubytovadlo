@@ -13,6 +13,7 @@ namespace App\MotoPress;
 
 use App\Entity\Reservation;
 use App\Enum\ReservationStatus;
+use App\Formatting\CzechZip;
 use App\Formatting\Money;
 use App\Reservation\GuestRequestKeywords;
 
@@ -113,7 +114,7 @@ class MotoPressBookingMapper
         }
         $zip = trim((string) ($customer['zip'] ?? ''));
         if ($zip !== '' && $this->fill($isNew, $address->getZip())) {
-            $address = $address->withZip($this->normalizeZip($zip));
+            $address = $address->withZip(CzechZip::format($zip));
         }
         $country = trim((string) ($customer['country'] ?? ''));
         if ($country !== '' && $this->fill($isNew, $address->getCountry())) {
@@ -374,16 +375,6 @@ class MotoPressBookingMapper
             'cancelled', 'abandoned' => ReservationStatus::CANCELLED,
             default => ReservationStatus::NEEDS_DETAILS,
         };
-    }
-
-    private function normalizeZip(string $zip): string
-    {
-        $digits = preg_replace('/\D/', '', $zip) ?? '';
-        if (strlen($digits) === 5) {
-            return substr($digits, 0, 3) . ' ' . substr($digits, 3);
-        }
-
-        return $zip;
     }
 
     /**
