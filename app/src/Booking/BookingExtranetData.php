@@ -66,12 +66,14 @@ final class BookingExtranetData
         if ($this->guestName !== null) {
             $reservation->setGuestName($this->guestName);
         }
-        if ($this->guestEmail !== null && $reservation->getGuestEmail() === null) {
-            $reservation->setGuestEmail($this->guestEmail);
+        $contact = $reservation->getGuestContact();
+        if ($this->guestEmail !== null && $contact->getEmail() === null) {
+            $contact = $contact->withEmail($this->guestEmail);
         }
-        if ($this->guestPhone !== null && $reservation->getGuestPhone() === null) {
-            $reservation->setGuestPhone($this->guestPhone);
+        if ($this->guestPhone !== null && $contact->getPhone() === null) {
+            $contact = $contact->withPhone($this->guestPhone);
         }
+        $reservation->setGuestContact($contact);
         $address = $reservation->getGuestAddress();
         if ($this->guestStreet !== null) {
             $address = $address->withStreet($this->guestStreet);

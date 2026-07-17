@@ -91,23 +91,23 @@
                     <a href="{{ path('reservation_details', {id: reservation.id}) }}" class="text-decoration-none small">Upravit →</a>
                 </div>
                 <div class="card-body">
-                    {% set phone = reservation.guestPhone|phone %}
+                    {% set phone = reservation.guestContact.phone|phone %}
                     <dl class="row mb-0">
                         <dt class="col-5 col-sm-4">Jméno</dt>
                         <dd class="col-7 col-sm-8">{{ reservation.guestName ?? '—' }}</dd>
 
                         <dt class="col-5 col-sm-4">E-mail</dt>
                         <dd class="col-7 col-sm-8 text-break">
-                            {% if reservation.guestEmail %}
-                                <a href="mailto:{{ reservation.guestEmail }}">{{ reservation.guestEmail }}</a>
+                            {% if reservation.guestContact.email %}
+                                <a href="mailto:{{ reservation.guestContact.email }}">{{ reservation.guestContact.email }}</a>
                             {% else %}—{% endif %}
                         </dd>
 
                         <dt class="col-5 col-sm-4">Telefon</dt>
-                        <dd class="col-7 col-sm-8">{{ phone ? phone.national : (reservation.guestPhone ?? '—') }}</dd>
+                        <dd class="col-7 col-sm-8">{{ phone ? phone.national : (reservation.guestContact.phone ?? '—') }}</dd>
 
                         <dt class="col-5 col-sm-4">Adresa</dt>
-                        <dd class="col-7 col-sm-8">{{ reservation.guestAddressFormatted ?? '—' }}</dd>
+                        <dd class="col-7 col-sm-8">{{ reservation.guestAddress.format ?? '—' }}</dd>
 
                         {% if reservation.guestBilling.companyName %}
                             <dt class="col-5 col-sm-4">Firma</dt>
@@ -133,7 +133,7 @@
                         {% endif %}
                     </dl>
 
-                    {% if phone or reservation.guestEmail %}
+                    {% if phone or reservation.guestContact.email %}
                         <div class="d-flex gap-2 flex-wrap mt-3">
                             {% if phone %}
                                 <a href="tel:{{ phone.e164 }}" class="btn btn-sm btn-outline-primary">📞 Volat</a>
@@ -164,8 +164,8 @@
                                     {% endif %}
                                 </div>
                             {% endif %}
-                            {% if reservation.guestEmail %}
-                                <a href="mailto:{{ reservation.guestEmail }}" class="btn btn-sm btn-outline-primary">✉️ E-mail</a>
+                            {% if reservation.guestContact.email %}
+                                <a href="mailto:{{ reservation.guestContact.email }}" class="btn btn-sm btn-outline-primary">✉️ E-mail</a>
                             {% endif %}
                         </div>
                     {% endif %}
@@ -556,9 +556,9 @@
                                 <td class="inv-actions text-end">
                                     <div class="d-flex gap-1 justify-content-end flex-wrap">
                                         <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editInvoice{{ inv.id }}">✎ Upravit</button>
-                                        {% if reservation.guestEmail %}
+                                        {% if reservation.guestContact.email %}
                                             <form method="post" action="{{ path('invoice_send_email', {id: inv.id}) }}"
-                                                  onsubmit="return confirm('Poslat fakturu {{ inv.number }} hostovi na {{ reservation.guestEmail }}?');">
+                                                  onsubmit="return confirm('Poslat fakturu {{ inv.number }} hostovi na {{ reservation.guestContact.email }}?');">
                                                 <input type="hidden" name="_token" value="{{ csrf_token('invoice-email-' ~ inv.id) }}">
                                                 <button class="btn btn-sm btn-outline-primary">Poslat e-mailem</button>
                                             </form>

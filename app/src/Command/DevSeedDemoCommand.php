@@ -18,6 +18,7 @@ use App\Entity\ElectricityTariff;
 use App\Entity\Embeddable\Address;
 use App\Entity\Embeddable\BillingIdentity;
 use App\Entity\Embeddable\ElectricityUsage;
+use App\Entity\Embeddable\GuestContact;
 use App\Entity\Embeddable\VatReverseCharge;
 use App\Entity\GuestDocument;
 use App\Entity\Invoice;
@@ -283,8 +284,7 @@ class DevSeedDemoCommand extends Command
         // Údaje hosta (NEEDS_DETAILS je úmyslně nemá).
         if (!($s['needsDetails'] ?? false)) {
             $r->setGuestName($s['name']);
-            $r->setGuestEmail($s['email'] ?? null);
-            $r->setGuestPhone($s['phone'] ?? null);
+            $r->setGuestContact(new GuestContact($s['email'] ?? null, $s['phone'] ?? null));
             $r->setGuestAddress(new Address($s['street'] ?? null, $s['city'] ?? null, $s['zip'] ?? null, $s['country'] ?? 'CZ'));
             $r->setGuestBilling(new BillingIdentity($s['company'] ?? null, $s['ico'] ?? null, $s['dic'] ?? null));
             $r->setGuestRegion($s['region'] ?? null);

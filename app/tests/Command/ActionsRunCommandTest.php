@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Command;
 
+use App\Entity\Embeddable\GuestContact;
 use App\Entity\GuestMessage;
 use App\Entity\Invoice;
 use App\Entity\InvoiceLine;
@@ -85,7 +86,7 @@ final class ActionsRunCommandTest extends KernelTestCase
         $r = new Reservation(Channel::WEB, new \DateTimeImmutable('+5 days'));
         $r->setCheckOut(new \DateTimeImmutable('+7 days'));
         $r->setGuestName('Future Host');
-        $r->setGuestEmail('future@example.com');
+        $r->setGuestContact(new GuestContact('future@example.com'));
         $this->em->persist($r);
         $msg = new ReservationAction($r, ActionType::PRE_ARRIVAL_MESSAGE, new \DateTimeImmutable('-1 hour'));
         $this->em->persist($msg);
@@ -130,7 +131,7 @@ final class ActionsRunCommandTest extends KernelTestCase
         $r = new Reservation(Channel::WEB, new \DateTimeImmutable('+5 days'));
         $r->setCheckOut(new \DateTimeImmutable('+7 days'));
         $r->setGuestName('Draft Host');
-        $r->setGuestEmail('draft@example.com');
+        $r->setGuestContact(new GuestContact('draft@example.com'));
         $this->em->persist($r);
         $msg = new ReservationAction($r, ActionType::PRE_ARRIVAL_MESSAGE, new \DateTimeImmutable('-1 hour'));
         $this->em->persist($msg);
@@ -151,7 +152,7 @@ final class ActionsRunCommandTest extends KernelTestCase
         $r = new Reservation(Channel::WEB, new \DateTimeImmutable('+5 days'));
         $r->setCheckOut(new \DateTimeImmutable('+7 days'));
         $r->setGuestName('Off Host');
-        $r->setGuestEmail('off@example.com');
+        $r->setGuestContact(new GuestContact('off@example.com'));
         $this->em->persist($r);
         $msg = new ReservationAction($r, ActionType::PRE_ARRIVAL_MESSAGE, new \DateTimeImmutable('-1 hour'));
         $this->em->persist($msg);

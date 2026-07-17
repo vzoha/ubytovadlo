@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Mail;
 
+use App\Entity\Embeddable\GuestContact;
 use App\Entity\GuestMessage;
 use App\Entity\MessageTemplate;
 use App\Entity\Reservation;
@@ -137,7 +138,7 @@ final class ReservationConfirmationTest extends TestCase
     {
         $r = new Reservation(Channel::WEB, new \DateTimeImmutable('+10 days'));
         $r->setStatus($status);
-        $r->setGuestEmail('host@example.com');
+        $r->setGuestContact(new GuestContact('host@example.com'));
 
         return $r;
     }

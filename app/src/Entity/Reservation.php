@@ -14,6 +14,7 @@ namespace App\Entity;
 use App\Entity\Embeddable\Address;
 use App\Entity\Embeddable\BillingIdentity;
 use App\Entity\Embeddable\ElectricityUsage;
+use App\Entity\Embeddable\GuestContact;
 use App\Entity\Embeddable\UbyportReport;
 use App\Entity\Embeddable\VatReverseCharge;
 use App\Enum\BillingMode;
@@ -21,7 +22,6 @@ use App\Enum\Channel;
 use App\Enum\PurposeOfStay;
 use App\Enum\ReservationStatus;
 use App\Repository\ReservationRepository;
-use App\ValueObject\PhoneNumber;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -130,11 +130,8 @@ class Reservation
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $guestName = null;
 
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $guestEmail = null;
-
-    #[ORM\Column(length: 64, nullable: true)]
-    private ?string $guestPhone = null;
+    #[ORM\Embedded(class: GuestContact::class, columnPrefix: 'guest_')]
+    private GuestContact $guestContact;
 
     #[ORM\Embedded(class: Address::class, columnPrefix: 'guest_')]
     private Address $guestAddress;
@@ -196,6 +193,7 @@ class Reservation
     {
         $this->channel = $channel;
         $this->checkIn = $checkIn;
+        $this->guestContact = new GuestContact();
         $this->guestAddress = new Address();
         $this->guestBilling = new BillingIdentity();
         $this->electricity = new ElectricityUsage();
@@ -542,33 +540,17 @@ class Reservation
         return $this;
     }
 
-    public function getGuestEmail(): ?string
+    public function getGuestContact(): GuestContact
     {
-        return $this->guestEmail;
+        return $this->guestContact;
     }
 
-    public function setGuestEmail(?string $guestEmail): self
+    public function setGuestContact(GuestContact $guestContact): self
     {
-        $this->guestEmail = $guestEmail;
-        $this->touch();
-
-        return $this;
-    }
-
-    public function getGuestPhone(): ?string
-    {
-        return $this->guestPhone;
-    }
-
-    public function setGuestPhone(?string $guestPhone): self
-    {
-        $phone = PhoneNumber::tryFromString($guestPhone);
-        if ($phone !== null) {
-            $this->guestPhone = $phone->e164();
-        } else {
-            $trimmed = trim((string) $guestPhone);
-            $this->guestPhone = $trimmed === '' ? null : $trimmed;
+        if ($this->guestContact->equals($guestContact)) {
+            return $this;
         }
+        $this->guestContact = $guestContact;
         $this->touch();
 
         return $this;

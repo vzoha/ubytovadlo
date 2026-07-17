@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Controller;
 
+use App\Entity\Embeddable\Address;
+use App\Entity\Embeddable\GuestContact;
 use App\Entity\QuickMessage;
 use App\Entity\Reservation;
 use App\Entity\User;
@@ -69,7 +71,7 @@ final class ReservationContactLinksTest extends WebTestCase
         $r->setCheckOut(new \DateTimeImmutable('+13 days'));
         $r->setStatus(ReservationStatus::CONFIRMED);
         $r->setGuestName('Kontaktní Host');
-        $r->setGuestPhone('776 123 456');
+        $r->setGuestContact(new GuestContact(phone: '776 123 456'));
         $this->persist($r);
 
         $crawler = $this->client->request('GET', '/reservation/' . $r->getId());
@@ -82,6 +84,25 @@ final class ReservationContactLinksTest extends WebTestCase
         self::assertStringContainsString('776 123 456', (string) $this->client->getResponse()->getContent());
     }
 
+    /**
+     * Detail vypisuje adresu přes VO — Twig `?? '—'` spolkne i chybu chybějícího
+     * gettru, takže rozbité napojení pozná jen assert na vypsanou hodnotu.
+     */
+    public function testAddressIsRenderedOnDetail(): void
+    {
+        $r = new Reservation(Channel::DIRECT, new \DateTimeImmutable('+10 days'));
+        $r->setCheckOut(new \DateTimeImmutable('+13 days'));
+        $r->setStatus(ReservationStatus::CONFIRMED);
+        $r->setGuestName('Kontaktní Host');
+        $r->setGuestAddress(new Address('Dlouhá 5', 'Praha', '110 00', 'CZ'));
+        $this->persist($r);
+
+        $this->client->request('GET', '/reservation/' . $r->getId());
+        self::assertResponseIsSuccessful();
+
+        self::assertStringContainsString('Dlouhá 5, 110 00 Praha', (string) $this->client->getResponse()->getContent());
+    }
+
     public function testQuickMessagesArePrefilledInDropdown(): void
     {
         $this->seedQuickMessages();
@@ -90,7 +111,7 @@ final class ReservationContactLinksTest extends WebTestCase
         $r->setCheckOut(new \DateTimeImmutable('+13 days'));
         $r->setStatus(ReservationStatus::CONFIRMED);
         $r->setGuestName('Jan Novák');
-        $r->setGuestPhone('776 123 456');
+        $r->setGuestContact(new GuestContact(phone: '776 123 456'));
         $this->persist($r);
 
         $crawler = $this->client->request('GET', '/reservation/' . $r->getId());
@@ -116,7 +137,7 @@ final class ReservationContactLinksTest extends WebTestCase
         $r->setCheckOut(new \DateTimeImmutable('+13 days'));
         $r->setStatus(ReservationStatus::CONFIRMED);
         $r->setGuestName('Jan Novák');
-        $r->setGuestPhone('776 123 456');
+        $r->setGuestContact(new GuestContact(phone: '776 123 456'));
         $this->persist($r);
 
         $crawler = $this->client->request('GET', '/reservation/' . $r->getId());
@@ -133,7 +154,7 @@ final class ReservationContactLinksTest extends WebTestCase
         $r->setCheckOut(new \DateTimeImmutable('+13 days'));
         $r->setStatus(ReservationStatus::CONFIRMED);
         $r->setGuestName('Kontaktní Host');
-        $r->setGuestEmail('host@example.com');
+        $r->setGuestContact(new GuestContact('host@example.com'));
         $this->persist($r);
 
         $crawler = $this->client->request('GET', '/reservation/' . $r->getId());

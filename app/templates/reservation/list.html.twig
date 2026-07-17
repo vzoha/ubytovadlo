@@ -100,7 +100,7 @@
                                 cancelled: 'dark',
                             }[r.status.value] %}
                             <span class="badge text-bg-{{ badge }}">{{ r.status.label }}</span>
-                            {% if r.motopressExternalId and not r.guestEmail and r.channel.value != 'web' %}
+                            {% if r.motopressExternalId and not r.guestContact.email and r.channel.value != 'web' %}
                                 <span class="badge text-bg-warning ms-1" title="MotoPress hlasi blok obsazenosti, ale chybi data hosta. Doplnit z extranetu.">⚠ z extranetu</span>
                             {% endif %}
                         </td>

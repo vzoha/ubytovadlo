@@ -33,8 +33,8 @@ final class MotoPressBookingMapperTest extends TestCase
         self::assertSame('2026-07-15', $reservation->getCheckIn()->format('Y-m-d'));
         self::assertSame('2026-07-22', $reservation->getCheckOut()?->format('Y-m-d'));
         self::assertSame('Jan Novak', $reservation->getGuestName());
-        self::assertSame('jan.novak@example.cz', $reservation->getGuestEmail());
-        self::assertSame('+420777123456', $reservation->getGuestPhone());
+        self::assertSame('jan.novak@example.cz', $reservation->getGuestContact()->getEmail());
+        self::assertSame('+420777123456', $reservation->getGuestContact()->getPhone());
         self::assertSame('Hlavni 12', $reservation->getGuestAddress()->getStreet());
         self::assertSame('Praha', $reservation->getGuestAddress()->getCity());
         self::assertSame('110 00', $reservation->getGuestAddress()->getZip());
@@ -242,7 +242,7 @@ final class MotoPressBookingMapperTest extends TestCase
         self::assertSame('9999.00', $reservation->getPriceTotal());
         self::assertSame(ReservationStatus::IN_PROGRESS, $reservation->getStatus());
         // Prázdné pole se doplní.
-        self::assertSame('novy@web.cz', $reservation->getGuestEmail());
+        self::assertSame('novy@web.cz', $reservation->getGuestContact()->getEmail());
         // Datumy (obsazenost) se aktualizují.
         self::assertSame('2026-08-02', $reservation->getCheckIn()->format('Y-m-d'));
         self::assertSame('2026-08-06', $reservation->getCheckOut()?->format('Y-m-d'));

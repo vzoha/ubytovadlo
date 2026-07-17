@@ -46,6 +46,12 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Změněno
 
+- **Údaje hosta jako hodnotové objekty.** Adresa (`Address`), firemní údaje
+  (`BillingIdentity`) a kontakt (`GuestContact`) jsou samostatné neměnné celky
+  s vlastní normalizací — prázdné pole je vždy `null`, země ISO kódem velkými
+  písmeny, telefon v E.164. Firemní údaje sdílí rezervace i faktura, takže
+  snapshot odběratele na faktuře je jedno přiřazení. Formuláře je skládají přes
+  `AddressType`, `BillingIdentityType` a `GuestContactType`.
 - **Zpracování příchozích e-mailů přes handlery.** Každý typ e-mailu (Airbnb
   rezervace a výplata, Booking trigger a měsíční faktura, platba z banky) má
   vlastní handler, který rozhodne, jestli e-mail patří jemu, ke kterému konektoru

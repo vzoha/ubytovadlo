@@ -43,7 +43,7 @@ class GuestMessageSender
     /** Lze rezervaci poslat e-mail? (má vyplněný e-mail hosta) */
     public function canSend(Reservation $reservation): bool
     {
-        return trim((string) $reservation->getGuestEmail()) !== '';
+        return $reservation->getGuestContact()->hasEmail();
     }
 
     /**
@@ -55,7 +55,7 @@ class GuestMessageSender
      */
     public function send(Reservation $reservation, MessageKind $kind, array $context = [], array $attachmentPaths = [], ?MessageTemplate $override = null): GuestMessage
     {
-        $to = trim((string) $reservation->getGuestEmail());
+        $to = (string) $reservation->getGuestContact()->getEmail();
         if ($to === '') {
             throw new \InvalidArgumentException('Rezervace nemá e-mail hosta — nelze odeslat zprávu.');
         }

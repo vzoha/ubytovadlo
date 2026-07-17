@@ -169,7 +169,7 @@ class ReservationController extends AbstractController
             'note_types' => NoteType::cases(),
             'deposit_applies' => $this->depositConfig->appliesTo($reservation->getBillingMode()),
             'deposit_amount' => $this->depositConfig->computeAmount($reservation->getPriceTotal()),
-            'quick_messages' => $reservation->getGuestPhone() !== null
+            'quick_messages' => $reservation->getGuestContact()->getPhone() !== null
                 ? $this->guestMessageTexts->forReservation($reservation)
                 : [],
         ]);

@@ -31,8 +31,8 @@
     {{ form_start(form, {attr: {novalidate: 'novalidate'}}) }}
     <div class="row g-3">
         <div class="col-md-6">{{ form_row(form.guestName) }}</div>
-        <div class="col-md-6">{{ form_row(form.guestEmail) }}</div>
-        <div class="col-md-6">{{ form_row(form.guestPhone) }}</div>
+        <div class="col-md-6">{{ form_row(form.guestContact.email) }}</div>
+        <div class="col-md-6">{{ form_row(form.guestContact.phone) }}</div>
         <div class="col-md-6">{{ form_row(form.guestAddress.street) }}</div>
         <div class="col-md-2">{{ form_row(form.guestAddress.zip) }}</div>
         <div class="col-md-3">{{ form_row(form.guestAddress.city) }}</div>

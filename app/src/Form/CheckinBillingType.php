@@ -13,7 +13,6 @@ namespace App\Form;
 
 use App\Entity\Reservation;
 use Symfony\Component\Form\AbstractType;
-use Symfony\Component\Form\Extension\Core\Type\EmailType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
@@ -51,9 +50,11 @@ class CheckinBillingType extends AbstractType
                     'country' => ['label' => 'Země (ISO kód)', 'required' => false, 'attr' => ['maxlength' => 2, 'placeholder' => 'CZ']],
                 ],
             ])
-            ->add('guestEmail', EmailType::class, [
-                'label' => 'E-mail (kam poslat fakturu)',
-                'required' => false,
+            ->add('guestContact', GuestContactType::class, [
+                'fields' => ['email'],
+                'field_options' => [
+                    'email' => ['label' => 'E-mail (kam poslat fakturu)'],
+                ],
             ]);
     }
 

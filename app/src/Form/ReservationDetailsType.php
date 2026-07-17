@@ -14,9 +14,7 @@ namespace App\Form;
 use App\Entity\Reservation;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
-use Symfony\Component\Form\Extension\Core\Type\EmailType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
-use Symfony\Component\Form\Extension\Core\Type\TelType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
@@ -37,14 +35,7 @@ class ReservationDetailsType extends AbstractType
                 'label' => 'Jméno hosta',
                 'required' => true,
             ])
-            ->add('guestEmail', EmailType::class, [
-                'label' => 'E-mail hosta (kam poslat fakturu)',
-                'required' => false,
-            ])
-            ->add('guestPhone', TelType::class, [
-                'label' => 'Telefon',
-                'required' => false,
-            ])
+            ->add('guestContact', GuestContactType::class)
             ->add('guestAddress', AddressType::class)
             ->add('guestBilling', BillingIdentityType::class)
             ->add('guestsAdult', IntegerType::class, [

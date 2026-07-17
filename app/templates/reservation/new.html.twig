@@ -20,8 +20,8 @@
         <div class="col-md-8">{{ form_row(form.billingMode) }}</div>
 
         <div class="col-md-12"><hr><h6 class="text-muted mb-0">Kontakt</h6></div>
-        <div class="col-md-6">{{ form_row(form.guestEmail) }}</div>
-        <div class="col-md-6">{{ form_row(form.guestPhone) }}</div>
+        <div class="col-md-6">{{ form_row(form.guestContact.email) }}</div>
+        <div class="col-md-6">{{ form_row(form.guestContact.phone) }}</div>
 
         <div class="col-md-12"><hr><h6 class="text-muted mb-0">Fakturační adresa <span class="fw-normal">(pro fakturu; lze doplnit později)</span></h6></div>
         <div class="col-md-6">{{ form_row(form.guestAddress.street) }}</div>

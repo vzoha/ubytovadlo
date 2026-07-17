@@ -89,12 +89,14 @@ class MotoPressBookingMapper
         if ($name !== '' && $this->fill($isNew, $reservation->getGuestName())) {
             $reservation->setGuestName($name);
         }
-        if (!empty($customer['email']) && $this->fill($isNew, $reservation->getGuestEmail())) {
-            $reservation->setGuestEmail((string) $customer['email']);
+        $contact = $reservation->getGuestContact();
+        if (!empty($customer['email']) && $this->fill($isNew, $contact->getEmail())) {
+            $contact = $contact->withEmail((string) $customer['email']);
         }
-        if (!empty($customer['phone']) && $this->fill($isNew, $reservation->getGuestPhone())) {
-            $reservation->setGuestPhone((string) $customer['phone']);
+        if (!empty($customer['phone']) && $this->fill($isNew, $contact->getPhone())) {
+            $contact = $contact->withPhone((string) $customer['phone']);
         }
+        $reservation->setGuestContact($contact);
 
         $address = $reservation->getGuestAddress();
         $street = trim((string) ($customer['address1'] ?? ''));

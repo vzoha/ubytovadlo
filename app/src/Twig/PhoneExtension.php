@@ -26,7 +26,7 @@ class PhoneExtension extends AbstractExtension
 
     /**
      * Vrátí telefon jako value object pro zobrazení a deep linky (tel:, sms:, wa.me),
-     * nebo null, když číslo nejde naparsovat. V šabloně: {{ (reservation.guestPhone|phone).national }}.
+     * nebo null, když číslo nejde naparsovat. V šabloně: {{ (reservation.guestContact.phone|phone).national }}.
      */
     public function phone(?string $raw): ?PhoneNumber
     {

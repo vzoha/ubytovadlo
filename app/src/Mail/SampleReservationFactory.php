@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Mail;
 
+use App\Entity\Embeddable\GuestContact;
 use App\Entity\Reservation;
 use App\Enum\Channel;
 
@@ -32,7 +33,7 @@ final class SampleReservationFactory
             ->setCheckInTime($checkIn)
             ->setCheckOutTime($checkOut)
             ->setGuestName('Jan Ukázka')
-            ->setGuestEmail('host@example.com')
+            ->setGuestContact(new GuestContact('host@example.com'))
             ->setGuestsAdult(2)
             ->setPriceTotal('6000')
             ->setCheckinToken(str_repeat('0123456789abcdef', 4)); // 64-znakový hex, ať {{ checkin_url }} v náhledu vede na reálnou adresu

@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Controller;
 
+use App\Entity\Embeddable\GuestContact;
 use App\Entity\GuestMessage;
 use App\Entity\Reservation;
 use App\Entity\ReservationAction;
@@ -109,7 +110,7 @@ final class ReservationTimelineControllerTest extends WebTestCase
         $container->get(SettingRepository::class)->set(MailSettingsProvider::SENDER_EMAIL, 'odesilatel@example.cz');
 
         $r = $this->reservation();
-        $r->setGuestEmail('host@example.com');
+        $r->setGuestContact(new GuestContact('host@example.com'));
         $action = new ReservationAction($r, ActionType::PRE_ARRIVAL_MESSAGE, new \DateTimeImmutable('+1 day'));
         $this->em->persist($action);
         $this->em->flush();
