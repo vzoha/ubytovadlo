@@ -85,6 +85,25 @@ final class ReservationNewControllerTest extends WebTestCase
         self::assertSame('2026-08-14', $reservation->getCheckOut()?->format('Y-m-d'));
     }
 
+    /** Nečíselná cena se nesmí tiše uložit jako 0 — host by dostal fakturu na nulu. */
+    public function testRejectsNonNumericPrice(): void
+    {
+        $crawler = $this->client->request('GET', '/rezervace/nova');
+        $form = $crawler->selectButton('Přidat rezervaci')->form();
+        $form['reservation_manual[checkIn]'] = '2026-08-10';
+        $form['reservation_manual[checkOut]'] = '2026-08-14';
+        $form['reservation_manual[guestName]'] = 'Chybná Cena';
+        $form['reservation_manual[guestsAdult]'] = '2';
+        $form['reservation_manual[guestsChild]'] = '0';
+        $form['reservation_manual[priceTotal]'] = 'osm tisíc';
+        $form['reservation_manual[billingMode]'] = BillingMode::ADMIN_BOOKING->value;
+        $this->client->submit($form);
+
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString('Cenu zadej číslem', (string) $this->client->getResponse()->getContent());
+        self::assertNull($this->em->getRepository(Reservation::class)->findOneBy(['guestName' => 'Chybná Cena']));
+    }
+
     public function testRejectsCheckoutBeforeCheckin(): void
     {
         $crawler = $this->client->request('GET', '/rezervace/nova');

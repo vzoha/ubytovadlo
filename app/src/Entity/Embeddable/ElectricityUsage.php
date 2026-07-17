@@ -59,6 +59,13 @@ final class ElectricityUsage
         return $this->source;
     }
 
+    public function equals(self $other): bool
+    {
+        return $this->vtKwh === $other->vtKwh
+            && $this->ntKwh === $other->ntKwh
+            && $this->source === $other->source;
+    }
+
     /** Celková spotřeba (VT + NT), nebo null když není znám ani jeden odečet. */
     public function getTotalKwh(): ?int
     {

@@ -115,6 +115,13 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Opraveno
 
+- **Cena rezervace musí být číslo.** Ruční přidání rezervace ohlídá, že cena jde
+  přečíst jako částka (`8500` i `8 500,50`) — nesrozumitelný zápis formulář
+  odmítne s vysvětlením místo toho, aby rezervaci uložil s nulou.
+- **Check-in pozná nedostupnou čtečku dokladu.** Když se knihovna pro čtení MRZ
+  nenačte (offline, firewall, blokovaný obsah), sken to hostovi rovnou řekne a
+  odkáže ho na ruční vyplnění; nabídka skenování kamerou se v takovém případě
+  nezobrazí.
 - **Splněná timeline akce se zavře hned, ne až v její termín.** Vystavení
   doplatkové faktury a připomínku doplatku uzavře přímo událost — jakmile je
   faktura vystavená nebo doplatek uhrazený, akce zmizí z otevřených, aniž by se

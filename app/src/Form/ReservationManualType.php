@@ -12,11 +12,14 @@ declare(strict_types=1);
 namespace App\Form;
 
 use App\Enum\BillingMode;
+use App\Formatting\Money;
 use Symfony\Component\Form\Extension\Core\Type\CountryType;
 use Symfony\Component\Form\Extension\Core\Type\DateType;
 use Symfony\Component\Form\Extension\Core\Type\EnumType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 /**
  * Ruční přidání rezervace — přímý host bez OTA i webového funnelu. Přebírá pole
@@ -52,6 +55,13 @@ class ReservationManualType extends ReservationDetailsType
                 'label' => 'Cena celkem (Kč)',
                 'required' => false,
                 'attr' => ['inputmode' => 'decimal', 'placeholder' => 'např. 8500'],
+                'constraints' => [
+                    new Assert\Callback(static function (?string $value, ExecutionContextInterface $context): void {
+                        if ($value !== null && trim($value) !== '' && Money::parse($value) === null) {
+                            $context->buildViolation('Cenu zadej číslem, například 8500 nebo 8 500,50.')->addViolation();
+                        }
+                    }),
+                ],
             ])
             ->add('billingMode', EnumType::class, [
                 'label' => 'Fakturační režim',

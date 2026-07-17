@@ -21,6 +21,7 @@ use App\Enum\IncomeSource;
 use App\Enum\InvoiceType;
 use App\Enum\ReceiptOrigin;
 use App\Enum\ReservationStatus;
+use App\Invoice\InvoiceService;
 use App\Repository\AccountRepository;
 use App\Repository\InvoiceRepository;
 use App\Repository\PaymentRepository;
@@ -342,7 +343,7 @@ class IncomeUpserter
 
     private function accountForInvoice(Invoice $invoice): ?Account
     {
-        return str_contains(mb_strtolower($invoice->getPaymentMethod()), 'hotov')
+        return InvoiceService::isCashPayment($invoice->getPaymentMethod())
             ? $this->accounts->findDefaultByType(AccountType::CASH)
             : $this->bankAccount();
     }

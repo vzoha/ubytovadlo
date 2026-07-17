@@ -521,6 +521,9 @@ class Reservation
 
     public function setVatReverseCharge(VatReverseCharge $vatReverseCharge): self
     {
+        if ($this->vatReverseCharge->equals($vatReverseCharge)) {
+            return $this;
+        }
         $this->vatReverseCharge = $vatReverseCharge;
         $this->touch();
 
@@ -674,6 +677,9 @@ class Reservation
 
     public function setElectricity(ElectricityUsage $electricity): self
     {
+        if ($this->electricity->equals($electricity)) {
+            return $this;
+        }
         $this->electricity = $electricity;
         $this->touch();
 

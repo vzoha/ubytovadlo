@@ -63,4 +63,18 @@ final class VatReverseCharge
     {
         return $this->amountCzk;
     }
+
+    public function equals(self $other): bool
+    {
+        return $this->cnbRate === $other->cnbRate
+            && $this->baseCzk === $other->baseCzk
+            && $this->amountCzk === $other->amountCzk
+            && self::sameDay($this->duzp, $other->duzp)
+            && self::sameDay($this->cnbRateDate, $other->cnbRateDate);
+    }
+
+    private static function sameDay(?\DateTimeImmutable $a, ?\DateTimeImmutable $b): bool
+    {
+        return $a?->format('Y-m-d') === $b?->format('Y-m-d');
+    }
 }

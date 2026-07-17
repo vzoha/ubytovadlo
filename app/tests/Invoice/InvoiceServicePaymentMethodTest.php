@@ -129,4 +129,17 @@ final class InvoiceServicePaymentMethodTest extends TestCase
 
         return $r;
     }
+
+    /**
+     * Zařazení příjmu na hotovostní účet se řídí touhle metodou — porovnává
+     * proti konstantě, aby přeformulování textu neposlalo peníze na jiný účet.
+     */
+    public function testIsCashPayment(): void
+    {
+        self::assertTrue(InvoiceService::isCashPayment(InvoiceService::PAYMENT_CASH));
+        self::assertTrue(InvoiceService::isCashPayment(' Hotově '));
+        self::assertFalse(InvoiceService::isCashPayment(InvoiceService::PAYMENT_BANK));
+        self::assertFalse(InvoiceService::isCashPayment(InvoiceService::PAYMENT_INTERMEDIARY));
+        self::assertFalse(InvoiceService::isCashPayment(null));
+    }
 }

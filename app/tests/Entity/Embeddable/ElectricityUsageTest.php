@@ -48,4 +48,13 @@ final class ElectricityUsageTest extends TestCase
         self::assertSame(50, (new ElectricityUsage(50, null))->getTotalKwh());
         self::assertSame(20, (new ElectricityUsage(null, 20))->getTotalKwh());
     }
+
+    public function testEquals(): void
+    {
+        $usage = ElectricityUsage::measured(32, 20);
+
+        self::assertTrue($usage->equals(ElectricityUsage::measured(32, 20)));
+        self::assertFalse($usage->equals(ElectricityUsage::allocated(32, 20)), 'jiný zdroj = jiná spotřeba');
+        self::assertFalse($usage->equals(ElectricityUsage::measured(33, 20)));
+    }
 }

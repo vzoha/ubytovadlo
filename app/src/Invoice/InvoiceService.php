@@ -38,6 +38,7 @@ class InvoiceService
 {
     public const PAYMENT_BANK = 'převodem';
     public const PAYMENT_CASH = 'hotově';
+    public const PAYMENT_INTERMEDIARY = 'převodem – zprostředkovatel';
 
     private const DUE_DAYS_DEFAULT = 2;
     private const DUE_DAYS_FKSP = 30;
@@ -141,7 +142,7 @@ class InvoiceService
         $invoice->addLine(new InvoiceLine('Ubytovací služby', $totalCzk, vatRate: $this->accommodationVatRate()));
 
         if ($this->isOtaIntermediated($reservation)) {
-            $invoice->setPaymentMethod('převodem – zprostředkovatel');
+            $invoice->setPaymentMethod(self::PAYMENT_INTERMEDIARY);
             $invoice->setBankAccount(null);
 
             // U Airbnb host platí zprostředkovateli předem; reálné peníze nám
@@ -264,6 +265,16 @@ class InvoiceService
             self::PAYMENT_BANK => $this->fillBankPayment($invoice),
             default => throw new \InvalidArgumentException(sprintf('Neznámý způsob platby "%s".', $method)),
         };
+    }
+
+    /**
+     * Platí host hotově? Rozhoduje o tom, na který účet příjem sedne
+     * ({@see IncomeUpserter}), proto se ptáme tady — u zdroje
+     * hodnoty — a ne porovnáním textu na volajícím.
+     */
+    public static function isCashPayment(?string $method): bool
+    {
+        return $method !== null && mb_strtolower(trim($method)) === mb_strtolower(self::PAYMENT_CASH);
     }
 
     private function fillBankPayment(Invoice $invoice): void

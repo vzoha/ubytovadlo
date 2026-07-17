@@ -151,8 +151,18 @@
         }
 
         var LOCATE_ACCEPT = 30;
+        // Čtečka (tesseract.js) se tahá z CDN — bez ní jde doklad opsat ručně,
+        // ale sken by jinak zůstal viset na „Hledám MRZ…" bez vysvětlení.
+        function ocrAvailable() {
+            return typeof Tesseract !== 'undefined';
+        }
+
         function handleFile(file) {
             if (!file) return;
+            if (!ocrAvailable()) {
+                showError('Čtečku dokladu se nepodařilo načíst. Zkontroluj připojení a zkus to znovu — údaje můžeš vyplnit i ručně ve formuláři níže.');
+                return;
+            }
             var url = URL.createObjectURL(file);
             image.src = url;
             preview.classList.remove('d-none');
@@ -963,7 +973,7 @@
         (function initLiveScan() {
             var liveBtn = document.getElementById('mrz-live-btn');
             if (!liveBtn) return;
-            if (!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)) {
+            if (!ocrAvailable() || !(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)) {
                 liveBtn.classList.add('d-none');
                 return;
             }

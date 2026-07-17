@@ -30,6 +30,7 @@ use App\Enum\ReceiptOrigin;
 use App\Enum\ReservationStatus;
 use App\Form\ReservationDetailsType;
 use App\Form\ReservationManualType;
+use App\Formatting\Money;
 use App\Invoice\BalanceCalculator;
 use App\Invoice\DepositConfig;
 use App\Invoice\PaymentStatusResolver;
@@ -109,7 +110,7 @@ class ReservationController extends AbstractController
             if ($checkOut !== null && $checkOut <= $reservation->getCheckIn()) {
                 $form->get('checkOut')->addError(new FormError('Odjezd musí být po příjezdu.'));
             } else {
-                $reservation->setPriceTotal($this->normalizePrice($reservation->getPriceTotal()));
+                $reservation->setPriceTotal(Money::parse($reservation->getPriceTotal()));
                 // Ruční zadání = autorita nad rozdělením hostů (žádný sync to nepřepíše).
                 $reservation->setGuestsSplitManually(true);
                 $reservation->setStatus(ReservationStatus::CONFIRMED);
@@ -127,15 +128,6 @@ class ReservationController extends AbstractController
         return $this->render('reservation/new.html.twig', [
             'form' => $form->createView(),
         ]);
-    }
-
-    private function normalizePrice(?string $raw): ?string
-    {
-        if ($raw === null || trim($raw) === '') {
-            return null;
-        }
-
-        return number_format((float) str_replace([' ', ','], ['', '.'], $raw), 2, '.', '');
     }
 
     #[Route('/reservation/{id}', name: 'reservation_detail', methods: ['GET'], requirements: ['id' => '\d+'])]
