@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace App\Form;
 
 use App\Entity\Embeddable\Address;
+use App\Form\Concern\MapsValueObjectFields;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\DataMapperInterface;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
@@ -31,6 +32,8 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
  */
 class AddressType extends AbstractType implements DataMapperInterface
 {
+    use MapsValueObjectFields;
+
     /**
      * @param array<string, mixed> $options
      */
@@ -99,24 +102,5 @@ class AddressType extends AbstractType implements DataMapperInterface
             self::stringOrNull($fields['zip']->getData()),
             self::stringOrNull($fields['country']->getData()),
         );
-    }
-
-    /**
-     * @param array<string, mixed> $defaults
-     * @param array<string, mixed> $options
-     *
-     * @return array<string, mixed>
-     */
-    private function fieldOptions(string $field, array $defaults, array $options): array
-    {
-        /** @var array<string, array<string, mixed>> $overrides */
-        $overrides = $options['field_options'];
-
-        return array_replace($defaults, $overrides[$field] ?? []);
-    }
-
-    private static function stringOrNull(mixed $value): ?string
-    {
-        return is_string($value) ? $value : null;
     }
 }

@@ -336,6 +336,8 @@ final class CheckinControllerTest extends WebTestCase
             'checkin_billing[guestAddress][street]' => 'Dlouhá 5',
             'checkin_billing[guestAddress][zip]' => '110 00',
             'checkin_billing[guestAddress][city]' => 'Praha',
+            'checkin_billing[guestBilling][companyName]' => 'Firma s.r.o.',
+            'checkin_billing[guestBilling][ico]' => '12345678',
         ]);
         $this->client->submit($form);
 
@@ -345,6 +347,8 @@ final class CheckinControllerTest extends WebTestCase
         $reservation = static::getContainer()->get(ReservationRepository::class)->find($this->reservation->getId());
         self::assertSame('Jan Novák', $reservation->getGuestName());
         self::assertSame('Dlouhá 5', $reservation->getGuestAddress()->getStreet());
+        self::assertSame('Firma s.r.o.', $reservation->getGuestBilling()->getCompanyName());
+        self::assertSame('12345678', $reservation->getGuestBilling()->getIco());
 
         // Po doplnění už index billing nenabízí jako chybějící.
         $this->client->request('GET', '/checkin/' . $token);

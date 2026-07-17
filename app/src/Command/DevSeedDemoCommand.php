@@ -16,6 +16,7 @@ use App\Entity\Account;
 use App\Entity\BalanceStatement;
 use App\Entity\ElectricityTariff;
 use App\Entity\Embeddable\Address;
+use App\Entity\Embeddable\BillingIdentity;
 use App\Entity\Embeddable\ElectricityUsage;
 use App\Entity\Embeddable\VatReverseCharge;
 use App\Entity\GuestDocument;
@@ -285,9 +286,7 @@ class DevSeedDemoCommand extends Command
             $r->setGuestEmail($s['email'] ?? null);
             $r->setGuestPhone($s['phone'] ?? null);
             $r->setGuestAddress(new Address($s['street'] ?? null, $s['city'] ?? null, $s['zip'] ?? null, $s['country'] ?? 'CZ'));
-            $r->setGuestCompanyName($s['company'] ?? null);
-            $r->setGuestIco($s['ico'] ?? null);
-            $r->setGuestDic($s['dic'] ?? null);
+            $r->setGuestBilling(new BillingIdentity($s['company'] ?? null, $s['ico'] ?? null, $s['dic'] ?? null));
             $r->setGuestRegion($s['region'] ?? null);
             $r->setGuestsAdult($s['adults'] ?? 2);
             $r->setGuestsChild($s['children'] ?? 0);

@@ -46,18 +46,7 @@ class ReservationDetailsType extends AbstractType
                 'required' => false,
             ])
             ->add('guestAddress', AddressType::class)
-            ->add('guestCompanyName', TextType::class, [
-                'label' => 'Firma (volitelné)',
-                'required' => false,
-            ])
-            ->add('guestIco', TextType::class, [
-                'label' => 'IČO',
-                'required' => false,
-            ])
-            ->add('guestDic', TextType::class, [
-                'label' => 'DIČ',
-                'required' => false,
-            ])
+            ->add('guestBilling', BillingIdentityType::class)
             ->add('guestsAdult', IntegerType::class, [
                 'label' => 'Dospělých',
                 'required' => true,

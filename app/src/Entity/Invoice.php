@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Entity\Embeddable\BillingIdentity;
 use App\Enum\InvoiceType;
 use App\Enum\PdfSource;
 use App\Enum\TaxProfile;
@@ -72,14 +73,8 @@ class Invoice
     #[ORM\Column(length: 64, nullable: true)]
     private ?string $customerCountry = null;
 
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $customerCompanyName = null;
-
-    #[ORM\Column(length: 16, nullable: true)]
-    private ?string $customerIco = null;
-
-    #[ORM\Column(length: 32, nullable: true)]
-    private ?string $customerDic = null;
+    #[ORM\Embedded(class: BillingIdentity::class, columnPrefix: 'customer_')]
+    private BillingIdentity $customerBilling;
 
     // === Částky ===
     #[ORM\Column(length: 3)]
@@ -173,6 +168,7 @@ class Invoice
         $this->issuedAt = $issuedAt;
         $this->dueAt = $dueAt;
         $this->customerName = $reservation->getGuestName() ?? '';
+        $this->customerBilling = new BillingIdentity();
         $this->lines = new ArrayCollection();
         $this->createdAt = new \DateTimeImmutable();
     }
@@ -279,38 +275,14 @@ class Invoice
         return $this;
     }
 
-    public function getCustomerCompanyName(): ?string
+    public function getCustomerBilling(): BillingIdentity
     {
-        return $this->customerCompanyName;
+        return $this->customerBilling;
     }
 
-    public function setCustomerCompanyName(?string $name): self
+    public function setCustomerBilling(BillingIdentity $customerBilling): self
     {
-        $this->customerCompanyName = $name;
-
-        return $this;
-    }
-
-    public function getCustomerIco(): ?string
-    {
-        return $this->customerIco;
-    }
-
-    public function setCustomerIco(?string $ico): self
-    {
-        $this->customerIco = $ico;
-
-        return $this;
-    }
-
-    public function getCustomerDic(): ?string
-    {
-        return $this->customerDic;
-    }
-
-    public function setCustomerDic(?string $dic): self
-    {
-        $this->customerDic = $dic;
+        $this->customerBilling = $customerBilling;
 
         return $this;
     }

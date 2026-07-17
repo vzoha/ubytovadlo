@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use App\Entity\Embeddable\Address;
+use App\Entity\Embeddable\BillingIdentity;
 use App\Entity\Embeddable\ElectricityUsage;
 use App\Entity\Embeddable\UbyportReport;
 use App\Entity\Embeddable\VatReverseCharge;
@@ -138,14 +139,8 @@ class Reservation
     #[ORM\Embedded(class: Address::class, columnPrefix: 'guest_')]
     private Address $guestAddress;
 
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $guestCompanyName = null;
-
-    #[ORM\Column(length: 16, nullable: true)]
-    private ?string $guestIco = null;
-
-    #[ORM\Column(length: 32, nullable: true)]
-    private ?string $guestDic = null;
+    #[ORM\Embedded(class: BillingIdentity::class, columnPrefix: 'guest_')]
+    private BillingIdentity $guestBilling;
 
     #[ORM\Column(length: 128, nullable: true)]
     private ?string $guestRegion = null;
@@ -202,6 +197,7 @@ class Reservation
         $this->channel = $channel;
         $this->checkIn = $checkIn;
         $this->guestAddress = new Address();
+        $this->guestBilling = new BillingIdentity();
         $this->electricity = new ElectricityUsage();
         $this->vatReverseCharge = new VatReverseCharge();
         $this->ubyportReport = new UbyportReport();
@@ -594,40 +590,17 @@ class Reservation
         return $this;
     }
 
-    public function getGuestCompanyName(): ?string
+    public function getGuestBilling(): BillingIdentity
     {
-        return $this->guestCompanyName;
+        return $this->guestBilling;
     }
 
-    public function setGuestCompanyName(?string $guestCompanyName): self
+    public function setGuestBilling(BillingIdentity $guestBilling): self
     {
-        $this->guestCompanyName = $guestCompanyName;
-        $this->touch();
-
-        return $this;
-    }
-
-    public function getGuestIco(): ?string
-    {
-        return $this->guestIco;
-    }
-
-    public function setGuestIco(?string $guestIco): self
-    {
-        $this->guestIco = $guestIco;
-        $this->touch();
-
-        return $this;
-    }
-
-    public function getGuestDic(): ?string
-    {
-        return $this->guestDic;
-    }
-
-    public function setGuestDic(?string $guestDic): self
-    {
-        $this->guestDic = $guestDic;
+        if ($this->guestBilling->equals($guestBilling)) {
+            return $this;
+        }
+        $this->guestBilling = $guestBilling;
         $this->touch();
 
         return $this;

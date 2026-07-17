@@ -30,9 +30,9 @@
         <div class="col-md-4">{{ form_row(form.guestAddress.country) }}</div>
 
         <div class="col-md-12"><hr><h6 class="text-muted mb-0">Firma <span class="fw-normal">(pokud chce host fakturovat na firmu)</span></h6></div>
-        <div class="col-md-6">{{ form_row(form.guestCompanyName) }}</div>
-        <div class="col-md-3">{{ form_row(form.guestIco) }}</div>
-        <div class="col-md-3">{{ form_row(form.guestDic) }}</div>
+        <div class="col-md-6">{{ form_row(form.guestBilling.companyName) }}</div>
+        <div class="col-md-3">{{ form_row(form.guestBilling.ico) }}</div>
+        <div class="col-md-3">{{ form_row(form.guestBilling.dic) }}</div>
 
         <div class="col-md-12"><hr><h6 class="text-muted mb-0">Doplňky</h6></div>
         <div class="col-md-3 d-flex align-items-center">{{ form_row(form.hasPet) }}</div>

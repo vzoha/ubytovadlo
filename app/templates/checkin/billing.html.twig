@@ -17,15 +17,15 @@
                             <div class="col-12">{{ form_row(form.guestName) }}</div>
 
                             <div class="col-md-5">
-                                {{ form_label(form.guestIco) }}
+                                {{ form_label(form.guestBilling.ico) }}
                                 <div class="input-group">
-                                    {{ form_widget(form.guestIco) }}
+                                    {{ form_widget(form.guestBilling.ico) }}
                                     <button type="button" id="billing-ares-btn" class="btn btn-outline-secondary">Načíst z ARES</button>
                                 </div>
                                 <div id="billing-ares-status" class="form-text"></div>
                             </div>
-                            <div class="col-md-7">{{ form_row(form.guestCompanyName) }}</div>
-                            <div class="col-md-6">{{ form_row(form.guestDic) }}</div>
+                            <div class="col-md-7">{{ form_row(form.guestBilling.companyName) }}</div>
+                            <div class="col-md-6">{{ form_row(form.guestBilling.dic) }}</div>
 
                             <div class="col-12">{{ form_row(form.guestAddress.street) }}</div>
                             <div class="col-md-3">{{ form_row(form.guestAddress.zip) }}</div>
@@ -49,18 +49,18 @@
     (function() {
         // Symfony renders field ids from the form name (checkin_billing_*), not
         // from attr.id, so we target those generated ids.
-        var ico = document.getElementById('{{ form.guestIco.vars.id }}');
+        var ico = document.getElementById('{{ form.guestBilling.ico.vars.id }}');
         var btn = document.getElementById('billing-ares-btn');
         var status = document.getElementById('billing-ares-status');
         if (!ico || !btn) return;
         var aresUrl = {{ path('checkin_ares', {token: token})|json_encode|raw }};
         var IDS = {
-            company: '{{ form.guestCompanyName.vars.id }}',
+            company: '{{ form.guestBilling.companyName.vars.id }}',
             street: '{{ form.guestAddress.street.vars.id }}',
             city: '{{ form.guestAddress.city.vars.id }}',
             zip: '{{ form.guestAddress.zip.vars.id }}',
             country: '{{ form.guestAddress.country.vars.id }}',
-            dic: '{{ form.guestDic.vars.id }}'
+            dic: '{{ form.guestBilling.dic.vars.id }}'
         };
 
         function setIfEmpty(id, value) {

@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace App\Command;
 
 use App\Entity\Embeddable\Address;
+use App\Entity\Embeddable\BillingIdentity;
 use App\Entity\Reservation;
 use App\Enum\BillingMode;
 use App\Enum\Channel;
@@ -43,8 +44,7 @@ class InvoiceSmokeCommand extends Command
         $output->writeln('Doplatek: ' . $final->getNumber() . ' → ' . $final->getPdfPath());
 
         $fksp = $this->makeReservation('Smoke FKSP s.r.o.', Channel::WEB, BillingMode::FKSP, '8400.00', 'CZK');
-        $fksp->setGuestCompanyName('FKSP s.r.o.');
-        $fksp->setGuestIco('12345678');
+        $fksp->setGuestBilling(new BillingIdentity('FKSP s.r.o.', '12345678'));
         $fkspInvoice = $this->invoices->issueFull($fksp, new \DateTimeImmutable('2026-05-12'));
         $output->writeln('FKSP: ' . $fkspInvoice->getNumber() . ' → ' . $fkspInvoice->getPdfPath());
 

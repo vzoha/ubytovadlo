@@ -37,20 +37,11 @@ class CheckinBillingType extends AbstractType
                 'label' => 'Jméno a příjmení (nebo kontaktní osoba)',
                 'required' => true,
             ])
-            ->add('guestCompanyName', TextType::class, [
-                'label' => 'Firma (volitelné)',
-                'required' => false,
-                'attr' => ['id' => 'billing-company', 'placeholder' => 'Necháte-li prázdné, faktura je na fyzickou osobu'],
-            ])
-            ->add('guestIco', TextType::class, [
-                'label' => 'IČO',
-                'required' => false,
-                'attr' => ['inputmode' => 'numeric', 'autocomplete' => 'off', 'id' => 'billing-ico'],
-            ])
-            ->add('guestDic', TextType::class, [
-                'label' => 'DIČ',
-                'required' => false,
-                'attr' => ['id' => 'billing-dic'],
+            ->add('guestBilling', BillingIdentityType::class, [
+                'field_options' => [
+                    'companyName' => ['attr' => ['placeholder' => 'Necháte-li prázdné, faktura je na fyzickou osobu']],
+                    'ico' => ['attr' => ['inputmode' => 'numeric', 'autocomplete' => 'off']],
+                ],
             ])
             ->add('guestAddress', AddressType::class, [
                 'field_options' => [

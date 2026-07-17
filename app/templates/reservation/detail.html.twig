@@ -109,12 +109,12 @@
                         <dt class="col-5 col-sm-4">Adresa</dt>
                         <dd class="col-7 col-sm-8">{{ reservation.guestAddressFormatted ?? '—' }}</dd>
 
-                        {% if reservation.guestCompanyName %}
+                        {% if reservation.guestBilling.companyName %}
                             <dt class="col-5 col-sm-4">Firma</dt>
-                            <dd class="col-7 col-sm-8">{{ reservation.guestCompanyName }}</dd>
+                            <dd class="col-7 col-sm-8">{{ reservation.guestBilling.companyName }}</dd>
 
                             <dt class="col-5 col-sm-4">IČO / DIČ</dt>
-                            <dd class="col-7 col-sm-8">{{ reservation.guestIco ?? '—' }} / {{ reservation.guestDic ?? '—' }}</dd>
+                            <dd class="col-7 col-sm-8">{{ reservation.guestBilling.ico ?? '—' }} / {{ reservation.guestBilling.dic ?? '—' }}</dd>
                         {% endif %}
 
                         {% if reservation.guestRegion %}

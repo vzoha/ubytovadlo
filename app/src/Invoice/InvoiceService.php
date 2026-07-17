@@ -224,9 +224,7 @@ class InvoiceService
         $invoice->setCustomerCity($address->getCity());
         $invoice->setCustomerZip($address->getZip());
         $invoice->setCustomerCountry($this->countryLabel($address->getCountry()));
-        $invoice->setCustomerCompanyName($reservation->getGuestCompanyName());
-        $invoice->setCustomerIco($reservation->getGuestIco());
-        $invoice->setCustomerDic($reservation->getGuestDic());
+        $invoice->setCustomerBilling($reservation->getGuestBilling());
     }
 
     /**
