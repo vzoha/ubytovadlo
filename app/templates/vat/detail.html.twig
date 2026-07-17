@@ -198,7 +198,7 @@
                                                 <button class="btn btn-sm btn-outline-danger py-0" type="submit">×</button>
                                             </form>
                                         {% else %}
-                                            <a href="{{ path('vat_airbnb_upload', {year: summary.year, month: '%02d'|format(summary.month), reservation: r.id}) }}" class="btn btn-sm btn-warning">Nahrát</a>
+                                            <a href="{{ path('vat_airbnb_upload', {year: summary.year, month: '%02d'|format(summary.month), reservation: r.id}) }}" class="btn btn-sm btn-outline-secondary">Nahrát</a>
                                         {% endif %}
                                     </span>
                                 </li>
@@ -262,7 +262,7 @@
                         <td class="text-end">{{ r.vatReverseCharge.baseCzk ? r.vatReverseCharge.baseCzk|number_format(2, ',', ' ') : '—' }}</td>
                         <td class="text-end"><strong>{{ r.vatReverseCharge.amountCzk ? r.vatReverseCharge.amountCzk|number_format(2, ',', ' ') : '—' }}</strong></td>
                         <td class="text-end">
-                            <a href="{{ path('reservation_detail', {id: r.id}) }}" class="btn btn-sm btn-outline-secondary">↗</a>
+                            <a href="{{ path('reservation_detail', {id: r.id}) }}" class="text-decoration-none small">Detail →</a>
                         </td>
                     </tr>
                 {% endfor %}

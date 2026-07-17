@@ -174,7 +174,7 @@
                                                 {% if r.guestName %} · {{ r.guestName }}{% endif %}
                                             </div>
                                         </div>
-                                        <a href="{{ path('reservation_details', {id: r.id}) }}" class="btn btn-sm btn-danger">Doplnit</a>
+                                        <a href="{{ path('reservation_details', {id: r.id}) }}" class="btn btn-sm btn-primary">Doplnit</a>
                                     </div>
                                 </li>
                             {% endfor %}
@@ -222,7 +222,7 @@
                                                 {% if r.priceTotal %} · {{ r.priceTotal|number_format(0, ',', ' ') }} {{ r.priceCurrency }}{% endif %}
                                             </div>
                                         </div>
-                                        <a href="{{ path('reservation_detail', {id: r.id}) }}" class="btn btn-sm btn-warning">Otevřít</a>
+                                        <a href="{{ path('reservation_detail', {id: r.id}) }}" class="text-decoration-none small">Detail →</a>
                                     </div>
                                 </li>
                             {% endfor %}
