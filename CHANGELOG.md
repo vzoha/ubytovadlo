@@ -4,7 +4,7 @@ Všechny podstatné změny v tomto projektu se zaznamenávají sem.
 Formát vychází z [Keep a Changelog](https://keepachangelog.com/cs/1.1.0/),
 verzování dle [SemVer](https://semver.org/lang/cs/).
 
-## [Unreleased]
+## [0.10.0] — 2026-07-17
 
 ### Přidáno
 
@@ -624,6 +624,7 @@ iniciální snapshot vyčleněný z interního vývoje (bez přenosu git histori
 - iCal sanity sync (kontrola obsazenosti, detekce Airbnb storen) chybí.
 - Cílí zatím na jednu ubytovací jednotku (multi-unit je v plánu).
 
+[0.10.0]: https://github.com/vzoha/ubytovadlo/releases/tag/v0.10.0
 [0.9.0]: https://github.com/vzoha/ubytovadlo/releases/tag/v0.9.0
 [0.8.0]: https://github.com/vzoha/ubytovadlo/releases/tag/v0.8.0
 [0.7.0]: https://github.com/vzoha/ubytovadlo/releases/tag/v0.7.0
