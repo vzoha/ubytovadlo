@@ -37,6 +37,7 @@ use App\Enum\ExpenseCategory;
 use App\Enum\LedgerEntryType;
 use App\Enum\PaymentSource;
 use App\Enum\ReservationStatus;
+use App\Enum\UserRole;
 use App\Formatting\Money;
 use App\Invoice\InvoiceService;
 use App\Repository\CleaningRepository;
@@ -139,6 +140,7 @@ class DevSeedDemoCommand extends Command
     {
         $user = new User($input->getOption('email'));
         $user->setPassword($this->hasher->hashPassword($user, $input->getOption('password')));
+        $user->setRole(UserRole::ADMIN);
         $this->em->persist($user);
 
         $tariff = new ElectricityTariff(new \DateTimeImmutable('2025-01-01'), '6.80', '3.40');
