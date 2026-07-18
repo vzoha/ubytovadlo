@@ -30,10 +30,10 @@ V `app/` běží Symfony 7.4 projekt s Doctrine + MySQL.
 ## Doporučené pořadí pro v2
 
 1. ~~**Login + security**~~ — ✅ hotové.
-2. ~~**Fakturace**~~ — ✅ hotové (mPDF, číselná řada, QR Platba, ČNB EUR→CZK, 5 toků). ARES doplnění firmy z IČO ✅ (check‑in billing). Chybí: automatický e‑mail s PDF hostovi.
+2. ~~**Fakturace**~~ — ✅ hotové (mPDF, číselná řada, QR Platba, ČNB EUR→CZK, 5 toků). ARES doplnění firmy z IČO ✅ (check‑in billing). Faktura PDF e‑mailem hostovi ✅ (`GuestMessageSender`, šablona `invoice`).
 3. ~~**DPH modul**~~ — ✅ hotové (Booking PDF import, Airbnb manual upload, ČNB kurz, `VatPeriod`, reconciliation).
 4. ~~**Zprávy hostům**~~ — ✅ hotové (nastavení e-mailů + barevné téma, editovatelné Markdown šablony s proměnnými, náhled + test, master layout; odeslání zapojeno do `app:actions:run` přes Symfony Mailer; faktura PDF e-mailem hostovi). Plán/stav: `docs/private/plan-zpravy-hostum.md`.
 5. ~~**MotoPress REST sync**~~ — ✅ hotové (`app:motopress:sync`).
-6. **iCal sync** — sanity check obsazenosti, detekce Airbnb cancellations.
+6. ~~**iCal sync**~~ — ✅ hotové (obousměrný: import obsazenosti z Booking/Airbnb/eChalupy/CS chalupy přes `app:ical:sync`, export `.ics` feedu do OTA extranetů, auto‑storno zmizelých bloků, kontrola dvojího prodeje na dashboardu).
 7. ~~**Deploy na sdílený hosting**~~ — ✅ hotové (viz `docs/deploy.md`; cron IMAP poller + MotoPress sync á 15 min).
 8. ~~**Ekonomika / evidence příjmů a výdajů**~~ — ✅ hotové (`/ekonomika`, zisk per rezervace, viz výše).

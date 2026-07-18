@@ -197,8 +197,8 @@ Tohle není volitelný modul — bez něj se obejde jen, dokud finanční úřad
 
 Aktuální rozsah — co MVP umí, v2 progress a doporučené pořadí dalších kroků: **`docs/stav-projektu.md`**.
 
-**Chybí:** iCal sync (sanity check obsazenosti / Airbnb cancellations).
+**iCal sync** je obousměrný: import obsazenosti z Booking/Airbnb/eChalupy/CS chalupy (`app:ical:sync`), export `.ics` feedu do OTA extranetů, auto‑storno zmizelých bloků a kontrola dvojího prodeje na dashboardu.
 
 **Produkce běží na sdíleném hostingu** (viz `docs/deploy.md`). Důsledek: **všechny změny DB schématu výhradně přes Doctrine migrace** — žádné `schema:update` ani ad-hoc SQL; produkce se aktualizuje `doctrine:migrations:migrate`.
 
-**Check‑in UX:** online check‑in sbírá doklady **jen u cizinců** (Ubyport), čistě česká skupina dokončí bez vyplňování. MRZ sken: foto/upload + **live kamera** (vodítko, grading jas/glare/ostrost, auto‑cvak). Fakturační adresu **objednatele** si host doplní sám, když chybí (`CheckinBillingType`), s **ARES** autofillem z IČO (`App\Ares\AresClient`).
+**Check‑in UX:** online check‑in vede hosta jeho jazykem (CS/EN/DE/FR/IT/PL) a plní **knihu hostů** (přehled + CSV v Ekonomice, `/ekonomika/kniha-hostu`). Evidence českých hostů je volitelná (`guestbook.register_czech`, výchozí zapnuto); **Ubyport** podklad se tvoří **jen u cizinců**. MRZ sken: foto/upload + **live kamera** (vodítko, grading jas/glare/ostrost, auto‑cvak) → vyplní formulář. Fakturační adresu **objednatele** si host doplní sám, když chybí (`CheckinBillingType`), s **ARES** autofillem z IČO (`App\Ares\AresClient`).
