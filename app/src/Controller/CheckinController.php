@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Ares\AresClient;
+use App\Config\GuestRegistrationSettings;
 use App\Entity\GuestDocument;
 use App\Entity\Reservation;
 use App\Enum\OwnerNotificationType;
@@ -47,6 +48,7 @@ class CheckinController extends AbstractController
         private readonly AresClient $ares,
         private readonly OwnerNotifier $notifier,
         private readonly TranslatorInterface $translator,
+        private readonly GuestRegistrationSettings $guestRegistration,
     ) {
     }
 
@@ -62,6 +64,7 @@ class CheckinController extends AbstractController
             'expectedGuests' => $this->expectedGuestCount($reservation),
             'isCompleted' => $reservation->getCheckinCompletedAt() !== null,
             'hasBilling' => $this->hasBillingAddress($reservation),
+            'registerCzech' => $this->guestRegistration->registerCzechGuests(),
         ]);
     }
 
@@ -159,10 +162,10 @@ class CheckinController extends AbstractController
             return $this->redirectToRoute('checkin_index', ['token' => $token]);
         }
 
-        // Zahraniční hosty hlásíme na Ubyport; čistě česká skupina nevyplňuje nic,
-        // takže dokončení s nula doklady je legitimní (host potvrdil „jen Češi").
-        // guardEditable() výše zaručuje, že jde o první dokončení (opakovaný POST
-        // skončí 404), takže notifikace odejde právě jednou.
+        // Dokončení s nula doklady je legitimní — s vypnutou evidencí Čechů projde
+        // čistě česká skupina bez vyplňování, se zapnutou host jen nemusel doklady
+        // dotáhnout online (majitel/ka je doplní na místě). guardEditable() výše
+        // zaručuje první dokončení (opakovaný POST skončí 404), notifikace odejde jednou.
         $this->notifier->notify(OwnerNotificationType::CHECKIN_COMPLETED, $reservation, [
             'documents' => \count($this->documents->findByReservation($reservation)),
         ]);
@@ -261,7 +264,9 @@ class CheckinController extends AbstractController
 
     private function handleForm(Request $request, GuestDocument $doc, string $token, bool $isNew): Response
     {
-        $form = $this->createForm(GuestDocumentType::class, $doc);
+        $registerCzech = $this->guestRegistration->registerCzechGuests();
+
+        $form = $this->createForm(GuestDocumentType::class, $doc, ['registerCzechGuests' => $registerCzech]);
         if (!$isNew && $doc->getNationalityCode() !== null) {
             $form->get('nationality')->setData($this->nationalities->find($doc->getNationalityCode()));
         }
@@ -272,7 +277,9 @@ class CheckinController extends AbstractController
             $doc->setNationalityCode($nationality?->getCode());
 
             if ($doc->isCzechCitizen()) {
-                $doc->clearForeignerFields();
+                // Čecha v evidenční knize zbavíme jen cizineckých polí (občanství,
+                // vízum); doklad a adresu ponecháme. Když Čechy neevidujeme, mažeme vše.
+                $registerCzech ? $doc->clearUbyportOnlyFields() : $doc->clearForeignerFields();
             }
 
             $doc->confirm();
@@ -291,6 +298,7 @@ class CheckinController extends AbstractController
             'token' => $token,
             'isNew' => $isNew,
             'doc' => $doc,
+            'registerCzech' => $registerCzech,
         ]);
     }
 

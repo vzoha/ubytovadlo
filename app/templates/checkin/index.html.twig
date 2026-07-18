@@ -30,9 +30,9 @@
                     </div>
                 </div>
 
-                {# ── Hosté: registrujeme jen cizince (Ubyport), Čechy ne ── #}
+                {# ── Hosté do evidenční knihy; cizinci navíc na Ubyport ── #}
                 <h2 class="h5 mb-2">{{ 'index.guests_heading'|trans({}, 'checkin') }}</h2>
-                <p class="small text-muted">{{ 'index.guests_note'|trans({}, 'checkin')|raw }}</p>
+                <p class="small text-muted">{{ (registerCzech ? 'index.guests_note_all' : 'index.guests_note')|trans({}, 'checkin')|raw }}</p>
             {% endif %}
 
             {% if guests is not empty %}
@@ -46,6 +46,7 @@
                                     {% if g.nationalityCode %} · {{ g.nationalityCode }}{% endif %}
                                     {% if g.documentNumber %} · {{ g.documentNumber }}{% endif %}
                                 </div>
+                                {% if g.residenceAddress %}<div class="small text-muted">{{ g.residenceAddress }}</div>{% endif %}
                             </div>
                             {% if not isCompleted %}
                                 <div class="d-flex gap-2">
@@ -62,8 +63,8 @@
             {% endif %}
 
             {% if not isCompleted %}
-                {% if guests is empty %}
-                    {# Vstupní rozcestník: jsou mezi hosty cizinci? #}
+                {% if guests is empty and not registerCzech %}
+                    {# Evidence Čechů vypnutá — registrujeme jen cizince. #}
                     <div class="card">
                         <div class="card-body text-center">
                             <p class="mb-3">{{ 'index.foreigners_question'|trans({}, 'checkin')|raw }}</p>
@@ -78,9 +79,14 @@
                             </div>
                         </div>
                     </div>
+                {% elseif guests is empty %}
+                    {# Každého hosta přidáme do evidenční knihy — dokončit lze až s hosty. #}
+                    <div class="d-grid">
+                        <a class="btn btn-primary" href="{{ path('checkin_host_new', {token: reservation.checkinToken}) }}">+ {{ 'index.add_guest_first'|trans({}, 'checkin') }}</a>
+                    </div>
                 {% else %}
                     <div class="d-flex justify-content-between gap-2 flex-wrap">
-                        <a class="btn btn-outline-primary" href="{{ path('checkin_host_new', {token: reservation.checkinToken}) }}">+ {{ 'index.add_foreigner_more'|trans({}, 'checkin') }}</a>
+                        <a class="btn btn-outline-primary" href="{{ path('checkin_host_new', {token: reservation.checkinToken}) }}">+ {{ (registerCzech ? 'index.add_guest_more' : 'index.add_foreigner_more')|trans({}, 'checkin') }}</a>
                         <form method="post" action="{{ path('checkin_finish', {token: reservation.checkinToken}) }}">
                             <input type="hidden" name="_token" value="{{ csrf_token('checkin_finish') }}">
                             <button type="submit" class="btn btn-success">{{ 'index.submit_all'|trans({}, 'checkin') }}</button>

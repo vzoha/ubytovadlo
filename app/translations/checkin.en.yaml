@@ -22,6 +22,7 @@ index:
     billing_add: 'Add billing address'
     guests_heading: 'Guests'
     guests_note: 'By law we are required to report to the foreign police (Ubyport) <strong>only foreign guests</strong>. We do not register Czech citizens anywhere — do not enter them.'
+    guests_note_all: 'We record every guest in the guest register (name, date of birth, ID document and residence). Foreign guests are additionally reported to the foreign police (Ubyport).'
     badge_czech: 'Czech citizen'
     guest_edit: 'Edit'
     guest_delete: 'Delete'
@@ -30,6 +31,8 @@ index:
     add_foreigner_first: 'Yes, add a foreign guest'
     finish_czech: 'No, we are all Czech — finish'
     add_foreigner_more: 'Add another foreigner'
+    add_guest_first: 'Add a guest'
+    add_guest_more: 'Add another guest'
     submit_all: 'Everything filled in, submit'
 
 billing:
@@ -47,7 +50,7 @@ billing:
 
 host:
     back: 'Back to list'
-    title_new: 'Add a foreign guest'
+    title_new: 'Add a guest'
     title_edit: 'Edit guest'
     scan_heading: 'Scan ID document'
     scan_intro: 'Take a photo of the side of the ID document with the MRZ lines (the lines with &lt;&lt;&lt; at the bottom). Name, date of birth, document number and nationality will be pre-filled; add the address manually.'
@@ -67,7 +70,8 @@ host:
     debug_preview: 'Preprocessed preview (this is what goes to OCR):'
     debug_passes: 'OCR passes:'
     debug_candidates: 'MRZ line candidates (after normalization):'
-    foreigner_note: 'For foreigners (fill in everything according to the travel document):'
+    doc_note: 'Identity document and residence address (for the guest register):'
+    foreigner_note: 'For foreigners only — for reporting to the foreign police (Ubyport):'
     cancel: 'Cancel'
     save: 'Save'
     js:
@@ -123,17 +127,18 @@ form:
     last_name: 'Last name'
     first_name: 'First name'
     birth_date: 'Date of birth'
-    is_czech: 'Citizen of the Czech Republic (no need to fill in an ID document)'
+    is_czech: 'Citizen of the Czech Republic'
     nationality: 'Nationality'
     nationality_placeholder: '— select —'
-    nationality_help: 'Required for foreigners. Czechs leave blank.'
+    nationality_help: 'Only for foreigners (for Ubyport).'
     document_type: 'Document type'
     document_type_placeholder: '— select —'
     document_number: 'Document number'
     visa_number: 'Visa number (if any)'
-    residence_abroad: 'Permanent residence abroad'
-    residence_abroad_help: 'E.g. "Slovakia, Bratislava, Milíčova 26"'
+    residence: 'Permanent residence address'
+    residence_help: 'Street, city and country — e.g. "Milíčova 26, Bratislava, Slovakia".'
     note: 'Note'
+    field_required: 'Please fill in.'
     required_for_foreigners: 'Required for foreigners.'
 
 doc_type:

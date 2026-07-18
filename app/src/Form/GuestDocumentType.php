@@ -96,17 +96,17 @@ class GuestDocumentType extends AbstractType
                 'constraints' => [new Length(max: 32)],
                 'attr' => ['maxlength' => 32],
             ])
+            ->add('residenceAddress', TextareaType::class, [
+                'label' => 'form.residence',
+                'required' => false,
+                'attr' => ['rows' => 2],
+                'help' => 'form.residence_help',
+            ])
             ->add('visaNumber', TextType::class, [
                 'label' => 'form.visa_number',
                 'required' => false,
                 'constraints' => [new Length(max: 32)],
                 'attr' => ['maxlength' => 32],
-            ])
-            ->add('permanentResidenceAbroad', TextareaType::class, [
-                'label' => 'form.residence_abroad',
-                'required' => false,
-                'attr' => ['rows' => 2],
-                'help' => 'form.residence_abroad_help',
             ])
             ->add('note', TextareaType::class, [
                 'label' => 'form.note',
@@ -114,22 +114,34 @@ class GuestDocumentType extends AbstractType
                 'attr' => ['rows' => 2],
             ]);
 
-        $builder->addEventListener(FormEvents::POST_SUBMIT, function (FormEvent $event): void {
+        $registerCzechGuests = (bool) $options['registerCzechGuests'];
+
+        $builder->addEventListener(FormEvents::POST_SUBMIT, function (FormEvent $event) use ($registerCzechGuests): void {
             $doc = $event->getData();
-            if (!$doc instanceof GuestDocument || $doc->isCzechCitizen()) {
+            if (!$doc instanceof GuestDocument) {
                 return;
             }
             $form = $event->getForm();
-            $required = $this->translator->trans('form.required_for_foreigners', [], 'checkin');
+            $isForeigner = !$doc->isCzechCitizen();
+            $required = $this->translator->trans('form.field_required', [], 'checkin');
 
-            if ($form->get('nationality')->getData() === null) {
-                $form->get('nationality')->addError(new FormError($required));
+            // Doklad a adresu vyžadujeme do evidenční knihy (§ 3g) u každého hosta;
+            // u českého jen když ho vůbec evidujeme.
+            if ($isForeigner || $registerCzechGuests) {
+                if ($doc->getDocumentType() === null) {
+                    $form->get('documentType')->addError(new FormError($required));
+                }
+                if ($doc->getDocumentNumber() === null || $doc->getDocumentNumber() === '') {
+                    $form->get('documentNumber')->addError(new FormError($required));
+                }
+                if ($doc->getResidenceAddress() === null || trim($doc->getResidenceAddress()) === '') {
+                    $form->get('residenceAddress')->addError(new FormError($required));
+                }
             }
-            if ($doc->getDocumentType() === null) {
-                $form->get('documentType')->addError(new FormError($required));
-            }
-            if ($doc->getDocumentNumber() === null || $doc->getDocumentNumber() === '') {
-                $form->get('documentNumber')->addError(new FormError($required));
+
+            // Občanství je navíc jen u cizince (podklad pro Ubyport).
+            if ($isForeigner && $form->get('nationality')->getData() === null) {
+                $form->get('nationality')->addError(new FormError($this->translator->trans('form.required_for_foreigners', [], 'checkin')));
             }
         });
     }
@@ -139,6 +151,8 @@ class GuestDocumentType extends AbstractType
         $resolver->setDefaults([
             'data_class' => GuestDocument::class,
             'translation_domain' => 'checkin',
+            'registerCzechGuests' => true,
         ]);
+        $resolver->setAllowedTypes('registerCzechGuests', 'bool');
     }
 }

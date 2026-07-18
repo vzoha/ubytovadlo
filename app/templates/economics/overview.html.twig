@@ -6,6 +6,7 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h1 class="h3 mb-0">Ekonomika {{ year }}</h1>
         <div class="d-flex gap-3 align-items-center">
+            <a href="{{ path('guest_book', {year: year}) }}" class="text-decoration-none small text-nowrap">Kniha hostů →</a>
             <a href="{{ path('recreation_fee_report', {year: year}) }}" class="text-decoration-none small text-nowrap">Rekreační poplatek →</a>
             <div class="btn-group">
                 {% for y in years %}

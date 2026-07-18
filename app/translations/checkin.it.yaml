@@ -22,6 +22,7 @@ index:
     billing_add: 'Aggiungi indirizzo di fatturazione'
     guests_heading: 'Ospiti'
     guests_note: 'La legge ci obbliga a notificare alla polizia degli stranieri (Ubyport) <strong>solo gli stranieri alloggiati</strong>. I cittadini cechi non vengono registrati — non inseriteli.'
+    guests_note_all: 'Registriamo ogni ospite nel registro degli ospiti (nome, data di nascita, documento e residenza). Gli stranieri vengono inoltre notificati alla polizia degli stranieri (Ubyport).'
     badge_czech: 'cittadino ceco'
     guest_edit: 'Modifica'
     guest_delete: 'Elimina'
@@ -30,6 +31,8 @@ index:
     add_foreigner_first: 'Sì, aggiungi un ospite straniero'
     finish_czech: 'No, siamo tutti cechi — termina'
     add_foreigner_more: 'Aggiungi un altro straniero'
+    add_guest_first: 'Aggiungi un ospite'
+    add_guest_more: 'Aggiungi un altro ospite'
     submit_all: 'Tutto compilato, invia'
 
 billing:
@@ -47,7 +50,7 @@ billing:
 
 host:
     back: 'Torna all''elenco'
-    title_new: 'Aggiungi un ospite straniero'
+    title_new: 'Aggiungi un ospite'
     title_edit: 'Modifica ospite'
     scan_heading: 'Scansiona il documento'
     scan_intro: 'Fotografate il lato del documento con le righe MRZ (le righe con &lt;&lt;&lt; in basso). Nome, data di nascita, numero del documento e cittadinanza verranno precompilati; l''indirizzo va inserito manualmente.'
@@ -67,7 +70,8 @@ host:
     debug_preview: 'Anteprima preelaborata (questo va all''OCR):'
     debug_passes: 'Tentativi OCR:'
     debug_candidates: 'Righe MRZ candidate (dopo la normalizzazione):'
-    foreigner_note: 'Per gli stranieri (compilate tutto secondo il documento di viaggio):'
+    doc_note: 'Documento d''identità e indirizzo di residenza (per il registro degli ospiti):'
+    foreigner_note: 'Solo per gli stranieri — per la notifica alla polizia degli stranieri (Ubyport):'
     cancel: 'Annulla'
     save: 'Salva'
     js:
@@ -123,17 +127,18 @@ form:
     last_name: 'Cognome'
     first_name: 'Nome'
     birth_date: 'Data di nascita'
-    is_czech: 'Cittadino/cittadina della Repubblica Ceca (non è necessario il documento)'
+    is_czech: 'Cittadino/cittadina della Repubblica Ceca'
     nationality: 'Cittadinanza'
     nationality_placeholder: '— seleziona —'
-    nationality_help: 'Obbligatorio per gli stranieri. I cechi lascino vuoto.'
+    nationality_help: 'Solo per gli stranieri (per Ubyport).'
     document_type: 'Tipo di documento'
     document_type_placeholder: '— seleziona —'
     document_number: 'Numero del documento'
     visa_number: 'Numero del visto (se presente)'
-    residence_abroad: 'Residenza permanente all''estero'
-    residence_abroad_help: 'Es. «Slovacchia, Bratislava, Milíčova 26»'
+    residence: 'Indirizzo di residenza permanente'
+    residence_help: 'Via, città e Paese — es. «Milíčova 26, Bratislava, Slovacchia».'
     note: 'Nota'
+    field_required: 'Compilare.'
     required_for_foreigners: 'Obbligatorio per gli stranieri.'
 
 doc_type:

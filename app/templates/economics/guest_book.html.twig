@@ -1,0 +1,67 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Kniha hostů {{ year }} — {{ brand_name }}{% endblock %}
+
+{% block body %}
+    <a href="{{ path('economics_overview', {year: year}) }}" class="text-decoration-none small">← Ekonomika {{ year }}</a>
+    <div class="d-flex justify-content-between align-items-center mb-3 mt-1">
+        <h1 class="h3 mb-0">Kniha hostů {{ year }}</h1>
+        <div class="btn-group">
+            {% for y in years %}
+                <a href="{{ path('guest_book', {year: y}) }}"
+                   class="btn btn-sm btn-outline-secondary {{ y == year ? 'active' : '' }}">{{ y }}</a>
+            {% endfor %}
+        </div>
+    </div>
+
+    <p class="text-muted small mb-3">
+        Evidenční kniha ubytovaných za rok — podklad k&nbsp;poplatku z&nbsp;pobytu (§&nbsp;3g zákona o&nbsp;místních poplatcích).
+        Obsahuje hosty, kteří potvrdili údaje v&nbsp;online check-inu; uchovává se 6&nbsp;let.
+    </p>
+
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span>Hosté · {{ documents|length }}</span>
+            {% if documents is not empty %}
+                <a href="{{ path('guest_book_csv', {year: year}) }}" class="btn btn-sm btn-outline-secondary">Stáhnout CSV</a>
+            {% endif %}
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle mb-0 small">
+                <thead class="text-muted">
+                <tr>
+                    <th>Host</th>
+                    <th>Datum narození</th>
+                    <th>Občanství</th>
+                    <th>Doklad</th>
+                    <th>Bydliště</th>
+                    <th>Pobyt</th>
+                    <th class="text-end">Nocí</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for doc in documents %}
+                    {% set r = doc.reservation %}
+                    <tr>
+                        <td>
+                            <a href="{{ path('reservation_detail', {id: r.id}) }}">{{ doc.lastName }} {{ doc.firstName }}</a>
+                        </td>
+                        <td>{{ doc.birthDate|date('j. n. Y') }}</td>
+                        <td>{% if doc.isCzechCitizen %}ČR{% elseif doc.nationalityCode %}{{ doc.nationalityCode }}{% else %}—{% endif %}</td>
+                        <td>
+                            {%- if doc.documentNumber -%}
+                                {{ doc.documentType ? doc.documentType.label ~ ' · ' : '' }}{{ doc.documentNumber }}
+                            {%- else -%}—{%- endif -%}
+                        </td>
+                        <td>{{ doc.residenceAddress ?? '—' }}</td>
+                        <td>{{ r.checkIn|date('j. n.') }} – {{ r.checkOut ? r.checkOut|date('j. n. Y') : '—' }}</td>
+                        <td class="text-end">{% if r.checkOut %}{{ date(r.checkOut).diff(date(r.checkIn)).days }}{% else %}—{% endif %}</td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="7" class="text-center text-muted py-3">V roce {{ year }} zatím žádní evidovaní hosté.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

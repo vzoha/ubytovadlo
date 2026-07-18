@@ -103,7 +103,7 @@ final class UnlExporter
             '',
             '',
             $nationality,
-            $this->singleLine($g->getPermanentResidenceAbroad()),
+            $this->singleLine($g->getResidenceAddress()),
             $documentNumber,
             $g->getVisaNumber() ?? '',
             $r->getUbyportPurposeOfStay()->value,

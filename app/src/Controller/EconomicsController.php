@@ -14,6 +14,7 @@ namespace App\Controller;
 use App\Enum\Channel;
 use App\Profit\RecreationFeeReportBuilder;
 use App\Profit\YearEconomicsBuilder;
+use App\Repository\GuestDocumentRepository;
 use App\Repository\ReservationRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
@@ -31,6 +32,7 @@ class EconomicsController extends AbstractController
         private readonly ReservationRepository $reservations,
         private readonly YearEconomicsBuilder $economics,
         private readonly RecreationFeeReportBuilder $recreationFees,
+        private readonly GuestDocumentRepository $guestDocuments,
     ) {
     }
 
@@ -102,5 +104,69 @@ class EconomicsController extends AbstractController
         $response->headers->set('Content-Disposition', sprintf('attachment; filename="rekreacni-poplatek-%04d.csv"', $year));
 
         return $response;
+    }
+
+    #[Route('/ekonomika/kniha-hostu/{year}', name: 'guest_book', methods: ['GET'], requirements: ['year' => '\d{4}'])]
+    public function guestBook(?int $year = null): Response
+    {
+        $year ??= (int) (new \DateTimeImmutable('today'))->format('Y');
+        [$from, $to] = $this->yearRange($year);
+
+        return $this->render('economics/guest_book.html.twig', [
+            'year' => $year,
+            'years' => $this->reservations->findDistinctCheckInYears(),
+            'documents' => $this->guestDocuments->findForGuestBook($from, $to),
+        ]);
+    }
+
+    #[Route('/ekonomika/kniha-hostu/{year}/kniha.csv', name: 'guest_book_csv', methods: ['GET'], requirements: ['year' => '\d{4}'])]
+    public function guestBookCsv(int $year): Response
+    {
+        [$from, $to] = $this->yearRange($year);
+        $documents = $this->guestDocuments->findForGuestBook($from, $to);
+
+        $out = fopen('php://temp', 'r+');
+        \assert($out !== false);
+        // UTF-8 BOM — Excel jinak háže diakritiku.
+        fwrite($out, "\xEF\xBB\xBF");
+
+        fputcsv($out, ['Příjmení', 'Jméno', 'Datum narození', 'Občanství', 'Druh dokladu', 'Číslo dokladu', 'Adresa bydliště', 'Příjezd', 'Odjezd', 'Nocí'], ';', '"', '');
+        foreach ($documents as $doc) {
+            $reservation = $doc->getReservation();
+            $checkOut = $reservation->getCheckOut();
+            fputcsv($out, [
+                $doc->getLastName(),
+                $doc->getFirstName(),
+                $doc->getBirthDate()->format('d.m.Y'),
+                $doc->isCzechCitizen() ? 'ČR' : ($doc->getNationalityCode() ?? ''),
+                $doc->getDocumentType()?->label() ?? '',
+                $doc->getDocumentNumber() ?? '',
+                (string) $doc->getResidenceAddress(),
+                $reservation->getCheckIn()->format('d.m.Y'),
+                $checkOut?->format('d.m.Y') ?? '',
+                $checkOut !== null ? $checkOut->diff($reservation->getCheckIn())->days : '',
+            ], ';', '"', '');
+        }
+
+        rewind($out);
+        $csv = (string) stream_get_contents($out);
+        fclose($out);
+
+        $response = new Response($csv);
+        $response->headers->set('Content-Type', 'text/csv; charset=UTF-8');
+        $response->headers->set('Content-Disposition', sprintf('attachment; filename="kniha-hostu-%04d.csv"', $year));
+
+        return $response;
+    }
+
+    /**
+     * @return array{0: \DateTimeImmutable, 1: \DateTimeImmutable}
+     */
+    private function yearRange(int $year): array
+    {
+        return [
+            new \DateTimeImmutable(sprintf('%04d-01-01 00:00:00', $year)),
+            new \DateTimeImmutable(sprintf('%04d-12-31 23:59:59', $year)),
+        ];
     }
 }

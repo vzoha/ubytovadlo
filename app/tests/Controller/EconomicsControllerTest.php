@@ -12,12 +12,14 @@ declare(strict_types=1);
 namespace App\Tests\Controller;
 
 use App\Entity\Cleaning;
+use App\Entity\GuestDocument;
 use App\Entity\Invoice;
 use App\Entity\InvoiceLine;
 use App\Entity\Reservation;
 use App\Entity\Setting;
 use App\Entity\User;
 use App\Enum\Channel;
+use App\Enum\DocumentType;
 use App\Enum\ReservationStatus;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -41,6 +43,7 @@ final class EconomicsControllerTest extends WebTestCase
         $this->em->createQuery('DELETE FROM ' . Cleaning::class . ' c')->execute();
         $this->em->createQuery('DELETE FROM ' . InvoiceLine::class . ' l')->execute();
         $this->em->createQuery('DELETE FROM ' . Invoice::class . ' i')->execute();
+        $this->em->createQuery('DELETE FROM ' . GuestDocument::class . ' g')->execute();
         $this->em->createQuery('DELETE FROM ' . Reservation::class . ' r')->execute();
         $this->em->createQuery('DELETE FROM ' . Setting::class . ' s')->execute();
         $this->em->createQuery('DELETE FROM ' . User::class . ' u')->execute();
@@ -154,5 +157,57 @@ final class EconomicsControllerTest extends WebTestCase
         $csv = (string) $response->getContent();
         self::assertStringContainsString('Miluše Testová', $csv);
         self::assertStringContainsString('Celkem', $csv);
+    }
+
+    public function testGuestBookRendersConfirmedGuest(): void
+    {
+        $this->seedGuest('Evidovaný', 'CZ998877', 'Lipová 14, Tábor', confirmed: true);
+        $this->seedGuest('Rozpracovaný', 'CZ111000', 'Nádražní 2, Tábor', confirmed: false);
+
+        $this->client->request('GET', '/ekonomika/kniha-hostu/2026');
+
+        self::assertResponseIsSuccessful();
+        $body = (string) $this->client->getResponse()->getContent();
+        self::assertStringContainsString('Kniha hostů 2026', $body);
+        self::assertStringContainsString('Evidovaný', $body);
+        self::assertStringContainsString('CZ998877', $body);
+        self::assertStringContainsString('Lipová 14, Tábor', $body);
+        // nepotvrzený doklad do evidenční knihy nepatří
+        self::assertStringNotContainsString('Rozpracovaný', $body);
+    }
+
+    public function testGuestBookCsvDownloads(): void
+    {
+        $this->seedGuest('Evidovaný', 'CZ998877', 'Lipová 14, Tábor', confirmed: true);
+
+        $this->client->request('GET', '/ekonomika/kniha-hostu/2026/kniha.csv');
+
+        self::assertResponseIsSuccessful();
+        $response = $this->client->getResponse();
+        self::assertStringContainsString('text/csv', (string) $response->headers->get('Content-Type'));
+        $csv = (string) $response->getContent();
+        self::assertStringContainsString('Evidovaný', $csv);
+        self::assertStringContainsString('CZ998877', $csv);
+        self::assertStringContainsString('Lipová 14, Tábor', $csv);
+    }
+
+    private function seedGuest(string $lastName, string $documentNumber, string $residence, bool $confirmed): void
+    {
+        $r = new Reservation(Channel::WEB, new \DateTimeImmutable('2026-05-10'));
+        $r->setCheckOut(new \DateTimeImmutable('2026-05-13'));
+        $r->setStatus(ReservationStatus::COMPLETED);
+        $r->setGuestName($lastName);
+        $this->em->persist($r);
+
+        $doc = new GuestDocument($r, 'Adam', $lastName, new \DateTimeImmutable('1990-01-01'));
+        $doc->setIsCzechCitizen(true);
+        $doc->setDocumentType(DocumentType::ID_CARD);
+        $doc->setDocumentNumber($documentNumber);
+        $doc->setResidenceAddress($residence);
+        if ($confirmed) {
+            $doc->confirm();
+        }
+        $this->em->persist($doc);
+        $this->em->flush();
     }
 }

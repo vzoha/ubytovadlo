@@ -22,6 +22,7 @@ index:
     billing_add: 'Ajouter l''adresse de facturation'
     guests_heading: 'Hôtes'
     guests_note: 'La loi nous impose de déclarer à la police des étrangers (Ubyport) <strong>uniquement les étrangers hébergés</strong>. Nous n''enregistrons pas les citoyens tchèques — ne les renseignez pas.'
+    guests_note_all: 'Nous inscrivons chaque hôte au registre des hôtes (nom, date de naissance, pièce d''identité et domicile). Les étrangers sont en outre déclarés à la police des étrangers (Ubyport).'
     badge_czech: 'citoyen tchèque'
     guest_edit: 'Modifier'
     guest_delete: 'Supprimer'
@@ -30,6 +31,8 @@ index:
     add_foreigner_first: 'Oui, ajouter un hôte étranger'
     finish_czech: 'Non, nous sommes tous tchèques — terminer'
     add_foreigner_more: 'Ajouter un autre étranger'
+    add_guest_first: 'Ajouter un hôte'
+    add_guest_more: 'Ajouter un autre hôte'
     submit_all: 'Tout est rempli, envoyer'
 
 billing:
@@ -47,7 +50,7 @@ billing:
 
 host:
     back: 'Retour à la liste'
-    title_new: 'Ajouter un hôte étranger'
+    title_new: 'Ajouter un hôte'
     title_edit: 'Modifier l''hôte'
     scan_heading: 'Scanner la pièce d''identité'
     scan_intro: 'Photographiez le côté de la pièce d''identité comportant les lignes MRZ (les lignes avec &lt;&lt;&lt; en bas). Le nom, la date de naissance, le numéro du document et la nationalité seront préremplis ; complétez l''adresse manuellement.'
@@ -67,7 +70,8 @@ host:
     debug_preview: 'Aperçu prétraité (voici ce qui est envoyé à l''OCR) :'
     debug_passes: 'Tentatives OCR :'
     debug_candidates: 'Candidats de lignes MRZ (après normalisation) :'
-    foreigner_note: 'Pour les étrangers (remplissez tout d''après le document de voyage) :'
+    doc_note: 'Pièce d''identité et adresse du domicile (pour le registre des hôtes) :'
+    foreigner_note: 'Uniquement pour les étrangers — pour la déclaration à la police des étrangers (Ubyport) :'
     cancel: 'Annuler'
     save: 'Enregistrer'
     js:
@@ -123,17 +127,18 @@ form:
     last_name: 'Nom'
     first_name: 'Prénom'
     birth_date: 'Date de naissance'
-    is_czech: 'Citoyen(ne) de la République tchèque (inutile de remplir la pièce d''identité)'
+    is_czech: 'Citoyen(ne) de la République tchèque'
     nationality: 'Nationalité'
     nationality_placeholder: '— sélectionnez —'
-    nationality_help: 'Obligatoire pour les étrangers. Les Tchèques laissent vide.'
+    nationality_help: 'Uniquement pour les étrangers (pour Ubyport).'
     document_type: 'Type de document'
     document_type_placeholder: '— sélectionnez —'
     document_number: 'Numéro du document'
     visa_number: 'Numéro de visa (le cas échéant)'
-    residence_abroad: 'Domicile permanent à l''étranger'
-    residence_abroad_help: 'Par ex. « Slovaquie, Bratislava, Milíčova 26 »'
+    residence: 'Adresse du domicile permanent'
+    residence_help: 'Rue, ville et pays — par ex. « Milíčova 26, Bratislava, Slovaquie ».'
     note: 'Remarque'
+    field_required: 'Veuillez remplir.'
     required_for_foreigners: 'Obligatoire pour les étrangers.'
 
 doc_type:

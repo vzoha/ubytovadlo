@@ -403,15 +403,21 @@ class DevSeedDemoCommand extends Command
         if (empty($s['docs'])) {
             return;
         }
-        $r->setCheckinToken(str_repeat($s['ext'][0] ?? 'a', 64));
+        // Token musí být 64 hex znaků a unikátní — poskládáme ho z celého ext
+        // (samé číslice), ne z jednoho znaku, jinak by se dvě rezervace srazily.
+        $r->setCheckinToken(substr(str_repeat((string) ($s['ext'] ?? 'a'), 64), 0, 64));
         foreach ($s['docs'] as $doc) {
+            $isCzech = $doc[3] === 'CZ';
             $gd = new GuestDocument($r, $doc[0], $doc[1], new \DateTimeImmutable($doc[2]));
-            $gd->setIsCzechCitizen($doc[3] === 'CZ');
-            if ($doc[3] !== 'CZ') {
+            $gd->setIsCzechCitizen($isCzech);
+            $gd->setDocumentType($isCzech ? DocumentType::ID_CARD : DocumentType::PASSPORT);
+            $gd->setDocumentNumber($doc[4] ?? null);
+            $gd->setResidenceAddress($doc[5] ?? null);
+            if (!$isCzech) {
                 $gd->setNationalityCode($doc[3]);
-                $gd->setDocumentType(DocumentType::PASSPORT);
-                $gd->setDocumentNumber($doc[4] ?? null);
             }
+            // Doklady z check-inu jsou potvrzené hostem → jdou do evidenční knihy i Ubyportu.
+            $gd->confirm();
             $this->em->persist($gd);
         }
     }
@@ -550,6 +556,10 @@ class DevSeedDemoCommand extends Command
                 'city' => 'Tábor', 'zip' => '39001', 'adults' => 2, 'children' => 1, 'price' => '4500.00',
                 'acq' => 'Google', 'vtKwh' => 32, 'ntKwh' => 20, 'clean' => [CleaningType::CLEANER, 700, 700],
                 'inv' => 'deposit_final',
+                'docs' => [
+                    ['Jan', 'Novák', '1984-05-04', 'CZ', '123456789', 'Lipová 14, Tábor'],
+                    ['Petra', 'Nováková', '1986-09-21', 'CZ', '987654321', 'Lipová 14, Tábor'],
+                ],
             ],
             [
                 'channel' => Channel::AIRBNB, 'billing' => \App\Enum\BillingMode::AIRBNB,
@@ -691,8 +701,8 @@ class DevSeedDemoCommand extends Command
                 'acq' => 'Google', 'vtKwh' => 38, 'ntKwh' => 24, 'clean' => [CleaningType::CLEANER, 700, 700],
                 'inv' => 'deposit_only',
                 'docs' => [
-                    ['George', 'Smith', '1985-03-12', 'GBR', '512345678'],
-                    ['Emily', 'Smith', '1988-07-30', 'GBR', '512345679'],
+                    ['George', 'Smith', '1985-03-12', 'GBR', '512345678', '21 Baker Street, London, United Kingdom'],
+                    ['Emily', 'Smith', '1988-07-30', 'GBR', '512345679', '21 Baker Street, London, United Kingdom'],
                 ],
             ],
 

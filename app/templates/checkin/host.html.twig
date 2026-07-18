@@ -94,15 +94,26 @@
                             <div class="col-12">{{ form_row(form.isCzechCitizen) }}</div>
                         </div>
 
-                        <hr>
-                        <p class="small text-muted mb-3">{{ 'host.foreigner_note'|trans({}, 'checkin') }}</p>
+                        <div id="checkin-doc-fields"{% if doc.isCzechCitizen and not registerCzech %} class="d-none"{% endif %}>
+                            <hr>
+                            <p class="small text-muted mb-3">{{ 'host.doc_note'|trans({}, 'checkin') }}</p>
+                            <div class="row g-3">
+                                <div class="col-md-6">{{ form_row(form.documentType) }}</div>
+                                <div class="col-md-6">{{ form_row(form.documentNumber) }}</div>
+                                <div class="col-12">{{ form_row(form.residenceAddress) }}</div>
+                            </div>
+                        </div>
 
-                        <div class="row g-3">
-                            <div class="col-md-6">{{ form_row(form.nationality) }}</div>
-                            <div class="col-md-6">{{ form_row(form.documentType) }}</div>
-                            <div class="col-md-6">{{ form_row(form.documentNumber) }}</div>
-                            <div class="col-md-6">{{ form_row(form.visaNumber) }}</div>
-                            <div class="col-12">{{ form_row(form.permanentResidenceAbroad) }}</div>
+                        <div id="checkin-foreigner-fields"{% if doc.isCzechCitizen %} class="d-none"{% endif %}>
+                            <hr>
+                            <p class="small text-muted mb-3">{{ 'host.foreigner_note'|trans({}, 'checkin') }}</p>
+                            <div class="row g-3">
+                                <div class="col-md-6">{{ form_row(form.nationality) }}</div>
+                                <div class="col-md-6">{{ form_row(form.visaNumber) }}</div>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mt-1">
                             <div class="col-12">{{ form_row(form.note) }}</div>
                         </div>
 
@@ -115,6 +126,22 @@
             {{ form_end(form) }}
         </div>
     </div>
+
+    <script>
+    // Přepínač „občan ČR" řídí viditelnost sekcí: cizinecká pole (občanství, vízum)
+    // se schovají u Čecha vždy; doklad + bydliště jen když Čechy neevidujeme.
+    (function () {
+        var cb = document.getElementById('guest_document_isCzechCitizen');
+        if (!cb) return;
+        var foreign = document.getElementById('checkin-foreigner-fields');
+        var docs = document.getElementById('checkin-doc-fields');
+        var registerCzech = {{ registerCzech ? 'true' : 'false' }};
+        cb.addEventListener('change', function () {
+            if (foreign) foreign.classList.toggle('d-none', cb.checked);
+            if (docs) docs.classList.toggle('d-none', cb.checked && !registerCzech);
+        });
+    })();
+    </script>
 
     {% if isNew %}
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
@@ -772,6 +799,9 @@
             if (data.documentType) {
                 setSelect('guest_document_documentType', data.documentType);
             }
+
+            // Sken mohl přepnout „občan ČR" — promítni to do viditelnosti sekcí.
+            if (cb) cb.dispatchEvent(new Event('change'));
         }
 
         function setField(id, value) {

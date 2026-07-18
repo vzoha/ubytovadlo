@@ -22,6 +22,7 @@ index:
     billing_add: 'Rechnungsadresse ergänzen'
     guests_heading: 'Gäste'
     guests_note: 'Das Gesetz verpflichtet uns, der Ausländerpolizei (Ubyport) <strong>nur untergebrachte ausländische Gäste</strong> zu melden. Tschechische Staatsbürger erfassen wir nirgends — bitte tragen Sie diese nicht ein.'
+    guests_note_all: 'Jeden Gast tragen wir ins Gästebuch ein (Name, Geburtsdatum, Ausweisdokument und Wohnsitz). Ausländische Gäste melden wir zusätzlich der Ausländerpolizei (Ubyport).'
     badge_czech: 'tschechischer Staatsbürger'
     guest_edit: 'Bearbeiten'
     guest_delete: 'Löschen'
@@ -30,6 +31,8 @@ index:
     add_foreigner_first: 'Ja, ausländischen Gast hinzufügen'
     finish_czech: 'Nein, wir sind alle Tschechen — abschließen'
     add_foreigner_more: 'Weiteren ausländischen Gast hinzufügen'
+    add_guest_first: 'Gast hinzufügen'
+    add_guest_more: 'Weiteren Gast hinzufügen'
     submit_all: 'Alles ausgefüllt, absenden'
 
 billing:
@@ -47,7 +50,7 @@ billing:
 
 host:
     back: 'Zurück zur Liste'
-    title_new: 'Ausländischen Gast hinzufügen'
+    title_new: 'Gast hinzufügen'
     title_edit: 'Gast bearbeiten'
     scan_heading: 'Ausweisdokument scannen'
     scan_intro: 'Fotografieren Sie die Seite des Ausweisdokuments mit den MRZ-Zeilen (die Zeilen mit &lt;&lt;&lt; am unteren Rand). Name, Geburtsdatum, Dokumentnummer und Staatsangehörigkeit werden vorausgefüllt; die Adresse ergänzen Sie bitte manuell.'
@@ -67,7 +70,8 @@ host:
     debug_preview: 'Vorverarbeitete Vorschau (das geht ins OCR):'
     debug_passes: 'OCR-Versuche:'
     debug_candidates: 'Kandidaten für MRZ-Zeilen (nach Normalisierung):'
-    foreigner_note: 'Bei ausländischen Gästen (alles gemäß Reisedokument ausfüllen):'
+    doc_note: 'Ausweisdokument und Wohnanschrift (für das Gästebuch):'
+    foreigner_note: 'Nur bei ausländischen Gästen — zur Meldung bei der Ausländerpolizei (Ubyport):'
     cancel: 'Abbrechen'
     save: 'Speichern'
     js:
@@ -123,17 +127,18 @@ form:
     last_name: 'Nachname'
     first_name: 'Vorname'
     birth_date: 'Geburtsdatum'
-    is_czech: 'Staatsbürger/in der Tschechischen Republik (Ausweisdokument muss nicht ausgefüllt werden)'
+    is_czech: 'Staatsbürger/in der Tschechischen Republik'
     nationality: 'Staatsangehörigkeit'
     nationality_placeholder: '— auswählen —'
-    nationality_help: 'Bei ausländischen Gästen erforderlich. Tschechen lassen dies leer.'
+    nationality_help: 'Nur bei ausländischen Gästen (für Ubyport).'
     document_type: 'Dokumenttyp'
     document_type_placeholder: '— auswählen —'
     document_number: 'Dokumentnummer'
     visa_number: 'Visumnummer (falls vorhanden)'
-    residence_abroad: 'Ständiger Wohnsitz im Ausland'
-    residence_abroad_help: 'Z. B. „Slowakei, Bratislava, Milíčova 26"'
+    residence: 'Adresse des ständigen Wohnsitzes'
+    residence_help: 'Straße, Ort und Land — z. B. „Milíčova 26, Bratislava, Slowakei".'
     note: 'Anmerkung'
+    field_required: 'Bitte ausfüllen.'
     required_for_foreigners: 'Bei ausländischen Gästen erforderlich.'
 
 doc_type:

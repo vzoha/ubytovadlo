@@ -53,6 +53,29 @@ class GuestDocumentRepository extends ServiceEntityRepository
     }
 
     /**
+     * Evidenční kniha za období — potvrzení hosté (čeští i cizinci), jejichž pobyt
+     * protíná interval [from, to]. Podklad k poplatku z pobytu (§ 3g zák. o místních
+     * poplatcích): jméno, datum narození, doklad, adresa bydliště, doba pobytu.
+     *
+     * @return GuestDocument[]
+     */
+    public function findForGuestBook(\DateTimeImmutable $from, \DateTimeImmutable $to): array
+    {
+        return $this->createQueryBuilder('g')
+            ->join('g.reservation', 'r')
+            ->andWhere('g.confirmedAt IS NOT NULL')
+            ->andWhere('r.checkIn <= :to')
+            ->andWhere('r.checkOut >= :from')
+            ->setParameter('from', $from)
+            ->setParameter('to', $to)
+            ->orderBy('r.checkIn', 'ASC')
+            ->addOrderBy('g.lastName', 'ASC')
+            ->addOrderBy('g.firstName', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
      * Fronta "k nahlášení" — potvrzení cizinci, kteří ještě nebyli nahlášeni
      * a mají všechna povinná pole pro UNL (občanství + číslo dokladu + check-out
      * na rezervaci). Rolling model: po exportu se označí ubyportReportedAt

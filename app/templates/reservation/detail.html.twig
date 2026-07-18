@@ -290,13 +290,14 @@
                     {% if guest_documents is not empty %}
                         <div class="table-responsive">
                             <table class="table table-sm small mb-2">
-                                <thead class="text-muted"><tr><th>Jméno</th><th>Občanství</th><th>Doklad</th><th>Stav</th></tr></thead>
+                                <thead class="text-muted"><tr><th>Jméno</th><th>Občanství</th><th>Doklad</th><th>Bydliště</th><th>Stav</th></tr></thead>
                                 <tbody>
                                 {% for g in guest_documents %}
                                     <tr>
                                         <td>{{ g.lastName }} {{ g.firstName }}</td>
                                         <td>{% if g.isCzechCitizen %}ČR{% elseif g.nationalityCode %}{{ g.nationalityCode }}{% else %}—{% endif %}</td>
                                         <td>{{ g.documentNumber ?? '—' }}</td>
+                                        <td>{{ g.residenceAddress ?? '—' }}</td>
                                         <td>{% if g.confirmedAt %}<span class="text-success">potvrzeno</span>{% else %}<span class="text-muted">rozpracováno</span>{% endif %}</td>
                                     </tr>
                                 {% endfor %}

@@ -102,7 +102,7 @@ final class CheckinControllerTest extends WebTestCase
             'guest_document[nationality]' => 'DEU',
             'guest_document[documentType]' => 'passport',
             'guest_document[documentNumber]' => 'AB1234567',
-            'guest_document[permanentResidenceAbroad]' => 'Berlin, Vogelstrasse 45',
+            'guest_document[residenceAddress]' => 'Berlin, Vogelstrasse 45',
         ]);
         $this->client->submit($form);
 
@@ -118,8 +118,10 @@ final class CheckinControllerTest extends WebTestCase
         self::assertNotNull($g->getConfirmedAt(), 'submit musi confirm() automaticky');
     }
 
-    public function testCzechCitizenChecksClearsDocumentFields(): void
+    public function testCzechCitizenKeepsDocumentButClearsNationality(): void
     {
+        // Výchozí stav (bez nastavení) = evidujeme i Čechy → doklad a adresa do
+        // evidenční knihy zůstávají, maže se jen cizinecké pole (občanství).
         $token = $this->reservation->getCheckinToken();
         $crawler = $this->client->request('GET', '/checkin/' . $token . '/host/novy');
 
@@ -129,9 +131,9 @@ final class CheckinControllerTest extends WebTestCase
             'guest_document[birthDate]' => '1985-01-01',
             'guest_document[isCzechCitizen]' => '1',
             'guest_document[nationality]' => 'DEU',
-            'guest_document[documentType]' => 'passport',
-            'guest_document[documentNumber]' => 'ZAPOMENU',
-            'guest_document[permanentResidenceAbroad]' => 'Berlin',
+            'guest_document[documentType]' => 'id_card',
+            'guest_document[documentNumber]' => '123456789',
+            'guest_document[residenceAddress]' => 'Dlouhá 5, Praha',
         ]);
         $this->client->submit($form);
 
@@ -139,10 +141,41 @@ final class CheckinControllerTest extends WebTestCase
         self::assertCount(1, $docs);
         $g = $docs[0];
         self::assertTrue($g->isCzechCitizen());
-        self::assertNull($g->getNationalityCode(), 'pro Cecha smazat nationality');
-        self::assertNull($g->getDocumentType(), 'pro Cecha smazat typ dokladu');
-        self::assertNull($g->getDocumentNumber(), 'pro Cecha smazat doklad');
-        self::assertNull($g->getPermanentResidenceAbroad(), 'pro Cecha smazat adresu v zahranici');
+        self::assertNull($g->getNationalityCode(), 'u Čecha se občanství (Ubyport) maže');
+        self::assertSame('123456789', $g->getDocumentNumber(), 'doklad Čecha zůstává v evidenční knize');
+        self::assertSame('Dlouhá 5, Praha', $g->getResidenceAddress(), 'adresa Čecha zůstává');
+    }
+
+    public function testCzechCitizenClearsDocumentWhenRegistrationOff(): void
+    {
+        // Vypnutá evidence Čechů → čistě český host je jen jméno + datum narození,
+        // doklad i adresa se zahodí (jako dřív).
+        $this->em->persist(new Setting('guestbook.register_czech', '0'));
+        $this->em->flush();
+
+        $token = $this->reservation->getCheckinToken();
+        $crawler = $this->client->request('GET', '/checkin/' . $token . '/host/novy');
+
+        $form = $crawler->selectButton('Uložit')->form([
+            'guest_document[lastName]' => 'Novák',
+            'guest_document[firstName]' => 'Jan',
+            'guest_document[birthDate]' => '1985-01-01',
+            'guest_document[isCzechCitizen]' => '1',
+            'guest_document[nationality]' => 'DEU',
+            'guest_document[documentType]' => 'id_card',
+            'guest_document[documentNumber]' => 'ZAPOMENU',
+            'guest_document[residenceAddress]' => 'Praha',
+        ]);
+        $this->client->submit($form);
+
+        $docs = static::getContainer()->get(GuestDocumentRepository::class)->findByReservation($this->reservation);
+        self::assertCount(1, $docs);
+        $g = $docs[0];
+        self::assertTrue($g->isCzechCitizen());
+        self::assertNull($g->getNationalityCode());
+        self::assertNull($g->getDocumentType(), 'bez evidence Čechů se doklad maže');
+        self::assertNull($g->getDocumentNumber());
+        self::assertNull($g->getResidenceAddress());
     }
 
     public function testEditUpdatesExistingDocument(): void
@@ -165,6 +198,7 @@ final class CheckinControllerTest extends WebTestCase
             'guest_document[nationality]' => 'DEU',
             'guest_document[documentType]' => 'passport',
             'guest_document[documentNumber]' => 'NEW',
+            'guest_document[residenceAddress]' => 'Wien, Ringstrasse 1',
         ]);
         $this->client->submit($form);
 
@@ -210,8 +244,11 @@ final class CheckinControllerTest extends WebTestCase
 
     public function testFinishWithNoGuestsCompletesForCzechOnlyStay(): void
     {
-        // Čistě česká skupina nehlásí nikoho na Ubyport — dokončení s nula
-        // doklady je legitimní („Ne, jsme všichni Češi").
+        // S vypnutou evidencí Čechů projde čistě česká skupina bez dokladů —
+        // rozcestník nabídne „Ne, jsme všichni Češi — dokončit".
+        $this->em->persist(new Setting('guestbook.register_czech', '0'));
+        $this->em->flush();
+
         $token = $this->reservation->getCheckinToken();
 
         $crawler = $this->client->request('GET', '/checkin/' . $token);
@@ -325,7 +362,7 @@ final class CheckinControllerTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertSelectorExists('a[href$="/fakturace"]');
-        self::assertSelectorTextContains('body', 'Jsou mezi ubytovanými');
+        self::assertSelectorTextContains('body', 'evidenční knihy');
     }
 
     public function testBillingFormSavesObjednatel(): void

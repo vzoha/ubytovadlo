@@ -56,7 +56,7 @@ class UnlExporterTest extends TestCase
         );
         $doc = new GuestDocument($reservation, 'Fazul', 'Abdalla', new \DateTimeImmutable('1974-02-25'));
         $doc->setNationalityCode('XXX');
-        $doc->setPermanentResidenceAbroad('Kábul, Kedale 21');
+        $doc->setResidenceAddress('Kábul, Kedale 21');
         $doc->setDocumentNumber('321654');
         $doc->setVisaNumber('999');
 
@@ -133,7 +133,7 @@ class UnlExporterTest extends TestCase
         $doc = new GuestDocument($r, 'Smith', 'John', new \DateTimeImmutable('1990-01-01'));
         $doc->setNationalityCode('GBR');
         $doc->setDocumentNumber('GB123');
-        $doc->setPermanentResidenceAbroad("Londyn\nBaker Street 221B");
+        $doc->setResidenceAddress("Londyn\nBaker Street 221B");
 
         $result = $this->exporter->build($this->buildProfile(), [$doc], new \DateTimeImmutable('2026-05-19 10:00:00'));
         $utf8 = iconv('WINDOWS-1250', 'UTF-8', $result->content);

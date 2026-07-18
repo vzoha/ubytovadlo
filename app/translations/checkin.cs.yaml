@@ -22,6 +22,7 @@ index:
     billing_add: 'Doplnit fakturační adresu'
     guests_heading: 'Hosté'
     guests_note: 'Zákon nám ukládá nahlásit cizinecké policii (Ubyport) <strong>jen ubytované cizince</strong>. Občany ČR nikde neevidujeme — nevyplňujte je.'
+    guests_note_all: 'Každého hosta zapisujeme do evidenční knihy (jméno, datum narození, doklad a bydliště). U cizinců navíc hlásíme ubytování cizinecké policii (Ubyport).'
     badge_czech: 'občan ČR'
     guest_edit: 'Upravit'
     guest_delete: 'Smazat'
@@ -30,6 +31,8 @@ index:
     add_foreigner_first: 'Ano, přidat zahraničního hosta'
     finish_czech: 'Ne, jsme všichni Češi — dokončit'
     add_foreigner_more: 'Přidat dalšího cizince'
+    add_guest_first: 'Přidat hosta'
+    add_guest_more: 'Přidat dalšího hosta'
     submit_all: 'Vše vyplněno, odeslat'
 
 billing:
@@ -47,7 +50,7 @@ billing:
 
 host:
     back: 'Zpět na seznam'
-    title_new: 'Přidat zahraničního hosta'
+    title_new: 'Přidat hosta'
     title_edit: 'Upravit hosta'
     scan_heading: 'Naskenovat doklad'
     scan_intro: 'Vyfoťte stranu dokladu s MRZ řádky (řádky s &lt;&lt;&lt; na spodní straně). Jméno, datum narození, číslo dokladu a státní příslušnost se předvyplní; adresu doplňte ručně.'
@@ -67,7 +70,8 @@ host:
     debug_preview: 'Předzpracovaný náhled (do OCR jde tohle):'
     debug_passes: 'Pokusy OCR:'
     debug_candidates: 'Kandidáti MRZ řádků (po normalizaci):'
-    foreigner_note: 'U cizinců (vše vyplňte podle cestovního dokladu):'
+    doc_note: 'Doklad totožnosti a adresa bydliště (do evidenční knihy):'
+    foreigner_note: 'Jen u cizinců — pro hlášení cizinecké policii (Ubyport):'
     cancel: 'Zrušit'
     save: 'Uložit'
     js:
@@ -123,17 +127,18 @@ form:
     last_name: 'Příjmení'
     first_name: 'Jméno'
     birth_date: 'Datum narození'
-    is_czech: 'Občan/občanka České republiky (nemusíte vyplňovat doklad)'
+    is_czech: 'Občan/občanka České republiky'
     nationality: 'Státní občanství'
     nationality_placeholder: '— vyberte —'
-    nationality_help: 'U cizinců povinné. Češi nechte prázdné.'
-    document_type: 'Typ dokladu'
+    nationality_help: 'Jen u cizinců (pro Ubyport).'
+    document_type: 'Druh dokladu'
     document_type_placeholder: '— vyberte —'
     document_number: 'Číslo dokladu'
     visa_number: 'Číslo víza (pokud je)'
-    residence_abroad: 'Trvalé bydliště v zahraničí'
-    residence_abroad_help: 'Např. „Slovensko, Bratislava, Milíčova 26"'
+    residence: 'Adresa trvalého bydliště'
+    residence_help: 'Ulice, obec a stát — např. „Milíčova 26, Bratislava, Slovensko".'
     note: 'Poznámka'
+    field_required: 'Vyplňte prosím.'
     required_for_foreigners: 'U cizinců povinné.'
 
 doc_type:

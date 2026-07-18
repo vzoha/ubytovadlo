@@ -8,6 +8,14 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Přidáno
 
+- **Evidenční kniha hostů.** V **Ekonomika → Kniha hostů** je za každý rok přehled
+  ubytovaných jako podklad k poplatku z pobytu (§ 3g zákona o místních poplatcích):
+  jméno, datum narození, občanství, druh a číslo dokladu, adresa bydliště a doba
+  pobytu. Obsahuje hosty, kteří potvrdili údaje v online check-inu, a jde stáhnout
+  jako CSV.
+- **Přepínač „Evidovat i české hosty".** V **Nastavení → Obecné** se volí, zda
+  online check-in sbírá doklad a adresu i od českých hostů (pro evidenční knihu),
+  nebo je vyplňují jen cizinci (pro Ubyport). Ve výchozím stavu zapnuto.
 - **Výběr jazyka na online check-inu.** Host si stránky check-inu přepne v
   nabídce vlajek mezi češtinou, angličtinou, němčinou, francouzštinou, italštinou
   a polštinou; každý jazyk je uvedený svým vlastním názvem. Při první návštěvě se
@@ -18,6 +26,11 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Změněno
 
+- **Online check-in má dvě úrovně.** Každý host projde stejným krokem do evidenční
+  knihy — jméno, datum narození, druh a číslo dokladu, adresa bydliště —
+  a cizinci navíc vyplní státní občanství a vízum pro hlášení cizinecké policii
+  (Ubyport). Sken dokladu (foto i živá kamera) předvyplní údaje pro české i
+  zahraniční hosty; obraz dokladu zůstává v prohlížeči, ukládá se jen text.
 - **Formulářová pole používají sémantický typ.** E-mail, telefon a web v nastavení
   dodavatele i připojení jednají jako nativní pole (`e-mail`, `telefon`, `URL`) —
   na mobilu naskočí odpovídající klávesnice a prohlížeč hlídá formát. U číselných

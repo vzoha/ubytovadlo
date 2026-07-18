@@ -22,6 +22,7 @@ index:
     billing_add: 'Uzupełnij adres do faktury'
     guests_heading: 'Goście'
     guests_note: 'Prawo nakazuje nam zgłosić policji ds. cudzoziemców (Ubyport) <strong>tylko zakwaterowanych cudzoziemców</strong>. Obywateli Czech nigdzie nie ewidencjonujemy — nie wpisuj ich.'
+    guests_note_all: 'Każdego gościa wpisujemy do księgi meldunkowej (imię, data urodzenia, dokument i adres zamieszkania). Cudzoziemców dodatkowo zgłaszamy policji ds. cudzoziemców (Ubyport).'
     badge_czech: 'obywatel Czech'
     guest_edit: 'Edytuj'
     guest_delete: 'Usuń'
@@ -30,6 +31,8 @@ index:
     add_foreigner_first: 'Tak, dodaj gościa z zagranicy'
     finish_czech: 'Nie, wszyscy jesteśmy Czechami — zakończ'
     add_foreigner_more: 'Dodaj kolejnego cudzoziemca'
+    add_guest_first: 'Dodaj gościa'
+    add_guest_more: 'Dodaj kolejnego gościa'
     submit_all: 'Wszystko uzupełnione, wyślij'
 
 billing:
@@ -47,7 +50,7 @@ billing:
 
 host:
     back: 'Powrót do listy'
-    title_new: 'Dodaj gościa z zagranicy'
+    title_new: 'Dodaj gościa'
     title_edit: 'Edytuj gościa'
     scan_heading: 'Zeskanuj dokument tożsamości'
     scan_intro: 'Sfotografuj stronę dokumentu z liniami MRZ (linie z &lt;&lt;&lt; na dole). Imię, data urodzenia, numer dokumentu i przynależność państwowa zostaną wstępnie uzupełnione; adres uzupełnij ręcznie.'
@@ -67,7 +70,8 @@ host:
     debug_preview: 'Podgląd po obróbce (to trafia do OCR):'
     debug_passes: 'Próby OCR:'
     debug_candidates: 'Kandydaci linii MRZ (po normalizacji):'
-    foreigner_note: 'U cudzoziemców (wszystko wypełnij zgodnie z dokumentem podróży):'
+    doc_note: 'Dokument tożsamości i adres zamieszkania (do księgi meldunkowej):'
+    foreigner_note: 'Tylko dla cudzoziemców — do zgłoszenia policji ds. cudzoziemców (Ubyport):'
     cancel: 'Anuluj'
     save: 'Zapisz'
     js:
@@ -123,17 +127,18 @@ form:
     last_name: 'Nazwisko'
     first_name: 'Imię'
     birth_date: 'Data urodzenia'
-    is_czech: 'Obywatel/obywatelka Republiki Czeskiej (nie trzeba wypełniać dokumentu)'
+    is_czech: 'Obywatel/obywatelka Republiki Czeskiej'
     nationality: 'Obywatelstwo'
     nationality_placeholder: '— wybierz —'
-    nationality_help: 'U cudzoziemców obowiązkowe. Czesi zostawcie puste.'
+    nationality_help: 'Tylko dla cudzoziemców (do Ubyport).'
     document_type: 'Typ dokumentu'
     document_type_placeholder: '— wybierz —'
     document_number: 'Numer dokumentu'
     visa_number: 'Numer wizy (jeśli jest)'
-    residence_abroad: 'Stały adres zamieszkania za granicą'
-    residence_abroad_help: 'Np. „Słowacja, Bratysława, Milíčova 26"'
+    residence: 'Adres stałego zamieszkania'
+    residence_help: 'Ulica, miasto i kraj — np. „Milíčova 26, Bratysława, Słowacja".'
     note: 'Uwaga'
+    field_required: 'Proszę uzupełnić.'
     required_for_foreigners: 'U cudzoziemców obowiązkowe.'
 
 doc_type:

@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace App\Form;
 
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\UrlType;
@@ -56,6 +57,12 @@ class GeneralSettingsType extends AbstractType
                         mimeTypesMessage: 'Nahraj obrázek ve formátu PNG nebo JPG.',
                     ),
                 ],
+            ])
+            ->add('registerCzechGuests', CheckboxType::class, [
+                'label' => 'Evidovat i české hosty',
+                'required' => false,
+                'help' => 'Do evidenční knihy (podklad k poplatku z pobytu) sbírá při check-inu doklad a adresu i od českých hostů. '
+                    . 'Vypněte, pokud poplatek z pobytu nevybíráte — pak doklad vyplňují jen cizinci pro Ubyport.',
             ]);
     }
 

@@ -62,9 +62,9 @@ class GuestDocument
     #[ORM\Column(length: 32, nullable: true)]
     private ?string $visaNumber = null;
 
-    /** Trvalé bydliště v zahraničí — volný text, do Ubyport jeden řádek. */
+    /** Adresa trvalého bydliště hosta — volný text (Čech v ČR, cizinec v zahraničí), do Ubyport jeden řádek. */
     #[ORM\Column(type: Types::TEXT, nullable: true)]
-    private ?string $permanentResidenceAbroad = null;
+    private ?string $residenceAddress = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $note = null;
@@ -167,13 +167,30 @@ class GuestDocument
         return $this;
     }
 
+    /**
+     * Vynuluje všechna cizinecká i dokladová pole — pro režim, kdy české hosty
+     * neevidujeme vůbec (host je jen jméno + datum narození).
+     */
     public function clearForeignerFields(): self
     {
         $this->nationalityCode = null;
         $this->documentType = null;
         $this->documentNumber = null;
         $this->visaNumber = null;
-        $this->permanentResidenceAbroad = null;
+        $this->residenceAddress = null;
+        $this->touch();
+
+        return $this;
+    }
+
+    /**
+     * Vynuluje jen pole, která patří výhradně do Ubyportu (občanství, vízum) —
+     * pro českého hosta v evidenční knize, kde doklad a adresu ponecháváme.
+     */
+    public function clearUbyportOnlyFields(): self
+    {
+        $this->nationalityCode = null;
+        $this->visaNumber = null;
         $this->touch();
 
         return $this;
@@ -218,14 +235,14 @@ class GuestDocument
         return $this;
     }
 
-    public function getPermanentResidenceAbroad(): ?string
+    public function getResidenceAddress(): ?string
     {
-        return $this->permanentResidenceAbroad;
+        return $this->residenceAddress;
     }
 
-    public function setPermanentResidenceAbroad(?string $permanentResidenceAbroad): self
+    public function setResidenceAddress(?string $residenceAddress): self
     {
-        $this->permanentResidenceAbroad = $permanentResidenceAbroad;
+        $this->residenceAddress = $residenceAddress;
         $this->touch();
 
         return $this;
