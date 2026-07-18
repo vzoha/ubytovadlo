@@ -29,6 +29,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Veřejné stránky pro online check-in. Authorizace = unikátní token v URL
@@ -45,6 +46,7 @@ class CheckinController extends AbstractController
         private readonly MrzParser $mrzParser,
         private readonly AresClient $ares,
         private readonly OwnerNotifier $notifier,
+        private readonly TranslatorInterface $translator,
     ) {
     }
 
@@ -78,7 +80,7 @@ class CheckinController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             $this->em->flush();
-            $this->addFlash('success', 'Fakturační údaje uloženy.');
+            $this->addFlash('success', $this->translator->trans('flash.billing_saved', [], 'checkin'));
 
             return $this->redirectToRoute('checkin_index', ['token' => $token]);
         }
@@ -132,7 +134,7 @@ class CheckinController extends AbstractController
         $this->guardEditable($reservation);
 
         if (!$this->isCsrfTokenValid('checkin_delete_' . $id, (string) $request->request->get('_token'))) {
-            $this->addFlash('error', 'Neplatný formulář, zkuste to znovu.');
+            $this->addFlash('error', $this->translator->trans('flash.invalid_form', [], 'checkin'));
 
             return $this->redirectToRoute('checkin_index', ['token' => $token]);
         }
@@ -140,7 +142,7 @@ class CheckinController extends AbstractController
         $doc = $this->resolveDocument($reservation, $id);
         $this->em->remove($doc);
         $this->em->flush();
-        $this->addFlash('success', 'Host smazán.');
+        $this->addFlash('success', $this->translator->trans('flash.host_deleted', [], 'checkin'));
 
         return $this->redirectToRoute('checkin_index', ['token' => $token]);
     }
@@ -152,7 +154,7 @@ class CheckinController extends AbstractController
         $this->guardEditable($reservation);
 
         if (!$this->isCsrfTokenValid('checkin_finish', (string) $request->request->get('_token'))) {
-            $this->addFlash('error', 'Neplatný formulář, zkuste to znovu.');
+            $this->addFlash('error', $this->translator->trans('flash.invalid_form', [], 'checkin'));
 
             return $this->redirectToRoute('checkin_index', ['token' => $token]);
         }
@@ -197,19 +199,19 @@ class CheckinController extends AbstractController
                 static fn (string $t) => trim($t) !== '',
             ));
             if ($texts === []) {
-                return new JsonResponse(['error' => 'Chybí MRZ text.'], 400);
+                return new JsonResponse(['error' => $this->translator->trans('error.mrz_missing', [], 'checkin')], 400);
             }
             $result = $this->mrzParser->parseMany($texts);
         } else {
             $mrzText = $payload['mrz'] ?? '';
             if (!\is_string($mrzText) || trim($mrzText) === '') {
-                return new JsonResponse(['error' => 'Chybí MRZ text.'], 400);
+                return new JsonResponse(['error' => $this->translator->trans('error.mrz_missing', [], 'checkin')], 400);
             }
             $result = $this->mrzParser->parse($mrzText);
         }
 
         if ($result === null) {
-            return new JsonResponse(['error' => 'Nepodařilo se rozpoznat MRZ zónu dokladu.'], 422);
+            return new JsonResponse(['error' => $this->translator->trans('error.mrz_unrecognized', [], 'checkin')], 422);
         }
 
         $data = $result->toArray();
@@ -220,8 +222,11 @@ class CheckinController extends AbstractController
 
         $nationality = $this->nationalities->find($result->nationalityCode);
         $data['nationalityFound'] = $nationality !== null;
+        $nationalityName = $nationality !== null
+            ? ($request->getLocale() === 'cs' ? $nationality->getNameCs() : $nationality->getNameEn())
+            : null;
         $data['nationalityLabel'] = $nationality
-            ? sprintf('%s — %s', $nationality->getCode(), $nationality->getNameCs())
+            ? sprintf('%s — %s', $nationality->getCode(), $nationalityName)
             : null;
 
         return new JsonResponse($data);
@@ -276,7 +281,7 @@ class CheckinController extends AbstractController
                 $this->em->persist($doc);
             }
             $this->em->flush();
-            $this->addFlash('success', 'Údaje uloženy.');
+            $this->addFlash('success', $this->translator->trans('flash.host_saved', [], 'checkin'));
 
             return $this->redirectToRoute('checkin_index', ['token' => $token]);
         }

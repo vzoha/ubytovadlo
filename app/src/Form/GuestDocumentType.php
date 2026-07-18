@@ -26,78 +26,90 @@ use Symfony\Component\Form\FormError;
 use Symfony\Component\Form\FormEvent;
 use Symfony\Component\Form\FormEvents;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Translation\LocaleSwitcher;
 use Symfony\Component\Validator\Constraints\Length;
 use Symfony\Component\Validator\Constraints\NotBlank;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
- * Formulář pro online check-in jednoho hosta.
+ * Formulář pro online check-in jednoho hosta. Texty se překládají v doméně
+ * `checkin` podle jazyka zvoleného hostem; seznam zemí se zobrazuje v jeho
+ * jazyce (česky pro `cs`, jinak anglicky).
  *
  * @extends AbstractType<GuestDocument>
  */
 class GuestDocumentType extends AbstractType
 {
+    public function __construct(
+        private readonly TranslatorInterface $translator,
+        private readonly LocaleSwitcher $localeSwitcher,
+    ) {
+    }
+
     /**
      * @param array<string, mixed> $options
      */
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
+        $czech = $this->localeSwitcher->getLocale() === 'cs';
+
         $builder
             ->add('lastName', TextType::class, [
-                'label' => 'Příjmení',
+                'label' => 'form.last_name',
                 'constraints' => [new NotBlank(), new Length(max: 64)],
             ])
             ->add('firstName', TextType::class, [
-                'label' => 'Jméno',
+                'label' => 'form.first_name',
                 'constraints' => [new NotBlank(), new Length(max: 64)],
             ])
             ->add('birthDate', DateType::class, [
-                'label' => 'Datum narození',
+                'label' => 'form.birth_date',
                 'widget' => 'single_text',
                 'input' => 'datetime_immutable',
                 'constraints' => [new NotBlank()],
             ])
             ->add('isCzechCitizen', CheckboxType::class, [
-                'label' => 'Občan/občanka České republiky (nemusíte vyplňovat doklad)',
+                'label' => 'form.is_czech',
                 'required' => false,
             ])
             ->add('nationality', EntityType::class, [
-                'label' => 'Státní občanství',
+                'label' => 'form.nationality',
                 'class' => Nationality::class,
-                'choice_label' => fn (Nationality $n) => sprintf('%s — %s', $n->getCode(), $n->getNameCs()),
+                'choice_label' => fn (Nationality $n) => sprintf('%s — %s', $n->getCode(), $czech ? $n->getNameCs() : $n->getNameEn()),
                 'choice_value' => 'code',
-                'placeholder' => '— vyberte —',
+                'placeholder' => 'form.nationality_placeholder',
                 'required' => false,
                 'mapped' => false,
-                'query_builder' => fn ($repo) => $repo->createQueryBuilder('n')->orderBy('n.nameCs', 'ASC'),
-                'help' => 'U cizinců povinné. Češi nechte prázdné.',
+                'query_builder' => fn ($repo) => $repo->createQueryBuilder('n')->orderBy($czech ? 'n.nameCs' : 'n.nameEn', 'ASC'),
+                'help' => 'form.nationality_help',
             ])
             ->add('documentType', EnumType::class, [
-                'label' => 'Typ dokladu',
+                'label' => 'form.document_type',
                 'class' => DocumentType::class,
-                'choice_label' => fn (DocumentType $t) => $t->label(),
-                'placeholder' => '— vyberte —',
+                'choice_label' => fn (DocumentType $t) => $this->translator->trans('doc_type.' . $t->value, [], 'checkin'),
+                'placeholder' => 'form.document_type_placeholder',
                 'required' => false,
             ])
             ->add('documentNumber', TextType::class, [
-                'label' => 'Číslo dokladu',
+                'label' => 'form.document_number',
                 'required' => false,
                 'constraints' => [new Length(max: 32)],
                 'attr' => ['maxlength' => 32],
             ])
             ->add('visaNumber', TextType::class, [
-                'label' => 'Číslo víza (pokud je)',
+                'label' => 'form.visa_number',
                 'required' => false,
                 'constraints' => [new Length(max: 32)],
                 'attr' => ['maxlength' => 32],
             ])
             ->add('permanentResidenceAbroad', TextareaType::class, [
-                'label' => 'Trvalé bydliště v zahraničí',
+                'label' => 'form.residence_abroad',
                 'required' => false,
                 'attr' => ['rows' => 2],
-                'help' => 'Např. „Slovensko, Bratislava, Milíčova 26"',
+                'help' => 'form.residence_abroad_help',
             ])
             ->add('note', TextareaType::class, [
-                'label' => 'Poznámka',
+                'label' => 'form.note',
                 'required' => false,
                 'attr' => ['rows' => 2],
             ]);
@@ -108,15 +120,16 @@ class GuestDocumentType extends AbstractType
                 return;
             }
             $form = $event->getForm();
+            $required = $this->translator->trans('form.required_for_foreigners', [], 'checkin');
 
             if ($form->get('nationality')->getData() === null) {
-                $form->get('nationality')->addError(new FormError('U cizinců povinné.'));
+                $form->get('nationality')->addError(new FormError($required));
             }
             if ($doc->getDocumentType() === null) {
-                $form->get('documentType')->addError(new FormError('U cizinců povinné.'));
+                $form->get('documentType')->addError(new FormError($required));
             }
             if ($doc->getDocumentNumber() === null || $doc->getDocumentNumber() === '') {
-                $form->get('documentNumber')->addError(new FormError('U cizinců povinné.'));
+                $form->get('documentNumber')->addError(new FormError($required));
             }
         });
     }
@@ -125,6 +138,7 @@ class GuestDocumentType extends AbstractType
     {
         $resolver->setDefaults([
             'data_class' => GuestDocument::class,
+            'translation_domain' => 'checkin',
         ]);
     }
 }

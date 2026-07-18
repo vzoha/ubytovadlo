@@ -36,7 +36,9 @@ final class CheckinControllerTest extends WebTestCase
 
     protected function setUp(): void
     {
-        $this->client = static::createClient();
+        // Český host: prohlížeč hlásí cs, takže check-in vyjde česky a test
+        // ověřuje logiku proti českým textům. Vícejazyčnost řeší CheckinLocaleTest.
+        $this->client = static::createClient([], ['HTTP_ACCEPT_LANGUAGE' => 'cs']);
         $container = static::getContainer();
         $em = $container->get('doctrine')->getManager();
         \assert($em instanceof EntityManagerInterface);

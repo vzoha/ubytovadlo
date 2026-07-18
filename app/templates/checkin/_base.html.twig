@@ -1,16 +1,41 @@
 <!DOCTYPE html>
-<html lang="cs">
+<html lang="{{ app.request.locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block title %}Online check-in — {{ brand_name }}{% endblock %}</title>
+    <title>{% block title %}{{ 'index.title'|trans({}, 'checkin') }} — {{ brand_name }}{% endblock %}</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%22112%22>🏡</text></svg>">
     <link href="{{ asset('assets/bootstrap.min.css') }}" rel="stylesheet">
 </head>
 <body class="bg-light">
 <nav class="navbar navbar-dark bg-dark mb-4">
-    <div class="container">
-        <span class="navbar-brand">🏡 {{ brand_name }} — online check-in</span>
+    <div class="container flex-wrap gap-2">
+        <span class="navbar-brand me-0">🏡 {{ brand_name }} — {{ 'nav.tagline'|trans({}, 'checkin') }}</span>
+        {% set locales = {
+            'cs': {flag: '🇨🇿', label: 'Čeština'},
+            'en': {flag: '🇬🇧', label: 'English'},
+            'de': {flag: '🇩🇪', label: 'Deutsch'},
+            'fr': {flag: '🇫🇷', label: 'Français'},
+            'it': {flag: '🇮🇹', label: 'Italiano'},
+            'pl': {flag: '🇵🇱', label: 'Polski'}
+        } %}
+        {% set active = locales[app.request.locale]|default(locales.cs) %}
+        <div class="dropdown">
+            <button class="btn btn-sm btn-outline-light dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="{{ 'switcher.label'|trans({}, 'checkin') }}">
+                <span aria-hidden="true">{{ active.flag }}</span> <span class="d-none d-sm-inline">{{ active.label }}</span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                {% for code, loc in locales %}
+                    <li>
+                        <a class="dropdown-item{{ app.request.locale == code ? ' active' }}"
+                           href="{{ path(app.request.attributes.get('_route'), app.request.attributes.get('_route_params')|merge({'_locale': code})) }}"
+                           {{ app.request.locale == code ? 'aria-current="true"' }}>
+                            <span aria-hidden="true">{{ loc.flag }}</span> {{ loc.label }}
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
     </div>
 </nav>
 <main class="container pb-5">
@@ -25,7 +50,7 @@
     {% block body %}{% endblock %}
 </main>
 <footer class="container text-center text-muted small pb-4 pt-2">
-    Powered by <a href="{{ product_url }}" target="_blank" rel="noopener" class="text-decoration-none">{{ product_name }}</a>
+    {{ 'footer.powered_by'|trans({}, 'checkin') }} <a href="{{ product_url }}" target="_blank" rel="noopener" class="text-decoration-none">{{ product_name }}</a>
     · © {{ "now"|date("Y") }}
 </footer>
 <script src="{{ asset('assets/bootstrap.bundle.min.js') }}"></script>

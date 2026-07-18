@@ -3,29 +3,26 @@
 {% block body %}
     <div class="row justify-content-center">
         <div class="col-lg-7">
-            <a href="{{ path('checkin_index', {token: token}) }}" class="text-decoration-none small">← Zpět na seznam</a>
-            <h1 class="h3 mt-1 mb-3">{{ isNew ? 'Přidat zahraničního hosta' : 'Upravit hosta' }}</h1>
+            <a href="{{ path('checkin_index', {token: token}) }}" class="text-decoration-none small">← {{ 'host.back'|trans({}, 'checkin') }}</a>
+            <h1 class="h3 mt-1 mb-3">{{ (isNew ? 'host.title_new' : 'host.title_edit')|trans({}, 'checkin') }}</h1>
 
             {% if isNew %}
             <div class="card mb-4 border-primary">
                 <div class="card-body">
-                    <h2 class="h6 card-title mb-2">📷 Naskenovat doklad</h2>
-                    <p class="small text-muted mb-2">
-                        Vyfoťte stranu dokladu s MRZ řádky (řádky s &lt;&lt;&lt; na spodní straně).
-                        Jméno, datum narození, číslo dokladu a státní příslušnost se předvyplní; adresu doplňte ručně.
-                    </p>
+                    <h2 class="h6 card-title mb-2">📷 {{ 'host.scan_heading'|trans({}, 'checkin') }}</h2>
+                    <p class="small text-muted mb-2">{{ 'host.scan_intro'|trans({}, 'checkin')|raw }}</p>
 
                     <div id="mrz-scanner">
                         <div class="d-flex gap-2 flex-wrap">
                             <button type="button" id="mrz-live-btn" class="btn btn-primary mb-0">
-                                📹 Skenovat kamerou (živě)
+                                📹 {{ 'host.scan_live'|trans({}, 'checkin') }}
                             </button>
                             <label class="btn btn-outline-primary mb-0">
-                                📷 Vyfotit doklad
+                                📷 {{ 'host.scan_photo'|trans({}, 'checkin') }}
                                 <input type="file" accept="image/*" capture="environment" id="mrz-input-camera" class="d-none">
                             </label>
                             <label class="btn btn-outline-secondary mb-0">
-                                🖼️ Nahrát obrázek
+                                🖼️ {{ 'host.scan_upload'|trans({}, 'checkin') }}
                                 <input type="file" accept="image/*" id="mrz-input-file" class="d-none">
                             </label>
                         </div>
@@ -35,24 +32,24 @@
                                 <video id="mrz-video" playsinline muted class="d-block w-100" style="max-height: 360px; object-fit: cover"></video>
                                 <div class="position-absolute top-50 start-50 translate-middle text-center" style="width: 88%; pointer-events: none">
                                     <div style="border: 2px dashed rgba(255,255,255,.9); border-radius: 6px; height: 84px"></div>
-                                    <div class="small text-white mt-1" style="text-shadow: 0 0 4px #000">Umísti MRZ řádky (&lt;&lt;&lt;) do rámečku</div>
+                                    <div class="small text-white mt-1" style="text-shadow: 0 0 4px #000">{{ 'host.live_guide'|trans({}, 'checkin')|raw }}</div>
                                 </div>
-                                <div id="mrz-live-status" class="position-absolute bottom-0 start-0 end-0 text-center small text-white py-1" style="background: rgba(0,0,0,.55)">Spouštím kameru…</div>
+                                <div id="mrz-live-status" class="position-absolute bottom-0 start-0 end-0 text-center small text-white py-1" style="background: rgba(0,0,0,.55)">{{ 'host.live_starting'|trans({}, 'checkin') }}</div>
                             </div>
                             <div class="d-flex gap-2 mt-2">
-                                <button type="button" id="mrz-live-shot" class="btn btn-sm btn-outline-primary">📸 Cvaknout teď</button>
-                                <button type="button" id="mrz-live-close" class="btn btn-sm btn-outline-secondary">Zavřít kameru</button>
+                                <button type="button" id="mrz-live-shot" class="btn btn-sm btn-outline-primary">📸 {{ 'host.live_shot'|trans({}, 'checkin') }}</button>
+                                <button type="button" id="mrz-live-close" class="btn btn-sm btn-outline-secondary">{{ 'host.live_close'|trans({}, 'checkin') }}</button>
                             </div>
                         </div>
 
                         <div id="mrz-preview" class="mt-3 d-none">
-                            <img id="mrz-image" class="img-fluid rounded border" style="max-height: 300px" alt="Doklad">
+                            <img id="mrz-image" class="img-fluid rounded border" style="max-height: 300px" alt="{{ 'host.doc_alt'|trans({}, 'checkin') }}">
                         </div>
 
                         <div id="mrz-progress" class="mt-3 d-none">
                             <div class="d-flex align-items-center gap-2">
                                 <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
-                                <span id="mrz-status" class="small">Načítám OCR engine…</span>
+                                <span id="mrz-status" class="small">{{ 'host.ocr_loading'|trans({}, 'checkin') }}</span>
                             </div>
                             <div class="progress mt-2" style="height: 6px">
                                 <div id="mrz-progress-bar" class="progress-bar" style="width: 0%"></div>
@@ -62,25 +59,23 @@
                         <div id="mrz-result" class="mt-3 d-none"></div>
 
                         <details class="mt-3 small">
-                            <summary class="text-muted" style="cursor:pointer">⌨️ Nedaří se? Opiš MRZ ručně</summary>
+                            <summary class="text-muted" style="cursor:pointer">⌨️ {{ 'host.manual_summary'|trans({}, 'checkin') }}</summary>
                             <div class="mt-2">
-                                <p class="text-muted small mb-2">
-                                    Z pasu nebo ID karty opiš dva (pas) nebo tři (občanka) řádky MRZ — tu posloupnost znaků na konci, kde jsou znaky <code>&lt;</code>.
-                                </p>
+                                <p class="text-muted small mb-2">{{ 'host.manual_intro'|trans({}, 'checkin')|raw }}</p>
                                 <textarea id="mrz-manual" class="form-control font-monospace small" rows="3" placeholder="P&lt;CZECITIZEN&lt;&lt;FIRSTNAME&lt;&lt;&lt;&lt;&lt;&lt;&lt;…&#10;DOC#######&lt;…"></textarea>
-                                <button id="mrz-manual-btn" type="button" class="btn btn-sm btn-outline-primary mt-2">Předvyplnit z MRZ</button>
+                                <button id="mrz-manual-btn" type="button" class="btn btn-sm btn-outline-primary mt-2">{{ 'host.manual_button'|trans({}, 'checkin') }}</button>
                             </div>
                         </details>
 
                         <details class="mt-3 small">
-                            <summary class="text-muted" style="cursor:pointer">🔬 Debug</summary>
+                            <summary class="text-muted" style="cursor:pointer">🔬 {{ 'host.debug_summary'|trans({}, 'checkin') }}</summary>
                             <div class="mt-2">
-                                <div class="text-muted mb-1">Předzpracovaný náhled (do OCR jde tohle):</div>
+                                <div class="text-muted mb-1">{{ 'host.debug_preview'|trans({}, 'checkin') }}</div>
                                 <canvas id="mrz-debug-canvas" class="img-fluid rounded border mb-2" style="max-height: 200px; display:none"></canvas>
                                 <div id="mrz-debug-info" class="text-muted mb-2"></div>
-                                <div class="text-muted mb-1">Pokusy OCR:</div>
+                                <div class="text-muted mb-1">{{ 'host.debug_passes'|trans({}, 'checkin') }}</div>
                                 <pre id="mrz-debug-passes" class="bg-light p-2 small mb-2" style="white-space:pre-wrap; max-height:240px; overflow:auto"></pre>
-                                <div class="text-muted mb-1">Kandidáti MRZ řádků (po normalizaci):</div>
+                                <div class="text-muted mb-1">{{ 'host.debug_candidates'|trans({}, 'checkin') }}</div>
                                 <pre id="mrz-debug-candidates" class="bg-light p-2 small mb-0" style="white-space:pre-wrap; max-height:120px; overflow:auto"></pre>
                             </div>
                         </details>
@@ -100,7 +95,7 @@
                         </div>
 
                         <hr>
-                        <p class="small text-muted mb-3">U cizinců (vše vyplňte podle cestovního dokladu):</p>
+                        <p class="small text-muted mb-3">{{ 'host.foreigner_note'|trans({}, 'checkin') }}</p>
 
                         <div class="row g-3">
                             <div class="col-md-6">{{ form_row(form.nationality) }}</div>
@@ -112,8 +107,8 @@
                         </div>
 
                         <div class="d-flex justify-content-between mt-3">
-                            <a href="{{ path('checkin_index', {token: token}) }}" class="btn btn-outline-secondary">Zrušit</a>
-                            <button type="submit" class="btn btn-primary">Uložit</button>
+                            <a href="{{ path('checkin_index', {token: token}) }}" class="btn btn-outline-secondary">{{ 'host.cancel'|trans({}, 'checkin') }}</a>
+                            <button type="submit" class="btn btn-primary">{{ 'host.save'|trans({}, 'checkin') }}</button>
                         </div>
                     </div>
                 </div>
@@ -126,6 +121,37 @@
     <script src="{{ asset('assets/mrz-image.js') }}"></script>
     <script>
     (function() {
+        var T = {{ {
+            empty: 'host.js.empty'|trans({}, 'checkin'),
+            reader_failed: 'host.js.reader_failed'|trans({}, 'checkin'),
+            preparing: 'host.js.preparing'|trans({}, 'checkin'),
+            searching_mrz: 'host.js.searching_mrz'|trans({}, 'checkin'),
+            evaluating: 'host.js.evaluating'|trans({}, 'checkin'),
+            manual_fail: 'host.js.manual_fail'|trans({}, 'checkin'),
+            mrz_detected: 'host.js.mrz_detected'|trans({}, 'checkin'),
+            mrz_band_fallback: 'host.js.mrz_band_fallback'|trans({}, 'checkin'),
+            dbg_original: 'host.js.dbg_original'|trans({}, 'checkin'),
+            dbg_after_crop: 'host.js.dbg_after_crop'|trans({}, 'checkin'),
+            dbg_autocrop: 'host.js.dbg_autocrop'|trans({}, 'checkin'),
+            dbg_autocrop_yes: 'host.js.dbg_autocrop_yes'|trans({}, 'checkin'),
+            dbg_autocrop_no: 'host.js.dbg_autocrop_no'|trans({}, 'checkin'),
+            candidates_none: 'host.js.candidates_none'|trans({}, 'checkin'),
+            dbg_chars: 'host.js.dbg_chars'|trans({}, 'checkin'),
+            reading_doc: 'host.js.reading_doc'|trans({}, 'checkin'),
+            read_fail_debug: 'host.js.read_fail_debug'|trans({}, 'checkin'),
+            recognize_fail_debug: 'host.js.recognize_fail_debug'|trans({}, 'checkin'),
+            success_prefill: 'host.js.success_prefill'|trans({}, 'checkin'),
+            comm_error: 'host.js.comm_error'|trans({}, 'checkin'),
+            aiming: 'host.js.aiming'|trans({}, 'checkin'),
+            camera_fail: 'host.js.camera_fail'|trans({}, 'checkin'),
+            too_dark: 'host.js.too_dark'|trans({}, 'checkin'),
+            glare: 'host.js.glare'|trans({}, 'checkin'),
+            blurry: 'host.js.blurry'|trans({}, 'checkin'),
+            hold_still: 'host.js.hold_still'|trans({}, 'checkin'),
+            reading_ok: 'host.js.reading_ok'|trans({}, 'checkin'),
+            unreadable_frame: 'host.js.unreadable_frame'|trans({}, 'checkin'),
+            camera_success: 'host.js.camera_success'|trans({}, 'checkin')
+        }|json_encode|raw }};
         // Obrazové kroky sdílí check-in i vývojářský test — viz assets/mrz-image.js.
         var toGrey = MrzImage.toGrey;
         var otsuFromGrey = MrzImage.otsuFromGrey;
@@ -166,7 +192,7 @@
         }
 
         function dbgPass(name, text) {
-            dbgPasses.textContent += '── ' + name + ' ──\n' + (text || '(prázdné)') + '\n\n';
+            dbgPasses.textContent += '── ' + name + ' ──\n' + (text || T.empty) + '\n\n';
         }
 
         var LOCATE_ACCEPT = 30;
@@ -179,7 +205,7 @@
         function handleFile(file) {
             if (!file) return;
             if (!ocrAvailable()) {
-                showError('Čtečku dokladu se nepodařilo načíst. Zkontroluj připojení a zkus to znovu — údaje můžeš vyplnit i ručně ve formuláři níže.');
+                showError(T.reader_failed);
                 return;
             }
             var url = URL.createObjectURL(file);
@@ -187,7 +213,7 @@
             preview.classList.remove('d-none');
             progressEl.classList.remove('d-none');
             resultEl.classList.add('d-none');
-            statusEl.textContent = 'Připravuji obrázek…';
+            statusEl.textContent = T.preparing;
             progressBar.style.width = '0%';
             dbgReset();
 
@@ -197,10 +223,10 @@
             // tight crop reads the name zone far cleaner than the fallback.
             var img = new Image();
             img.onload = function() {
-                statusEl.textContent = 'Hledám MRZ…';
+                statusEl.textContent = T.searching_mrz;
                 locateRecropTexts(img).then(function(texts) {
                     if (texts.length === 0) { fallbackPasses(file); return; }
-                    statusEl.textContent = 'Vyhodnocuji…';
+                    statusEl.textContent = T.evaluating;
                     postTexts(texts).then(function(res) {
                         if (res.ok && (res.data.confidence || 0) >= LOCATE_ACCEPT) {
                             handleBackendResponse(res);
@@ -230,7 +256,7 @@
             resultEl.classList.add('d-none');
             resultEl.innerHTML = '';
             sendToBackend(raw).then(function(ok) {
-                if (!ok) showError('MRZ nelze rozpoznat. Zkontroluj řádky, nezapomeň znaky &lt;.');
+                if (!ok) showError(T.manual_fail);
             });
         });
 
@@ -290,8 +316,8 @@
                 });
 
                 statusEl.textContent = detection
-                    ? 'MRZ detekováno (' + detection.lines.length + ' řádky), spouštím OCR…'
-                    : 'MRZ pásmo nedetekováno, zkouším spodní třetinu…';
+                    ? T.mrz_detected.replace('%count%', detection.lines.length)
+                    : T.mrz_band_fallback;
 
                 showDebug(canvas, img, cropY, cropH, detection);
 
@@ -312,11 +338,11 @@
             dbgCanvas.height = Math.floor(canvas.height * dbgScale);
             dbgCanvas.getContext('2d').drawImage(canvas, 0, 0, dbgCanvas.width, dbgCanvas.height);
             dbgCanvas.style.display = 'block';
-            dbgInfo.textContent = 'Originál: ' + img.width + '×' + img.height + ' px. '
-                + 'Po cropu: ' + canvas.width + '×' + canvas.height + ' px. '
-                + 'Auto-crop: ' + (detection
-                    ? 'ANO (' + detection.lines.length + ' řádky)'
-                    : 'NE (fallback spodních 35 %)');
+            dbgInfo.textContent = T.dbg_original + img.width + '×' + img.height + ' px. '
+                + T.dbg_after_crop + canvas.width + '×' + canvas.height + ' px. '
+                + T.dbg_autocrop + (detection
+                    ? T.dbg_autocrop_yes.replace('%count%', detection.lines.length)
+                    : T.dbg_autocrop_no);
         }
 
         // ─── OCR passes ────────────────────────────────────────────────────
@@ -463,17 +489,17 @@
                 if (idx >= passes.length) {
                     if (texts.length === 0) {
                         progressEl.classList.add('d-none');
-                        showError('Nepodařilo se přečíst MRZ. Otevři Debug a zkus opsat řádky ručně.');
+                        showError(T.read_fail_debug);
                         return;
                     }
-                    statusEl.textContent = 'Vyhodnocuji…';
+                    statusEl.textContent = T.evaluating;
                     sendTexts(texts).then(function(ok) {
-                        if (!ok) showError('MRZ se nepodařilo rozpoznat. Otevři Debug nebo opiš řádky ručně.');
+                        if (!ok) showError(T.recognize_fail_debug);
                     });
                     return;
                 }
                 var pass = passes[idx];
-                statusEl.textContent = 'Čtu doklad (' + (idx + 1) + '/' + passes.length + ')…';
+                statusEl.textContent = T.reading_doc.replace('%current%', idx + 1).replace('%total%', passes.length);
                 progressBar.style.width = '0%';
                 pass.run().then(function(text) {
                     dbgPass(pass.name, text);
@@ -645,8 +671,8 @@
             var candidates = rawCandidates.filter(looksLikeMrz);
 
             dbgCandidates.textContent = candidates.length
-                ? candidates.map(function(c, i) { return (i + 1) + ' (' + c.length + ' znaků): ' + c; }).join('\n')
-                : '(žádný řádek 26–50 znaků z A-Z 0-9 <)';
+                ? candidates.map(function(c, i) { return (i + 1) + ' (' + c.length + T.dbg_chars + c; }).join('\n')
+                : T.candidates_none;
 
             var avgLen = candidates.length ? candidates.reduce(function(a, c) { return a + c.length; }, 0) / candidates.length : 0;
 
@@ -695,14 +721,14 @@
                 return false;
             }
             prefillForm(res.data);
-            showSuccess('Údaje rozpoznány a předvyplněny. Zkontrolujte a doplňte adresu a zbývající pole.');
+            showSuccess(T.success_prefill);
             return true;
         }
 
         // Several OCR reads → backend merges by majority vote.
         function sendTexts(texts) {
             return postTexts(texts).then(handleBackendResponse)
-                .catch(function(err) { showError('Chyba komunikace: ' + err.message); return false; });
+                .catch(function(err) { showError(T.comm_error + err.message); return false; });
         }
 
         // Low-level POST that returns {ok, data} without prefilling, so the
@@ -724,7 +750,7 @@
             })
             .then(function(resp) { return resp.json().then(function(d) { return {ok: resp.ok, data: d}; }); })
             .then(handleBackendResponse)
-            .catch(function(err) { showError('Chyba komunikace: ' + err.message); return false; });
+            .catch(function(err) { showError(T.comm_error + err.message); return false; });
         }
 
         function prefillForm(data) {
@@ -814,13 +840,13 @@
                         stream = s; video.srcObject = s;
                         live.classList.remove('d-none');
                         resultEl.classList.add('d-none');
-                        setStatus('Zaměřuji…');
+                        setStatus(T.aiming);
                         var p = video.play();
                         if (p && p.catch) p.catch(function() {});
                         loop();
                     })
                     .catch(function() {
-                        showError('Kameru se nepodařilo spustit (chybí oprávnění?). Použij „Vyfotit doklad" nebo „Nahrát obrázek".');
+                        showError(T.camera_fail);
                     });
             }
 
@@ -863,13 +889,13 @@
                 rafId = requestAnimationFrame(loop);
                 if (busy || done || now() < cooldownUntil) return;
                 var g = grade();
-                if (!g) { setStatus('Zaměřuji…'); return; }
-                if (g.mean < 55) { setStatus('🔅 Moc tmavé – přisviť', 'warn'); steady = 0; return; }
-                if (g.glare > 0.06) { setStatus('✨ Odlesk – nakloň doklad', 'warn'); steady = 0; return; }
-                if (g.sharp < 90) { setStatus('🔍 Rozmazané – přibliž a podrž', 'warn'); steady = 0; return; }
-                if (!g.stable) { setStatus('✋ Drž klidně…'); steady = 0; return; }
+                if (!g) { setStatus(T.aiming); return; }
+                if (g.mean < 55) { setStatus(T.too_dark, 'warn'); steady = 0; return; }
+                if (g.glare > 0.06) { setStatus(T.glare, 'warn'); steady = 0; return; }
+                if (g.sharp < 90) { setStatus(T.blurry, 'warn'); steady = 0; return; }
+                if (!g.stable) { setStatus(T.hold_still); steady = 0; return; }
                 steady++;
-                setStatus('🟢 Čtu doklad…', 'ok');
+                setStatus(T.reading_ok, 'ok');
                 if (steady >= 2) attempt();
             }
 
@@ -895,7 +921,7 @@
 
             function miss() {
                 busy = false; steady = 0; cooldownUntil = now() + 700;
-                if (!done) setStatus('Nečitelné – drž doklad v rámečku…', 'warn');
+                if (!done) setStatus(T.unreadable_frame, 'warn');
             }
 
             function success(res, frame) {
@@ -904,7 +930,7 @@
                 preview.classList.remove('d-none');
                 stop();
                 prefillForm(res.data);
-                showSuccess('Doklad načten z kamery a předvyplněn. Zkontrolujte a doplňte adresu a zbývající pole.');
+                showSuccess(T.camera_success);
             }
 
             liveBtn.addEventListener('click', start);

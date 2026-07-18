@@ -3,12 +3,9 @@
 {% block body %}
     <div class="row justify-content-center">
         <div class="col-lg-7">
-            <a href="{{ path('checkin_index', {token: token}) }}" class="text-decoration-none small">← Zpět</a>
-            <h1 class="h3 mt-1 mb-3">Fakturační údaje</h1>
-            <p class="small text-muted mb-3">
-                Vyplňte, jen pokud chcete vystavit fakturu. Na firmu zadejte IČO —
-                název a adresu doplníme automaticky z rejstříku ARES.
-            </p>
+            <a href="{{ path('checkin_index', {token: token}) }}" class="text-decoration-none small">← {{ 'billing.back'|trans({}, 'checkin') }}</a>
+            <h1 class="h3 mt-1 mb-3">{{ 'billing.title'|trans({}, 'checkin') }}</h1>
+            <p class="small text-muted mb-3">{{ 'billing.intro'|trans({}, 'checkin') }}</p>
 
             {{ form_start(form) }}
                 <div class="card">
@@ -20,7 +17,7 @@
                                 {{ form_label(form.guestBilling.ico) }}
                                 <div class="input-group">
                                     {{ form_widget(form.guestBilling.ico) }}
-                                    <button type="button" id="billing-ares-btn" class="btn btn-outline-secondary">Načíst z ARES</button>
+                                    <button type="button" id="billing-ares-btn" class="btn btn-outline-secondary">{{ 'billing.ares_button'|trans({}, 'checkin') }}</button>
                                 </div>
                                 <div id="billing-ares-status" class="form-text"></div>
                             </div>
@@ -36,8 +33,8 @@
                         </div>
 
                         <div class="d-flex justify-content-between mt-3">
-                            <a href="{{ path('checkin_index', {token: token}) }}" class="btn btn-outline-secondary">Zrušit</a>
-                            <button type="submit" class="btn btn-primary">Uložit</button>
+                            <a href="{{ path('checkin_index', {token: token}) }}" class="btn btn-outline-secondary">{{ 'billing.cancel'|trans({}, 'checkin') }}</a>
+                            <button type="submit" class="btn btn-primary">{{ 'billing.save'|trans({}, 'checkin') }}</button>
                         </div>
                     </div>
                 </div>
@@ -47,6 +44,13 @@
 
     <script>
     (function() {
+        var T = {{ {
+            enter_ico: 'billing.ares_enter_ico'|trans({}, 'checkin'),
+            searching: 'billing.ares_searching'|trans({}, 'checkin'),
+            not_found: 'billing.ares_not_found'|trans({}, 'checkin'),
+            filled: 'billing.ares_filled'|trans({}, 'checkin'),
+            unavailable: 'billing.ares_unavailable'|trans({}, 'checkin')
+        }|json_encode|raw }};
         // Symfony renders field ids from the form name (checkin_billing_*), not
         // from attr.id, so we target those generated ids.
         var ico = document.getElementById('{{ form.guestBilling.ico.vars.id }}');
@@ -74,23 +78,23 @@
 
         function lookup() {
             var v = (ico.value || '').replace(/\D/g, '');
-            if (v.length < 1) { status.textContent = 'Zadejte IČO.'; return; }
-            status.textContent = 'Hledám v ARES…';
+            if (v.length < 1) { status.textContent = T.enter_ico; return; }
+            status.textContent = T.searching;
             btn.disabled = true;
             fetch(aresUrl + '?ico=' + encodeURIComponent(v))
                 .then(function(r) { return r.ok ? r.json() : null; })
                 .then(function(d) {
                     btn.disabled = false;
-                    if (!d || !d.found) { status.textContent = 'IČO nenalezeno v ARES.'; return; }
+                    if (!d || !d.found) { status.textContent = T.not_found; return; }
                     setAlways(IDS.company, d.companyName);
                     setAlways(IDS.street, d.street);
                     setAlways(IDS.city, d.city);
                     setAlways(IDS.zip, d.zip);
                     setIfEmpty(IDS.country, d.country);
                     setIfEmpty(IDS.dic, d.dic);
-                    status.textContent = '✓ Doplněno z ARES: ' + (d.companyName || '');
+                    status.textContent = '✓ ' + T.filled + (d.companyName || '');
                 })
-                .catch(function() { btn.disabled = false; status.textContent = 'ARES je nedostupný, vyplňte ručně.'; });
+                .catch(function() { btn.disabled = false; status.textContent = T.unavailable; });
         }
 
         btn.addEventListener('click', lookup);

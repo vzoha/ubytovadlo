@@ -3,42 +3,36 @@
 {% block body %}
     <div class="row justify-content-center">
         <div class="col-lg-8">
-            <h1 class="h3 mb-2">Online check-in</h1>
+            <h1 class="h3 mb-2">{{ 'index.title'|trans({}, 'checkin') }}</h1>
             <p class="text-muted small">
-                Příjezd <strong>{{ reservation.checkIn|date('d. m. Y') }}</strong>
-                · odjezd <strong>{{ reservation.checkOut|date('d. m. Y') }}</strong>
-                · očekáváme <strong>{{ expectedGuests }}</strong> {{ expectedGuests == 1 ? 'osobu' : (expectedGuests < 5 ? 'osoby' : 'osob') }}
+                {{ 'index.arrival'|trans({}, 'checkin') }} <strong>{{ reservation.checkIn|date('d. m. Y') }}</strong>
+                · {{ 'index.departure'|trans({}, 'checkin') }} <strong>{{ reservation.checkOut|date('d. m. Y') }}</strong>
+                · {{ 'index.expecting'|trans({}, 'checkin') }} <strong>{{ expectedGuests }}</strong> {{ 'index.guests_noun'|trans({'%count%': expectedGuests}, 'checkin') }}
             </p>
 
             {% if isCompleted %}
                 <div class="alert alert-success">
-                    <strong>Check-in byl uzavřen {{ reservation.checkinCompletedAt|date('d. m. Y H:i') }}.</strong>
-                    Údaje jsme přijali, na úpravy nás kontaktujte přímo.
+                    <strong>{{ 'index.completed_title'|trans({'%date%': reservation.checkinCompletedAt|date('d. m. Y H:i')}, 'checkin') }}</strong>
+                    {{ 'index.completed_note'|trans({}, 'checkin') }}
                 </div>
             {% else %}
                 {# ── Fakturace (objednatel) — nabídneme jen když adresa chybí ── #}
                 <div class="card mb-4">
                     <div class="card-body">
-                        <h2 class="h6 card-title mb-2">🧾 Faktura</h2>
+                        <h2 class="h6 card-title mb-2">🧾 {{ 'index.invoice_heading'|trans({}, 'checkin') }}</h2>
                         {% if hasBilling %}
-                            <p class="small text-success mb-2">✓ Fakturační údaje máme vyplněné.</p>
-                            <a href="{{ path('checkin_billing', {token: reservation.checkinToken}) }}" class="btn btn-sm btn-outline-secondary">Upravit fakturační údaje</a>
+                            <p class="small text-success mb-2">✓ {{ 'index.billing_have'|trans({}, 'checkin') }}</p>
+                            <a href="{{ path('checkin_billing', {token: reservation.checkinToken}) }}" class="btn btn-sm btn-outline-secondary">{{ 'index.billing_edit'|trans({}, 'checkin') }}</a>
                         {% else %}
-                            <p class="small text-muted mb-2">
-                                Chcete za pobyt fakturu (na sebe, nebo na firmu)? Doplňte prosím
-                                fakturační adresu. Pokud fakturu nepotřebujete, tento krok přeskočte.
-                            </p>
-                            <a href="{{ path('checkin_billing', {token: reservation.checkinToken}) }}" class="btn btn-sm btn-primary">Doplnit fakturační adresu</a>
+                            <p class="small text-muted mb-2">{{ 'index.billing_want'|trans({}, 'checkin') }}</p>
+                            <a href="{{ path('checkin_billing', {token: reservation.checkinToken}) }}" class="btn btn-sm btn-primary">{{ 'index.billing_add'|trans({}, 'checkin') }}</a>
                         {% endif %}
                     </div>
                 </div>
 
                 {# ── Hosté: registrujeme jen cizince (Ubyport), Čechy ne ── #}
-                <h2 class="h5 mb-2">Hosté</h2>
-                <p class="small text-muted">
-                    Zákon nám ukládá nahlásit cizinecké policii (Ubyport) <strong>jen ubytované cizince</strong>.
-                    Občany ČR nikde neevidujeme — nevyplňujte je.
-                </p>
+                <h2 class="h5 mb-2">{{ 'index.guests_heading'|trans({}, 'checkin') }}</h2>
+                <p class="small text-muted">{{ 'index.guests_note'|trans({}, 'checkin')|raw }}</p>
             {% endif %}
 
             {% if guests is not empty %}
@@ -46,7 +40,7 @@
                     {% for g in guests %}
                         <div class="list-group-item d-flex justify-content-between align-items-center">
                             <div>
-                                <div><strong>{{ g.lastName }} {{ g.firstName }}</strong>{% if g.isCzechCitizen %} <span class="badge bg-secondary">občan ČR</span>{% endif %}</div>
+                                <div><strong>{{ g.lastName }} {{ g.firstName }}</strong>{% if g.isCzechCitizen %} <span class="badge bg-secondary">{{ 'index.badge_czech'|trans({}, 'checkin') }}</span>{% endif %}</div>
                                 <div class="small text-muted">
                                     {{ g.birthDate|date('d. m. Y') }}
                                     {% if g.nationalityCode %} · {{ g.nationalityCode }}{% endif %}
@@ -55,10 +49,10 @@
                             </div>
                             {% if not isCompleted %}
                                 <div class="d-flex gap-2">
-                                    <a class="btn btn-sm btn-outline-primary" href="{{ path('checkin_host_edit', {token: reservation.checkinToken, id: g.id}) }}">Upravit</a>
-                                    <form method="post" action="{{ path('checkin_host_delete', {token: reservation.checkinToken, id: g.id}) }}" onsubmit="return confirm('Opravdu smazat tohoto hosta?');">
+                                    <a class="btn btn-sm btn-outline-primary" href="{{ path('checkin_host_edit', {token: reservation.checkinToken, id: g.id}) }}">{{ 'index.guest_edit'|trans({}, 'checkin') }}</a>
+                                    <form method="post" action="{{ path('checkin_host_delete', {token: reservation.checkinToken, id: g.id}) }}" onsubmit="return confirm('{{ 'index.guest_delete_confirm'|trans({}, 'checkin')|e('js') }}');">
                                         <input type="hidden" name="_token" value="{{ csrf_token('checkin_delete_' ~ g.id) }}">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger">Smazat</button>
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">{{ 'index.guest_delete'|trans({}, 'checkin') }}</button>
                                     </form>
                                 </div>
                             {% endif %}
@@ -72,24 +66,24 @@
                     {# Vstupní rozcestník: jsou mezi hosty cizinci? #}
                     <div class="card">
                         <div class="card-body text-center">
-                            <p class="mb-3">Jsou mezi ubytovanými <strong>cizinci</strong> (občané jiného státu než ČR)?</p>
+                            <p class="mb-3">{{ 'index.foreigners_question'|trans({}, 'checkin')|raw }}</p>
                             <div class="d-flex justify-content-center gap-2 flex-wrap">
                                 <a class="btn btn-primary" href="{{ path('checkin_host_new', {token: reservation.checkinToken}) }}">
-                                    Ano, přidat zahraničního hosta
+                                    {{ 'index.add_foreigner_first'|trans({}, 'checkin') }}
                                 </a>
                                 <form method="post" action="{{ path('checkin_finish', {token: reservation.checkinToken}) }}">
                                     <input type="hidden" name="_token" value="{{ csrf_token('checkin_finish') }}">
-                                    <button type="submit" class="btn btn-outline-success">Ne, jsme všichni Češi — dokončit</button>
+                                    <button type="submit" class="btn btn-outline-success">{{ 'index.finish_czech'|trans({}, 'checkin') }}</button>
                                 </form>
                             </div>
                         </div>
                     </div>
                 {% else %}
                     <div class="d-flex justify-content-between gap-2 flex-wrap">
-                        <a class="btn btn-outline-primary" href="{{ path('checkin_host_new', {token: reservation.checkinToken}) }}">+ Přidat dalšího cizince</a>
+                        <a class="btn btn-outline-primary" href="{{ path('checkin_host_new', {token: reservation.checkinToken}) }}">+ {{ 'index.add_foreigner_more'|trans({}, 'checkin') }}</a>
                         <form method="post" action="{{ path('checkin_finish', {token: reservation.checkinToken}) }}">
                             <input type="hidden" name="_token" value="{{ csrf_token('checkin_finish') }}">
-                            <button type="submit" class="btn btn-success">Vše vyplněno, odeslat</button>
+                            <button type="submit" class="btn btn-success">{{ 'index.submit_all'|trans({}, 'checkin') }}</button>
                         </form>
                     </div>
                 {% endif %}

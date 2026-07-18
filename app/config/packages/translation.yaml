@@ -1,5 +1,10 @@
 framework:
     default_locale: en
+    # cs je první v nabídce: Request::getPreferredLanguage() ji vrátí, když
+    # Accept-Language chybí, takže online check-in bez signálu z prohlížeče
+    # padne na češtinu. Admin UI si drží výchozí locale (formátování čísel),
+    # jazyk přepíná jen check-in přes CheckinLocaleSubscriber.
+    enabled_locales: [cs, en, de, fr, it, pl]
     translator:
         default_path: '%kernel.project_dir%/translations'
         providers:

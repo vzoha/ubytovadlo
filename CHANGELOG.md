@@ -6,6 +6,16 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ## [Unreleased]
 
+### Přidáno
+
+- **Výběr jazyka na online check-inu.** Host si stránky check-inu přepne v
+  nabídce vlajek mezi češtinou, angličtinou, němčinou, francouzštinou, italštinou
+  a polštinou; každý jazyk je uvedený svým vlastním názvem. Při první návštěvě se
+  jazyk nabídne podle nastavení jeho prohlížeče. Přeložený je celý průvodce —
+  výběr hosta, sken dokladu (včetně pokynů kamery a hlášek čtečky), fakturační
+  formulář i děkovací stránka. Volba se drží po celou dobu vyplňování. Seznam
+  zemí se zobrazuje v jazyce hosta (česky, jinak anglicky).
+
 ### Změněno
 
 - **Formulářová pole používají sémantický typ.** E-mail, telefon a web v nastavení
