@@ -20,6 +20,7 @@ use Symfony\Component\Form\Extension\Core\Type\EnumType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
+use Symfony\Component\Form\Extension\Core\Type\TimeType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormError;
 use Symfony\Component\Form\FormEvent;
@@ -27,7 +28,6 @@ use Symfony\Component\Form\FormEvents;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints\GreaterThanOrEqual;
 use Symfony\Component\Validator\Constraints\NotBlank;
-use Symfony\Component\Validator\Constraints\Regex;
 
 /**
  * Editace zprávy hostovi — režim odesílání, časování na ose (u plánovaných druhů)
@@ -110,13 +110,15 @@ class MessageTemplateType extends AbstractType
                 'choices' => ['před' => self::DIRECTION_BEFORE, 'po' => self::DIRECTION_AFTER],
                 'data' => $offset > 0 ? self::DIRECTION_AFTER : self::DIRECTION_BEFORE,
             ])
-            ->add('sendAt', TextType::class, [
+            ->add('sendAt', TimeType::class, [
                 'mapped' => false,
                 'label' => 'V hodin',
                 'required' => false,
+                'input' => 'string',
+                'input_format' => 'H:i',
+                'widget' => 'single_text',
+                'with_seconds' => false,
                 'data' => $template->getSendAt(),
-                'attr' => ['placeholder' => '09:00'],
-                'constraints' => [new Regex(pattern: '/^([01]?\d|2[0-3]):[0-5]\d$/', message: 'Zadej čas ve tvaru HH:MM.')],
             ]);
     }
 

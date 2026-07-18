@@ -46,12 +46,14 @@ class GuestContactType extends AbstractType implements DataMapperInterface
             $builder->add('email', EmailType::class, $this->fieldOptions('email', [
                 'label' => 'E-mail hosta (kam poslat fakturu)',
                 'required' => false,
+                'attr' => ['autocomplete' => 'email'],
             ], $options));
         }
         if (in_array('phone', $fields, true)) {
             $builder->add('phone', TelType::class, $this->fieldOptions('phone', [
                 'label' => 'Telefon',
                 'required' => false,
+                'attr' => ['autocomplete' => 'tel'],
             ], $options));
         }
         $builder->setDataMapper($this);

@@ -49,6 +49,7 @@ class NumberingSettingsType extends AbstractType
                     new GreaterThanOrEqual(1),
                     new LessThanOrEqual(999),
                 ],
+                'attr' => ['min' => 1, 'max' => 999],
             ]);
     }
 

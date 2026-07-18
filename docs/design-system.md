@@ -38,6 +38,11 @@ Segmentové přepínače (filtry stavů, výběr roku) jsou **šedé**; aktivní
 - Podstránkový formulář nese dvojici `Uložit` + `Zrušit`.
 - Vstup do detailu z tabulky: textový odkaz `Detail →` v posledním sloupci. Husté finanční tabulky smí místo toho mít klikací buňku (datum/jméno).
 
+## Formulářová pole
+
+- **Preferuj nativní HTML5 prvky** před vlastními JS komponentami: `type="number"` (má vestavěný ±spinner), `type="date"`/`time`, `type="email"`/`tel`/`url`, `datalist`, `<details>`/`<summary>`, `required`, `min`/`max`/`step`, `pattern`. Míň kódu, přístupnost a validace zdarma, konzistentní chování. Vlastní widget až když nativní opravdu nestačí.
+- Sémantický `type` podle obsahu (číslo → `number`, e-mail → `email`, telefon → `tel`) kvůli klávesnici na mobilu a validaci. K `number` dej `min`/`max`/`step`.
+
 ## Texty (copy)
 
 - Aktivní sloveso podle toho, co se stane: `Uložit`, ne `Odeslat`; název akce drž stejný v celém toku.

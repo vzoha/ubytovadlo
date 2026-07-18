@@ -4,6 +4,17 @@ Všechny podstatné změny v tomto projektu se zaznamenávají sem.
 Formát vychází z [Keep a Changelog](https://keepachangelog.com/cs/1.1.0/),
 verzování dle [SemVer](https://semver.org/lang/cs/).
 
+## [Unreleased]
+
+### Změněno
+
+- **Formulářová pole používají sémantický typ.** E-mail, telefon a web v nastavení
+  dodavatele i připojení jednají jako nativní pole (`e-mail`, `telefon`, `URL`) —
+  na mobilu naskočí odpovídající klávesnice a prohlížeč hlídá formát. U číselných
+  polí (porty, poplatky, ceny úklidu, splatnost zálohy, pořadové číslo faktury)
+  drží prohlížeč povolený rozsah přímo ve vstupu. Hodina odeslání u zpráv hostům
+  se zadává výběrem času (`HH:MM`).
+
 ## [0.10.0] — 2026-07-17
 
 ### Přidáno

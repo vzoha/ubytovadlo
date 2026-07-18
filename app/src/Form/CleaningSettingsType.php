@@ -46,16 +46,19 @@ class CleaningSettingsType extends AbstractType
                     'label' => 'Práh hostů',
                     'help' => 'Do tohoto počtu hostů (včetně) platí nižší cena.',
                     'constraints' => [new GreaterThanOrEqual(0)],
+                    'attr' => ['min' => 0],
                 ])
                 ->add($type->value . '_small', IntegerType::class, [
                     'label' => 'Cena do prahu (Kč)',
                     'help' => 'Výchozí: ' . $defaults['small'] . ' Kč.',
                     'constraints' => [new GreaterThanOrEqual(0)],
+                    'attr' => ['min' => 0],
                 ])
                 ->add($type->value . '_large', IntegerType::class, [
                     'label' => 'Cena nad práh (Kč)',
                     'help' => 'Stejná jako „do prahu" = paušál. Výchozí: ' . $defaults['large'] . ' Kč.',
                     'constraints' => [new GreaterThanOrEqual(0)],
+                    'attr' => ['min' => 0],
                 ]);
         }
     }

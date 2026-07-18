@@ -42,11 +42,13 @@ class DepositSettingsType extends AbstractType
                 'label' => 'Výše',
                 'required' => false,
                 'help' => 'U fixní částky v Kč (např. 1000), u procenta v % (např. 30). Při „bez zálohy" se nepoužije.',
+                'attr' => ['inputmode' => 'decimal'],
             ])
             ->add('dueDays', IntegerType::class, [
                 'label' => 'Splatnost zálohy (dnů)',
                 'help' => 'Kolik dnů od vystavení má host na uhrazení zálohy.',
                 'constraints' => [new GreaterThanOrEqual(0)],
+                'attr' => ['min' => 0],
             ]);
     }
 

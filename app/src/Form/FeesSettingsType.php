@@ -34,6 +34,7 @@ class FeesSettingsType extends AbstractType
             'help' => 'Sazba obce za pobyt dospělé osoby a noc. Děti jsou osvobozené. Výchozí: '
                 . ReservationProfitCalculator::RECREATION_FEE_DEFAULT . ' Kč.',
             'constraints' => [new GreaterThanOrEqual(0)],
+            'attr' => ['min' => 0],
         ]);
     }
 
