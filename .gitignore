@@ -24,4 +24,14 @@
 
 # Stažený obsah skillů (jako vendor/) — verze drží skills-lock.json
 /.agents/
-/.claude/
+
+# Nastavení agenta: vlastní skilly a hooky projektu do repa patří (znalost o
+# tomhle projektu, ne o stroji). Stažené skilly v .claude/skills jsou jen
+# symlinky do .agents/ — ty ne, stejně jako lokální override a runtime soubory.
+/.claude/*
+!/.claude/settings.json
+!/.claude/hooks/
+!/.claude/skills/
+/.claude/skills/*
+!/.claude/skills/ubytovadlo-*
+/.claude/settings.local.json

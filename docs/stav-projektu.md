@@ -37,3 +37,13 @@ V `app/` běží Symfony 7.4 projekt s Doctrine + MySQL.
 6. ~~**iCal sync**~~ — ✅ hotové (obousměrný: import obsazenosti z Booking/Airbnb/eChalupy/CS chalupy přes `app:ical:sync`, export `.ics` feedu do OTA extranetů, auto‑storno zmizelých bloků, kontrola dvojího prodeje na dashboardu).
 7. ~~**Deploy na sdílený hosting**~~ — ✅ hotové (viz `docs/deploy.md`; cron IMAP poller + MotoPress sync á 15 min).
 8. ~~**Ekonomika / evidence příjmů a výdajů**~~ — ✅ hotové (`/ekonomika`, zisk per rezervace, viz výše).
+
+## Otevřené otázky / TODO
+
+- **OTA notifikace** — zapnout v Booking extranetu plné detaily a v Airbnb ověřit/zapnout e‑mail notifikace. Podle aktuálního vzorku Booking e‑mailu pak zúžit `needs_details` formulář na to, co opravdu chybí (typicky adresa + firemní údaje).
+- **Záloha 1000 Kč** — jak chodí (převod / brána) a jestli jde spárovat automaticky (variabilní symbol, callback, parsování výpisu). Směr: párovat přes e‑mail „Přišla platba" od banky, VS = kód rezervace.
+- **Browser extension** pro Booking/Airbnb extranet — 1 klik místo formuláře. Odložené rozhodnutí, ale realistická volba.
+- **Číselná řada faktur** — navázat na dosavadní číslování, nebo začít novou řadu (po dohodě s účetní).
+- **Booking/Airbnb měsíční vyúčtování** — kam přesně chodí a v jakém formátu (PDF s tabulkou? CSV?).
+- **MotoPress jako konektor (autorita = Ubytovadlo)** — import je jednosměrný a **volitelný** (přepínač „Importovat rezervace z MotoPressu" na Připojení + `MotoPressSettings::enabled`; command přeskočí i bez vyplněných přístupů). **Novou** rezervaci sync naimportuje celou; u **existující** už jen doplní prázdná pole, aktualizuje datumy (obsazenost) a promítne storno — ruční edity (jméno, cena, stav) nepřepisuje. Jediný zápisový směr do MotoPressu je push stavu platby (`MotoPressPaymentSyncListener`, gated `push_payments`). Do budoucna zvážit skutečný obousměrný sync.
+- **Cashflow** — přepojení `ReservationProfitCalculator` na zaplacené faktury (net vs. gross u Airbnb) a backfill historie z CSV.
