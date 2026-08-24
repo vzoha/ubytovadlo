@@ -4,6 +4,15 @@ Všechny podstatné změny v tomto projektu se zaznamenávají sem.
 Formát vychází z [Keep a Changelog](https://keepachangelog.com/cs/1.1.0/),
 verzování dle [SemVer](https://semver.org/lang/cs/).
 
+## [Unreleased]
+
+### Změněno
+
+- **Obsazenost z iCal feedů se stahuje spolu s rezervacemi z webu.** Cron wrapper
+  `app/cron/channels-sync.php` obsluhuje kanály, na které se ptáme sami — MotoPress
+  REST i iCal feedy Booking, Airbnb, eChalupy a CS chalupy. Hostingům se stropem na
+  počet cron úloh tak stačí čtyři čtvrthodinové úlohy a jedna denní.
+
 ## [0.11.0] — 2026-08-24
 
 ### Přidáno

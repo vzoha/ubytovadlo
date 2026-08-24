@@ -220,17 +220,18 @@ php bin/console app:user:create <email> --env=prod   # admin login (vyzve skryt�
 
 Některé hostingy (vč. hukotu) spouští cron **PHP souborem cestou, bez
 argumentů** (`crontab` v lshell není). Proto jsou v repu wrappery
-`app/cron/{imap-poll,motopress-sync}.php` (volají `_kernel.php`, který bootne
-kernel z `.env` a spustí console command).
+`app/cron/{imap-poll,channels-sync}.php` (volají `_kernel.php`, který bootne
+kernel z `.env` a spustí console command). Jeden wrapper smí spustit víc commandů
+za sebou — hostingy mívají strop na počet cron úloh (hukot 5).
 
-V panelu **Cron úlohy** založ šest úloh (pět á 15 min + jeden denní):
+V panelu **Cron úlohy** založ čtyři úlohy á 15 min a jednu denní:
 
-| pole | imap | motopress | ical | actions-plan | process-due |
-|---|---|---|---|---|---|
-| Soubor | `/src/app/cron/imap-poll.php` | `/src/app/cron/motopress-sync.php` | `/src/app/cron/ical-sync.php` | `/src/app/cron/actions-plan.php` | `/src/app/cron/process-due.php` |
-| Time / Memory limit | 300 s / 256 MB | 300 s / 256 MB | 300 s / 256 MB | 300 s / 256 MB | 300 s / 256 MB |
-| Minuta | každých 15 min | každých 15 min | každých 15 min | každých 15 min | každých 15 min |
-| Hodina/Den/Měsíc/Den v týdnu | Každý | Každý | Každý | Každý | Každý |
+| pole | imap | channels | actions-plan | process-due |
+|---|---|---|---|---|
+| Soubor | `/src/app/cron/imap-poll.php` | `/src/app/cron/channels-sync.php` | `/src/app/cron/actions-plan.php` | `/src/app/cron/process-due.php` |
+| Time / Memory limit | 300 s / 256 MB | 300 s / 256 MB | 300 s / 256 MB | 300 s / 256 MB |
+| Minuta | každých 15 min | každých 15 min | každých 15 min | každých 15 min |
+| Hodina/Den/Měsíc/Den v týdnu | Každý | Každý | Každý | Každý |
 
 | pole | notifications-daily |
 |---|---|
@@ -242,10 +243,11 @@ V panelu **Cron úlohy** založ šest úloh (pět á 15 min + jeden denní):
 
 (Cesta je relativní z úrovně `www`, proto `/src/app/...`.)
 
-`ical-sync` stáhne iCal feedy zapnutých OTA konektorů (Booking, Airbnb, eChalupy,
-CS chalupy — URL feedu se zadává na stránce Připojení) a založí/aktualizuje z nich
-obsazenost; blok, který z feedu zmizí, stornuje. Bez vyplněné URL feedu se konektor
-přeskočí.
+`channels-sync` obsluhuje kanály, na které se ptáme sami: `app:motopress:sync`
+(rezervace z vlastního webu přes REST) a `app:ical:sync` (iCal feedy zapnutých OTA
+konektorů — Booking, Airbnb, eChalupy, CS chalupy; URL feedu se zadává na stránce
+Připojení). iCal import založí/aktualizuje obsazenost a blok, který z feedu zmizí,
+stornuje; bez vyplněné URL feedu se konektor přeskočí.
 `actions-plan` doplní automatické akce na časovou osu (pre-arrival/post-stay zprávy,
 doplatek, Ubyport u cizinců) i u rezervací potvrzených přes MotoPress sync.
 `process-due` (á 15 min) vyhodnotí akce, kterým nadešel čas (zprávy hostům,
@@ -263,7 +265,7 @@ připomínka a připomínka termínu v režimu „souhrn" odejdou týž den.
 
 ```sh
 tail ~/_log/cron/imap-poll.php.log
-tail ~/_log/cron/motopress-sync.php.log
+tail ~/_log/cron/channels-sync.php.log
 ```
 
 Zdravý výstup: `Found N message(s) … [OK] Done. processed=…` resp.
