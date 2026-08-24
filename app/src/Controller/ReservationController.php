@@ -15,6 +15,7 @@ use App\Booking\BookingExtranetParser;
 use App\Cashflow\IncomeUpserter;
 use App\Controller\Concern\ChecksCsrf;
 use App\Controller\Concern\ParsesRequestInput;
+use App\Currency\ReservationCzkPreviewResolver;
 use App\Entity\Reservation;
 use App\Entity\ReservationAction;
 use App\Entity\ReservationNote;
@@ -77,6 +78,7 @@ class ReservationController extends AbstractController
         private readonly IncomeUpserter $incomeUpserter,
         private readonly ReservationReceiptRepository $receipts,
         private readonly PaymentStatusResolver $paymentStatusResolver,
+        private readonly ReservationCzkPreviewResolver $czkPreviews,
         private readonly DepositConfig $depositConfig,
         private readonly ReservationConfirmation $confirmation,
         private readonly GuestMessageTexts $guestMessageTexts,
@@ -98,6 +100,7 @@ class ReservationController extends AbstractController
             'currentStatus' => $status,
             'statuses' => ReservationStatus::cases(),
             'payment_statuses' => $this->paymentStatusResolver->batch($reservations),
+            'czk_previews' => $this->czkPreviews->batch($reservations),
         ]);
     }
 

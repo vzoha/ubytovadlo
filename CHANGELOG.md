@@ -8,6 +8,11 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Přidáno
 
+- **Cena v korunách u rezervací v cizí měně.** V seznamu rezervací je pod cenou
+  v cizí měně částka v korunách. Přepočítává se kurzem z vystavené faktury, jinak
+  kurzem ČNB uloženým k rezervaci; dokud rezervace svůj kurz nemá, ukáže se
+  orientační přepočet dnešním kurzem ČNB označený „≈". Najetím myší se zobrazí,
+  jaký kurz a ke kterému dni se použil.
 - **Náhled zprávy před odesláním.** Na časové ose rezervace je u každé
   naplánované zprávy hostovi tlačítko *Náhled*: ukáže příjemce, předmět i celý
   e-mail s daty té rezervace — přesně v podobě, v jaké hostovi odejde.

@@ -76,6 +76,42 @@ class InvoiceRepository extends ServiceEntityRepository
     }
 
     /**
+     * Kurz cizí měny → CZK z faktur rezervace, dávkově (bez N+1). Bere kurz
+     * poslední vystavené faktury — ten je nejblíž tomu, čím se pobyt zúčtoval.
+     *
+     * @param int[] $reservationIds
+     *
+     * @return array<int, array{currency: ?string, rate: string, date: ?\DateTimeImmutable}> klíč = ID rezervace
+     */
+    public function findExchangeRatesByReservations(array $reservationIds): array
+    {
+        if ($reservationIds === []) {
+            return [];
+        }
+
+        $rows = $this->createQueryBuilder('i')
+            ->select('IDENTITY(i.reservation) AS rid', 'i.originalCurrency AS currency', 'i.exchangeRate AS rate', 'i.exchangeRateDate AS date')
+            ->andWhere('i.reservation IN (:ids)')
+            ->andWhere('i.exchangeRate IS NOT NULL')
+            ->setParameter('ids', $reservationIds)
+            ->orderBy('i.issuedAt', 'ASC')
+            ->addOrderBy('i.id', 'ASC')
+            ->getQuery()
+            ->getResult();
+
+        $out = [];
+        foreach ($rows as $row) {
+            $out[(int) $row['rid']] = [
+                'currency' => $row['currency'],
+                'rate' => (string) $row['rate'],
+                'date' => $row['date'],
+            ];
+        }
+
+        return $out;
+    }
+
+    /**
      * Batch načtení faktur pro výpočet ekonomiky — jedna query místo N+1,
      * s eager-fetch zálohové parent faktury (konečná + záloha = celý příjem).
      *

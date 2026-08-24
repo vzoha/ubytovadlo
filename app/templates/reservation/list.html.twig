@@ -121,6 +121,13 @@
                         <td class="text-end">
                             {% if r.priceTotal %}
                                 {{ r.priceTotal|number_format(0, ',', ' ') }} {{ r.priceCurrency }}
+                                {% set czk = czk_previews[r.id] ?? null %}
+                                {% if czk %}
+                                    <span class="d-block small lh-1 text-muted"
+                                          title="{{ czk.source.label }} {{ czk.rate|number_format(3, ',', ' ') }}{% if czk.rateDate %} k {{ czk.rateDate|date('j. n. Y') }}{% endif %}">
+                                        {{ czk.isEstimate ? '≈ ' }}{{ czk.amountCzk|number_format(0, ',', ' ') }} Kč
+                                    </span>
+                                {% endif %}
                             {% else %}—{% endif %}
                         </td>
                         <td>
