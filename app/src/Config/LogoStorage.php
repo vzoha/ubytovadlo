@@ -57,6 +57,15 @@ final class LogoStorage
         return '/assets/' . $this->filename();
     }
 
+    /**
+     * Absolutní URL loga pro <img src> v e-mailu zobrazeném v prohlížeči
+     * (náhled); null, když logo není nahrané.
+     */
+    public function absoluteUrl(string $schemeAndHost): ?string
+    {
+        return $this->exists() ? $schemeAndHost . $this->publicPath() : null;
+    }
+
     public function store(UploadedFile $file): void
     {
         $extension = self::EXTENSIONS[(string) $file->getMimeType()] ?? null;

@@ -41,6 +41,9 @@
                             {% if item.isOpenAction %}
                                 <div class="d-flex gap-1 mt-1 flex-wrap align-items-center">
                                     {% if item.action.type.sendsGuestMessage %}
+                                        <button class="btn btn-outline-secondary btn-sm py-0" type="button"
+                                                data-bs-toggle="modal" data-bs-target="#modalMessagePreview"
+                                                data-preview-url="{{ path('reservation_action_preview', {id: item.action.id}) }}">Náhled</button>
                                         <form method="post" action="{{ path('reservation_action_send', {id: item.action.id}) }}" class="d-inline" onsubmit="return confirm('Odeslat zprávu hostovi teď?');">
                                             <input type="hidden" name="_token" value="{{ csrf_token('action-edit-' ~ item.action.id) }}">
                                             <button class="btn btn-outline-primary btn-sm py-0">Odeslat</button>
@@ -139,3 +142,56 @@
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="modalMessagePreview" tabindex="-1" aria-labelledby="modalMessagePreviewLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title h6 mb-0" id="modalMessagePreviewLabel">Náhled zprávy</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zavřít"></button>
+            </div>
+            <div class="modal-body">
+                <dl class="row small mb-2">
+                    <dt class="col-3 col-sm-2 fw-normal text-muted">Komu</dt>
+                    <dd class="col-9 col-sm-10 mb-1" data-preview-to></dd>
+                    <dt class="col-3 col-sm-2 fw-normal text-muted">Předmět</dt>
+                    <dd class="col-9 col-sm-10 mb-0" data-preview-subject></dd>
+                </dl>
+                <iframe data-preview-frame title="Náhled zprávy hostovi" style="width:100%; height:60vh; border:1px solid #dee2e6; border-radius:6px; background:#fff;"></iframe>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Zavřít</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function () {
+        const modal = document.getElementById('modalMessagePreview');
+        const frame = modal.querySelector('[data-preview-frame]');
+        const to = modal.querySelector('[data-preview-to]');
+        const subject = modal.querySelector('[data-preview-subject]');
+
+        modal.addEventListener('show.bs.modal', async function (event) {
+            const url = event.relatedTarget ? event.relatedTarget.dataset.previewUrl : null;
+            frame.srcdoc = '';
+            to.textContent = '…';
+            subject.textContent = '…';
+            if (!url) return;
+
+            try {
+                const res = await fetch(url);
+                if (!res.ok) throw new Error(res.status);
+                const data = await res.json();
+                to.textContent = data.to || 'Host nemá e-mail — zpráva se neodešle.';
+                subject.textContent = data.subject;
+                frame.srcdoc = data.html;
+            } catch (e) {
+                to.textContent = '';
+                subject.textContent = '';
+                frame.srcdoc = '<p style="font-family:sans-serif;color:#b00">Náhled se nepodařilo načíst.</p>';
+            }
+        });
+    })();
+</script>

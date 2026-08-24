@@ -20,6 +20,7 @@ use App\Enum\Channel;
 use App\Invoice\BalanceCalculator;
 use App\Invoice\BalanceResult;
 use App\Invoice\PaymentStatusResolver;
+use App\Mail\ActionMessageResolver;
 use App\Mail\GuestMessageSender;
 use App\Mail\MessageTemplateProvider;
 use App\Notification\OwnerNotifier;
@@ -56,6 +57,7 @@ final class ReservationActionExecutorCloseTest extends TestCase
             $this->createMock(OwnerNotifier::class),
             // closeIfSatisfied stav platby neřeší; final službu stačí reálná instance.
             new PaymentStatusResolver($this->invoices, $this->createMock(ReservationReceiptRepository::class)),
+            $this->createMock(ActionMessageResolver::class),
         );
     }
 

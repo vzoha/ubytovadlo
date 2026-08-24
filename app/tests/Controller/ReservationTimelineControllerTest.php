@@ -13,6 +13,7 @@ namespace App\Tests\Controller;
 
 use App\Entity\Embeddable\GuestContact;
 use App\Entity\GuestMessage;
+use App\Entity\Invoice;
 use App\Entity\Reservation;
 use App\Entity\ReservationAction;
 use App\Entity\ReservationNote;
@@ -44,6 +45,7 @@ final class ReservationTimelineControllerTest extends WebTestCase
         \assert($em instanceof EntityManagerInterface);
         $this->em = $em;
 
+        $this->em->createQuery('DELETE FROM ' . Invoice::class . ' i')->execute();
         $this->em->createQuery('DELETE FROM ' . GuestMessage::class . ' g')->execute();
         $this->em->createQuery('DELETE FROM ' . ReservationAction::class . ' a')->execute();
         $this->em->createQuery('DELETE FROM ' . ReservationNote::class . ' n')->execute();
@@ -128,6 +130,53 @@ final class ReservationTimelineControllerTest extends WebTestCase
         self::assertNotNull($sent);
         self::assertSame(MessageKind::PRE_ARRIVAL, $sent->getKind());
         self::assertSame('host@example.com', $sent->getToEmail());
+    }
+
+    public function testPreviewShowsMessageWithReservationData(): void
+    {
+        $r = $this->reservation();
+        $r->setGuestContact(new GuestContact('host@example.com'));
+        $action = new ReservationAction($r, ActionType::PRE_ARRIVAL_MESSAGE, new \DateTimeImmutable('+1 day'));
+        $this->em->persist($action);
+        $this->em->flush();
+
+        $crawler = $this->client->request('GET', '/reservation/' . $r->getId());
+        self::assertCount(1, $crawler->filter('[data-preview-url$="/action/' . $action->getId() . '/nahled"]'));
+
+        $this->client->request('GET', '/reservation/action/' . $action->getId() . '/nahled');
+
+        self::assertResponseIsSuccessful();
+        $data = json_decode((string) $this->client->getResponse()->getContent(), true);
+        self::assertSame('host@example.com', $data['to']);
+        self::assertNotSame('', $data['subject']);
+        self::assertStringContainsString('Timeline', $data['html']);
+    }
+
+    public function testPreviewUsesCustomMessageText(): void
+    {
+        $r = $this->reservation();
+        $action = new ReservationAction($r, ActionType::CUSTOM_MESSAGE, new \DateTimeImmutable('+1 day'));
+        $action->setPayload(['text' => 'Klíče budou ve schránce.']);
+        $this->em->persist($action);
+        $this->em->flush();
+
+        $this->client->request('GET', '/reservation/action/' . $action->getId() . '/nahled');
+
+        self::assertResponseIsSuccessful();
+        $data = json_decode((string) $this->client->getResponse()->getContent(), true);
+        self::assertStringContainsString('Klíče budou ve schránce.', $data['html']);
+    }
+
+    public function testPreviewIsMissingForActionWithoutMessage(): void
+    {
+        $r = $this->reservation();
+        $action = new ReservationAction($r, ActionType::CUSTOM_REMINDER, new \DateTimeImmutable('+1 day'));
+        $this->em->persist($action);
+        $this->em->flush();
+
+        $this->client->request('GET', '/reservation/action/' . $action->getId() . '/nahled');
+
+        self::assertResponseStatusCodeSame(404);
     }
 
     private function reservation(): Reservation

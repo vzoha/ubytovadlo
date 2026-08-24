@@ -23,6 +23,7 @@ use App\Enum\PaymentStatus;
 use App\Enum\SendMode;
 use App\Invoice\BalanceCalculator;
 use App\Invoice\PaymentStatusResolver;
+use App\Mail\ActionMessageResolver;
 use App\Mail\GuestMessageSender;
 use App\Mail\MessageTemplateProvider;
 use App\Notification\OwnerNotifier;
@@ -47,6 +48,7 @@ class ReservationActionExecutor
         private readonly MessageTemplateProvider $templates,
         private readonly OwnerNotifier $notifier,
         private readonly PaymentStatusResolver $paymentStatus,
+        private readonly ActionMessageResolver $messages,
     ) {
     }
 
@@ -163,7 +165,7 @@ class ReservationActionExecutor
             return true;
         }
 
-        return $this->dispatch($action, $kind, $this->customOverride($action, $kind));
+        return $this->dispatch($action, $kind, $this->messages->template($action, $kind));
     }
 
     /**
@@ -185,7 +187,7 @@ class ReservationActionExecutor
             return true;
         }
 
-        return $this->dispatch($action, $kind, $this->customOverride($action, $kind));
+        return $this->dispatch($action, $kind, $this->messages->template($action, $kind));
     }
 
     /**
@@ -257,21 +259,6 @@ class ReservationActionExecutor
         }
 
         return true;
-    }
-
-    /** Pro custom zprávu složí ad-hoc šablonu z volného textu v payloadu. */
-    private function customOverride(ReservationAction $action, MessageKind $kind): ?MessageTemplate
-    {
-        if ($kind !== MessageKind::CUSTOM) {
-            return null;
-        }
-        $payload = $action->getPayload() ?? [];
-        $text = trim((string) ($payload['text'] ?? ''));
-        if ($text === '') {
-            return null;
-        }
-
-        return new MessageTemplate(MessageKind::CUSTOM, $this->templates->for(MessageKind::CUSTOM)->getSubject(), $text);
     }
 
     /**

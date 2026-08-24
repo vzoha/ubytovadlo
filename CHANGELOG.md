@@ -8,6 +8,9 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Přidáno
 
+- **Náhled zprávy před odesláním.** Na časové ose rezervace je u každé
+  naplánované zprávy hostovi tlačítko *Náhled*: ukáže příjemce, předmět i celý
+  e-mail s daty té rezervace — přesně v podobě, v jaké hostovi odejde.
 - **Evidenční kniha hostů.** V **Ekonomika → Kniha hostů** je za každý rok přehled
   ubytovaných jako podklad k poplatku z pobytu (§ 3g zákona o místních poplatcích):
   jméno, datum narození, občanství, druh a číslo dokladu, adresa bydliště a doba

@@ -95,7 +95,7 @@ class MessageTemplatesController extends AbstractController
             (string) $request->request->get('body'),
         );
 
-        $logoSrc = $this->logo->exists() ? $request->getSchemeAndHttpHost() . $this->logo->publicPath() : null;
+        $logoSrc = $this->logo->absoluteUrl($request->getSchemeAndHttpHost());
         $rendered = $this->renderer->renderTemplate(
             $transient,
             $this->sampleFactory->create(),
