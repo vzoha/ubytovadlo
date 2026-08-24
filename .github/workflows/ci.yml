@@ -7,12 +7,26 @@ on:
 
 jobs:
   tests:
-    name: Testy a statická analýza
+    name: Testy a statická analýza (${{ matrix.db.name }})
     runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        db:
+          # Lokální vývoj běží na MySQL 8.4, produkce na MariaDB — obojí musí projít.
+          - name: MySQL 8.4
+            image: mysql:8.4
+            server_version: "8.4"
+            ping: mysqladmin ping -uroot -proot
+          - name: MariaDB 11.8
+            image: mariadb:11.8
+            server_version: "11.8.6-MariaDB"
+            ping: mariadb-admin ping -uroot -proot
 
     services:
       db:
-        image: mysql:8.4
+        image: ${{ matrix.db.image }}
         env:
           MYSQL_ROOT_PASSWORD: root
           MYSQL_DATABASE: ubytovadlo
@@ -21,7 +35,7 @@ jobs:
         ports:
           - 3306:3306
         options: >-
-          --health-cmd="mysqladmin ping -uroot -proot"
+          --health-cmd="${{ matrix.db.ping }}"
           --health-interval=5s
           --health-timeout=5s
           --health-retries=10
@@ -31,10 +45,13 @@ jobs:
         working-directory: app
 
     env:
-      DATABASE_URL: "mysql://app:app@127.0.0.1:3306/ubytovadlo?serverVersion=8.4&charset=utf8mb4"
+      DATABASE_URL: "mysql://app:app@127.0.0.1:3306/ubytovadlo?serverVersion=${{ matrix.db.server_version }}&charset=utf8mb4"
 
     steps:
       - uses: actions/checkout@v5
+        with:
+          # Revize změněných souborů potřebuje historii pro merge-base.
+          fetch-depth: 0
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -54,15 +71,28 @@ jobs:
         run: composer install --no-interaction --no-progress --prefer-dist
 
       - name: Security audit (composer)
+        if: matrix.db.name == 'MySQL 8.4'
         run: composer audit
 
       - name: Code style (php-cs-fixer)
+        if: matrix.db.name == 'MySQL 8.4'
         run: vendor/bin/php-cs-fixer fix --dry-run --diff
         env:
           PHP_CS_FIXER_IGNORE_ENV: 1
 
       - name: Static analysis (PHPStan)
+        if: matrix.db.name == 'MySQL 8.4'
         run: vendor/bin/phpstan analyse --no-progress
+
+      - name: Clean code (PHPMD na změněných souborech)
+        if: matrix.db.name == 'MySQL 8.4'
+        working-directory: ${{ github.workspace }}
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            tools/review-changed.sh "origin/${{ github.base_ref }}"
+          else
+            tools/review-changed.sh HEAD~1
+          fi
 
       - name: Grant privileges on test database
         run: |

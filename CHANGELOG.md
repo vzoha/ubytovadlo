@@ -26,6 +26,8 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Změněno
 
+- **Aplikace běží na MySQL i MariaDB.** Obě databáze jsou pokryté automatickými
+  testy, takže sdílený hosting s MariaDB je plnohodnotná varianta.
 - **Online check-in má dvě úrovně.** Každý host projde stejným krokem do evidenční
   knihy — jméno, datum narození, druh a číslo dokladu, adresa bydliště —
   a cizinci navíc vyplní státní občanství a vízum pro hlášení cizinecké policii
@@ -37,6 +39,11 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
   polí (porty, poplatky, ceny úklidu, splatnost zálohy, pořadové číslo faktury)
   drží prohlížeč povolený rozsah přímo ve vstupu. Hodina odeslání u zpráv hostům
   se zadává výběrem času (`HH:MM`).
+
+### Zabezpečení
+
+- Aktualizace `league/commonmark` na 2.9 — verze bez známých zranitelností pro
+  odepření služby při zpracování Markdownu v šablonách zpráv.
 
 ## [0.10.0] — 2026-07-17
 

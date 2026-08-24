@@ -31,12 +31,22 @@ Konfigurace: zkopíruj potřebné řádky z `app/.env.example` do `app/.env.loca
 Lokálně musí projít to samé, co kontroluje CI:
 
 ```bash
-docker compose exec app vendor/bin/php-cs-fixer fix --dry-run --diff   # code style
-docker compose exec app vendor/bin/phpstan analyse                     # statická analýza
-docker compose exec app vendor/bin/phpunit                             # testy
+docker compose exec app composer check     # code style + statická analýza + testy
+tools/review-changed.sh                    # clean code na změněných souborech
 ```
 
-`php-cs-fixer fix` (bez `--dry-run`) styl rovnou opraví.
+`composer check` spojuje php-cs-fixer, PHPStan (level 6) a PHPUnit; jednotlivě
+jdou pustit jako `composer cs:check`, `composer stan` a `composer test`.
+`composer cs` (bez `:check`) styl rovnou opraví.
+
+`tools/review-changed.sh` pustí **PHPMD** (`app/phpmd.xml`) jen na soubory
+v `app/src`, které se v tvé větvi změnily — hlídá délku a složitost metod, počet
+parametrů, mrtvý kód a vazby mezi třídami. Nález, který je vědomé rozhodnutí,
+umlč cíleně u té metody nebo třídy anotací `@SuppressWarnings(PHPMD.NazevPravidla)`.
+
+Testy v CI běží proti **MySQL 8.4 i MariaDB 11.8** — vývoj probíhá na MySQL,
+produkce na MariaDB. Do migrací proto nepiš collation (`utf8mb4_0900_ai_ci`
+MariaDB nezná), funkční indexy ani nativní JSON funkce.
 
 ## Pravidla
 
