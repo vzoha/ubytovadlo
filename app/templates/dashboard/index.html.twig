@@ -326,6 +326,40 @@
             </div>
         {% endif %}
 
+        {# === TERMÍNY === #}
+        {% if not tasks.isEmpty %}
+            <div class="col-12">
+                <div class="card shadow-sm {{ tasks.overdue > 0 ? 'border-danger' : '' }}">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>🛠️ <strong>Termíny</strong> — revize, servis a další hlídané úkony</span>
+                        <span>
+                            {% if tasks.overdue > 0 %}<span class="badge text-bg-danger">{{ tasks.overdue }} po termínu</span>{% endif %}
+                            {% if tasks.soon > 0 %}<span class="badge text-bg-warning">{{ tasks.soon }} se blíží</span>{% endif %}
+                        </span>
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        {% for task in tasks.tasks %}
+                            {% set urgency = task.urgencyAt(today) %}
+                            {% set days = task.daysUntilDue(today) %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center gap-3">
+                                <span class="me-auto">
+                                    <a class="text-decoration-none fw-semibold" href="{{ path('task_show', {id: task.id}) }}">{{ task.name }}</a>
+                                    <span class="d-block small text-muted">{{ task.category.label }}{% if task.vendor %} · {{ task.vendor }}{% endif %}</span>
+                                </span>
+                                <span class="small text-muted text-nowrap">{{ task.dueOn|date('j. n. Y') }}</span>
+                                <span class="badge text-bg-{{ urgency.badge }} text-nowrap">
+                                    {{ days == 0 ? 'dnes' : (days > 0 ? 'za ' ~ days ~ ' dní' : 'před ' ~ (days * -1) ~ ' dny') }}
+                                </span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                    <div class="card-footer bg-transparent text-end">
+                        <a class="text-decoration-none small" href="{{ path('task_index') }}">Všechny termíny →</a>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
         {# === EKONOMIKA === #}
         <div class="col-12">
             <a href="{{ path('economics_overview') }}" class="card shadow-sm text-decoration-none text-body">

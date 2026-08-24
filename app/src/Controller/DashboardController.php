@@ -24,6 +24,7 @@ use App\Repository\InvoiceRepository;
 use App\Repository\ReservationRepository;
 use App\Repository\VatPeriodRepository;
 use App\Setup\SetupChecklist;
+use App\Task\TaskOverview;
 use App\Ubyport\UbyportQueue;
 use App\Ubyport\UbyportRow;
 use App\Vat\VatMonthCalculator;
@@ -53,6 +54,7 @@ class DashboardController extends AbstractController
         private readonly YearEconomicsBuilder $economicsBuilder,
         private readonly SetupChecklist $setupChecklist,
         private readonly OccupancyConflictFinder $occupancyFinder,
+        private readonly TaskOverview $taskOverview,
     ) {
     }
 
@@ -72,6 +74,7 @@ class DashboardController extends AbstractController
             'setupPending' => $this->setupChecklist->pending(),
             'setupDismissedCount' => $this->setupChecklist->dismissedCount(),
             'occupancyConflicts' => $this->occupancyFinder->find($this->reservations->findActiveForOccupancy($today)),
+            'tasks' => $this->taskOverview->summary($today),
         ]);
     }
 

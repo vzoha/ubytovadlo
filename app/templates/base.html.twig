@@ -30,6 +30,9 @@
                     {% endif %}
                     <li class="nav-item"><a class="nav-link" href="{{ path('cleaning_index') }}">Úklid</a></li>
                     {% if is_granted('ROLE_USER') %}
+                        <li class="nav-item"><a class="nav-link" href="{{ path('task_index') }}">Termíny</a></li>
+                    {% endif %}
+                    {% if is_granted('ROLE_USER') %}
                         <li class="nav-item"><a class="nav-link" href="{{ path('ubyport_index') }}">Ubyport</a></li>
                     {% endif %}
                     {% if is_granted('ROLE_ADMIN') %}

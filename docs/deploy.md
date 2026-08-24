@@ -154,16 +154,17 @@ PDF a doklady nejsou v DB. `scp -r` do `~/src/app/var/`:
 |---|---|
 | `var/invoices/` (booking/, airbnb/) | faktury hostům + OTA měsíční doklady |
 | `var/ubyport/receipts/` | doručenky Ubyport |
+| `var/tasks/` | protokoly a revizní zprávy k hlídaným termínům |
 
 ```sh
 scp -r -F /dev/null -i ~/.ssh/<klíč> -o IdentitiesOnly=yes \
-  var/invoices var/ubyport \
+  var/invoices var/ubyport var/tasks \
   <ssh-user>@<ssh-host>:<home>/src/app/var/
 ```
 
-> Cesty k PDF se v DB ukládají **relativně** (`var/invoices/…`, viz
-> `App\Storage\PdfStorage`) → nezávislé na prostředí, `mysqldump` je přenese bez
-> přepisu.
+> Cesty k souborům se v DB ukládají **relativně** (`var/invoices/…`,
+> `var/tasks/…`, viz `App\Storage\PdfStorage` a `App\Task\TaskAttachmentStorage`)
+> → nezávislé na prostředí, `mysqldump` je přenese bez přepisu.
 
 ---
 
@@ -253,8 +254,10 @@ ubytovateli** z fronty — i ty, které během běhu vznikly (`app:actions:run` 
 `app:notifications:dispatch` v jednom).
 `notifications-daily` běží jednou denně: nejdřív `app:vat:remind` (sám se zkratuje
 mimo ~20. den, připomínku DPH založí jen za měsíc s přijatou provizí, idempotentně
-jednou za období), pak `app:notifications:digest` (denní souhrn nasbíraných
-notifikací) — takže i DPH připomínka v režimu „souhrn" odejde týž den.
+jednou za období), pak `app:tasks:remind` (hlídané termíny — upozorní na termín
+v okně předstihu a na termín po lhůtě opakuje jednou týdně) a nakonec
+`app:notifications:digest` (denní souhrn nasbíraných notifikací) — takže i DPH
+připomínka a připomínka termínu v režimu „souhrn" odejdou týž den.
 
 **Ověření běhu:** hukot píše výstup do `~/_log/cron/<soubor>.php.log`:
 

@@ -8,6 +8,18 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Přidáno
 
+- **Termíny.** Nová sekce **Termíny** hlídá opakované úkony ubytovatele — revize
+  a kontroly, servis, administrativu, platby i sezónní práce. U každého úkonu se
+  drží lhůta, kdo ho dělá a podle jakého předpisu, a seznam ukazuje, co je po
+  termínu, co se blíží a co je v pořádku. Zápis provedení posune termín podle
+  zvoleného opakování (od posledního provedení, pevné datum v kalendáři, nebo
+  jednorázově), uloží protokol k pozdějšímu dohledání a na přání zaúčtuje cenu
+  jako výdaj v cashflow. Katalog obvyklých termínů — od kontroly hasicích
+  přístrojů a spalinové cesty přes revizi elektroinstalace a rozbor vody až po
+  pojistku, poplatek obci nebo zazimování — nabídne úkon i s lhůtou a předpisem;
+  stačí vybrat, co se objektu týká. Blížící se a zmeškané termíny jsou na
+  přehledu a chodí na ně e-mailové upozornění (denní cron `app:tasks:remind`,
+  režim doručení se nastavuje v **Nastavení → Notifikace**).
 - **Cena v korunách u rezervací v cizí měně.** V seznamu rezervací je pod cenou
   v cizí měně částka v korunách. Přepočítává se kurzem z vystavené faktury, jinak
   kurzem ČNB uloženým k rezervaci; dokud rezervace svůj kurz nemá, ukáže se

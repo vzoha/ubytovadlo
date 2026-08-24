@@ -1,0 +1,131 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Termíny — {{ brand_name }}{% endblock %}
+
+{% block body %}
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+        <h1 class="h3 mb-0">Termíny</h1>
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#modalTask">+ Termín</button>
+            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalCatalog">+ Z katalogu</button>
+        </div>
+    </div>
+
+    <form method="get" action="{{ path('task_index') }}" class="row row-cols-auto g-2 align-items-end mb-3 small">
+        <div class="col">
+            <label class="form-label mb-1" for="filter-category">Kategorie</label>
+            <select name="kategorie" id="filter-category" class="form-select form-select-sm">
+                <option value="">Všechny</option>
+                {% for c in categories %}
+                    <option value="{{ c.value }}" {{ filterCategory == c ? 'selected' }}>{{ c.label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="filter-all" name="vse" value="1" {{ onlyActive ? '' : 'checked' }}>
+                <label class="form-check-label" for="filter-all">Včetně vypnutých</label>
+            </div>
+        </div>
+        <div class="col"><button class="btn btn-sm btn-outline-secondary">Filtrovat</button></div>
+    </form>
+
+    <div class="card">
+        <div class="table-responsive">
+        <table class="table table-sm table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Stav</th><th>Úkon</th><th>Kategorie</th><th>Lhůta</th>
+                    <th>Naposledy</th><th>Příští termín</th><th></th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for task in tasks %}
+                {% set urgency = task.urgencyAt(today) %}
+                {% set days = task.daysUntilDue(today) %}
+                <tr>
+                    <td><span class="badge text-bg-{{ urgency.badge }}">{{ urgency.label }}</span></td>
+                    <td>
+                        <div class="fw-semibold">{{ task.name }}</div>
+                        {% if task.legalReference %}<div class="small text-muted">{{ task.legalReference }}</div>{% endif %}
+                    </td>
+                    <td class="small">{{ task.category.label }}</td>
+                    <td class="small text-muted">{{ task|task_interval }}</td>
+                    <td class="small">{{ task.lastDoneOn ? task.lastDoneOn|date('j. n. Y') : '—' }}</td>
+                    <td class="small">
+                        {% if task.dueOn %}
+                            {{ task.dueOn|date('j. n. Y') }}
+                            <span class="text-muted">({{ days == 0 ? 'dnes' : (days > 0 ? 'za ' ~ days ~ ' dní' : 'před ' ~ (days * -1) ~ ' dny') }})</span>
+                        {% else %}
+                            <span class="text-muted">nezadán</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end text-nowrap">
+                        <a class="text-decoration-none small" href="{{ path('task_show', {id: task.id}) }}">Detail →</a>
+                    </td>
+                </tr>
+            {% else %}
+                <tr><td colspan="7" class="text-muted">Zatím žádné hlídané termíny. Začni katalogem obvyklých revizí a kontrol.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalTask" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <form method="post" action="{{ path('task_create') }}" class="modal-content">
+                <input type="hidden" name="_token" value="{{ csrf_token('task-new') }}">
+                <div class="modal-header"><h2 class="h5 modal-title">Nový termín</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zavřít"></button></div>
+                <div class="modal-body">{% include 'task/_form_fields.html.twig' with {prefix: 'new', task: null} %}</div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Zrušit</button>
+                    <button type="submit" class="btn btn-primary">Uložit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalCatalog" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <form method="post" action="{{ path('task_catalog_add') }}" class="modal-content">
+                <input type="hidden" name="_token" value="{{ csrf_token('task-catalog') }}">
+                <div class="modal-header"><h2 class="h5 modal-title">Termíny z katalogu</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zavřít"></button></div>
+                <div class="modal-body">
+                    <p class="small text-muted">
+                        Obvyklé termíny ubytovatele i s lhůtou a předpisem. Vyber, co se týká tvého objektu — datum
+                        příštího termínu doplníš u každého zvlášť. Lhůty jsou obvyklé hodnoty; konkrétní zařízení může mít
+                        lhůtu kratší podle pokynu výrobce nebo prostředí.
+                    </p>
+                    {% for c in categories %}
+                        {% set entries = catalog[c.value] ?? [] %}
+                        {% if entries is not empty %}
+                            <h3 class="h6 text-muted mt-3">{{ c.label }}</h3>
+                            {% for entry in entries %}
+                                {% set used = entry.key in usedCatalogKeys %}
+                                <div class="form-check border-bottom py-2">
+                                    <input class="form-check-input" type="checkbox" name="keys[]" value="{{ entry.key }}"
+                                           id="cat-{{ entry.key }}" {{ used ? 'disabled' }}>
+                                    <label class="form-check-label w-100" for="cat-{{ entry.key }}">
+                                        <span class="fw-semibold">{{ entry.name }}</span>
+                                        <span class="badge text-bg-light">{{ entry.intervalLabel }}</span>
+                                        {% if used %}<span class="badge text-bg-secondary">už hlídáš</span>{% endif %}
+                                        <span class="d-block small text-muted">
+                                            {{ entry.hint }}{% if entry.legalReference %} <em>{{ entry.legalReference }}</em>{% endif %}
+                                        </span>
+                                    </label>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Zrušit</button>
+                    <button type="submit" class="btn btn-primary">Uložit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}

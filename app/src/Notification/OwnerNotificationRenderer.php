@@ -89,6 +89,7 @@ final class OwnerNotificationRenderer
             OwnerNotificationType::VAT_REMINDER => $this->vatReminder($payload),
             OwnerNotificationType::UBYPORT_DUE => $this->ubyportDue($reservation),
             OwnerNotificationType::IDENTIFIED_PERSON_ONSET => $this->identifiedPersonOnset($payload),
+            OwnerNotificationType::TASK_DUE => $this->taskDue($payload),
         };
     }
 
@@ -217,6 +218,48 @@ final class OwnerNotificationRenderer
                 $this->reservationButton($reservation, 'Otevřít rezervaci'),
             ),
         );
+    }
+
+    /** @param array<string, mixed> $payload */
+    private function taskDue(array $payload): OwnerNotificationContent
+    {
+        $name = trim((string) ($payload['name'] ?? 'Hlídaný termín'));
+        $dueOn = trim((string) ($payload['dueOn'] ?? ''));
+        $days = (int) ($payload['days'] ?? 0);
+        $overdue = $days < 0;
+
+        $timing = match (true) {
+            $days === 0 => 'je **dnes**',
+            $overdue => sprintf('byl **%s**, tedy před %d dny', $dueOn, -$days),
+            default => sprintf('je **%s**, za %d dní', $dueOn, $days),
+        };
+
+        $lines = [sprintf('Termín úkonu **%s** %s.', $name, $timing)];
+        $reference = trim((string) ($payload['legalReference'] ?? ''));
+        if ($reference !== '') {
+            $lines[] = 'Lhůta plyne z předpisu: ' . $reference . '.';
+        }
+        $vendor = trim((string) ($payload['vendor'] ?? ''));
+        if ($vendor !== '') {
+            $lines[] = 'Naposledy dělal: ' . $vendor . '.';
+        }
+        $lines[] = $this->taskButton($payload);
+
+        return new OwnerNotificationContent(
+            ($overdue ? 'Po termínu: ' : 'Blíží se termín: ') . $name,
+            implode("\n\n", array_filter($lines)),
+        );
+    }
+
+    /** @param array<string, mixed> $payload */
+    private function taskButton(array $payload): string
+    {
+        $id = (int) ($payload['taskId'] ?? 0);
+        if ($id <= 0) {
+            return sprintf('[[button:Otevřít termíny|%s]]', $this->url('task_index'));
+        }
+
+        return sprintf('[[button:Otevřít termín|%s]]', $this->url('task_show', ['id' => $id]));
     }
 
     private function reservationLabel(?Reservation $reservation): string

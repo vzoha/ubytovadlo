@@ -1,0 +1,94 @@
+{# Pole formuláře termínu — sdílí je okno „Nový termín" i „Upravit termín". #}
+<div class="row g-3">
+    <div class="col-12">
+        <label class="form-label" for="{{ prefix }}-name">Název</label>
+        <input type="text" class="form-control" id="{{ prefix }}-name" name="name" maxlength="120" required
+               value="{{ task is defined and task ? task.name : '' }}" placeholder="Kontrola hasicích přístrojů">
+    </div>
+    <div class="col-12 col-md-6">
+        <label class="form-label" for="{{ prefix }}-category">Kategorie</label>
+        <select class="form-select" id="{{ prefix }}-category" name="category">
+            {% for c in categories %}
+                <option value="{{ c.value }}" {{ task is defined and task and task.category == c ? 'selected' }}>{{ c.label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-12 col-md-6">
+        <label class="form-label" for="{{ prefix }}-recurrence">Opakování</label>
+        <select class="form-select" id="{{ prefix }}-recurrence" name="recurrence">
+            {% for r in recurrences %}
+                <option value="{{ r.value }}" {{ task is defined and task and task.recurrence == r ? 'selected' }}>{{ r.label }}</option>
+            {% endfor %}
+        </select>
+        <div class="form-text">Od posledního provedení = lhůta běží od data úkonu. Pevné datum = termín drží kalendář.</div>
+    </div>
+    <div class="col-6 col-md-3">
+        <label class="form-label" for="{{ prefix }}-interval-value">Lhůta</label>
+        <input type="number" class="form-control" id="{{ prefix }}-interval-value" name="interval_value" min="1" step="1"
+               value="{{ task is defined and task ? task.intervalValue : 1 }}">
+    </div>
+    <div class="col-6 col-md-3">
+        <label class="form-label" for="{{ prefix }}-interval-unit">Jednotka</label>
+        <select class="form-select" id="{{ prefix }}-interval-unit" name="interval_unit">
+            {% for u in units %}
+                <option value="{{ u.value }}" {{ task is defined and task and task.intervalUnit == u ? 'selected' : (u.value == 'year' and (task is not defined or not task) ? 'selected') }}>{{ u.label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-6 col-md-3">
+        <label class="form-label" for="{{ prefix }}-due-on">Příští termín</label>
+        <input type="date" class="form-control" id="{{ prefix }}-due-on" name="due_on"
+               value="{{ task is defined and task and task.dueOn ? task.dueOn|date('Y-m-d') : '' }}">
+    </div>
+    <div class="col-6 col-md-3">
+        <label class="form-label" for="{{ prefix }}-lead-days">Upozornit předem</label>
+        <div class="input-group">
+            <input type="number" class="form-control" id="{{ prefix }}-lead-days" name="lead_days" min="0" step="1"
+                   value="{{ task is defined and task ? task.leadDays : 30 }}">
+            <span class="input-group-text">dní</span>
+        </div>
+    </div>
+    <div class="col-12 col-md-6">
+        <label class="form-label" for="{{ prefix }}-vendor">Kdo úkon dělá</label>
+        <input type="text" class="form-control" id="{{ prefix }}-vendor" name="vendor" maxlength="120"
+               value="{{ task is defined and task ? task.vendor : '' }}" placeholder="Revizní technik, firma">
+    </div>
+    <div class="col-12 col-md-6">
+        <label class="form-label" for="{{ prefix }}-vendor-contact">Kontakt</label>
+        <input type="text" class="form-control" id="{{ prefix }}-vendor-contact" name="vendor_contact" maxlength="160"
+               value="{{ task is defined and task ? task.vendorContact : '' }}" placeholder="telefon nebo e-mail">
+    </div>
+    <div class="col-12 col-md-6">
+        <label class="form-label" for="{{ prefix }}-legal">Předpis nebo norma</label>
+        <input type="text" class="form-control" id="{{ prefix }}-legal" name="legal_reference" maxlength="160"
+               value="{{ task is defined and task ? task.legalReference : '' }}" placeholder="vyhl. 246/2001 Sb.">
+    </div>
+    <div class="col-6 col-md-3">
+        <label class="form-label" for="{{ prefix }}-cost">Odhad ceny</label>
+        <div class="input-group">
+            <input type="number" class="form-control" id="{{ prefix }}-cost" name="estimated_cost" min="0" step="1"
+                   value="{{ task is defined and task and task.estimatedCostCzk is not null ? task.estimatedCostCzk : '' }}">
+            <span class="input-group-text">Kč</span>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <label class="form-label" for="{{ prefix }}-expense">Kategorie výdaje</label>
+        <select class="form-select" id="{{ prefix }}-expense" name="expense_category">
+            <option value="">Podle kategorie termínu</option>
+            {% for e in expenseCategories %}
+                <option value="{{ e.value }}" {{ task is defined and task and task.expenseCategory == e ? 'selected' }}>{{ e.label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-12">
+        <label class="form-label" for="{{ prefix }}-note">Poznámka</label>
+        <textarea class="form-control" id="{{ prefix }}-note" name="note" rows="2">{{ task is defined and task ? task.note : '' }}</textarea>
+    </div>
+    <div class="col-12">
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="{{ prefix }}-active" name="active" value="1"
+                   {{ task is not defined or not task or task.active ? 'checked' }}>
+            <label class="form-check-label" for="{{ prefix }}-active">Hlídat tento termín</label>
+        </div>
+    </div>
+</div>

@@ -56,6 +56,45 @@ final class OwnerNotificationRendererTest extends KernelTestCase
         self::assertStringContainsString('1 000,00 Kč', $content->bodyMarkdown);
     }
 
+    public function testTaskDueContentNamesDeadlineAndReference(): void
+    {
+        $content = $this->renderer->contentFor($this->notification(
+            OwnerNotificationType::TASK_DUE,
+            null,
+            ['taskId' => 7, 'name' => 'Kontrola hasicích přístrojů', 'dueOn' => '11. 9. 2026', 'days' => 12, 'legalReference' => 'vyhl. 246/2001 Sb.'],
+        ));
+
+        self::assertStringContainsString('Blíží se termín: Kontrola hasicích přístrojů', $content->subject);
+        self::assertStringContainsString('11. 9. 2026', $content->bodyMarkdown);
+        self::assertStringContainsString('za 12 dní', $content->bodyMarkdown);
+        self::assertStringContainsString('vyhl. 246/2001 Sb.', $content->bodyMarkdown);
+        self::assertStringContainsString('/terminy/7', $content->bodyMarkdown);
+    }
+
+    public function testTaskDueContentSaysHowLongItIsOverdue(): void
+    {
+        $content = $this->renderer->contentFor($this->notification(
+            OwnerNotificationType::TASK_DUE,
+            null,
+            ['taskId' => 3, 'name' => 'Kontrola komína', 'dueOn' => '4. 8. 2026', 'days' => -20],
+        ));
+
+        self::assertStringContainsString('Po termínu: Kontrola komína', $content->subject);
+        self::assertStringContainsString('před 20 dny', $content->bodyMarkdown);
+    }
+
+    public function testTaskDueWithoutIdLinksToTheList(): void
+    {
+        $content = $this->renderer->contentFor($this->notification(
+            OwnerNotificationType::TASK_DUE,
+            null,
+            ['name' => 'Servis kotle', 'dueOn' => '1. 10. 2026', 'days' => 0],
+        ));
+
+        self::assertStringContainsString('je **dnes**', $content->bodyMarkdown);
+        self::assertStringContainsString('/terminy', $content->bodyMarkdown);
+    }
+
     public function testVatReminderContentTranslatesMonth(): void
     {
         $content = $this->renderer->contentFor($this->notification(

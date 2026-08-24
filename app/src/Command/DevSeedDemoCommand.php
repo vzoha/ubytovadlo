@@ -27,6 +27,7 @@ use App\Entity\Payment;
 use App\Entity\QuickMessage;
 use App\Entity\Reservation;
 use App\Entity\Setting;
+use App\Entity\TaskCompletion;
 use App\Entity\User;
 use App\Entity\VatPeriod;
 use App\Enum\AccountType;
@@ -41,6 +42,7 @@ use App\Enum\UserRole;
 use App\Formatting\Money;
 use App\Invoice\InvoiceService;
 use App\Repository\CleaningRepository;
+use App\Task\TaskCatalog;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -74,6 +76,7 @@ class DevSeedDemoCommand extends Command
         private readonly Connection $connection,
         private readonly InvoiceService $invoices,
         private readonly CleaningRepository $cleanings,
+        private readonly TaskCatalog $catalog,
         private readonly IncomeUpserter $incomeUpserter,
         private readonly UserPasswordHasherInterface $hasher,
         private readonly string $appEnv,
@@ -105,11 +108,12 @@ class DevSeedDemoCommand extends Command
         $this->seedSupport($input, $io);
         $this->seedAccounts($io);
         $this->seedQuickMessages($io);
+        $this->seedTasks($io);
         $reservations = $this->seedReservations($io);
         $this->seedReservationIncomes($reservations, $io);
         $this->seedVatPeriods($io);
 
-        $io->success(sprintf('Hotovo. Naseedováno %d rezervací + faktury, úklidy, elektřina, DPH.', count($reservations)));
+        $io->success(sprintf('Hotovo. Naseedováno %d rezervací + faktury, úklidy, elektřina, DPH, termíny.', count($reservations)));
         $io->writeln('Přihlášení: <info>' . $input->getOption('email') . '</info> / <info>' . $input->getOption('password') . '</info>');
 
         return Command::SUCCESS;
@@ -122,7 +126,7 @@ class DevSeedDemoCommand extends Command
             'invoice_line', 'invoice', 'cleaning', 'guest_document', 'airbnb_statement',
             'booking_monthly_invoice', 'vat_period', 'electricity_reading', 'electricity_tariff',
             'payment', 'email_log', 'reservation', 'app_user', 'setting', 'accommodation_profile',
-            'quick_message',
+            'quick_message', 'task_completion', 'recurring_task',
         ];
         $this->connection->executeStatement('SET FOREIGN_KEY_CHECKS = 0');
         foreach ($tables as $table) {
@@ -152,6 +156,42 @@ class DevSeedDemoCommand extends Command
 
         $this->em->flush();
         $io->writeln('  Uživatel, tarif a nastavení vytvořeny.');
+    }
+
+    /**
+     * Demo termíny — jeden po lhůtě, jeden na spadnutí a jeden v pořádku, ať je
+     * na přehledu vidět všechny tři stavy i historie provedení.
+     */
+    private function seedTasks(SymfonyStyle $io): void
+    {
+        $today = new \DateTimeImmutable('today');
+        $specs = [
+            ['chimney_sweep', '-20 days', '-1 year -20 days', 1400],
+            ['fire_extinguisher_check', '+18 days', '-1 year +18 days', 700],
+            ['electrical_installation', '+2 years', '-3 years', 3500],
+            ['well_water_analysis', '+120 days', null, null],
+        ];
+
+        foreach ($specs as [$key, $due, $done, $cost]) {
+            $entry = $this->catalog->find($key);
+            if ($entry === null) {
+                continue;
+            }
+            $task = $this->catalog->toTask($entry, $today->modify($due));
+            $task->setVendor('Demo servis s.r.o.')->setVendorContact('servis@example.com');
+            $this->em->persist($task);
+
+            if ($done === null) {
+                continue;
+            }
+            $completion = new TaskCompletion($task, $today->modify($done));
+            $completion->setVendor('Demo servis s.r.o.')->setCostCzk($cost)->setNote('Bez závad.');
+            $task->setLastDoneOn($completion->getDoneOn());
+            $this->em->persist($completion);
+        }
+
+        $this->em->flush();
+        $io->writeln('  Hlídané termíny vytvořeny.');
     }
 
     /** Demo účty + pár neutrálních výdajů, převod a uzávěrka (žádné reálné PII). */
