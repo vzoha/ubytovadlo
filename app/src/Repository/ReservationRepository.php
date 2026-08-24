@@ -232,6 +232,30 @@ class ReservationRepository extends ServiceEntityRepository
     }
 
     /**
+     * Rezervace pro přehledový seznam. Bez zvoleného stavu vrací všechny kromě
+     * zrušených — ty se zobrazí jen při explicitním filtru na stav „Zrušeno".
+     *
+     * @return Reservation[]
+     */
+    public function findForList(?ReservationStatus $status): array
+    {
+        $qb = $this->createQueryBuilder('r')
+            ->orderBy('r.checkIn', 'DESC');
+
+        if ($status !== null) {
+            return $qb->andWhere('r.status = :status')
+                ->setParameter('status', $status)
+                ->getQuery()
+                ->getResult();
+        }
+
+        $qb->andWhere('r.status != :cancelled')
+            ->setParameter('cancelled', ReservationStatus::CANCELLED);
+
+        return $qb->getQuery()->getResult();
+    }
+
+    /**
      * Rezervace, jejichž celý pobyt spadá do intervalu mezi dvěma odečty elektřiny.
      * Konvence: check_in >= readingFrom a check_out <= readingTo (tj. odečet udělaný
      * mimo pobyt). Cancelled vyloučeny.

@@ -82,8 +82,7 @@ class ReservationController extends AbstractController
         $statusValue = $request->query->getString('status');
         $status = $statusValue !== '' ? ReservationStatus::tryFrom($statusValue) : null;
 
-        $criteria = $status !== null ? ['status' => $status] : [];
-        $reservations = $this->reservations->findBy($criteria, ['checkIn' => 'DESC']);
+        $reservations = $this->reservations->findForList($status);
 
         return $this->render('reservation/list.html.twig', [
             'reservations' => $reservations,

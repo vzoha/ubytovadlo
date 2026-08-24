@@ -51,6 +51,8 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Změněno
 
+- **Seznam rezervací ukazuje aktivní rezervace.** Výchozí pohled *Aktivní* drží
+  zrušené rezervace stranou; zobrazí se pod filtrem *Zrušeno*.
 - **Aplikace běží na MySQL i MariaDB.** Obě databáze jsou pokryté automatickými
   testy, takže sdílený hosting s MariaDB je plnohodnotná varianta.
 - **Online check-in má dvě úrovně.** Každý host projde stejným krokem do evidenční
