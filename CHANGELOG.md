@@ -24,6 +24,12 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
   formulář i děkovací stránka. Volba se drží po celou dobu vyplňování. Seznam
   zemí se zobrazuje v jazyce hosta (česky, jinak anglicky).
 
+- **Zaokrouhlení faktury placené hotově.** Faktura se způsobem platby *hotově*
+  vychází na celé koruny — rozdíl je na ní vidět samostatným řádkem
+  *Zaokrouhlení*. Řádek je bez DPH, takže rekapitulace daně zůstává na haléře
+  přesná. Přepnutí faktury zpět na převod řádek odebere a částka k úhradě i QR
+  kód odpovídají přesné ceně.
+
 ### Změněno
 
 - **Aplikace běží na MySQL i MariaDB.** Obě databáze jsou pokryté automatickými

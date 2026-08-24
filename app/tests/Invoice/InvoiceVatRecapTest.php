@@ -16,6 +16,7 @@ use App\Entity\InvoiceLine;
 use App\Entity\Reservation;
 use App\Enum\Channel;
 use App\Enum\InvoiceType;
+use App\Invoice\CashRounding;
 use App\Invoice\InvoiceVatRecap;
 use App\Invoice\VatRates;
 use PHPUnit\Framework\TestCase;
@@ -63,6 +64,22 @@ final class InvoiceVatRecapTest extends TestCase
         self::assertFalse($recap->hasVat());
         self::assertSame([], $recap->rows);
         self::assertSame('0', $recap->vatTotal);
+    }
+
+    /**
+     * Zaokrouhlení hotovostní faktury daň nenese — rekapitulace ho vynechá,
+     * takže základ i DPH zůstanou na haléře stejné jako u platby převodem.
+     */
+    public function testCashRoundingStaysOutOfRecap(): void
+    {
+        $invoice = $this->invoice();
+        $invoice->addLine(new InvoiceLine('Ubytovací služby', '11200.40', vatRate: VatRates::ACCOMMODATION));
+        $invoice->addLine(new InvoiceLine(CashRounding::LINE_DESCRIPTION, '-0.40'));
+
+        $recap = InvoiceVatRecap::fromInvoice($invoice);
+
+        self::assertCount(1, $recap->rows);
+        self::assertSame('11200.40', $recap->grossTotal);
     }
 
     private function invoice(): Invoice

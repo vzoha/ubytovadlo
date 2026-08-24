@@ -557,6 +557,13 @@ class Invoice
         return $this;
     }
 
+    public function removeLine(InvoiceLine $line): self
+    {
+        $this->lines->removeElement($line);
+
+        return $this;
+    }
+
     public function getCreatedAt(): \DateTimeImmutable
     {
         return $this->createdAt;

@@ -12,10 +12,13 @@ declare(strict_types=1);
 namespace App\Tests\Invoice;
 
 use App\Cashflow\IncomeUpserter;
+use App\Entity\Invoice;
+use App\Entity\InvoiceLine;
 use App\Entity\Reservation;
 use App\Enum\BillingMode;
 use App\Enum\Channel;
 use App\Enum\ReservationStatus;
+use App\Invoice\CashRounding;
 use App\Invoice\DepositConfig;
 use App\Invoice\InvoiceNumber;
 use App\Invoice\InvoiceNumberAllocator;
@@ -107,6 +110,78 @@ final class InvoiceServicePaymentMethodTest extends TestCase
         self::assertSame(InvoiceService::PAYMENT_BANK, $invoice->getPaymentMethod());
         self::assertSame('123/0300', $invoice->getBankAccount());
         self::assertNotNull($invoice->getQrPayload());
+    }
+
+    /**
+     * Hotovost se platí celými korunami — haléře z ceny (typicky přepočet z EUR)
+     * musí faktura srovnat samostatným řádkem, ne je nechat na částce k úhradě.
+     */
+    public function testCashRoundsTotalToWholeCrowns(): void
+    {
+        $reservation = $this->webReservation();
+        $reservation->setPriceTotal('3500.40');
+        $invoice = $this->service->issueFull($reservation, new \DateTimeImmutable('2026-05-29'));
+        self::assertSame('3500.40', $invoice->getTotalAmount());
+
+        $this->service->changePaymentMethod($invoice, InvoiceService::PAYMENT_CASH);
+
+        self::assertSame('3500.00', $invoice->getTotalAmount());
+        $rounding = $this->roundingLine($invoice);
+        self::assertNotNull($rounding);
+        self::assertSame('-0.40', $rounding->getTotalPrice());
+        self::assertNull($rounding->getVatRate(), 'Rozdíl ze zaokrouhlení nenese DPH.');
+    }
+
+    public function testSwitchBackToBankRestoresExactTotal(): void
+    {
+        $reservation = $this->webReservation();
+        $reservation->setPriceTotal('3500.60');
+        $invoice = $this->service->issueFull($reservation, new \DateTimeImmutable('2026-05-29'));
+        $this->service->changePaymentMethod($invoice, InvoiceService::PAYMENT_CASH);
+        self::assertSame('3501.00', $invoice->getTotalAmount());
+
+        $this->service->changePaymentMethod($invoice, InvoiceService::PAYMENT_BANK);
+
+        self::assertSame('3500.60', $invoice->getTotalAmount());
+        self::assertNull($this->roundingLine($invoice));
+    }
+
+    public function testCashOnWholeCrownsAddsNoRoundingLine(): void
+    {
+        $invoice = $this->service->issueFull($this->webReservation(), new \DateTimeImmutable('2026-05-29'));
+
+        $this->service->changePaymentMethod($invoice, InvoiceService::PAYMENT_CASH);
+
+        self::assertSame('3500.00', $invoice->getTotalAmount());
+        self::assertNull($this->roundingLine($invoice));
+    }
+
+    /**
+     * Opakovaná úprava faktury nesmí zaokrouhlení nabalovat — druhý průchod
+     * počítá znovu z ceny bez zaokrouhlení.
+     */
+    public function testRepeatedCashSwitchKeepsSingleRoundingLine(): void
+    {
+        $reservation = $this->webReservation();
+        $reservation->setPriceTotal('3500.40');
+        $invoice = $this->service->issueFull($reservation, new \DateTimeImmutable('2026-05-29'));
+
+        $this->service->changePaymentMethod($invoice, InvoiceService::PAYMENT_CASH);
+        $this->service->changePaymentMethod($invoice, InvoiceService::PAYMENT_CASH);
+
+        self::assertSame('3500.00', $invoice->getTotalAmount());
+        self::assertCount(2, $invoice->getLines());
+    }
+
+    private function roundingLine(Invoice $invoice): ?InvoiceLine
+    {
+        foreach ($invoice->getLines() as $line) {
+            if ($line->getDescription() === CashRounding::LINE_DESCRIPTION) {
+                return $line;
+            }
+        }
+
+        return null;
     }
 
     public function testUnknownMethodIsRejected(): void

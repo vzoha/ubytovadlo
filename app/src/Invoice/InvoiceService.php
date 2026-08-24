@@ -253,18 +253,32 @@ class InvoiceService
 
     /**
      * Přepne způsob platby vystavené faktury (typicky doplatek hrazený hotově na místě).
-     * Hotovost odstraní z faktury číslo účtu i QR; převod je doplní zpět.
+     * Hotovost odstraní z faktury číslo účtu i QR a zaokrouhlí částku na celé koruny
+     * ({@see CashRounding}); převod účet i QR doplní zpět a vrátí částku na haléře.
      */
     public function changePaymentMethod(Invoice $invoice, string $method): void
     {
         match ($method) {
-            self::PAYMENT_CASH => $invoice
-                ->setPaymentMethod(self::PAYMENT_CASH)
-                ->setBankAccount(null)
-                ->setQrPayload(null),
-            self::PAYMENT_BANK => $this->fillBankPayment($invoice),
+            self::PAYMENT_CASH => $this->switchToCash($invoice),
+            self::PAYMENT_BANK => $this->switchToBank($invoice),
             default => throw new \InvalidArgumentException(sprintf('Neznámý způsob platby "%s".', $method)),
         };
+    }
+
+    private function switchToCash(Invoice $invoice): void
+    {
+        CashRounding::applyTo($invoice);
+        $invoice
+            ->setPaymentMethod(self::PAYMENT_CASH)
+            ->setBankAccount(null)
+            ->setQrPayload(null);
+    }
+
+    private function switchToBank(Invoice $invoice): void
+    {
+        // Zaokrouhlení pryč dřív než QR — do platebního příkazu patří přesná částka.
+        CashRounding::stripFrom($invoice);
+        $this->fillBankPayment($invoice);
     }
 
     /**
