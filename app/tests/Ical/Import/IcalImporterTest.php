@@ -11,10 +11,12 @@ declare(strict_types=1);
 
 namespace App\Tests\Ical\Import;
 
+use App\Cashflow\IncomeUpserter;
 use App\Connector\ConnectorManager;
 use App\Entity\Connector;
 use App\Entity\PendingOwnerNotification;
 use App\Entity\Reservation;
+use App\Entity\ReservationReceipt;
 use App\Enum\BillingMode;
 use App\Enum\Channel;
 use App\Enum\ConnectorType;
@@ -24,6 +26,7 @@ use App\Ical\Import\IcalImporter;
 use App\Ical\Import\IcalImportResult;
 use App\Ical\Import\IcalParser;
 use App\Notification\OwnerNotifier;
+use App\Repository\ReservationReceiptRepository;
 use App\Repository\ReservationRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\NullLogger;
@@ -37,6 +40,8 @@ final class IcalImporterTest extends KernelTestCase
     private ConnectorManager $connectors;
     private ReservationRepository $reservations;
     private OwnerNotifier $notifier;
+    private IncomeUpserter $incomeUpserter;
+    private ReservationReceiptRepository $receipts;
 
     private \DateTimeImmutable $start;
     private \DateTimeImmutable $end;
@@ -49,7 +54,10 @@ final class IcalImporterTest extends KernelTestCase
         $this->connectors = $container->get(ConnectorManager::class);
         $this->reservations = $container->get(ReservationRepository::class);
         $this->notifier = $container->get(OwnerNotifier::class);
+        $this->incomeUpserter = $container->get(IncomeUpserter::class);
+        $this->receipts = $container->get(ReservationReceiptRepository::class);
 
+        $this->em->createQuery('DELETE FROM ' . ReservationReceipt::class . ' r')->execute();
         $this->em->createQuery('DELETE FROM ' . PendingOwnerNotification::class . ' n')->execute();
         $this->em->createQuery('DELETE FROM ' . Reservation::class . ' r')->execute();
         $this->em->createQuery('DELETE FROM ' . Connector::class . ' c')->execute();
@@ -71,6 +79,7 @@ final class IcalImporterTest extends KernelTestCase
             $this->connectors,
             $this->reservations,
             $this->notifier,
+            $this->incomeUpserter,
             $this->em,
             new NullLogger(),
         );
@@ -178,6 +187,30 @@ final class IcalImporterTest extends KernelTestCase
         self::assertSame(1, $result->cancelled);
         self::assertSame(ReservationStatus::CANCELLED, $this->reservations->findByIcalUid('a@booking.com')?->getStatus());
         self::assertSame(ReservationStatus::NEEDS_DETAILS, $this->reservations->findByIcalUid('b@booking.com')?->getStatus());
+    }
+
+    public function testCancelledReservationLosesEstimatedIncome(): void
+    {
+        $feed = [
+            $this->event('a@booking.com', $this->start, $this->end),
+            $this->event('b@booking.com', $this->start->modify('+30 days'), $this->end->modify('+30 days')),
+        ];
+        $this->importFeed($this->ics(...$feed));
+
+        // Potvrzená rezervace se známou cenou drží odhad výplaty na účtu.
+        $reservation = $this->reservations->findByIcalUid('a@booking.com');
+        self::assertNotNull($reservation);
+        $reservation->setStatus(ReservationStatus::CONFIRMED);
+        $reservation->setPriceTotal('7000.00');
+        $reservation->setPriceCurrency('CZK');
+        $this->em->flush();
+        $this->incomeUpserter->recompute($reservation);
+        self::assertCount(1, $this->receipts->findForReservation($reservation));
+
+        // Host zrušil na OTA → blok z feedu zmizí a s ním i očekávaný příjem.
+        $this->importFeed($this->ics($feed[1]));
+
+        self::assertSame([], $this->receipts->findForReservation($reservation));
     }
 
     public function testEmptyFeedDoesNotCancel(): void

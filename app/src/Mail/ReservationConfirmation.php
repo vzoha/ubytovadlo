@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Mail;
 
+use App\Cashflow\IncomeUpserter;
 use App\Entity\Reservation;
 use App\Enum\GuestMessageStatus;
 use App\Enum\MessageKind;
@@ -36,6 +37,7 @@ class ReservationConfirmation
         private readonly GuestMessageRepository $messages,
         private readonly EntityManagerInterface $em,
         private readonly OwnerNotifier $notifier,
+        private readonly IncomeUpserter $incomeUpserter,
     ) {
     }
 
@@ -49,6 +51,9 @@ class ReservationConfirmation
         if ($reservation->getStatus() === ReservationStatus::NEEDS_DETAILS) {
             $reservation->setStatus(ReservationStatus::CONFIRMED);
             $statusChanged = true;
+            // Potvrzením se z rezervace stává očekávaný příjem — u OTA odhad
+            // výplaty, u přímé objednávky podklad pro platby a faktury.
+            $this->incomeUpserter->recompute($reservation);
         }
 
         $reason = $this->skipReason($reservation, $explicit);

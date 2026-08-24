@@ -38,6 +38,7 @@ use App\Invoice\PaymentStatusResolver;
 use App\Mail\GuestMessageTexts;
 use App\Mail\ReservationConfirmation;
 use App\Profit\ReservationProfitCalculator;
+use App\Repository\AccountRepository;
 use App\Repository\CleaningRepository;
 use App\Repository\GuestDocumentRepository;
 use App\Repository\InvoiceRepository;
@@ -72,6 +73,7 @@ class ReservationController extends AbstractController
         private readonly ReservationTimelineBuilder $timelineBuilder,
         private readonly ReservationActionPlanner $actionPlanner,
         private readonly BalanceCalculator $balanceCalculator,
+        private readonly AccountRepository $accounts,
         private readonly IncomeUpserter $incomeUpserter,
         private readonly ReservationReceiptRepository $receipts,
         private readonly PaymentStatusResolver $paymentStatusResolver,
@@ -158,6 +160,7 @@ class ReservationController extends AbstractController
             'guest_documents' => $this->guestDocuments->findByReservation($reservation),
             'profit' => $this->profitCalculator->calculate($reservation),
             'receipts' => $this->receipts->findForReservation($reservation),
+            'accounts' => $this->accounts->findOrdered(onlyActive: true),
             'timeline' => $this->timelineBuilder->build($reservation),
             'balance' => $this->balanceCalculator->forReservation($reservation),
             'note_types' => NoteType::cases(),
@@ -259,7 +262,8 @@ class ReservationController extends AbstractController
         }
 
         $receivedOn = $this->parseDateOrNull($request->request->getString('received_on')) ?? new \DateTimeImmutable('today');
-        $this->incomeUpserter->recordManualPayment($reservation, $amount, $receivedOn);
+        $account = $this->accounts->findChosen($request->request->getInt('account'));
+        $this->incomeUpserter->recordManualPayment($reservation, $amount, $receivedOn, $account);
         $this->addFlash('success', 'Platba zaznamenána.');
 
         return $this->redirectToRoute('reservation_detail', ['id' => $reservation->getId()]);
@@ -298,6 +302,8 @@ class ReservationController extends AbstractController
             // Doplň automatické akce na časovou osu (idempotentní).
             $this->actionPlanner->planFor($reservation);
             $this->em->flush();
+            // Potvrzená rezervace se známou cenou už patří do příjmů na účtech.
+            $this->incomeUpserter->recompute($reservation);
             $this->addFlash('success', 'Údaje rezervace uloženy.');
 
             return $this->redirectToRoute('reservation_detail', ['id' => $reservation->getId()]);
@@ -340,6 +346,8 @@ class ReservationController extends AbstractController
 
         $parser->parse($raw)->applyTo($reservation);
         $this->em->flush();
+        // Cena a provize z extranetu určují odhad výplaty na účet.
+        $this->incomeUpserter->recompute($reservation);
         $this->addFlash('success', 'Údaje naimportovány. Zkontroluj a klikni Uložit.');
 
         return $this->redirectToRoute('reservation_details', ['id' => $reservation->getId()]);

@@ -252,6 +252,36 @@ class InvoiceService
     }
 
     /**
+     * Uloží ruční úpravu vystavené faktury — data a způsob platby. Úprava mění
+     * reálný příjem rezervace (kdy peníze dorazily a na který účet: hotovostní
+     * u platby hotově, bankovní u převodu), proto se hned přepočte cashflow
+     * a překreslí PDF.
+     */
+    public function updateIssued(
+        Invoice $invoice,
+        \DateTimeImmutable $issuedAt,
+        \DateTimeImmutable $dueAt,
+        ?\DateTimeImmutable $paidAt,
+        string $paymentMethod,
+    ): void {
+        $invoice->setIssuedAt($issuedAt);
+        $invoice->setDueAt($dueAt);
+        $invoice->setPaidAt($paidAt);
+
+        if ($paymentMethod !== $invoice->getPaymentMethod()) {
+            $this->changePaymentMethod($invoice, $paymentMethod);
+        } elseif ($invoice->getQrPayload() !== null) {
+            $this->refreshBankQr($invoice);
+        }
+
+        $this->em->flush();
+        $this->regeneratePdf($invoice);
+
+        $this->incomeUpserter->recompute($invoice->getReservation());
+        $this->dispatcher->dispatch(new ReservationFinancialsChangedEvent($invoice->getReservation()));
+    }
+
+    /**
      * Přepne způsob platby vystavené faktury (typicky doplatek hrazený hotově na místě).
      * Hotovost odstraní z faktury číslo účtu i QR a zaokrouhlí částku na celé koruny
      * ({@see CashRounding}); převod účet i QR doplní zpět a vrátí částku na haléře.

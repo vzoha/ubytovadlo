@@ -254,13 +254,20 @@
                         <form method="post" action="{{ path('reservation_record_payment', {id: reservation.id}) }}" class="row g-2 align-items-end mt-2 border-top pt-2">
                             <input type="hidden" name="_token" value="{{ csrf_token('payment-' ~ reservation.id) }}">
                             <div class="col-12"><label class="form-label small mb-0 text-muted">Zaznamenat platbu hosta (hotovost, převod, záloha bez faktury)</label></div>
-                            <div class="col-7 col-sm-5">
+                            <div class="col-7 col-sm-4">
                                 <input name="amount" type="number" step="1" min="1" class="form-control form-control-sm" placeholder="Kč" required>
                             </div>
-                            <div class="col-5 col-sm-4">
+                            <div class="col-5 col-sm-3">
                                 <input name="received_on" type="date" class="form-control form-control-sm">
                             </div>
-                            <div class="col-12 col-sm-3">
+                            <div class="col-7 col-sm-3">
+                                <select name="account" class="form-select form-select-sm" aria-label="Účet, na který platba dorazila">
+                                    {% for account in accounts %}
+                                        <option value="{{ account.id }}">{{ account.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-5 col-sm-2">
                                 <button class="btn btn-sm btn-outline-primary w-100">Zapsat</button>
                             </div>
                         </form>

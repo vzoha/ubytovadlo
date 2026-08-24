@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Mail;
 
+use App\Cashflow\IncomeUpserter;
 use App\Entity\Embeddable\GuestContact;
 use App\Entity\GuestMessage;
 use App\Entity\MessageTemplate;
@@ -131,7 +132,7 @@ final class ReservationConfirmationTest extends TestCase
     {
         $em = $this->createMock(EntityManagerInterface::class);
 
-        return new ReservationConfirmation($this->sender, $this->templates, $this->messages, $em, $this->notifier);
+        return new ReservationConfirmation($this->sender, $this->templates, $this->messages, $em, $this->notifier, $this->createMock(IncomeUpserter::class));
     }
 
     private function reservation(ReservationStatus $status): Reservation

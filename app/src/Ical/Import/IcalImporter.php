@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Ical\Import;
 
+use App\Cashflow\IncomeUpserter;
 use App\Connector\ConnectorManager;
 use App\Entity\Reservation;
 use App\Enum\BillingMode;
@@ -41,6 +42,7 @@ final class IcalImporter
         private readonly ConnectorManager $connectors,
         private readonly ReservationRepository $reservations,
         private readonly OwnerNotifier $notifier,
+        private readonly IncomeUpserter $incomeUpserter,
         private readonly EntityManagerInterface $em,
         private readonly LoggerInterface $logger,
     ) {
@@ -66,6 +68,7 @@ final class IcalImporter
         $updated = 0;
         $unchanged = 0;
         $seen = [];
+        $touched = [];
 
         foreach ($events as $event) {
             if ($this->isOwnerBlock($channel, $event)) {
@@ -91,16 +94,23 @@ final class IcalImporter
                 }
                 $created++;
             } elseif ($this->applyEvent($reservation, $event, $channel, false)) {
+                $touched[] = $reservation;
                 $updated++;
             } else {
                 $unchanged++;
             }
         }
 
-        $cancelled = $this->cancelVanished($channel, $from, $seen, $events);
+        $vanished = $this->cancelVanished($channel, $from, $seen, $events);
+        $cancelled = count($vanished);
 
         if (!$dryRun) {
             $this->em->flush();
+            // Zrušený pobyt už výplatu nedostane a posunutý termín mění datum
+            // příjmu — cashflow proto srovnáme podle nového stavu.
+            foreach ([...$touched, ...$vanished] as $reservation) {
+                $this->incomeUpserter->recompute($reservation);
+            }
         }
 
         return new IcalImportResult($created, $updated, $unchanged, $cancelled, count($events));
@@ -178,26 +188,29 @@ final class IcalImporter
 
     /**
      * Stornuje rezervace kanálu založené z feedu, jejichž UID v tomto běhu
-     * nedorazilo (host zrušil na OTA). Bezpečnostní pojistka: při prázdném feedu
-     * (0 událostí) nic neruší — nerozlišíme „žádné rezervace" od výpadku feedu.
+     * nedorazilo (host zrušil na OTA), a vrátí je. Bezpečnostní pojistka: při
+     * prázdném feedu (0 událostí) nic neruší — nerozlišíme „žádné rezervace"
+     * od výpadku feedu.
      *
      * @param array<string, true> $seen
      * @param list<IcalEvent>     $events
+     *
+     * @return list<Reservation> stornované rezervace
      */
-    private function cancelVanished(Channel $channel, \DateTimeImmutable $from, array $seen, array $events): int
+    private function cancelVanished(Channel $channel, \DateTimeImmutable $from, array $seen, array $events): array
     {
         if ($events === []) {
             $this->logger->warning('iCal feed bez událostí — přeskakuji detekci storn.', ['channel' => $channel->value]);
 
-            return 0;
+            return [];
         }
 
-        $cancelled = 0;
+        $cancelled = [];
         foreach ($this->reservations->findActiveIcalReservations($channel, $from) as $reservation) {
             $uid = $reservation->getIcalUid();
             if ($uid !== null && !isset($seen[$uid])) {
                 $reservation->setStatus(ReservationStatus::CANCELLED);
-                $cancelled++;
+                $cancelled[] = $reservation;
             }
         }
 

@@ -42,6 +42,15 @@ class AccountRepository extends ServiceEntityRepository
     }
 
     /** Výchozí aktivní účet daného typu (nejnižší sortOrder) — kam se zařadí automatický příjem. */
+    /**
+     * Účet zvolený ve formuláři. Bez volby (0, neznámé ID) vrací null —
+     * volající pak sáhne po výchozím účtu svého typu.
+     */
+    public function findChosen(int $id): ?Account
+    {
+        return $id > 0 ? $this->find($id) : null;
+    }
+
     public function findDefaultByType(AccountType $type): ?Account
     {
         return $this->createQueryBuilder('a')

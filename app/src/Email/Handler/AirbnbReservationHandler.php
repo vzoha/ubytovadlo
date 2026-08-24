@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Email\Handler;
 
+use App\Cashflow\IncomeUpserter;
 use App\Email\AirbnbReservationParser;
 use App\Email\Dto\AirbnbParsedReservation;
 use App\Email\EmailMessage;
@@ -35,6 +36,7 @@ final class AirbnbReservationHandler implements EmailHandler
         private readonly AirbnbReservationParser $parser,
         private readonly ReservationRepository $reservations,
         private readonly OwnerNotifier $notifier,
+        private readonly IncomeUpserter $incomeUpserter,
         private readonly EntityManagerInterface $em,
     ) {
     }
@@ -102,6 +104,13 @@ final class AirbnbReservationHandler implements EmailHandler
         // Airbnb e-mail nedává adresu, takže zůstává needs_details, dokud ji nedoplníme.
         if ($reservation->getStatus() === ReservationStatus::NEEDS_DETAILS && !$reservation->getGuestAddress()->isEmpty()) {
             $reservation->setStatus(ReservationStatus::CONFIRMED);
+        }
+
+        // Cena a provize z e-mailu určují odhad výplaty — u známé rezervace
+        // rovnou srovnáme příjem na účtu. Nová zůstává needs_details, tam příjem
+        // ještě nevzniká.
+        if (!$isNew) {
+            $this->incomeUpserter->recompute($reservation);
         }
 
         return $reservation;

@@ -116,9 +116,10 @@ class IncomeUpserter
     /**
      * Ručně zaznamenaná platba hosta (hotovost, převod, záloha bez faktury) u
      * přímé/web rezervace. Přidává se vedle případných faktur — host může platit
-     * víc splátkami — a je chráněná proti auto-přepočtu. Reálný příjem do cashflow.
+     * víc splátkami — a je chráněná proti auto-přepočtu. Reálný příjem do cashflow;
+     * `$account` říká, kam peníze dorazily (bez zadání na bankovní účet).
      */
-    public function recordManualPayment(Reservation $reservation, string $amountCzk, \DateTimeImmutable $receivedOn): ReservationReceipt
+    public function recordManualPayment(Reservation $reservation, string $amountCzk, \DateTimeImmutable $receivedOn, ?Account $account = null): ReservationReceipt
     {
         $nextId = 1;
         foreach ($this->receipts->findForReservation($reservation) as $receipt) {
@@ -128,7 +129,7 @@ class IncomeUpserter
         }
 
         $payment = new ReservationReceipt($reservation, $amountCzk, IncomeSource::MANUAL_PAYMENT, ReceiptOrigin::MANUAL_PAYMENT, $nextId);
-        $payment->setAccount($this->bankAccount());
+        $payment->setAccount($account ?? $this->bankAccount());
         $payment->setReceivedOn($receivedOn);
         $payment->setManuallyOverridden(true);
         $this->em->persist($payment);

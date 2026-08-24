@@ -21,7 +21,6 @@ use App\Invoice\InvoiceService;
 use App\Mail\GuestMessageSender;
 use App\Repository\InvoiceRepository;
 use App\Storage\PdfStorage;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -36,7 +35,6 @@ class InvoiceController extends AbstractController
     public function __construct(
         private readonly InvoiceService $invoices,
         private readonly InvoiceRepository $invoiceRepo,
-        private readonly EntityManagerInterface $em,
         private readonly PdfStorage $pdfStorage,
         private readonly GuestMessageSender $sender,
     ) {
@@ -150,18 +148,7 @@ class InvoiceController extends AbstractController
             }
 
             if ($errors === []) {
-                $invoice->setIssuedAt($issuedAt);
-                $invoice->setDueAt($dueAt);
-                $invoice->setPaidAt($paidAt);
-
-                if ($paymentMethod !== $invoice->getPaymentMethod()) {
-                    $this->invoices->changePaymentMethod($invoice, $paymentMethod);
-                } elseif ($invoice->getQrPayload() !== null) {
-                    $this->invoices->refreshBankQr($invoice);
-                }
-
-                $this->em->flush();
-                $this->invoices->regeneratePdf($invoice);
+                $this->invoices->updateIssued($invoice, $issuedAt, $dueAt, $paidAt, $paymentMethod);
 
                 $this->addFlash('success', sprintf('Faktura %s upravena.', $invoice->getNumber()));
 

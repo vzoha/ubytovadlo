@@ -33,6 +33,7 @@ use App\Repository\SettingRepository;
 use App\Vat\CnbExchangeRateClient;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Clock\Clock;
@@ -41,6 +42,7 @@ use Symfony\Component\Clock\Clock;
 final class InvoiceServicePaymentMethodTest extends TestCase
 {
     private InvoiceService $service;
+    private IncomeUpserter&MockObject $incomeUpserter;
 
     protected function setUp(): void
     {
@@ -70,6 +72,8 @@ final class InvoiceServicePaymentMethodTest extends TestCase
         );
         $issuerProvider = new IssuerProfileProvider($settings, new TaxProfileConfig($settings));
 
+        $this->incomeUpserter = $this->createMock(IncomeUpserter::class);
+
         $this->service = new InvoiceService(
             $em,
             $invoiceRepo,
@@ -79,7 +83,7 @@ final class InvoiceServicePaymentMethodTest extends TestCase
             $spayd,
             $this->createMock(CnbExchangeRateClient::class),
             $issuerProvider,
-            $this->createMock(IncomeUpserter::class),
+            $this->incomeUpserter,
             new DepositConfig($settings),
             $this->createMock(EventDispatcherInterface::class),
             new Clock(),
@@ -110,6 +114,30 @@ final class InvoiceServicePaymentMethodTest extends TestCase
         self::assertSame(InvoiceService::PAYMENT_BANK, $invoice->getPaymentMethod());
         self::assertSame('123/0300', $invoice->getBankAccount());
         self::assertNotNull($invoice->getQrPayload());
+    }
+
+    /**
+     * Přepnutí vystavené faktury na hotovost přesouvá reálný příjem z bankovního
+     * účtu na hotovostní — úprava proto musí přepočítat příjmy rezervace.
+     */
+    public function testEditRecomputesReservationIncome(): void
+    {
+        $reservation = $this->webReservation();
+        $invoice = $this->service->issueFull($reservation, new \DateTimeImmutable('2026-05-29'));
+
+        $this->incomeUpserter->expects(self::once())->method('recompute')->with($reservation);
+
+        $this->service->updateIssued(
+            $invoice,
+            new \DateTimeImmutable('2026-05-29'),
+            new \DateTimeImmutable('2026-05-31'),
+            new \DateTimeImmutable('2026-05-30'),
+            InvoiceService::PAYMENT_CASH,
+        );
+
+        self::assertSame(InvoiceService::PAYMENT_CASH, $invoice->getPaymentMethod());
+        self::assertNull($invoice->getBankAccount());
+        self::assertSame('2026-05-30', $invoice->getPaidAt()?->format('Y-m-d'));
     }
 
     /**

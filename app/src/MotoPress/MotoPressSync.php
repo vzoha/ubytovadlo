@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\MotoPress;
 
+use App\Cashflow\IncomeUpserter;
 use App\Entity\Reservation;
 use App\Enum\BillingMode;
 use App\Enum\Channel;
@@ -33,6 +34,7 @@ class MotoPressSync
         private readonly MotoPressBookingMapper $mapper,
         private readonly ReservationRepository $reservations,
         private readonly OwnerNotifier $notifier,
+        private readonly IncomeUpserter $incomeUpserter,
         private readonly EntityManagerInterface $em,
         private readonly LoggerInterface $logger,
     ) {
@@ -66,9 +68,11 @@ class MotoPressSync
         $updated = 0;
         $unchanged = 0;
         $skipped = 0;
+        /** @var list<Reservation> $touched rezervace zapsané v tomto běhu */
+        $touched = [];
 
         foreach ($bookings as $data) {
-            match ($this->syncBooking($data, $dryRun)) {
+            match ($this->syncBooking($data, $dryRun, $touched)) {
                 self::CREATED => $created++,
                 self::UPDATED => $updated++,
                 self::UNCHANGED => $unchanged++,
@@ -78,6 +82,11 @@ class MotoPressSync
 
         if (!$dryRun) {
             $this->em->flush();
+            // Cena, stav i kanál rozhodují o reálném příjmu rezervace — po zápisu
+            // ho srovnáme, aby cashflow odpovídalo tomu, co přišlo z MotoPressu.
+            foreach ($touched as $reservation) {
+                $this->incomeUpserter->recompute($reservation);
+            }
         }
 
         return new SyncResult($created, $updated, $unchanged, count($bookings), $skipped);
@@ -87,10 +96,11 @@ class MotoPressSync
      * Zpracuje jednu MotoPress rezervaci (upsert) a vrátí, jak dopadla.
      *
      * @param array<string, mixed> $data
+     * @param list<Reservation>    $touched rezervace zapsané v tomto běhu (out)
      *
      * @return self::CREATED|self::UPDATED|self::UNCHANGED|self::SKIPPED
      */
-    private function syncBooking(array $data, bool $dryRun): string
+    private function syncBooking(array $data, bool $dryRun, array &$touched): string
     {
         $mphbId = isset($data['id']) ? (string) $data['id'] : null;
         if ($mphbId === null || $mphbId === '') {
@@ -122,11 +132,14 @@ class MotoPressSync
             if (!$dryRun) {
                 $this->em->persist($reservation);
                 $this->notifier->notify(OwnerNotificationType::NEW_RESERVATION, $reservation);
+                $touched[] = $reservation;
             }
 
             return self::CREATED;
         }
         if ($before !== $this->snapshot($reservation)) {
+            $touched[] = $reservation;
+
             return self::UPDATED;
         }
 

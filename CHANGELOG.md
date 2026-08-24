@@ -26,7 +26,6 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
   výběr hosta, sken dokladu (včetně pokynů kamery a hlášek čtečky), fakturační
   formulář i děkovací stránka. Volba se drží po celou dobu vyplňování. Seznam
   zemí se zobrazuje v jazyce hosta (česky, jinak anglicky).
-
 - **Zaokrouhlení faktury placené hotově.** Faktura se způsobem platby *hotově*
   vychází na celé koruny — rozdíl je na ní vidět samostatným řádkem
   *Zaokrouhlení*. Řádek je bez DPH, takže rekapitulace daně zůstává na haléře
@@ -165,6 +164,15 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Opraveno
 
+- **Úprava faktury srovná příjem na účtech.** Změna způsobu platby i data úhrady
+  se hned promítne do přijatých plateb rezervace — platba hotově sedne na
+  hotovostní účet, převod na bankovní, a datum příjmu odpovídá datu úhrady.
+- **Příjem drží krok se změnou rezervace.** Storno z iCal feedu, přepis ceny nebo
+  provize při synchronizaci s webem, import z Booking extranetu, údaje z Airbnb
+  e-mailu i potvrzení rezervace přepočítají přijaté platby — zrušený pobyt zmizí
+  z očekávaných příjmů a odhad výplaty odpovídá aktuální ceně.
+- **Platba hosta se zapisuje na vybraný účet.** U ruční platby na detailu
+  rezervace se volí účet, na který peníze dorazily (hotovost, banka).
 - **Cena rezervace musí být číslo.** Ruční přidání rezervace ohlídá, že cena jde
   přečíst jako částka (`8500` i `8 500,50`) — nesrozumitelný zápis formulář
   odmítne s vysvětlením místo toho, aby rezervaci uložil s nulou.

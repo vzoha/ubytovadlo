@@ -25,6 +25,7 @@ use App\Enum\IncomeSource;
 use App\Enum\InvoiceType;
 use App\Enum\ReceiptOrigin;
 use App\Enum\ReservationStatus;
+use App\Repository\AccountRepository;
 use App\Repository\ReservationReceiptRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -34,6 +35,7 @@ final class IncomeUpserterTest extends KernelTestCase
     private EntityManagerInterface $em;
     private IncomeUpserter $upserter;
     private ReservationReceiptRepository $receipts;
+    private AccountRepository $accounts;
 
     protected function setUp(): void
     {
@@ -44,6 +46,7 @@ final class IncomeUpserterTest extends KernelTestCase
         $this->em = $em;
         $this->upserter = $container->get(IncomeUpserter::class);
         $this->receipts = $container->get(ReservationReceiptRepository::class);
+        $this->accounts = $container->get(AccountRepository::class);
 
         foreach ([ReservationReceipt::class, Payment::class, Cleaning::class, InvoiceLine::class, Invoice::class, Reservation::class, Account::class] as $class) {
             $this->em->createQuery('DELETE FROM ' . $class . ' e')->execute();
@@ -103,6 +106,17 @@ final class IncomeUpserterTest extends KernelTestCase
         self::assertSame(ReceiptOrigin::MANUAL_PAYMENT, $receipts[0]->getOriginType());
         self::assertTrue($receipts[0]->isManuallyOverridden());
         self::assertSame('2000.00', $receipts[0]->getAmountCzk());
+    }
+
+    public function testManualPaymentLandsOnChosenAccount(): void
+    {
+        $r = $this->persistReservation(Channel::DIRECT, '5000.00');
+        $this->em->flush();
+        $cash = $this->accounts->findDefaultByType(AccountType::CASH);
+
+        $this->upserter->recordManualPayment($r, '2000.00', new \DateTimeImmutable('2026-03-05'), $cash);
+
+        self::assertSame('Hotovost', $this->receipts->findForReservation($r)[0]->getAccount()?->getName());
     }
 
     public function testManualPaymentsAccumulateAndSurviveRecompute(): void
