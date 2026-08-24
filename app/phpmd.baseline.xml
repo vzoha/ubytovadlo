@@ -1,0 +1,149 @@
+<?xml version="1.0"?>
+<phpmd-baseline>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="src/Booking/BookingExtranetData.php" method="applyTo"/>
+  <violation rule="PHPMD\Rule\Design\NpathComplexity" file="src/Booking/BookingExtranetData.php" method="applyTo"/>
+  <violation rule="PHPMD\Rule\Design\WeightedMethodCount" file="src/Booking/BookingExtranetParser.php"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="src/Booking/BookingExtranetParser.php" method="parse"/>
+  <violation rule="PHPMD\Rule\CleanCode\ElseExpression" file="src/Booking/BookingExtranetParser.php"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="src/Booking/BookingExtranetParser.php" method="parseCustomerBlock"/>
+  <violation rule="PHPMD\Rule\Design\NpathComplexity" file="src/Booking/BookingExtranetParser.php" method="parseCustomerBlock"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="src/Booking/BookingExtranetParser.php" method="splitAddress"/>
+  <violation rule="PHPMD\Rule\Design\NpathComplexity" file="src/Booking/BookingExtranetParser.php" method="splitAddress"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="src/Booking/BookingExtranetParser.php" method="detectAddress"/>
+  <violation rule="PHPMD\Rule\Design\CouplingBetweenObjects" file="src/Cashflow/IncomeUpserter.php"/>
+  <violation rule="PHPMD\Rule\CleanCode\ElseExpression" file="src/Cashflow/IncomeUpserter.php"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="src/Cashflow/IncomeUpserter.php" method="directTargets"/>
+  <violation rule="PHPMD\Rule\Design\NpathComplexity" file="src/Cashflow/IncomeUpserter.php" method="directTargets"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="src/Command/ConfigImportEnvCommand.php" method="execute"/>
+  <violation rule="PHPMD\Rule\Design\NpathComplexity" file="src/Command/ConfigImportEnvCommand.php" method="execute"/>
+  <violation rule="PHPMD\Rule\Design\WeightedMethodCount" file="src/Command/DevSeedDemoCommand.php"/>
+  <violation rule="PHPMD\Rule\Design\CouplingBetweenObjects" file="src/Command/DevSeedDemoCommand.php"/>
+  <violation rule="PHPMD\Rule\Design\LongMethod" file="src/Command/DevSeedDemoCommand.php" method="specs"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="src/Command/IcalSyncCommand.php" method="execute"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="src/Command/ImapPollCommand.php" method="execute"/>
+  <violation rule="PHPMD\Rule\Design\NpathComplexity" file="src/Command/ImapPollCommand.php" method="execute"/>
+  <violation rule="PHPMD\Rule\CleanCode\ElseExpression" file="src/Command/ImapPollCommand.php"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="src/Command/ImapPollCommand.php" method="toEmailMessage"/>
+  <violation rule="PHPMD\Rule\Design\NpathComplexity" file="src/Command/ImapPollCommand.php" method="toEmailMessage"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="src/Command/MotoPressListServicesCommand.php" method="execute"/>
+  <violation rule="PHPMD\Rule\Design\NpathComplexity" file="src/Command/MotoPressListServicesCommand.php" method="execute"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="src/Command/MotoPressSyncCommand.php" method="execute"/>
+  <violation rule="PHPMD\Rule\Design\NpathComplexity" file="src/Command/MotoPressSyncCommand.php" method="execute"/>
+  <violation rule="PHPMD\Rule\Design\WeightedMethodCount" file="src/Command/MrzTestCommand.php"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="src/Command/MrzTestCommand.php" method="execute"/>
+  <violation rule="PHPMD\Rule\Design\NpathComplexity" file="src/Command/MrzTestCommand.php" method="execute"/>
+  <violation rule="PHPMD\Rule\CleanCode\ElseExpression" file="src/Command/MrzTestCommand.php"/>
+  <violation rule="PHPMD\Rule\CleanCode\ErrorControlOperator" file="src/Command/MrzTestCommand.php" method="ocrAndParse"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="src/Command/MrzTestCommand.php" method="ocrAndParse"/>
+  <violation rule="PHPMD\Rule\CleanCode\BooleanArgumentFlag" file="src/Command/MrzTestCommand.php"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="src/Command/MrzTestCommand.php" method="buildVariants"/>
+  <violation rule="PHPMD\Rule\Design\NpathComplexity" file="src/Command/MrzTestCommand.php" method="buildVariants"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="src/Command/MrzTestCommand.php" method="detectMrzBand"/>
+  <violation rule="PHPMD\Rule\Design\NpathComplexity" file="src/Command/MrzTestCommand.php" method="detectMrzBand"/>
+  <violation rule="PHPMD\Rule\Design\LongMethod" file="src/Command/MrzTestCommand.php" method="detectMrzBand"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="src/Command/MrzTestCommand.php" method="readPgmColumn"/>
+  <violation rule="PHPMD\Rule\Design\NpathComplexity" file="src/Command/MrzTestCommand.php" method="readPgmColumn"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="src/Command/NationalityImportCommand.php" method="execute"/>
+  <violation rule="PHPMD\Rule\Design\NpathComplexity" file="src/Command/NationalityImportCommand.php" method="execute"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="src/Command/UbyportExportCommand.php" method="execute"/>
+  <violation rule="PHPMD\Rule\Design\NpathComplexity" file="src/Command/UbyportExportCommand.php" method="execute"/>
+  <violation rule="PHPMD\Rule\CleanCode\ElseExpression" file="src/Command/UbyportExportCommand.php"/>
+  <violation rule="PHPMD\Rule\CleanCode\ElseExpression" file="src/Command/VatRecalculateCommand.php"/>
+  <violation rule="PHPMD\Rule\CleanCode\ElseExpression" file="src/Command/VatReconcileCommand.php"/>
+  <violation rule="PHPMD\Rule\Design\LongParameterList" file="src/Connector/ConnectorHealth.php" method="__construct"/>
+  <violation rule="PHPMD\Rule\Design\CouplingBetweenObjects" file="src/Controller/AccountController.php"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="src/Controller/CheckinController.php" method="parseMrz"/>
+  <violation rule="PHPMD\Rule\CleanCode\ElseExpression" file="src/Controller/CheckinController.php"/>
+  <violation rule="PHPMD\Rule\Design\LongParameterList" file="src/Controller/DashboardController.php" method="__construct"/>
+  <violation rule="PHPMD\Rule\CleanCode\ElseExpression" file="src/Controller/DashboardController.php"/>
+  <violation rule="PHPMD\Rule\CleanCode\ElseExpression" file="src/Controller/GeneralSettingsController.php"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="src/Controller/InvoiceController.php" method="edit"/>
+  <violation rule="PHPMD\Rule\Design\NpathComplexity" file="src/Controller/InvoiceController.php" method="edit"/>
+  <violation rule="PHPMD\Rule\CleanCode\ElseExpression" file="src/Controller/InvoiceController.php"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="src/Controller/IssuerSettingsController.php" method="edit"/>
+  <violation rule="PHPMD\Rule\Design\NpathComplexity" file="src/Controller/IssuerSettingsController.php" method="edit"/>
+  <violation rule="PHPMD\Rule\CleanCode\ElseExpression" file="src/Controller/IssuerSettingsController.php"/>
+  <violation rule="PHPMD\Rule\CleanCode\ElseExpression" file="src/Controller/MessageTemplatesController.php"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="src/Controller/MotoPressWebhookController.php" method="receive"/>
+  <violation rule="PHPMD\Rule\Design\NpathComplexity" file="src/Controller/MotoPressWebhookController.php" method="receive"/>
+  <violation rule="PHPMD\Rule\CleanCode\ElseExpression" file="src/Controller/MotoPressWebhookController.php"/>
+  <violation rule="PHPMD\Rule\Design\CouplingBetweenObjects" file="src/Controller/ReservationController.php"/>
+  <violation rule="PHPMD\Rule\Design\LongParameterList" file="src/Controller/ReservationController.php" method="__construct"/>
+  <violation rule="PHPMD\Rule\CleanCode\ElseExpression" file="src/Controller/ReservationController.php"/>
+  <violation rule="PHPMD\Rule\Design\LongParameterList" file="src/Controller/SetupWizardController.php" method="__construct"/>
+  <violation rule="PHPMD\Rule\CleanCode\ElseExpression" file="src/Controller/UbyportController.php"/>
+  <violation rule="PHPMD\Rule\Design\CouplingBetweenObjects" file="src/Controller/VatController.php"/>
+  <violation rule="PHPMD\Rule\Design\LongParameterList" file="src/Controller/VatController.php" method="__construct"/>
+  <violation rule="PHPMD\Rule\CleanCode\ElseExpression" file="src/Controller/VatController.php"/>
+  <violation rule="PHPMD\Rule\CleanCode\ErrorControlOperator" file="src/Controller/VatController.php" method="airbnbStatementDelete"/>
+  <violation rule="PHPMD\Rule\Design\LongParameterList" file="src/Email/Dto/AirbnbParsedReservation.php" method="__construct"/>
+  <violation rule="PHPMD\Rule\CleanCode\BooleanArgumentFlag" file="src/Email/Dto/AirbnbParsedReservation.php"/>
+  <violation rule="PHPMD\Rule\CleanCode\ElseExpression" file="src/Email/EmailDispatcher.php"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="src/Email/EmlReader.php" method="fromString"/>
+  <violation rule="PHPMD\Rule\CleanCode\ElseExpression" file="src/Email/EmlReader.php"/>
+  <violation rule="PHPMD\Rule\CleanCode\ElseExpression" file="src/Email/Handler/AirbnbPayoutHandler.php"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="src/Email/Handler/AirbnbReservationHandler.php" method="upsert"/>
+  <violation rule="PHPMD\Rule\Design\NpathComplexity" file="src/Email/Handler/AirbnbReservationHandler.php" method="upsert"/>
+  <violation rule="PHPMD\Rule\CleanCode\ElseExpression" file="src/Email/Handler/CsPaymentHandler.php"/>
+  <violation rule="PHPMD\Rule\CleanCode\ElseExpression" file="src/Entity/Connector.php"/>
+  <violation rule="PHPMD\Rule\ExcessivePublicCount" file="src/Entity/Invoice.php"/>
+  <violation rule="PHPMD\Rule\Design\WeightedMethodCount" file="src/Entity/Invoice.php"/>
+  <violation rule="PHPMD\Rule\ExcessivePublicCount" file="src/Entity/Reservation.php"/>
+  <violation rule="PHPMD\Rule\Design\WeightedMethodCount" file="src/Entity/Reservation.php"/>
+  <violation rule="PHPMD\Rule\CleanCode\ElseExpression" file="src/EventListener/RouterContextConsoleSubscriber.php"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="src/Form/GuestDocumentType.php" method="buildForm"/>
+  <violation rule="PHPMD\Rule\Design\NpathComplexity" file="src/Form/GuestDocumentType.php" method="buildForm"/>
+  <violation rule="PHPMD\Rule\UnusedPrivateMethod" file="src/Ical/ICalendarWriter.php" method="fold"/>
+  <violation rule="PHPMD\Rule\CleanCode\BooleanArgumentFlag" file="src/Ical/Import/IcalImporter.php"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="src/Ical/Import/IcalImporter.php" method="import"/>
+  <violation rule="PHPMD\Rule\Design\NpathComplexity" file="src/Ical/Import/IcalImporter.php" method="import"/>
+  <violation rule="PHPMD\Rule\CleanCode\ElseExpression" file="src/Ical/Import/IcalImporter.php"/>
+  <violation rule="PHPMD\Rule\CleanCode\ElseExpression" file="src/Ical/Import/IcalParser.php"/>
+  <violation rule="PHPMD\Rule\Design\CouplingBetweenObjects" file="src/Invoice/InvoiceService.php"/>
+  <violation rule="PHPMD\Rule\Design\LongParameterList" file="src/Invoice/InvoiceService.php" method="__construct"/>
+  <violation rule="PHPMD\Rule\CleanCode\ElseExpression" file="src/Invoice/InvoiceService.php"/>
+  <violation rule="PHPMD\Rule\Design\LongParameterList" file="src/Invoice/IssuerProfile.php" method="__construct"/>
+  <violation rule="PHPMD\Rule\UnusedPrivateMethod" file="src/Invoice/PaymentStatusResolver.php" method="applies"/>
+  <violation rule="PHPMD\Rule\Design\WeightedMethodCount" file="src/MotoPress/MotoPressBookingMapper.php"/>
+  <violation rule="PHPMD\Rule\CleanCode\BooleanArgumentFlag" file="src/MotoPress/MotoPressBookingMapper.php"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="src/MotoPress/MotoPressBookingMapper.php" method="applyWebBooking"/>
+  <violation rule="PHPMD\Rule\Design\NpathComplexity" file="src/MotoPress/MotoPressBookingMapper.php" method="applyWebBooking"/>
+  <violation rule="PHPMD\Rule\Design\LongMethod" file="src/MotoPress/MotoPressBookingMapper.php" method="applyWebBooking"/>
+  <violation rule="PHPMD\Rule\Design\EmptyCatchBlock" file="src/MotoPress/MotoPressBookingMapper.php"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="src/MotoPress/MotoPressPaymentSyncListener.php" method="__invoke"/>
+  <violation rule="PHPMD\Rule\Design\NpathComplexity" file="src/MotoPress/MotoPressPaymentSyncListener.php" method="__invoke"/>
+  <violation rule="PHPMD\Rule\CleanCode\BooleanArgumentFlag" file="src/MotoPress/MotoPressSync.php"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="src/MotoPress/MotoPressSync.php" method="syncBooking"/>
+  <violation rule="PHPMD\Rule\Design\NpathComplexity" file="src/MotoPress/MotoPressSync.php" method="syncBooking"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="src/MotoPress/MotoPressSync.php" method="resolveWebGateway"/>
+  <violation rule="PHPMD\Rule\Design\NpathComplexity" file="src/MotoPress/MotoPressSync.php" method="resolveWebGateway"/>
+  <violation rule="PHPMD\Rule\Design\WeightedMethodCount" file="src/Mrz/MrzParser.php"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="src/Mrz/MrzParser.php" method="parseWithSlidingWindow"/>
+  <violation rule="PHPMD\Rule\Design\NpathComplexity" file="src/Mrz/MrzParser.php" method="parseWithSlidingWindow"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="src/Mrz/MrzParser.php" method="scoreCombo"/>
+  <violation rule="PHPMD\Rule\Design\NpathComplexity" file="src/Mrz/MrzParser.php" method="scoreCombo"/>
+  <violation rule="PHPMD\Rule\Design\LongMethod" file="src/Mrz/MrzParser.php" method="scoreCombo"/>
+  <violation rule="PHPMD\Rule\CleanCode\ElseExpression" file="src/Mrz/MrzParser.php"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="src/Mrz/MrzParser.php" method="extractMrzLines"/>
+  <violation rule="PHPMD\Rule\Design\NpathComplexity" file="src/Mrz/MrzParser.php" method="extractMrzLines"/>
+  <violation rule="PHPMD\Rule\CleanCode\BooleanArgumentFlag" file="src/Mrz/MrzParser.php"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="src/Mrz/MrzParser.php" method="parseFrenchFromRaw"/>
+  <violation rule="PHPMD\Rule\Design\NpathComplexity" file="src/Mrz/MrzParser.php" method="parseFrenchFromRaw"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="src/Mrz/MrzParser.php" method="parseTwoLine"/>
+  <violation rule="PHPMD\Rule\Design\NpathComplexity" file="src/Mrz/MrzParser.php" method="parseTwoLine"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="src/Mrz/MrzParser.php" method="parseTd1"/>
+  <violation rule="PHPMD\Rule\Design\NpathComplexity" file="src/Mrz/MrzParser.php" method="parseTd1"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="src/Mrz/MrzParser.php" method="parseDate"/>
+  <violation rule="PHPMD\Rule\Design\LongParameterList" file="src/Profit/ReservationProfit.php" method="__construct"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="src/Profit/ReservationProfitCalculator.php" method="resolveIncome"/>
+  <violation rule="PHPMD\Rule\CleanCode\ElseExpression" file="src/Profit/YearEconomicsBuilder.php"/>
+  <violation rule="PHPMD\Rule\CleanCode\BooleanArgumentFlag" file="src/Repository/AccountRepository.php"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="src/Service/Electricity/ElectricityAllocator.php" method="allocateInterval"/>
+  <violation rule="PHPMD\Rule\Design\NpathComplexity" file="src/Service/Electricity/ElectricityAllocator.php" method="allocateInterval"/>
+  <violation rule="PHPMD\Rule\CleanCode\ElseExpression" file="src/Service/Electricity/ElectricityAllocator.php"/>
+  <violation rule="PHPMD\Rule\CleanCode\ElseExpression" file="src/Timeline/ReservationActionExecutor.php"/>
+  <violation rule="PHPMD\Rule\CleanCode\BooleanArgumentFlag" file="src/Timeline/TimelineItem.php"/>
+  <violation rule="PHPMD\Rule\Design\LongParameterList" file="src/Vat/BookingInvoiceData.php" method="__construct"/>
+  <violation rule="PHPMD\Rule\CleanCode\ElseExpression" file="src/Vat/VatCalculator.php"/>
+  <violation rule="PHPMD\Rule\Design\LongParameterList" file="src/Vat/VatMonthSummary.php" method="__construct"/>
+</phpmd-baseline>

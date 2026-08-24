@@ -12,10 +12,9 @@ Repo je **veřejné OSS** (FSL). Každá funkce projde tímhle, ať se nic neroz
 - [ ] Kód v `app/`, schéma **jen** přes Doctrine migrace (skill `ubytovadlo-migrace`)
 - [ ] **Rozumné testy** — unit i funkční, ne jen happy path: hraniční stavy, idempotence, prázdné vstupy
 - [ ] **Demo fixtures aktualizované** (`app:dev:seed-demo`, `app:dev:import-fixtures`), ať demo i screenshoty ukazují novou funkci na **neutrálních datech** (žádné reálné PII)
-- [ ] **Revize kódu** — skill `ubytovadlo-revize` (`tools/review-changed.sh` + checklist), na větší diff `/code-review`
 - [ ] **UI podle design manuálu** (skill `ubytovadlo-ui`), pokud se sáhlo na šablony
 - [ ] **`docker compose exec app composer check` zelené** (cs:check + PHPStan L6 + PHPUnit)
-- [ ] **`tools/review-changed.sh` bez nálezů** (PHPMD na změněných souborech; stejný job běží v CI)
+- [ ] **Revize kódu s opravou** — skill `ubytovadlo-revize`: pusť `tools/review-changed.sh` a projdi checklist, **závažné a střední nálezy oprav rovnou** (drobné jen zmiň), pak revizi i testy zopakuj. Na větší diff `/code-review --fix`. Revize patří **před** changelog — do changelogu jde až hotový tvar funkce.
 - [ ] Záznam do `CHANGELOG.md`, sekce `[Unreleased]`
 - [ ] `git status` přečtený — vím, co přidávám
 
@@ -27,7 +26,7 @@ Mimo repo (gitignored): `/sources/` (vzorky e-mailů, CSV, backfilly), `/docs/pr
 
 Per-instance věci řeš přes env/soubor s **graceful fallbackem**, ne natvrdo. Žádné reálné PII v kódu, testech ani fixtures — demo jména neutrální.
 
-pre-commit hook tohle hlídá, ale spoléhat se na něj nestačí.
+pre-commit hook tohle hlídá (privátní soubory, tajemství, code style, PHPMD nad stagovaným kódem), ale spoléhat se na něj nestačí — posuzovací vrstvu revize stroj neudělá.
 
 ## 3. Release
 

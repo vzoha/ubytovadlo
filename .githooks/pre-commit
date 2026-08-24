@@ -22,7 +22,15 @@ if git diff --cached -U0 -- '*.php' '*.yaml' '*.yml' '*.env' '*.md' \
     exit 1
 fi
 
-# 3) Code style — jen pokud běží dev kontejner (jinak doběhne CI).
+# 3) Code style + mechanická revize — jen pokud běží dev kontejner (jinak doběhne CI).
 if docker compose ps --services --filter status=running 2>/dev/null | grep -qx app; then
     docker compose exec -T app composer cs:check
+
+    # PHPMD nad stagovanými soubory z app/src. Nálezy, které v repu byly dřív,
+    # drží app/phpmd.baseline.xml — projde jen to, co přibylo v téhle změně.
+    if ! tools/review-changed.sh --staged; then
+        echo "✗ Revize našla nový nález (viz výše). Oprav ho, nebo ho vědomě umlč"
+        echo "  anotací @SuppressWarnings u té metody — viz skill ubytovadlo-revize."
+        exit 1
+    fi
 fi
