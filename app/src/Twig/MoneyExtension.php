@@ -25,8 +25,8 @@ class MoneyExtension extends AbstractExtension
     }
 
     /**
-     * Formátuje částku v českém formátu (1 234,50) a připojí symbol měny.
-     * CZK se renderuje jako "Kč", ostatní jako ISO kód.
+     * Formátuje částku v českém formátu (1 234,50) a připojí symbol měny
+     * („Kč", „€"). Měna bez známého symbolu se vypíše ISO kódem.
      */
     public function money(float|int|string|null $amount, ?string $currency = 'CZK', int $decimals = 2): string
     {

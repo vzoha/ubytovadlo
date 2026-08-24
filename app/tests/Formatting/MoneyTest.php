@@ -74,14 +74,15 @@ final class MoneyTest extends TestCase
     public static function symbolCases(): iterable
     {
         yield 'CZK jako Kč' => ['CZK', 'Kč'];
-        yield 'EUR jako ISO' => ['EUR', 'EUR'];
+        yield 'EUR jako €' => ['EUR', '€'];
+        yield 'neznámá měna jako ISO' => ['HUF', 'HUF'];
         yield 'null je prázdno' => [null, ''];
     }
 
     public function testFormat(): void
     {
         self::assertSame('1 234,50 Kč', Money::format(1234.5));
-        self::assertSame('1 234,50 EUR', Money::format('1234.50', 'EUR'));
+        self::assertSame('1 234,50 €', Money::format('1234.50', 'EUR'));
         self::assertSame('0 Kč', Money::format(null, 'CZK', 0));
     }
 }

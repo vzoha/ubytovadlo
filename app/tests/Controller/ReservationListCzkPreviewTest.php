@@ -73,8 +73,8 @@ final class ReservationListCzkPreviewTest extends WebTestCase
         $prices = $crawler->filter('tbody tr td.text-end')->each(
             static fn ($td): string => preg_replace('/\s+/u', ' ', trim($td->text())) ?? '',
         );
-        self::assertContains('100 EUR 2 436 Kč', $prices);
-        self::assertContains('4 455 CZK', $prices);
+        self::assertContains('100 € 2 436 Kč', $prices);
+        self::assertContains('4 455 Kč', $prices);
     }
 
     private function reservation(string $checkIn, string $price, string $currency): Reservation

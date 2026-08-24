@@ -8,7 +8,7 @@
         Rezervace
         <a href="{{ path('reservation_detail', {id: reservation.id}) }}">#{{ reservation.id }} {{ reservation.guestName }}</a>
         · {{ invoice.type.label }}
-        · {{ invoice.totalAmount|number_format(2, ',', ' ') }} {{ invoice.currency == 'CZK' ? 'Kč' : invoice.currency }}
+        · {{ invoice.totalAmount|money(invoice.currency) }}
     </p>
 
     <form method="post" class="card card-body" style="max-width: 480px;">

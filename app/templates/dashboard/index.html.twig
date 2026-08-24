@@ -219,7 +219,7 @@
                                                 {{ r.channel.label }}
                                                 {% if r.billingMode %} · {{ r.billingMode.label }}{% endif %}
                                                 · {{ r.guestName ?? '(host)' }}
-                                                {% if r.priceTotal %} · {{ r.priceTotal|number_format(0, ',', ' ') }} {{ r.priceCurrency }}{% endif %}
+                                                {% if r.priceTotal %} · {{ r.priceTotal|money(r.priceCurrency, 0) }}{% endif %}
                                             </div>
                                         </div>
                                         <a href="{{ path('reservation_detail', {id: r.id}) }}" class="text-decoration-none small">Detail →</a>

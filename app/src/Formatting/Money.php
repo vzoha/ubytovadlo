@@ -17,13 +17,22 @@ namespace App\Formatting;
  *  - `normalize()` — kanonický decimal string ("1234.50") pro uložení do DB a
  *    výpočty (Doctrine decimal sloupce drží částky jako string).
  *  - `parse()` — převod uživatelského vstupu ("1 234,50") na decimal string.
- *  - `symbol()` — symbol měny (CZK jako „Kč", ostatní ISO kód).
+ *  - `symbol()` — symbol měny pro zobrazení („Kč", „€"), jinak ISO kód.
  *  - `format()` — zobrazení v českém formátu (1 234,50 Kč) pro UI a e-maily.
  *
  * Přepočet mezi měnami uloženým kurzem řeší `App\Currency\CurrencyConverter`.
  */
 final class Money
 {
+    /** Symboly měn, se kterými se v ubytování potkáváme. */
+    private const SYMBOLS = [
+        'CZK' => 'Kč',
+        'EUR' => '€',
+        'USD' => '$',
+        'GBP' => '£',
+        'PLN' => 'zł',
+    ];
+
     /**
      * Kanonický decimal string ("1234.50") pro uložení do DB a výpočty.
      * `null` se chová jako nula.
@@ -51,11 +60,12 @@ final class Money
     }
 
     /**
-     * Symbol měny: CZK jako „Kč", ostatní jako ISO kód. `null` → prázdný řetězec.
+     * Symbol měny pro zobrazení. Měna bez známého symbolu se vypíše ISO kódem,
+     * `null` → prázdný řetězec.
      */
     public static function symbol(?string $currency): string
     {
-        return $currency === 'CZK' ? 'Kč' : (string) ($currency ?? '');
+        return self::SYMBOLS[$currency] ?? (string) ($currency ?? '');
     }
 
     /**

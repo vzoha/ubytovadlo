@@ -130,13 +130,13 @@
                     {% if summary.invoice %}
                         <div><strong>#{{ summary.invoice.invoiceNumber }}</strong> · vystaveno {{ summary.invoice.issuedAt|date('d. m. Y') }}</div>
                         <div class="small text-muted mb-2">Období {{ summary.invoice.periodFrom|date('d. m.') }} – {{ summary.invoice.periodTo|date('d. m. Y') }}</div>
-                        <div>Provize {{ summary.invoice.commission|number_format(2, ',', ' ') }} {{ summary.invoice.currency }} + payment fee {{ summary.invoice.paymentFee|number_format(2, ',', ' ') }} {{ summary.invoice.currency }}</div>
-                        <div class="mb-2"><strong>K zaplacení {{ summary.invoice.totalPayable|number_format(2, ',', ' ') }} {{ summary.invoice.currency }}</strong></div>
+                        <div>Provize {{ summary.invoice.commission|money(summary.invoice.currency) }} + payment fee {{ summary.invoice.paymentFee|money(summary.invoice.currency) }}</div>
+                        <div class="mb-2"><strong>K zaplacení {{ summary.invoice.totalPayable|money(summary.invoice.currency) }}</strong></div>
                         {% if summary.bookingDelta is not null %}
                             {% if summary.bookingDelta|abs < 0.01 %}
-                                <div class="text-success small mb-2">✓ souhrn rezervací sedí přesně ({{ summary.bookingReservationSum|number_format(2, ',', ' ') }} {{ summary.invoice.currency }})</div>
+                                <div class="text-success small mb-2">✓ souhrn rezervací sedí přesně ({{ summary.bookingReservationSum|money(summary.invoice.currency) }})</div>
                             {% else %}
-                                <div class="text-danger small mb-2">Δ {{ summary.bookingDelta|number_format(2, ',', ' ') }} {{ summary.invoice.currency }} (rezervace {{ summary.bookingReservationSum|number_format(2, ',', ' ') }})</div>
+                                <div class="text-danger small mb-2">Δ {{ summary.bookingDelta|money(summary.invoice.currency) }} (rezervace {{ summary.bookingReservationSum|number_format(2, ',', ' ') }})</div>
                             {% endif %}
                         {% endif %}
                         <a href="{{ path('vat_booking_invoice_pdf', {id: summary.invoice.id}) }}" target="_blank" class="btn btn-sm btn-outline-secondary">

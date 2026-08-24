@@ -8,6 +8,11 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Změněno
 
+- **Částky se všude vypisují se symbolem měny.** Koruny jako `Kč`, eura jako `€`,
+  dolary, libry a zloté odpovídajícím znakem; měna bez známého symbolu se vypíše
+  ISO kódem. Platí pro seznam a detail rezervace, přehled na nástěnce, faktury
+  i podklady k DPH.
+
 - **Obsazenost z iCal feedů se stahuje spolu s rezervacemi z webu.** Cron wrapper
   `app/cron/channels-sync.php` obsluhuje kanály, na které se ptáme sami — MotoPress
   REST i iCal feedy Booking, Airbnb, eChalupy a CS chalupy. Hostingům se stropem na
