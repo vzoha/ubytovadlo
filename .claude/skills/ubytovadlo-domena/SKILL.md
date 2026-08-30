@@ -1,6 +1,6 @@
 ---
 name: ubytovadlo-domena
-description: Doménová pravidla Ubytovadla — prodejní kanály (web/Booking/Airbnb/iCal), tok OTA rezervace, pět fakturačních toků a jejich mapování na MotoPress gateway, DPH reverse charge u identifikované osoby, evidované údaje, glosář. Použij při práci na rezervacích, fakturách, DPH, importech z kanálů nebo mailových parserech.
+description: Doménová pravidla Ubytovadla — prodejní kanály (web/Booking/Airbnb/iCal), tok OTA rezervace, pět fakturačních toků a jejich mapování na MotoPress gateway, tři daňové profily provozovatele (identifikovaná osoba / plátce / neplátce), reverse charge z provizí, sazby a daň shora, evidované údaje, glosář. Použij při práci na rezervacích, fakturách, DPH, importech z kanálů nebo mailových parserech.
 ---
 
 # Doména
@@ -30,9 +30,17 @@ Tok z vlastního webu je bez `needs_details` — MotoPress REST API dodá plné 
 
 ## Pět fakturačních toků
 
-Majitelka **není plátce DPH**, je **identifikovaná osoba** (§6h/§6i ZDPH) → hostům fakturuje vždy **bez DPH**, s poznámkou o identifikované osobě a vlastním DIČ.
+Jak faktura hostovi vypadá, řídí **daňový profil provozovatele** (`App\Enum\TaxProfile`, nastavení dodavatele). Default je identifikovaná osoba; profil konkrétní instance je v `CLAUDE.local.md`.
 
-1. **Web — klasika** (soukromý host): záloha 1000 Kč → **zálohová faktura**, zbytek při příjezdu (QR nebo hotově). **Konečná faktura** s odpočtem zálohy se posílá spolu se zálohovou během pobytu.
+| Profil | Faktura hostovi | DPH modul |
+|---|---|---|
+| `identified_person` | bez DPH, s poznámkou o identifikované osobě a vlastním DIČ | reverse charge z provizí |
+| `vat_payer` | s DPH — sazby na řádcích, rekapitulace | reverse charge + výstupní DPH; RC je odpočet, ne náklad |
+| `non_payer` | bez DPH, bez poznámky o režimu | skrytý |
+
+Nikdy nepiš chování jednoho profilu natvrdo — čti profil přes `TaxProfileConfig`.
+
+1. **Web — klasika** (soukromý host): záloha → **zálohová faktura**, zbytek při příjezdu (QR nebo hotově). Výši a splatnost zálohy drží `App\Invoice\DepositConfig` (fixní částka / procento z ceny / žádná záloha); jestli se záloha u dané rezervace vůbec bere, rozhoduje `appliesTo()`. **Konečná faktura** s odpočtem zálohy se posílá spolu se zálohovou během pobytu.
 2. **Web — FKSP** (zaměstnanecký fond): bez zálohy, jedna faktura na celou částku, ale **až po obdržení fakturačních údajů firmy** (stav `needs_billing_details`).
 3. **Web — admin/známí**: rezervaci založil provozovatel z WP adminu. Bez zálohy, jedna faktura během pobytu.
 4. **Airbnb**: údaje hosta se sbírají osobně na startu pobytu. Faktura v CZK na celou částku, e-mailem pokud host chce.
@@ -47,7 +55,7 @@ Faktura musí unést: vlastní číselnou řadu, variabilní symbol, QR Platbu (
 
 | `gateway_id` | Tok | Faktura |
 |---|---|---|
-| `bank` | Web klasika | Záloha 1000 Kč + doplatek s odpočtem |
+| `bank` | Web klasika | Záloha dle `DepositConfig` + doplatek s odpočtem |
 | `cash` | Web FKSP | Jedna faktura na celou částku po doplnění firmy |
 | `manual` | Web admin/známí | Jedna faktura na celou částku během pobytu |
 | (žádná platba) | Nezaplaceno / čekající | Žádná akce |
@@ -65,9 +73,16 @@ Z **provizí Booking/Airbnb** (přijatá služba z EU) se v ČR odvádí **21 % 
 
 **Souhrnné hlášení se u přijatých služeb NEpodává** (jen u poskytnutých do EU — u nás nenastává).
 
+## DPH — plátce
+
+- **Sazby:** ubytování **12 %**, doplňky **21 %**, reverse charge z provize zůstává 21 %.
+- **Cena rezervace je brutto.** `priceTotal` z MotoPressu, ruční rezervace i OTA = částka, kterou host platí včetně DPH. Faktura ji rozpouští **daní shora** (základ = `total / 1,12`, DPH = zbytek). QR Platba i `totalAmount` zůstávají na brutto.
+- **Reverse charge z provize u plátce není náklad** — má nárok na odpočet, takže do zisku rezervace nevstupuje.
+- **Kontrolní hlášení a přiznání aplikace negeneruje jako XML.** Spočítá čísla a vyexportuje seznam dokladů do CSV; do portálu je zadá provozovatel nebo účetní. Aplikace dělá podklad, ne e-podání.
+
 ## Co se eviduje
 
-Vychází z tabulky, kterou majitelka vedla ručně (`sources/Vejminek - kalkulace - 2026.csv`, gitignored):
+Vychází z tabulky, kterou provozovatel vedl ručně v tabulkovém procesoru (vzor v gitignored `sources/`):
 
 - rezervace: příjezd, odjezd, nocí, jméno, adresa, zdroj, e-mail, telefon, dospělí/děti/hosté, pes
 - elektřina: VT/NT před a po pobytu, cena za kWh, „elektřina v ceně" ano/ne
