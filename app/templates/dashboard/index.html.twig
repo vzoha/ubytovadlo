@@ -31,14 +31,14 @@
 {%- endmacro %}
 
 {% block body %}
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
         <h1 class="h3 mb-0">Přehled</h1>
         <span class="text-muted small">{{ today|date('d. m. Y') }}</span>
     </div>
 
     {% if setupPending is not empty or setupDismissedCount > 0 %}
         <div class="card shadow-sm mb-4 border-primary-subtle">
-            <div class="card-header bg-primary-subtle d-flex justify-content-between align-items-center">
+            <div class="card-header bg-primary-subtle d-flex flex-wrap justify-content-between align-items-center gap-2">
                 <strong>⚙️ Co ještě nastavit</strong>
                 <span class="d-flex align-items-center gap-2">
                     {% if setupPending is not empty %}<span class="badge bg-primary">{{ setupPending|length }}</span>{% endif %}
@@ -48,16 +48,18 @@
             {% if setupPending is not empty %}
                 <ul class="list-group list-group-flush">
                     {% for item in setupPending %}
-                        <li class="list-group-item d-flex justify-content-between align-items-center gap-3">
+                        <li class="list-group-item d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2 gap-sm-3">
                             <div class="me-auto">
                                 <div class="fw-semibold">{{ item.label }}</div>
                                 <div class="small text-muted">{{ item.description }}</div>
                             </div>
-                            <a href="{{ path(item.route) }}" class="btn btn-sm btn-primary flex-shrink-0">Nastavit</a>
-                            <form method="post" action="{{ path('setup_checklist_dismiss', { key: item.key }) }}" class="flex-shrink-0">
-                                <input type="hidden" name="_token" value="{{ csrf_token('setup_checklist') }}">
-                                <button type="submit" class="btn btn-sm btn-link text-muted text-decoration-none" title="Skrýt — tuhle věc nepoužívám">Nepoužívám</button>
-                            </form>
+                            <span class="d-flex align-items-center gap-2 flex-shrink-0">
+                                <a href="{{ path(item.route) }}" class="btn btn-sm btn-primary">Nastavit</a>
+                                <form method="post" action="{{ path('setup_checklist_dismiss', { key: item.key }) }}">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('setup_checklist') }}">
+                                    <button type="submit" class="btn btn-sm btn-link text-muted text-decoration-none" title="Skrýt — tuhle věc nepoužívám">Nepoužívám</button>
+                                </form>
+                            </span>
                         </li>
                     {% endfor %}
                 </ul>
@@ -77,7 +79,7 @@
 
     {% if occupancyConflicts is not empty %}
         <div class="card shadow-sm mb-4 border-danger">
-            <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
+            <div class="card-header bg-danger text-white d-flex flex-wrap justify-content-between align-items-center gap-2">
                 <strong>⚠ Překrývající se rezervace</strong>
                 <span class="badge bg-light text-danger">{{ occupancyConflicts|length }}</span>
             </div>
@@ -106,7 +108,7 @@
         {# === ÚKLID === #}
         <div class="col-lg-6">
             <div class="card shadow-sm h-100">
-                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                <div class="card-header bg-success text-white d-flex flex-wrap justify-content-between align-items-center gap-2">
                     <strong>🧹 Úklid &amp; nadcházející pobyty</strong>
                     <span class="badge bg-light text-success">{{ upcoming|length }}</span>
                 </div>
@@ -120,7 +122,7 @@
                                 {% set badge = {arrival: 'primary', departure: 'warning', in_progress: 'info'}[row.kind] %}
                                 {% set kindLabel = {arrival: 'příjezd', departure: 'odjezd', in_progress: 'probíhá → odjezd'}[row.kind] %}
                                 <li class="list-group-item">
-                                    <div class="d-flex justify-content-between align-items-start">
+                                    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
                                         <div>
                                             <div>
                                                 <span class="badge text-bg-{{ badge }} me-1">{{ kindLabel }}</span>
@@ -149,7 +151,7 @@
         {# === DOPLNIT ÚDAJE === #}
         <div class="col-lg-6">
             <div class="card shadow-sm h-100">
-                <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
+                <div class="card-header bg-danger text-white d-flex flex-wrap justify-content-between align-items-center gap-2">
                     <strong>📝 Doplnit údaje</strong>
                     <span class="badge bg-light text-danger">{{ needsDetails|length }}</span>
                 </div>
@@ -161,7 +163,7 @@
                             {% for row in needsDetails %}
                                 {% set r = row.reservation %}
                                 <li class="list-group-item">
-                                    <div class="d-flex justify-content-between align-items-start">
+                                    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
                                         <div>
                                             <div>
                                                 <span class="badge text-bg-secondary me-1">{{ r.channel.label }}</span>
@@ -187,7 +189,7 @@
         {# === FAKTURACE === #}
         <div class="col-lg-6">
             <div class="card shadow-sm h-100">
-                <div class="card-header text-white d-flex justify-content-between align-items-center" style="background:#fd7e14">
+                <div class="card-header text-white d-flex flex-wrap justify-content-between align-items-center gap-2" style="background:#fd7e14">
                     <strong>🧾 Vystavit fakturu</strong>
                     <span class="badge bg-light text-warning">{{ missingInvoices|length }}</span>
                 </div>
@@ -201,7 +203,7 @@
                                 {% set missingLabel = {final: 'Doplatek (konečná)', full: 'Faktura', mode_unset: 'Určit režim', ota_during_stay: 'Faktura během OTA pobytu'}[row.missing] %}
                                 {% set missingBadge = {final: 'warning', full: 'warning', mode_unset: 'dark', ota_during_stay: 'info'}[row.missing] %}
                                 <li class="list-group-item">
-                                    <div class="d-flex justify-content-between align-items-start">
+                                    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
                                         <div>
                                             <div>
                                                 <span class="badge text-bg-{{ missingBadge }} me-1">{{ missingLabel }}</span>
@@ -222,7 +224,7 @@
                                                 {% if r.priceTotal %} · {{ r.priceTotal|money(r.priceCurrency, 0) }}{% endif %}
                                             </div>
                                         </div>
-                                        <a href="{{ path('reservation_detail', {id: r.id}) }}" class="text-decoration-none small">Detail →</a>
+                                        <a href="{{ path('reservation_detail', {id: r.id}) }}" class="text-decoration-none small text-nowrap ms-auto">Detail →</a>
                                     </div>
                                 </li>
                             {% endfor %}
@@ -236,7 +238,7 @@
         {% if tax_profile.current.value != 'non_payer' %}
         <div class="col-lg-6">
             <div class="card shadow-sm h-100">
-                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <div class="card-header bg-primary text-white d-flex flex-wrap justify-content-between align-items-center gap-2">
                     <strong>💸 DPH ({{ tax_profile.current.value == 'vat_payer' ? 'plátce' : 'identifikovaná osoba' }})</strong>
                     <a href="{{ path('vat_list') }}" class="badge bg-light text-primary text-decoration-none">Vše →</a>
                 </div>
@@ -248,7 +250,7 @@
                     {% else %}
                         {% set primary = vat.pending|first %}
                         <div class="p-3 mb-3 rounded {{ primary.overdue ? 'bg-danger-subtle border border-danger' : 'bg-warning-subtle border border-warning' }}">
-                            <div class="d-flex justify-content-between align-items-start">
+                            <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
                                 <div>
                                     <div class="small text-uppercase fw-bold {{ primary.overdue ? 'text-danger' : 'text-warning-emphasis' }}">
                                         {% if primary.overdue %}⚠ PO TERMÍNU — podat IHNED{% else %}K podání{% endif %}
@@ -275,7 +277,7 @@
                             <ul class="list-group list-group-flush mb-3">
                                 {% for p in vat.pending|slice(1) %}
                                     <li class="list-group-item px-0 py-2">
-                                        <div class="d-flex justify-content-between align-items-center">
+                                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
                                             <div>
                                                 {% if p.overdue %}<span class="badge text-bg-danger me-1">PO TERMÍNU</span>{% endif %}
                                                 <a href="{{ path('vat_detail', {year: p.year, month: '%02d'|format(p.month)}) }}" class="text-decoration-none">
@@ -294,7 +296,7 @@
 
                     {# Průběžný měsíc — informativní pruh dole #}
                     {% set c = vat.current %}
-                    <div class="d-flex justify-content-between align-items-center text-muted small border-top pt-2">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 text-muted small border-top pt-2">
                         <span>Probíhá <strong class="text-body">{{ CZECH_MONTHS[c.month] }} {{ c.year }}</strong> · zatím {{ c.vat|number_format(0, ',', ' ') }} Kč (základ {{ c.base|number_format(0, ',', ' ') }})</span>
                         <span>podat do {{ c.dueAt|date('d. m.') }}</span>
                     </div>
@@ -308,7 +310,7 @@
             <div class="col-12">
                 <a href="{{ path('ubyport_index') }}"
                    class="card shadow-sm text-decoration-none text-body {{ ubyport.overdue > 0 ? 'border-danger ubyport-overdue' : '' }}">
-                    <div class="card-body d-flex justify-content-between align-items-center">
+                    <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-2">
                         <span>👮 <strong>Ubyport</strong> — hlášení cizinců</span>
                         <span>
                             {% if ubyport.overdue > 0 %}
@@ -330,7 +332,7 @@
         {% if not tasks.isEmpty %}
             <div class="col-12">
                 <div class="card shadow-sm {{ tasks.overdue > 0 ? 'border-danger' : '' }}">
-                    <div class="card-header d-flex justify-content-between align-items-center">
+                    <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
                         <span>🛠️ <strong>Termíny</strong> — revize, servis a další hlídané úkony</span>
                         <span>
                             {% if tasks.overdue > 0 %}<span class="badge text-bg-danger">{{ tasks.overdue }} po termínu</span>{% endif %}
@@ -341,14 +343,16 @@
                         {% for task in tasks.tasks %}
                             {% set urgency = task.urgencyAt(today) %}
                             {% set days = task.daysUntilDue(today) %}
-                            <li class="list-group-item d-flex justify-content-between align-items-center gap-3">
+                            <li class="list-group-item d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2 gap-sm-3">
                                 <span class="me-auto">
                                     <a class="text-decoration-none fw-semibold" href="{{ path('task_show', {id: task.id}) }}">{{ task.name }}</a>
                                     <span class="d-block small text-muted">{{ task.category.label }}{% if task.vendor %} · {{ task.vendor }}{% endif %}</span>
                                 </span>
-                                <span class="small text-muted text-nowrap">{{ task.dueOn|date('j. n. Y') }}</span>
-                                <span class="badge text-bg-{{ urgency.badge }} text-nowrap">
-                                    {{ days == 0 ? 'dnes' : (days > 0 ? 'za ' ~ days ~ ' dní' : 'před ' ~ (days * -1) ~ ' dny') }}
+                                <span class="d-flex align-items-center gap-2 ms-auto">
+                                    <span class="small text-muted text-nowrap">{{ task.dueOn|date('j. n. Y') }}</span>
+                                    <span class="badge text-bg-{{ urgency.badge }} text-nowrap">
+                                        {{ days == 0 ? 'dnes' : (days > 0 ? 'za ' ~ days ~ ' dní' : 'před ' ~ (days * -1) ~ ' dny') }}
+                                    </span>
                                 </span>
                             </li>
                         {% endfor %}
@@ -363,7 +367,7 @@
         {# === EKONOMIKA === #}
         <div class="col-12">
             <a href="{{ path('economics_overview') }}" class="card shadow-sm text-decoration-none text-body">
-                <div class="card-body d-flex justify-content-between align-items-center">
+                <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-2">
                     <span>📈 <strong>Ekonomika {{ economics.year }}</strong> — uskutečněno {{ economics.realized.count }} rezervací · {{ economics.realized.nights }} nocí</span>
                     <span>
                         <span class="text-muted small me-2">příjem {{ economics.realized.income|number_format(0, ',', ' ') }} Kč</span>

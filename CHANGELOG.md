@@ -30,7 +30,9 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
   DPH, termíny — se na úzké obrazovce zobrazují jako karty, kde má každý údaj svůj
   popisek; na širší obrazovce zůstávají tabulkou. Filtry stavů se zalomí do řádků,
   data a částky se nelámou uprostřed a stránka se nikam neposouvá do strany.
-  Design manuál drží pravidla pro šířku 360 px.
+  Design manuál drží pravidla pro šířku 360 px. Karty na nástěnce drží stejné
+  chování — odznak se zalomí pod nadpis, název úkonu i popis dostanou plnou
+  šířku a odkaz na detail zůstane vcelku.
 
 - **Prázdný přehled ukazuje jen hlášku.** Tabulka bez dat — úklid, elektřina,
   Ubyport, ekonomika, termíny — vypíše důvod, proč je prázdná, bez hlavičky
