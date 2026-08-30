@@ -34,7 +34,7 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 - **Prázdný přehled ukazuje jen hlášku.** Tabulka bez dat — úklid, elektřina,
   Ubyport, ekonomika, termíny — vypíše důvod, proč je prázdná, bez hlavičky
-  sloupců nad ničím.
+  sloupců nad ničím. Hlášky na nástěnce mají odsazení ze všech stran.
 
 - **Částky se všude vypisují se symbolem měny.** Koruny jako `Kč`, eura jako `€`,
   dolary, libry a zloté odpovídajícím znakem; měna bez známého symbolu se vypíše

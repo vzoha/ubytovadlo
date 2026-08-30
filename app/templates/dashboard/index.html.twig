@@ -112,7 +112,7 @@
                 </div>
                 <div class="card-body p-0">
                     {% if upcoming is empty %}
-                        <p class="text-muted m-3 mb-0">Žádný pobyt v nejbližších 30 dnech.</p>
+                        <p class="text-muted m-3">Žádný pobyt v nejbližších 30 dnech.</p>
                     {% else %}
                         <ul class="list-group list-group-flush">
                             {% for row in upcoming %}
@@ -155,7 +155,7 @@
                 </div>
                 <div class="card-body p-0">
                     {% if needsDetails is empty %}
-                        <p class="text-muted m-3 mb-0">Žádná rezervace nečeká na doplnění.</p>
+                        <p class="text-muted m-3">Žádná rezervace nečeká na doplnění.</p>
                     {% else %}
                         <ul class="list-group list-group-flush">
                             {% for row in needsDetails %}
@@ -193,7 +193,7 @@
                 </div>
                 <div class="card-body p-0">
                     {% if missingInvoices is empty %}
-                        <p class="text-muted m-3 mb-0">Vše vyfakturováno za tento a minulý měsíc.</p>
+                        <p class="text-muted m-3">Vše vyfakturováno za tento a minulý měsíc.</p>
                     {% else %}
                         <ul class="list-group list-group-flush">
                             {% for row in missingInvoices %}
