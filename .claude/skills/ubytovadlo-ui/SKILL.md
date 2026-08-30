@@ -50,6 +50,10 @@ Preferuj **nativní HTML5** před vlastní JS komponentou: `type="number"` (má 
 
 Cílová šířka **360 px**. Tabulka vždy v `.table-responsive` (mimo PDF/e-mail šablony), přebytečné sloupce `d-none d-md-table-cell`, tabulka nad ~5 sloupců `.table-stack` + `data-label` na buňkách (pod `md` karty, vzor `reservation/list.html.twig`), datum a částka `text-nowrap`, toolbar `d-flex flex-wrap gap-2`, formulářová mřížka `col-md-*`. Žádný vodorovný posuv stránky, samostatné tlačítko aspoň 38 px (`btn-sm` v tabulce je OK), text ne pod 12 px (`badge` výjimka, ale ne pod `.small`).
 
+## Prázdné stavy
+
+Řádek s hláškou v prázdné tabulce nese `class="table-empty"` — hlavička sloupců se skryje, ať nad hláškou nevisí prázdné sloupce.
+
 ## Kontrola hotového UI
 
 Sáhl jsi na šablonu? Projdi to očima, ne jen kódem:

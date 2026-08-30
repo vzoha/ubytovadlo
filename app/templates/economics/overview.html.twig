@@ -103,7 +103,7 @@
                         </td>
                     </tr>
                 {% else %}
-                    <tr><td colspan="13" class="text-center text-muted py-3">Žádné rezervace v roce {{ year }}.</td></tr>
+                    <tr class="table-empty"><td colspan="13" class="text-center text-muted py-3">Žádné rezervace v roce {{ year }}.</td></tr>
                 {% endfor %}
                 </tbody>
                 {% if reservations is not empty %}

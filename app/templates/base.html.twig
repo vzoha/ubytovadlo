@@ -10,6 +10,9 @@
         /* Badge drží čitelnou velikost i v hustých tabulkách se zmenšeným písmem. */
         .small .badge, .table.small .badge { font-size: .75rem; }
 
+        /* Prázdná tabulka ukazuje jen hlášku, ne hlavičku sloupců bez dat. */
+        .table:has(tr.table-empty) thead { display: none; }
+
         /* Široká tabulka: na mobilu je z každého řádku karta, popisek sloupce nese data-label. */
         @media (max-width: 767.98px) {
             .table-stack thead { display: none; }

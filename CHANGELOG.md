@@ -14,6 +14,10 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
   data a částky se nelámou uprostřed a stránka se nikam neposouvá do strany.
   Design manuál drží pravidla pro šířku 360 px.
 
+- **Prázdný přehled ukazuje jen hlášku.** Tabulka bez dat — úklid, elektřina,
+  Ubyport, ekonomika, termíny — vypíše důvod, proč je prázdná, bez hlavičky
+  sloupců nad ničím.
+
 - **Částky se všude vypisují se symbolem měny.** Koruny jako `Kč`, eura jako `€`,
   dolary, libry a zloté odpovídajícím znakem; měna bez známého symbolu se vypíše
   ISO kódem. Platí pro seznam a detail rezervace, přehled na nástěnce, faktury

@@ -58,7 +58,7 @@
                         <td class="text-end">{% if r.checkOut %}{{ date(r.checkOut).diff(date(r.checkIn)).days }}{% else %}—{% endif %}</td>
                     </tr>
                 {% else %}
-                    <tr><td colspan="7" class="text-center text-muted py-3">V roce {{ year }} zatím žádní evidovaní hosté.</td></tr>
+                    <tr class="table-empty"><td colspan="7" class="text-center text-muted py-3">V roce {{ year }} zatím žádní evidovaní hosté.</td></tr>
                 {% endfor %}
                 </tbody>
             </table>

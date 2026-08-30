@@ -58,6 +58,10 @@ Cílová šířka **360 px** — pokrývá běžné Androidy i užší iPhony. Z
 - Samostatně stojící tlačítko má aspoň 38 px na výšku; `btn-sm` v řádku tabulky je v pořádku.
 - Text neklesá pod 12 px. `badge` je výjimka — nekombinuj ho ale s `.small` na rodiči, výsledek je 10,5 px.
 
+## Prázdné stavy
+
+Prázdná tabulka ukazuje jen hlášku, ne hlavičku sloupců nad ničím. Řádek s hláškou nese `class="table-empty"` — hlavička se sama skryje.
+
 ## Texty (copy)
 
 - Aktivní sloveso podle toho, co se stane: `Uložit`, ne `Odeslat`; název akce drž stejný v celém toku.

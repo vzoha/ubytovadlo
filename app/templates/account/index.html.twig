@@ -100,7 +100,7 @@
                         </td>
                     </tr>
                 {% else %}
-                    <tr><td colspan="7" class="text-muted">Žádné pohyby.</td></tr>
+                    <tr class="table-empty"><td colspan="7" class="text-muted">Žádné pohyby.</td></tr>
                 {% endfor %}
                 </tbody>
             </table>
@@ -135,7 +135,7 @@
                         <td data-label="Částka" class="text-end text-nowrap text-success">{{ i.amountCzk|number_format(0, ',', ' ') }} Kč</td>
                     </tr>
                 {% else %}
-                    <tr><td colspan="6" class="text-muted">Zatím žádné přijaté příjmy.</td></tr>
+                    <tr class="table-empty"><td colspan="6" class="text-muted">Zatím žádné přijaté příjmy.</td></tr>
                 {% endfor %}
                 </tbody>
             </table>

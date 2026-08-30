@@ -42,7 +42,7 @@
                         </td>
                     </tr>
                 {% else %}
-                    <tr><td colspan="5" class="text-muted">Žádná uzávěrka.</td></tr>
+                    <tr class="table-empty"><td colspan="5" class="text-muted">Žádná uzávěrka.</td></tr>
                 {% endfor %}
                 </tbody>
             </table>
@@ -76,7 +76,7 @@
                         <td class="text-end"><button type="button" class="btn btn-sm btn-outline-primary py-0" data-bs-toggle="modal" data-bs-target="#editEntry{{ m.id }}">✎</button></td>
                     </tr>
                 {% else %}
-                    <tr><td colspan="6" class="text-muted">Žádné pohyby.</td></tr>
+                    <tr class="table-empty"><td colspan="6" class="text-muted">Žádné pohyby.</td></tr>
                 {% endfor %}
                 </tbody>
             </table>

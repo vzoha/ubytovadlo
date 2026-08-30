@@ -50,7 +50,7 @@
                             </td>
                         </tr>
                     {% else %}
-                        <tr><td colspan="{{ show_guest ? 5 : 4 }}" class="text-muted small p-3">Nic k vyplacení.</td></tr>
+                        <tr class="table-empty"><td colspan="{{ show_guest ? 5 : 4 }}" class="text-muted small p-3">Nic k vyplacení.</td></tr>
                     {% endfor %}
                     </tbody>
                 </table>
@@ -93,7 +93,7 @@
                             <td class="text-end">{{ c.payoutCzk|number_format(0, ',', ' ') }} Kč</td>
                         </tr>
                     {% else %}
-                        <tr><td colspan="{{ show_guest ? 5 : 4 }}" class="text-muted small p-3">Tento měsíc nic vyplaceno.</td></tr>
+                        <tr class="table-empty"><td colspan="{{ show_guest ? 5 : 4 }}" class="text-muted small p-3">Tento měsíc nic vyplaceno.</td></tr>
                     {% endfor %}
                     </tbody>
                 </table>
