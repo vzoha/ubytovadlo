@@ -43,6 +43,21 @@ Segmentové přepínače (filtry stavů, výběr roku) jsou **šedé**; aktivní
 - **Preferuj nativní HTML5 prvky** před vlastními JS komponentami: `type="number"` (má vestavěný ±spinner), `type="date"`/`time`, `type="email"`/`tel`/`url`, `datalist`, `<details>`/`<summary>`, `required`, `min`/`max`/`step`, `pattern`. Míň kódu, přístupnost a validace zdarma, konzistentní chování. Vlastní widget až když nativní opravdu nestačí.
 - Sémantický `type` podle obsahu (číslo → `number`, e-mail → `email`, telefon → `tel`) kvůli klávesnici na mobilu a validaci. K `number` dej `min`/`max`/`step`.
 
+## Mobil
+
+Cílová šířka **360 px** — pokrývá běžné Androidy i užší iPhony. Základ drží `base.html.twig` (viewport, `navbar-expand-lg`), zbytek je na stránce.
+
+- Každá `<table>` je obalená v `.table-responsive`. Výjimka jen šablony pro PDF a e-mail.
+- Sloupec, který se na mobilu nevejde, skryj `d-none d-md-table-cell` — nezmenšuj kvůli tomu písmo.
+- Tabulka nad ~5 sloupců dostane `.table-stack` a každá buňka `data-label="Nadpis sloupce"`. Pod `md` je z řádku karta s popisky, nad `md` zůstává tabulka. Vzor: [`reservation/list.html.twig`](../app/templates/reservation/list.html.twig).
+- Buňka s datem nebo částkou nese `text-nowrap` — číslo ani datum se nemá lámat uprostřed.
+- Toolbar tlačítek: `d-flex flex-wrap gap-2`. Zarovnání doprava jen tak, aby se prvky uměly zalomit.
+- Formulářová mřížka: `col-md-*`, ne `col-*` — na mobilu jsou pole pod sebou v plné šířce.
+- Modal s delším obsahem: `modal-dialog-scrollable`.
+- Stránka nemá vodorovný posuv — široký obsah scrolluje uvnitř svého kontejneru.
+- Samostatně stojící tlačítko má aspoň 38 px na výšku; `btn-sm` v řádku tabulky je v pořádku.
+- Text neklesá pod 12 px. `badge` je výjimka — nekombinuj ho ale s `.small` na rodiči, výsledek je 10,5 px.
+
 ## Texty (copy)
 
 - Aktivní sloveso podle toho, co se stane: `Uložit`, ne `Odeslat`; název akce drž stejný v celém toku.

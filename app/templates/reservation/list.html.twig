@@ -26,8 +26,13 @@
             height: 1px;
             background: linear-gradient(to right, #f59e0b, rgba(245, 158, 11, 0));
         }
+        @media (max-width: 767.98px) {
+            /* V kartovém režimu nese zvýraznění celá karta, ne jednotlivé buňky. */
+            .today-row > td { background-color: transparent !important; box-shadow: none; }
+            tr.today-row { background-color: #fffdf3; box-shadow: inset 3px 0 0 #f59e0b; }
+        }
         .today-divider .today-pill {
-            font-size: .7rem;
+            font-size: .75rem;
             font-weight: 600;
             letter-spacing: .03em;
             text-transform: uppercase;
@@ -45,12 +50,12 @@
         }
     </style>
 
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <div class="d-flex align-items-center gap-3">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <div class="d-flex flex-wrap align-items-center gap-3">
             <h1 class="h3 mb-0">Rezervace</h1>
             <a href="{{ path('reservation_new') }}" class="btn btn-sm btn-primary">+ Nová rezervace</a>
         </div>
-        <div class="btn-group" role="group">
+        <div class="d-flex flex-wrap gap-2" role="group">
             <a href="{{ path('reservation_list') }}" class="btn btn-sm btn-outline-secondary {{ currentStatus is null ? 'active' : '' }}">Aktivní</a>
             {% for status in statuses %}
                 <a href="{{ path('reservation_list', {status: status.value}) }}"
@@ -65,7 +70,7 @@
         <div class="alert alert-info">{{ currentStatus is null ? 'Žádné aktivní rezervace.' : 'Žádné rezervace v tomto stavu.' }}</div>
     {% else %}
         <div class="table-responsive">
-            <table class="table table-hover align-middle">
+            <table class="table table-hover align-middle table-stack">
                 <thead>
                 <tr>
                     <th>Stav</th>
@@ -104,21 +109,21 @@
                                 <span class="badge text-bg-warning ms-1" title="MotoPress hlasi blok obsazenosti, ale chybi data hosta. Doplnit z extranetu.">⚠ z extranetu</span>
                             {% endif %}
                         </td>
-                        <td>{{ r.channel.label }}</td>
-                        <td>
+                        <td data-label="Kanál">{{ r.channel.label }}</td>
+                        <td data-label="Příjezd" class="text-nowrap">
                             {{ r.checkIn|date('d. m. Y') }}
                             {% if checkIn == today %}<span class="badge text-bg-warning ms-1">dnes</span>{% endif %}
                         </td>
-                        <td>
+                        <td data-label="Odjezd" class="text-nowrap">
                             {{ r.checkOut ? r.checkOut|date('d. m. Y') : '—' }}
                             {% if r.checkOut and checkOut == today %}<span class="badge text-bg-warning ms-1">dnes</span>{% endif %}
                         </td>
-                        <td>
+                        <td data-label="Host">
                             {{ r.guestName ?? '(nedoplněno)' }}
                             {% if r.hasPet %}<span class="badge text-bg-warning ms-1" title="{{ r.petsNote ?? 'Host se psem' }}">🐶</span>{% endif %}
                             {% if r.needsBabyCot %}<span class="badge text-bg-info ms-1" title="Připravit dětskou postýlku">👶</span>{% endif %}
                         </td>
-                        <td class="text-end">
+                        <td data-label="Cena" class="text-end text-nowrap">
                             {% if r.priceTotal %}
                                 {{ r.priceTotal|money(r.priceCurrency, 0) }}
                                 {% set czk = czk_previews[r.id] ?? null %}
@@ -130,7 +135,7 @@
                                 {% endif %}
                             {% else %}—{% endif %}
                         </td>
-                        <td>
+                        <td data-label="Platba">
                             {% set ps = payment_statuses[r.id] ?? null %}
                             {% if ps %}<span class="badge text-bg-{{ ps.badge }}">{{ ps.label }}</span>{% else %}<span class="text-muted">—</span>{% endif %}
                         </td>

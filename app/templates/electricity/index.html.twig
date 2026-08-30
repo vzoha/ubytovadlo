@@ -19,22 +19,24 @@
             <div class="card">
                 <div class="card-header">Tarify</div>
                 <div class="card-body p-0">
-                    <table class="table table-sm mb-0">
-                        <thead class="small text-muted">
-                        <tr><th>Platný od</th><th class="text-end">VT Kč/kWh</th><th class="text-end">NT Kč/kWh</th></tr>
-                        </thead>
-                        <tbody>
-                        {% for t in tariffs %}
-                            <tr>
-                                <td>{{ t.validFrom|date('d. m. Y') }}</td>
-                                <td class="text-end">{{ t.vtRate|number_format(2, ',', ' ') }}</td>
-                                <td class="text-end">{{ t.ntRate|number_format(2, ',', ' ') }}</td>
-                            </tr>
-                        {% else %}
-                            <tr><td colspan="3" class="text-muted small">Žádné tarify zatím nejsou.</td></tr>
-                        {% endfor %}
-                        </tbody>
-                    </table>
+                    <div class="table-responsive">
+                        <table class="table table-sm mb-0">
+                            <thead class="small text-muted">
+                            <tr><th>Platný od</th><th class="text-end">VT Kč/kWh</th><th class="text-end">NT Kč/kWh</th></tr>
+                            </thead>
+                            <tbody>
+                            {% for t in tariffs %}
+                                <tr>
+                                    <td>{{ t.validFrom|date('d. m. Y') }}</td>
+                                    <td class="text-end">{{ t.vtRate|number_format(2, ',', ' ') }}</td>
+                                    <td class="text-end">{{ t.ntRate|number_format(2, ',', ' ') }}</td>
+                                </tr>
+                            {% else %}
+                                <tr><td colspan="3" class="text-muted small">Žádné tarify zatím nejsou.</td></tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -43,36 +45,38 @@
             <div class="card">
                 <div class="card-header">Historie odečtů ({{ readings|length }})</div>
                 <div class="card-body p-0">
-                    <table class="table table-sm table-hover mb-0">
-                        <thead class="small text-muted">
-                        <tr>
-                            <th>Datum</th>
-                            <th class="text-end">VT</th>
-                            <th class="text-end">NT</th>
-                            <th>Poznámka</th>
-                            <th></th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {% for r in readings %}
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead class="small text-muted">
                             <tr>
-                                <td>{{ r.readAt|date('d. m. Y') }}</td>
-                                <td class="text-end">{{ r.vtMeter|number_format(0, ',', ' ') }}</td>
-                                <td class="text-end">{{ r.ntMeter|number_format(0, ',', ' ') }}</td>
-                                <td class="small text-muted">{{ r.note ?? '' }}</td>
-                                <td class="text-end">
-                                    <form method="post" action="{{ path('electricity_delete', {id: r.id}) }}"
-                                          onsubmit="return confirm('Smazat odečet z {{ r.readAt|date('d. m. Y') }}?')">
-                                        <input type="hidden" name="_token" value="{{ csrf_token('electricity-delete-' ~ r.id) }}">
-                                        <button class="btn btn-sm btn-outline-danger py-0" title="Smazat odečet">×</button>
-                                    </form>
-                                </td>
+                                <th>Datum</th>
+                                <th class="text-end">VT</th>
+                                <th class="text-end">NT</th>
+                                <th>Poznámka</th>
+                                <th></th>
                             </tr>
-                        {% else %}
-                            <tr><td colspan="5" class="text-muted small p-3">Žádné odečty zatím nejsou.</td></tr>
-                        {% endfor %}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                            {% for r in readings %}
+                                <tr>
+                                    <td>{{ r.readAt|date('d. m. Y') }}</td>
+                                    <td class="text-end">{{ r.vtMeter|number_format(0, ',', ' ') }}</td>
+                                    <td class="text-end">{{ r.ntMeter|number_format(0, ',', ' ') }}</td>
+                                    <td class="small text-muted">{{ r.note ?? '' }}</td>
+                                    <td class="text-end">
+                                        <form method="post" action="{{ path('electricity_delete', {id: r.id}) }}"
+                                              onsubmit="return confirm('Smazat odečet z {{ r.readAt|date('d. m. Y') }}?')">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('electricity-delete-' ~ r.id) }}">
+                                            <button class="btn btn-sm btn-outline-danger py-0" title="Smazat odečet">×</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% else %}
+                                <tr><td colspan="5" class="text-muted small p-3">Žádné odečty zatím nejsou.</td></tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>

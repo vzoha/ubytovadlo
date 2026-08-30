@@ -19,38 +19,40 @@
             <span>Přijaté platby vs. výdaje po měsících</span>
             <a class="btn btn-sm btn-outline-secondary py-0" href="{{ path('account_export_csv', {from: year ~ '-01-01', to: year ~ '-12-31'}) }}">Export pohybů CSV</a>
         </div>
-        <table class="table table-sm align-middle mb-0 small">
-            <thead>
-                <tr>
-                    <th>Měsíc</th>
-                    <th class="text-end">Příjem</th>
-                    <th class="text-end">Provozní výdaje</th>
-                    <th class="text-end">Osobní / finanční</th>
-                    <th class="text-end">Čistý tok</th>
-                </tr>
-            </thead>
-            <tbody>
-            {% for row in summary.months %}
-                {% set empty = row.income == 0 and row.operating == 0 and row.nonOperating == 0 %}
-                <tr class="{{ empty ? 'text-muted' : '' }}">
-                    <td>{{ months[row.month - 1] }}</td>
-                    <td class="text-end text-success">{{ row.income|number_format(0, ',', ' ') }}</td>
-                    <td class="text-end {{ row.operating > 0 ? 'text-danger' : '' }}">{{ row.operating|number_format(0, ',', ' ') }}</td>
-                    <td class="text-end {{ row.nonOperating > 0 ? 'text-danger' : '' }}">{{ row.nonOperating|number_format(0, ',', ' ') }}</td>
-                    <td class="text-end fw-semibold {{ row.net < 0 ? 'text-danger' : '' }}">{{ row.net|number_format(0, ',', ' ') }}</td>
-                </tr>
-            {% endfor %}
-            </tbody>
-            <tfoot class="table-group-divider">
-                <tr class="fw-bold">
-                    <td>Celkem {{ year }}</td>
-                    <td class="text-end text-success">{{ summary.totals.income|number_format(0, ',', ' ') }}</td>
-                    <td class="text-end">{{ summary.totals.operating|number_format(0, ',', ' ') }}</td>
-                    <td class="text-end">{{ summary.totals.nonOperating|number_format(0, ',', ' ') }}</td>
-                    <td class="text-end {{ summary.totals.net < 0 ? 'text-danger' : '' }}">{{ summary.totals.net|number_format(0, ',', ' ') }} Kč</td>
-                </tr>
-            </tfoot>
-        </table>
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0 small">
+                <thead>
+                    <tr>
+                        <th>Měsíc</th>
+                        <th class="text-end">Příjem</th>
+                        <th class="text-end">Provozní výdaje</th>
+                        <th class="text-end">Osobní / finanční</th>
+                        <th class="text-end">Čistý tok</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for row in summary.months %}
+                    {% set empty = row.income == 0 and row.operating == 0 and row.nonOperating == 0 %}
+                    <tr class="{{ empty ? 'text-muted' : '' }}">
+                        <td>{{ months[row.month - 1] }}</td>
+                        <td class="text-end text-success">{{ row.income|number_format(0, ',', ' ') }}</td>
+                        <td class="text-end {{ row.operating > 0 ? 'text-danger' : '' }}">{{ row.operating|number_format(0, ',', ' ') }}</td>
+                        <td class="text-end {{ row.nonOperating > 0 ? 'text-danger' : '' }}">{{ row.nonOperating|number_format(0, ',', ' ') }}</td>
+                        <td class="text-end fw-semibold {{ row.net < 0 ? 'text-danger' : '' }}">{{ row.net|number_format(0, ',', ' ') }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+                <tfoot class="table-group-divider">
+                    <tr class="fw-bold">
+                        <td>Celkem {{ year }}</td>
+                        <td class="text-end text-success">{{ summary.totals.income|number_format(0, ',', ' ') }}</td>
+                        <td class="text-end">{{ summary.totals.operating|number_format(0, ',', ' ') }}</td>
+                        <td class="text-end">{{ summary.totals.nonOperating|number_format(0, ',', ' ') }}</td>
+                        <td class="text-end {{ summary.totals.net < 0 ? 'text-danger' : '' }}">{{ summary.totals.net|number_format(0, ',', ' ') }} Kč</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
     </div>
     <p class="small text-muted mt-2">
         Příjem = reálně přijaté platby z rezervací (záloha i doplatek v měsíci svého přijetí).

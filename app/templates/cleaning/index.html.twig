@@ -15,44 +15,46 @@
             <span class="fw-bold">{{ total|number_format(0, ',', ' ') }} Kč</span>
         </div>
         <div class="card-body p-0">
-            <table class="table table-sm table-hover mb-0">
-                <thead class="small text-muted">
-                <tr>
-                    <th>Pobyt</th>
-                    {% if show_guest %}<th>Host</th>{% endif %}
-                    <th>Typ</th>
-                    <th class="text-end">Vyplatit</th>
-                    <th></th>
-                </tr>
-                </thead>
-                <tbody>
-                {% for c in pending %}
+            <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0">
+                    <thead class="small text-muted">
                     <tr>
-                        <td>
-                            {{ c.reservation.checkOut ? c.reservation.checkOut|date('d. m. Y') : c.reservation.checkIn|date('d. m. Y') }}
-                        </td>
-                        {% if show_guest %}
-                        <td>
-                            <a href="{{ path('reservation_detail', {id: c.reservation.id}) }}">
-                                {{ c.reservation.guestName ?? '—' }}
-                            </a>
-                        </td>
-                        {% endif %}
-                        <td>{{ c.type|cleaning_label }}</td>
-                        <td class="text-end fw-bold">{{ c.payoutCzk|number_format(0, ',', ' ') }} Kč</td>
-                        <td class="text-end">
-                            <form method="post" action="{{ path('cleaning_mark_paid', {id: c.id}) }}"
-                                  onsubmit="return confirm('Označit jako vyplacené dnes?')">
-                                <input type="hidden" name="_token" value="{{ csrf_token('cleaning-paid-' ~ c.id) }}">
-                                <button class="btn btn-sm btn-outline-success">Zaplaceno</button>
-                            </form>
-                        </td>
+                        <th>Pobyt</th>
+                        {% if show_guest %}<th>Host</th>{% endif %}
+                        <th>Typ</th>
+                        <th class="text-end">Vyplatit</th>
+                        <th></th>
                     </tr>
-                {% else %}
-                    <tr><td colspan="{{ show_guest ? 5 : 4 }}" class="text-muted small p-3">Nic k vyplacení.</td></tr>
-                {% endfor %}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                    {% for c in pending %}
+                        <tr>
+                            <td>
+                                {{ c.reservation.checkOut ? c.reservation.checkOut|date('d. m. Y') : c.reservation.checkIn|date('d. m. Y') }}
+                            </td>
+                            {% if show_guest %}
+                            <td>
+                                <a href="{{ path('reservation_detail', {id: c.reservation.id}) }}">
+                                    {{ c.reservation.guestName ?? '—' }}
+                                </a>
+                            </td>
+                            {% endif %}
+                            <td>{{ c.type|cleaning_label }}</td>
+                            <td class="text-end fw-bold">{{ c.payoutCzk|number_format(0, ',', ' ') }} Kč</td>
+                            <td class="text-end">
+                                <form method="post" action="{{ path('cleaning_mark_paid', {id: c.id}) }}"
+                                      onsubmit="return confirm('Označit jako vyplacené dnes?')">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('cleaning-paid-' ~ c.id) }}">
+                                    <button class="btn btn-sm btn-outline-success">Zaplaceno</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr><td colspan="{{ show_guest ? 5 : 4 }}" class="text-muted small p-3">Nic k vyplacení.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -64,36 +66,38 @@
             <span class="fw-bold">{{ paid_total|number_format(0, ',', ' ') }} Kč</span>
         </div>
         <div class="card-body p-0">
-            <table class="table table-sm mb-0">
-                <thead class="small text-muted">
-                <tr>
-                    <th>Vyplaceno</th>
-                    <th>Pobyt</th>
-                    {% if show_guest %}<th>Host</th>{% endif %}
-                    <th>Typ</th>
-                    <th class="text-end">Částka</th>
-                </tr>
-                </thead>
-                <tbody>
-                {% for c in paid_this_month %}
+            <div class="table-responsive">
+                <table class="table table-sm mb-0">
+                    <thead class="small text-muted">
                     <tr>
-                        <td>{{ c.paidAt|date('d. m. Y') }}</td>
-                        <td>{{ c.reservation.checkOut ? c.reservation.checkOut|date('d. m. Y') : c.reservation.checkIn|date('d. m. Y') }}</td>
-                        {% if show_guest %}
-                        <td>
-                            <a href="{{ path('reservation_detail', {id: c.reservation.id}) }}">
-                                {{ c.reservation.guestName ?? '—' }}
-                            </a>
-                        </td>
-                        {% endif %}
-                        <td>{{ c.type|cleaning_label }}</td>
-                        <td class="text-end">{{ c.payoutCzk|number_format(0, ',', ' ') }} Kč</td>
+                        <th>Vyplaceno</th>
+                        <th>Pobyt</th>
+                        {% if show_guest %}<th>Host</th>{% endif %}
+                        <th>Typ</th>
+                        <th class="text-end">Částka</th>
                     </tr>
-                {% else %}
-                    <tr><td colspan="{{ show_guest ? 5 : 4 }}" class="text-muted small p-3">Tento měsíc nic vyplaceno.</td></tr>
-                {% endfor %}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                    {% for c in paid_this_month %}
+                        <tr>
+                            <td>{{ c.paidAt|date('d. m. Y') }}</td>
+                            <td>{{ c.reservation.checkOut ? c.reservation.checkOut|date('d. m. Y') : c.reservation.checkIn|date('d. m. Y') }}</td>
+                            {% if show_guest %}
+                            <td>
+                                <a href="{{ path('reservation_detail', {id: c.reservation.id}) }}">
+                                    {{ c.reservation.guestName ?? '—' }}
+                                </a>
+                            </td>
+                            {% endif %}
+                            <td>{{ c.type|cleaning_label }}</td>
+                            <td class="text-end">{{ c.payoutCzk|number_format(0, ',', ' ') }} Kč</td>
+                        </tr>
+                    {% else %}
+                        <tr><td colspan="{{ show_guest ? 5 : 4 }}" class="text-muted small p-3">Tento měsíc nic vyplaceno.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 {% endblock %}

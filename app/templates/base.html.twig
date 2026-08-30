@@ -6,6 +6,47 @@
     <title>{% block title %}{{ brand_name }} — automatizace{% endblock %}</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%22112%22>🏡</text></svg>">
     <link href="{{ asset('assets/bootstrap.min.css') }}" rel="stylesheet">
+    <style>
+        /* Badge drží čitelnou velikost i v hustých tabulkách se zmenšeným písmem. */
+        .small .badge, .table.small .badge { font-size: .75rem; }
+
+        /* Široká tabulka: na mobilu je z každého řádku karta, popisek sloupce nese data-label. */
+        @media (max-width: 767.98px) {
+            .table-stack thead { display: none; }
+            .table-stack, .table-stack tbody, .table-stack tr, .table-stack td { display: block; width: 100%; }
+            .table-stack tr {
+                background: #fff;
+                border: 1px solid var(--bs-border-color);
+                border-radius: .5rem;
+                padding: .5rem .75rem;
+                margin-bottom: .5rem;
+            }
+            .table-stack td {
+                position: relative;
+                padding: .2rem 0 .2rem 7rem;
+                border: 0;
+                text-align: left !important;
+            }
+            .table-stack td[data-label]::before {
+                content: attr(data-label);
+                position: absolute;
+                left: 0;
+                top: .2rem;
+                width: 6.5rem;
+                color: var(--bs-secondary-color);
+            }
+            .table-stack td:not([data-label]) { padding-left: 0; }
+            .table-stack td:last-child { padding-left: 0; text-align: right !important; }
+            .table-stack td[colspan] { padding-left: 0; }
+            /* Řádek, který jen odděluje sekce (colspan), zůstává mimo karty. */
+            .table-stack tr:has(> td[colspan]) {
+                background: transparent;
+                border: 0;
+                padding: 0;
+                margin-bottom: .25rem;
+            }
+        }
+    </style>
     {% block stylesheets %}{% endblock %}
 </head>
 <body class="bg-light">

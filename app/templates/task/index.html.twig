@@ -32,7 +32,7 @@
 
     <div class="card">
         <div class="table-responsive">
-        <table class="table table-sm table-hover align-middle mb-0">
+        <table class="table table-sm table-hover align-middle mb-0 table-stack">
             <thead>
                 <tr>
                     <th>Stav</th><th>Úkon</th><th>Kategorie</th><th>Lhůta</th>
@@ -45,14 +45,14 @@
                 {% set days = task.daysUntilDue(today) %}
                 <tr>
                     <td><span class="badge text-bg-{{ urgency.badge }}">{{ urgency.label }}</span></td>
-                    <td>
+                    <td data-label="Úkon">
                         <div class="fw-semibold">{{ task.name }}</div>
                         {% if task.legalReference %}<div class="small text-muted">{{ task.legalReference }}</div>{% endif %}
                     </td>
-                    <td class="small">{{ task.category.label }}</td>
-                    <td class="small text-muted">{{ task|task_interval }}</td>
-                    <td class="small">{{ task.lastDoneOn ? task.lastDoneOn|date('j. n. Y') : '—' }}</td>
-                    <td class="small">
+                    <td data-label="Kategorie" class="small">{{ task.category.label }}</td>
+                    <td data-label="Lhůta" class="small text-muted">{{ task|task_interval }}</td>
+                    <td data-label="Naposledy" class="small text-nowrap">{{ task.lastDoneOn ? task.lastDoneOn|date('j. n. Y') : '—' }}</td>
+                    <td data-label="Příští termín" class="small">
                         {% if task.dueOn %}
                             {{ task.dueOn|date('j. n. Y') }}
                             <span class="text-muted">({{ days == 0 ? 'dnes' : (days > 0 ? 'za ' ~ days ~ ' dní' : 'před ' ~ (days * -1) ~ ' dny') }})</span>

@@ -8,6 +8,12 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Změněno
 
+- **Aplikace se ovládá i z telefonu.** Přehledy s mnoha sloupci — rezervace, účty,
+  DPH, termíny — se na úzké obrazovce zobrazují jako karty, kde má každý údaj svůj
+  popisek; na širší obrazovce zůstávají tabulkou. Filtry stavů se zalomí do řádků,
+  data a částky se nelámou uprostřed a stránka se nikam neposouvá do strany.
+  Design manuál drží pravidla pro šířku 360 px.
+
 - **Částky se všude vypisují se symbolem měny.** Koruny jako `Kč`, eura jako `€`,
   dolary, libry a zloté odpovídajícím znakem; měna bez známého symbolu se vypíše
   ISO kódem. Platí pro seznam a detail rezervace, přehled na nástěnce, faktury

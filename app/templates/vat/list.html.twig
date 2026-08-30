@@ -18,7 +18,7 @@
         <div class="alert alert-info">Žádné rezervace s vyplněnou provizí ani Booking faktury.</div>
     {% else %}
         <div class="table-responsive">
-            <table class="table table-hover align-middle">
+            <table class="table table-hover align-middle table-stack">
                 <thead>
                 <tr>
                     <th>Měsíc</th>
@@ -40,17 +40,17 @@
                 {% for s in months %}
                     {% set key = '%04d-%02d'|format(s.year, s.month) %}
                     <tr>
-                        <td><strong>{{ key }}</strong></td>
-                        <td class="text-end">{{ s.reservations|length }}</td>
+                        <td data-label="Měsíc"><strong>{{ key }}</strong></td>
+                        <td data-label="Rezervací" class="text-end">{{ s.reservations|length }}</td>
                         {% if is_payer %}
-                            <td class="text-end">{{ s.outputVatCzk|number_format(2, ',', ' ') }}</td>
-                            <td class="text-end text-muted">{{ s.sumVatCzk|number_format(2, ',', ' ') }}</td>
-                            <td class="text-end"><strong>{{ s.liability.totalCzk|number_format(2, ',', ' ') }}</strong></td>
+                            <td data-label="Výstup Kč" class="text-end text-nowrap">{{ s.outputVatCzk|number_format(2, ',', ' ') }}</td>
+                            <td data-label="RC Kč" class="text-end text-nowrap text-muted">{{ s.sumVatCzk|number_format(2, ',', ' ') }}</td>
+                            <td data-label="Povinnost Kč" class="text-end text-nowrap"><strong>{{ s.liability.totalCzk|number_format(2, ',', ' ') }}</strong></td>
                         {% else %}
-                            <td class="text-end">{{ s.sumBaseCzk|number_format(2, ',', ' ') }}</td>
-                            <td class="text-end"><strong>{{ s.sumVatCzk|number_format(2, ',', ' ') }}</strong></td>
+                            <td data-label="Základ Kč" class="text-end text-nowrap">{{ s.sumBaseCzk|number_format(2, ',', ' ') }}</td>
+                            <td data-label="DPH Kč" class="text-end text-nowrap"><strong>{{ s.sumVatCzk|number_format(2, ',', ' ') }}</strong></td>
                         {% endif %}
-                        <td>
+                        <td data-label="Doklady OTA">
                             {% if s.invoice %}
                                 <span class="badge text-bg-success" title="Booking faktura #{{ s.invoice.invoiceNumber }}">B ✓</span>
                             {% elseif s.bookingReservationSum > 0 %}
@@ -62,7 +62,7 @@
                                 <span class="badge text-bg-warning" title="Airbnb rezervace existují, receipt nenahraný">A ⌛</span>
                             {% endif %}
                         </td>
-                        <td>
+                        <td data-label="Stav">
                             {% if s.period and s.period.filedAt %}
                                 <span class="badge text-bg-secondary" title="{{ s.period.filedAt|date('d. m. Y H:i') }}">odesláno na FÚ</span>
                             {% else %}

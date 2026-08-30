@@ -46,12 +46,16 @@ Preferuj **nativní HTML5** před vlastní JS komponentou: `type="number"` (má 
 - Popisy, nápovědy i changelog piš **k aktuálnímu stavu, ne ke změně oproti minulosti**. Žádné „místo X", „už není potřeba", „nově", „nahrazuje" — uživatel vidí jen současný stav.
 - Konzistenci drž **napříč stránkami**, ne po jedné. Než přidáš nový vzor, najdi, jak to řeší existující stránka.
 
+## Mobil
+
+Cílová šířka **360 px**. Tabulka vždy v `.table-responsive` (mimo PDF/e-mail šablony), přebytečné sloupce `d-none d-md-table-cell`, tabulka nad ~5 sloupců `.table-stack` + `data-label` na buňkách (pod `md` karty, vzor `reservation/list.html.twig`), datum a částka `text-nowrap`, toolbar `d-flex flex-wrap gap-2`, formulářová mřížka `col-md-*`. Žádný vodorovný posuv stránky, samostatné tlačítko aspoň 38 px (`btn-sm` v tabulce je OK), text ne pod 12 px (`badge` výjimka, ale ne pod `.small`).
+
 ## Kontrola hotového UI
 
 Sáhl jsi na šablonu? Projdi to očima, ne jen kódem:
 
 1. `docker compose up -d`, přihlas se jako `admin@example.com` / `heslo123` (po `app:dev:seed-demo`).
-2. Otevři dotčenou stránku přes chrome-devtools MCP a udělej screenshot — ve výchozí i úzké šířce (`resize_page` ~390 px).
+2. Otevři dotčenou stránku přes chrome-devtools MCP a udělej screenshot — ve výchozí i úzké šířce (`resize_page` 360 px).
 3. Zkontroluj proti tabulkám výše: barva odpovídá kategorii? Šipka jen na odkazu? Nadpisy `h3`/`h5`? Zpět nad nadpisem?
 4. Projdi prázdný a chybový stav, ne jen naplněný.
 
