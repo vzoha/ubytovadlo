@@ -43,10 +43,15 @@
         </p>
     {% endif %}
 
-    <div class="cal-legend text-muted mt-3">
-        {% for key, label in {'web': 'Web', 'direct': 'Přímá', 'booking': 'Booking.com', 'airbnb': 'Airbnb', 'echalupy': 'eChalupy', 'cs_chalupy': 'CS chalupy'} %}
-            <span><span class="cal-swatch cal-bar--{{ key }}" style="background: var(--cal-bar-color);"></span> {{ label }}</span>
-        {% endfor %}
-        <span><span class="cal-swatch bg-secondary" style="background-image: repeating-linear-gradient(45deg, rgba(255,255,255,.3) 0 4px, transparent 4px 8px);"></span> bez údajů hosta</span>
-    </div>
+    {# Legenda vysvětluje jen barvy, které jsou v tomhle měsíci vidět. #}
+    {% if calendar.channels is not empty %}
+        <div class="cal-legend text-muted mt-3">
+            {% for channel in calendar.channels %}
+                <span><span class="cal-swatch cal-bar--{{ channel.value }}" style="background: var(--cal-bar-color);"></span> {{ channel.label }}</span>
+            {% endfor %}
+            {% if calendar.hasUnconfirmed %}
+                <span><span class="cal-swatch bg-secondary" style="background-image: repeating-linear-gradient(45deg, rgba(255,255,255,.3) 0 4px, transparent 4px 8px);"></span> bez údajů hosta</span>
+            {% endif %}
+        </div>
+    {% endif %}
 {% endblock %}

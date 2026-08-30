@@ -171,7 +171,7 @@ final class CalendarBuilder
             (int) $reservation->getId(),
             $reservation->getGuestName() ?: $reservation->getChannel()->label(),
             $this->summary($reservation),
-            $reservation->getChannel()->value,
+            $reservation->getChannel(),
             $reservation->getStatus() === ReservationStatus::NEEDS_DETAILS,
             $conflict,
             $span,

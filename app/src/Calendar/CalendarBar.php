@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace App\Calendar;
 
+use App\Enum\Channel;
+
 /**
  * Rezervace připravená k vykreslení — obsah pásu (kdo, odkud, v jakém stavu)
  * oddělený od jeho geometrie ({@see BarSpan}).
@@ -21,7 +23,7 @@ final readonly class CalendarBar
         public int $reservationId,
         public string $label,
         public string $summary,
-        public string $channel,
+        public Channel $channel,
         public bool $unconfirmed,
         public bool $conflict,
         public BarSpan $span,

@@ -19,6 +19,7 @@ use App\Calendar\CalendarRange;
 use App\Calendar\CalendarRow;
 use App\Calendar\CalendarView;
 use App\Calendar\CalendarWeekSplitter;
+use App\Enum\Channel;
 use PHPUnit\Framework\TestCase;
 
 final class CalendarWeekSplitterTest extends TestCase
@@ -79,7 +80,7 @@ final class CalendarWeekSplitterTest extends TestCase
             $days[] = new CalendarDay($range->start->modify(sprintf('+%d days', $i)), $i, 'po', false, false, false);
         }
 
-        $bar = new CalendarBar(1, 'Novák', 'Novák — Web', 'web', false, false, $span);
+        $bar = new CalendarBar(1, 'Novák', 'Novák — Web', Channel::WEB, false, false, $span);
 
         return new CalendarView(
             $range,

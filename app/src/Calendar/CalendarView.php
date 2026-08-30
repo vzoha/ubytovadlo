@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace App\Calendar;
 
+use App\Enum\Channel;
+
 /**
  * Kompletní podklad pro vykreslení kalendáře — sloupce dnů, řádky jednotek
  * a pod nimi servisní řádky. Osa i mřížka renderují týž objekt.
@@ -41,5 +43,50 @@ final readonly class CalendarView
         }
 
         return true;
+    }
+
+    /** @return list<CalendarBar> všechny pásy napříč jednotkami a drahami */
+    public function bars(): array
+    {
+        $bars = [];
+        foreach ($this->unitRows as $row) {
+            foreach ($row->lanes as $lane) {
+                foreach ($lane as $bar) {
+                    $bars[] = $bar;
+                }
+            }
+        }
+
+        return $bars;
+    }
+
+    /**
+     * Kanály, které se v zobrazeném rozsahu opravdu vyskytují — legenda vysvětluje
+     * jen barvy, které jsou na obrazovce. Pořadí drží enum, ať se mezi měsíci nepřehazuje.
+     *
+     * @return list<Channel>
+     */
+    public function channels(): array
+    {
+        $present = [];
+        foreach ($this->bars() as $bar) {
+            $present[$bar->channel->value] = true;
+        }
+
+        return array_values(array_filter(
+            Channel::cases(),
+            static fn (Channel $channel): bool => isset($present[$channel->value]),
+        ));
+    }
+
+    public function hasUnconfirmed(): bool
+    {
+        foreach ($this->bars() as $bar) {
+            if ($bar->unconfirmed) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
