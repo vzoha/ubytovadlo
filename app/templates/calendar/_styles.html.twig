@@ -97,8 +97,10 @@
         text-decoration: none;
     }
     .cal-marker__label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    /* Na ose je sloupec široký jeden den — popisek se do něj nevejde, zůstane ikona a tooltip. */
-    .cal-markers--icons .cal-marker { justify-content: center; }
+    /* Na ose zabírá bod celý sloupec: úklid ani revize se neplánují na hodinu,
+       patří ke dni. Popisek se do šířky dne nevejde, zůstane ikona a tooltip. */
+    .cal-markers--icons > div { padding-left: 0; padding-right: 0; }
+    .cal-markers--icons .cal-marker { flex: 1 0 100%; justify-content: center; }
     .cal-markers--icons .cal-marker__label { display: none; }
 
     .cal-week { position: relative; min-height: 3.5rem; border: 1px solid var(--bs-border-color); border-radius: .5rem; overflow: hidden; }
