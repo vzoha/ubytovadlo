@@ -8,6 +8,12 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Přidáno
 
+- **Zpráva před odjezdem.** Nový druh zprávy hostům — odejde den před odjezdem
+  v 17:00 a připomene čas odchodu, klíče a co nechat v pořádku. Text je
+  předvyplněný česky i anglicky, časování i režim se nastavují v **Nastavení →
+  Šablony zpráv** jako u ostatních zpráv; ve výchozím stavu čeká na časové ose
+  rezervace na odeslání tlačítkem. Rezervace bez data odjezdu ji nedostane.
+
 - **Kalendář obsazenosti.** V menu *Kalendář* ukazuje měsíc ve dvou pohledech:
   **osa** (řádek na jednotku, sloupec na den) a **měsíc** (klasická mřížka týdnů).
   Pás rezervace nese jméno hosta a barvu prodejního kanálu, začíná odpoledne

@@ -71,6 +71,7 @@ class ReservationActionPlanner
         }
 
         $added += $this->ensureMessage($reservation, ActionType::PRE_ARRIVAL_MESSAGE);
+        $added += $this->ensureMessage($reservation, ActionType::PRE_DEPARTURE_MESSAGE);
         $added += $this->ensureMessage($reservation, ActionType::POST_STAY_MESSAGE);
 
         // Doplatek + připomínka jen u toku se zálohou; při „bez zálohy" jde web

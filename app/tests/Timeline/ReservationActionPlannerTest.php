@@ -56,10 +56,12 @@ final class ReservationActionPlannerTest extends KernelTestCase
         $added = $this->planner->planFor($r);
         $this->em->flush();
 
-        // žádost o zálohu + pre-arrival + post-stay + issue-final + balance-reminder
-        self::assertSame(5, $added);
+        // žádost o zálohu + pre-arrival + pre-departure + post-stay + issue-final + balance-reminder
+        self::assertSame(6, $added);
         self::assertTrue($this->actions->hasOfType($r, ActionType::RESERVATION_REQUEST_MESSAGE));
         self::assertTrue($this->actions->hasOfType($r, ActionType::PRE_ARRIVAL_MESSAGE));
+        self::assertTrue($this->actions->hasOfType($r, ActionType::PRE_DEPARTURE_MESSAGE));
+        self::assertTrue($this->actions->hasOfType($r, ActionType::POST_STAY_MESSAGE));
         self::assertTrue($this->actions->hasOfType($r, ActionType::ISSUE_FINAL_INVOICE));
         self::assertTrue($this->actions->hasOfType($r, ActionType::BALANCE_REMINDER));
         self::assertFalse($this->actions->hasOfType($r, ActionType::UBYPORT_EXPORT));
@@ -94,6 +96,38 @@ final class ReservationActionPlannerTest extends KernelTestCase
         self::assertNotNull($action);
         $expected = $r->getCheckIn()->modify('-5 days')->setTime(8, 0);
         self::assertEquals($expected, $action->getScheduledFor());
+    }
+
+    public function testPreDepartureIsPlannedDayBeforeCheckOut(): void
+    {
+        $r = $this->confirmed(BillingMode::STANDARD_WITH_DEPOSIT, 'CZ');
+
+        $this->planner->planFor($r);
+        $this->em->flush();
+
+        $action = $this->em->getRepository(ReservationAction::class)
+            ->findOneBy(['reservation' => $r, 'type' => ActionType::PRE_DEPARTURE_MESSAGE]);
+        self::assertNotNull($action, 'Zpráva před odjezdem se naplánuje');
+        $expected = $r->getCheckOut()?->modify('-1 day')->setTime(17, 0);
+        self::assertEquals($expected, $action->getScheduledFor());
+    }
+
+    public function testPreDepartureIsSkippedWithoutCheckOut(): void
+    {
+        $r = new Reservation(Channel::WEB, new \DateTimeImmutable('+10 days'));
+        $r->setStatus(ReservationStatus::CONFIRMED);
+        $r->setBillingMode(BillingMode::STANDARD_WITH_DEPOSIT);
+        $r->setGuestAddress(new Address(country: 'CZ'));
+        $this->em->persist($r);
+        $this->em->flush();
+
+        $this->planner->planFor($r);
+        $this->em->flush();
+
+        self::assertFalse(
+            $this->actions->hasOfType($r, ActionType::PRE_DEPARTURE_MESSAGE),
+            'Bez data odjezdu není kotva, zpráva se nenaplánuje',
+        );
     }
 
     public function testForeignerGetsUbyportAction(): void

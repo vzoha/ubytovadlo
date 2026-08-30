@@ -14,7 +14,8 @@ namespace App\Enum;
 /**
  * Druh e-mailové zprávy hostovi. Každý druh má vlastní editovatelnou šablonu
  * (předmět + tělo) a mapuje se na okamžik odeslání:
- *  - PRE_ARRIVAL / POST_STAY / CUSTOM / BALANCE_REMINDER → naplánovaná akce na ose,
+ *  - PRE_ARRIVAL / PRE_DEPARTURE / POST_STAY / CUSTOM / BALANCE_REMINDER → naplánovaná
+ *    akce na ose,
  *  - INVOICE → odeslání faktury v příloze (ručně tlačítkem nebo po vystavení).
  */
 enum MessageKind: string
@@ -22,6 +23,7 @@ enum MessageKind: string
     case RESERVATION_REQUEST = 'reservation_request';
     case RESERVATION_CONFIRMED = 'reservation_confirmed';
     case PRE_ARRIVAL = 'pre_arrival';
+    case PRE_DEPARTURE = 'pre_departure';
     case POST_STAY = 'post_stay';
     case BALANCE_REMINDER = 'balance_reminder';
     case INVOICE = 'invoice';
@@ -33,6 +35,7 @@ enum MessageKind: string
             self::RESERVATION_REQUEST => 'Žádost o zálohu',
             self::RESERVATION_CONFIRMED => 'Potvrzení rezervace',
             self::PRE_ARRIVAL => 'Před příjezdem',
+            self::PRE_DEPARTURE => 'Před odjezdem',
             self::POST_STAY => 'Po pobytu',
             self::BALANCE_REMINDER => 'Připomínka doplatku',
             self::INVOICE => 'Faktura e-mailem',
@@ -46,6 +49,7 @@ enum MessageKind: string
             self::RESERVATION_REQUEST => 'Odejde hned po objednávce — poděkování a pokyny k platbě zálohy s QR kódem.',
             self::RESERVATION_CONFIRMED => 'Odejde po zaplacení zálohy (nebo ručně) — potvrzení, že rezervace platí.',
             self::PRE_ARRIVAL => 'Odejde pár dní před příjezdem — instrukce, příjezd, kontakt.',
+            self::PRE_DEPARTURE => 'Odejde den před odjezdem — čas odchodu, klíče, co nechat v pořádku.',
             self::POST_STAY => 'Odejde den po odjezdu — poděkování, žádost o recenzi.',
             self::BALANCE_REMINDER => 'Připomene hostovi doplatek, dokud není uhrazen.',
             self::INVOICE => 'Průvodní text e-mailu, ke kterému se přiloží faktura v PDF.',
@@ -57,7 +61,7 @@ enum MessageKind: string
     public function isScheduled(): bool
     {
         return match ($this) {
-            self::RESERVATION_REQUEST, self::PRE_ARRIVAL, self::POST_STAY, self::BALANCE_REMINDER => true,
+            self::RESERVATION_REQUEST, self::PRE_ARRIVAL, self::PRE_DEPARTURE, self::POST_STAY, self::BALANCE_REMINDER => true,
             default => false,
         };
     }
@@ -68,6 +72,7 @@ enum MessageKind: string
         return match ($type) {
             ActionType::RESERVATION_REQUEST_MESSAGE => self::RESERVATION_REQUEST,
             ActionType::PRE_ARRIVAL_MESSAGE => self::PRE_ARRIVAL,
+            ActionType::PRE_DEPARTURE_MESSAGE => self::PRE_DEPARTURE,
             ActionType::POST_STAY_MESSAGE => self::POST_STAY,
             ActionType::CUSTOM_MESSAGE => self::CUSTOM,
             ActionType::BALANCE_REMINDER => self::BALANCE_REMINDER,

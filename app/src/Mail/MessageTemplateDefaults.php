@@ -95,6 +95,24 @@ final class MessageTemplateDefaults
                 V případě dotazů jsme vám k dispozici. Přejeme šťastnou cestu!
                 MD,
         ],
+        'pre_departure' => [
+            'subject' => 'Zítra odjezd — {{ accommodation_name }}',
+            'mode' => SendMode::DRAFT,
+            'anchor' => TimingAnchor::CHECK_OUT,
+            'offsetDays' => -1,
+            'sendAt' => '17:00',
+            'body' => <<<'MD'
+                Dobrý den, {{ guest_first_name_vocative }},
+
+                zítra se s vámi rozloučíme. Ať odjezd proběhne hladce, posíláme pár drobností:
+
+                - **Odjezd:** {{ check_out }} do {{ check_out_time }}
+                - Klíče nechte prosím na místě, kde jste je našli.
+                - Nádobí umyté, odpadky do popelnice před domem.
+
+                Kdybyste cokoli potřebovali, ozvěte se. Děkujeme, že jste u nás byli!
+                MD,
+        ],
         'post_stay' => [
             'subject' => 'Děkujeme za návštěvu — {{ accommodation_name }}',
             'mode' => SendMode::DRAFT,
@@ -210,6 +228,20 @@ final class MessageTemplateDefaults
                     [[button:Complete online check-in|{{ checkin_url }}]]
 
                     Should you have any questions, we are here for you. Have a safe trip!
+                    MD,
+            ],
+            'pre_departure' => [
+                'subject' => 'Departure tomorrow — {{ accommodation_name }}',
+                'body' => <<<'MD'
+                    Dear {{ guest_first_name }},
+
+                    we will be saying goodbye tomorrow. A few notes so your departure goes smoothly:
+
+                    - **Departure:** {{ check_out }} until {{ check_out_time }}
+                    - Please leave the keys where you found them.
+                    - Dishes washed, rubbish in the bin in front of the house.
+
+                    If you need anything, just let us know. Thank you for staying with us!
                     MD,
             ],
             'post_stay' => [
