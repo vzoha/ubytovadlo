@@ -93,4 +93,54 @@ final class GuestMessageRendererTest extends KernelTestCase
         self::assertSame('Vlastní předmět', $rendered->subject);
         self::assertStringContainsString('Tělo pro Jan.', $rendered->html);
     }
+
+    public function testForeignGuestGetsEnglishTemplate(): void
+    {
+        $reservation = $this->sampleFactory->create();
+        $reservation->setGuestAddress($reservation->getGuestAddress()->withCountry('DE'));
+
+        $rendered = $this->renderer->render(MessageKind::PRE_ARRIVAL, $reservation);
+
+        self::assertStringContainsString('arrival', $rendered->subject);
+        self::assertStringContainsString('Complete online check-in', $rendered->html);
+    }
+
+    public function testCzechGuestKeepsCzechTemplate(): void
+    {
+        $reservation = $this->sampleFactory->create();
+        $reservation->setGuestAddress($reservation->getGuestAddress()->withCountry('CZ'));
+
+        $rendered = $this->renderer->render(MessageKind::PRE_ARRIVAL, $reservation);
+
+        self::assertStringContainsString('Těšíme se', $rendered->subject);
+    }
+
+    public function testSavedTranslationBeatsDefaultEnglishText(): void
+    {
+        $translation = new MessageTemplate(MessageKind::PRE_ARRIVAL, 'Your stay', 'See you soon.', 'en');
+        $this->em->persist($translation);
+        $this->em->flush();
+
+        $reservation = $this->sampleFactory->create();
+        $reservation->setGuestAddress($reservation->getGuestAddress()->withCountry('AT'));
+
+        $rendered = $this->renderer->render(MessageKind::PRE_ARRIVAL, $reservation);
+
+        self::assertSame('Your stay', $rendered->subject);
+    }
+
+    public function testCzechOverrideDoesNotLeakIntoEnglishMessage(): void
+    {
+        $czech = new MessageTemplate(MessageKind::POST_STAY, 'Děkujeme za pobyt u nás', 'Wifi heslo bylo XY.');
+        $this->em->persist($czech);
+        $this->em->flush();
+
+        $reservation = $this->sampleFactory->create();
+        $reservation->setGuestAddress($reservation->getGuestAddress()->withCountry('FR'));
+
+        $rendered = $this->renderer->render(MessageKind::POST_STAY, $reservation);
+
+        self::assertStringContainsString('Thank you for your visit', $rendered->subject);
+        self::assertStringNotContainsString('Wifi heslo', $rendered->html);
+    }
 }

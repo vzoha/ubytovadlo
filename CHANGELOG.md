@@ -8,6 +8,13 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Přidáno
 
+- **Zprávy hostům umí anglicky.** Každá šablona má záložky *Čeština* a *Angličtina*;
+  anglická verze je předvyplněná hotovým textem, takže funguje i bez úprav. Hosté
+  s jinou zemí v adrese než Česko nebo Slovensko dostanou anglickou verzi, ostatní
+  českou. Režim odesílání a časování na ose rezervace drží česká verze — nastavují
+  se jednou pro obě jazykové mutace. Testovací odeslání a náhled pracují s jazykem,
+  který je právě otevřený.
+
 - **Průvodce nastavením vede k údajům ubytovacího zařízení.** Mezi krokem
   *Dodavatel* a *Připojení* přibyl krok **Ubytování** — název objektu, adresa,
   kontaktní spojení a identifikátory od cizinecké policie (IDUB, kód zařízení),

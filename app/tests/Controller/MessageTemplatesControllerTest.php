@@ -117,6 +117,42 @@ final class MessageTemplatesControllerTest extends WebTestCase
         self::assertStringContainsString('Ahoj Jan!', (string) $this->client->getResponse()->getContent());
     }
 
+    public function testEnglishTabSavesTranslationWithoutTouchingCzech(): void
+    {
+        $crawler = $this->client->request('GET', '/nastaveni/zpravy/pre_arrival/en');
+        self::assertResponseIsSuccessful();
+
+        $form = $crawler->selectButton('Uložit')->form();
+        $form['message_template[subject]'] = 'Welcome';
+        $form['message_template[bodyMarkdown]'] = 'Dear {{ guest_first_name }}.';
+        $this->client->submit($form);
+
+        self::assertResponseRedirects('/nastaveni/zpravy/pre_arrival/en');
+
+        $templates = static::getContainer()->get(MessageTemplateRepository::class);
+        $english = $templates->findByKind(MessageKind::PRE_ARRIVAL, 'en');
+        self::assertNotNull($english, 'Překlad se uloží jako vlastní řádek');
+        self::assertSame('Welcome', $english->getSubject());
+        self::assertSame('en', $english->getLocale());
+        self::assertNull($templates->findByKind(MessageKind::PRE_ARRIVAL), 'Česká verze zůstává na výchozím textu');
+    }
+
+    public function testTranslationHasNoSendingModeOrTiming(): void
+    {
+        $crawler = $this->client->request('GET', '/nastaveni/zpravy/pre_arrival/en');
+
+        self::assertResponseIsSuccessful();
+        self::assertCount(0, $crawler->filter('[name="message_template[mode]"]'), 'Režim drží jen čeština');
+        self::assertCount(0, $crawler->filter('[name="message_template[timingMode]"]'), 'Časování drží jen čeština');
+    }
+
+    public function testUnknownLocaleReturns404(): void
+    {
+        $this->client->request('GET', '/nastaveni/zpravy/pre_arrival/de');
+
+        self::assertResponseStatusCodeSame(404);
+    }
+
     public function testUnknownKindReturns404(): void
     {
         $this->client->request('GET', '/nastaveni/zpravy/neexistuje');

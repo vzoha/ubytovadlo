@@ -14,6 +14,7 @@ namespace App\Entity;
 use App\Enum\MessageKind;
 use App\Enum\SendMode;
 use App\Enum\TimingAnchor;
+use App\Mail\MessageLocales;
 use App\Repository\MessageTemplateRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -21,11 +22,13 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * Uživatelsky editovatelná šablona e-mailu hostovi (předmět + tělo v Markdownu
  * s proměnnými), její režim odesílání a časování na ose rezervace. V DB žije jen
- * override — výchozí texty i časování jsou v kódu (MessageTemplateDefaults). Jeden
- * řádek na druh zprávy.
+ * override — výchozí texty i časování jsou v kódu (MessageTemplateDefaults).
+ * Jeden řádek na druh zprávy a jazyk; režim a časování drží řádek základního
+ * jazyka, překlady nesou jen text.
  */
 #[ORM\Entity(repositoryClass: MessageTemplateRepository::class)]
 #[ORM\Table(name: 'message_template')]
+#[ORM\UniqueConstraint(name: 'uniq_message_template_kind_locale', columns: ['kind', 'locale'])]
 class MessageTemplate
 {
     #[ORM\Id]
@@ -33,8 +36,12 @@ class MessageTemplate
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(length: 32, unique: true, enumType: MessageKind::class)]
+    #[ORM\Column(length: 32, enumType: MessageKind::class)]
     private MessageKind $kind;
+
+    /** Jazyk textu; základní jazyk drží i režim a časování. */
+    #[ORM\Column(length: 5, options: ['default' => MessageLocales::BASE])]
+    private string $locale = MessageLocales::BASE;
 
     #[ORM\Column(length: 255)]
     private string $subject;
@@ -60,9 +67,10 @@ class MessageTemplate
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeImmutable $updatedAt;
 
-    public function __construct(MessageKind $kind, string $subject, string $bodyMarkdown)
+    public function __construct(MessageKind $kind, string $subject, string $bodyMarkdown, string $locale = MessageLocales::BASE)
     {
         $this->kind = $kind;
+        $this->locale = $locale;
         $this->subject = $subject;
         $this->bodyMarkdown = $bodyMarkdown;
         $this->updatedAt = new \DateTimeImmutable();
@@ -76,6 +84,17 @@ class MessageTemplate
     public function getKind(): MessageKind
     {
         return $this->kind;
+    }
+
+    public function getLocale(): string
+    {
+        return $this->locale;
+    }
+
+    /** Text v základním jazyce; překlady režim a časování nenesou. */
+    public function isBaseLocale(): bool
+    {
+        return $this->locale === MessageLocales::BASE;
     }
 
     public function getSubject(): string

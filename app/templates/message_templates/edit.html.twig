@@ -17,17 +17,36 @@
         </div>
     </div>
 
+    <div class="d-flex flex-wrap gap-2 mb-3">
+        {% for code, name in locales %}
+            <a href="{{ path('message_templates_edit', { kind: kind.value, locale: code }) }}"
+               class="btn btn-sm btn-outline-secondary{{ code == locale ? ' active' }}">
+                {{ name }}{% if code != 'cs' and code not in translated %} <span class="opacity-75">(výchozí text)</span>{% endif %}
+            </a>
+        {% endfor %}
+    </div>
+
+    {% if locale != 'cs' %}
+        <div class="alert alert-light border small">
+            Text v jazyce <strong>{{ locales[locale]|lower }}</strong>. Dostanou ho hosté, kteří mají v adrese
+            jinou zemi než Česko nebo Slovensko. Odejde přesně to, co je tady — dokud nic neuložíš, platí
+            předvyplněný výchozí text. Režim odesílání a časování drží česká verze.
+        </div>
+    {% endif %}
+
     <div class="row g-4">
         <div class="col-lg-6">
             <div class="card">
                 <div class="card-body">
                     {{ form_start(form, { attr: { id: 'template-form' } }) }}
-                        <div class="mb-3">
-                            {{ form_label(form.mode) }}
-                            {{ form_widget(form.mode) }}
-                            {{ form_errors(form.mode) }}
-                            <div class="form-text" id="mode-help"></div>
-                        </div>
+                        {% if form.mode is defined %}
+                            <div class="mb-3">
+                                {{ form_label(form.mode) }}
+                                {{ form_widget(form.mode) }}
+                                {{ form_errors(form.mode) }}
+                                <div class="form-text" id="mode-help"></div>
+                            </div>
+                        {% endif %}
 
                         {% if form.timingMode is defined %}
                             <div class="mb-3" id="timing-block">
@@ -87,7 +106,7 @@
 
                     <hr class="my-4">
 
-                    <form method="post" action="{{ path('message_templates_test', { kind: kind.value }) }}" class="row g-2 align-items-end">
+                    <form method="post" action="{{ path('message_templates_test', { kind: kind.value, locale: locale }) }}" class="row g-2 align-items-end">
                         <input type="hidden" name="_token" value="{{ csrf_token('message_template_test') }}">
                         <div class="col-sm-8">
                             <label class="form-label small mb-1">Poslat test na e-mail</label>
@@ -149,13 +168,14 @@
         refresh();
 
         const help = document.getElementById('mode-help');
-        const modes = form.querySelectorAll('[name$="[mode]"]');
-        function showModeHelp() {
-            const checked = form.querySelector('[name$="[mode]"]:checked');
-            help.textContent = checked ? (checked.dataset.help || '') : '';
+        if (help) {
+            function showModeHelp() {
+                const checked = form.querySelector('[name$="[mode]"]:checked');
+                help.textContent = checked ? (checked.dataset.help || '') : '';
+            }
+            form.querySelectorAll('[name$="[mode]"]').forEach(function (m) { m.addEventListener('change', showModeHelp); });
+            showModeHelp();
         }
-        modes.forEach(function (m) { m.addEventListener('change', showModeHelp); });
-        showModeHelp();
 
         const timingBlock = document.getElementById('timing-block');
         if (timingBlock) {

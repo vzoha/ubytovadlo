@@ -9,7 +9,8 @@
     <p class="text-muted small">
         Texty jednotlivých e-mailů hostům. Společný vzhled (logo, barvy, patička)
         nastavíš v záložce <strong>E-maily</strong>. V textu lze používat proměnné
-        jako <code>{{ '{{ guest_first_name }}' }}</code>.
+        jako <code>{{ '{{ guest_first_name }}' }}</code>. Host s jinou zemí v adrese
+        než Česko nebo Slovensko dostane anglickou verzi — vlastní, nebo výchozí.
     </p>
 
     <div class="list-group">
@@ -21,6 +22,11 @@
                     <div class="small text-muted">{{ row.kind.description }}</div>
                     {% if row.kind.isScheduled and row.template.timingSummary %}
                         <div class="small text-muted mt-1">🕑 {{ row.template.timingSummary }}</div>
+                    {% endif %}
+                    {% if row.translated is not empty %}
+                        <div class="small text-muted mt-1">
+                            🌐 přeloženo: {% for code in row.translated %}{{ locales[code]|lower }}{{ not loop.last ? ', ' }}{% endfor %}
+                        </div>
                     {% endif %}
                 </div>
                 <span class="badge rounded-pill text-bg-{{ row.template.mode.badge }} flex-shrink-0">

@@ -93,10 +93,13 @@ class GuestMessageSender
      *
      * @param array<string, string> $context
      */
-    public function sendTest(string $to, MessageKind $kind, Reservation $sample, array $context = []): void
+    public function sendTest(string $to, MessageKind $kind, Reservation $sample, array $context = [], ?MessageTemplate $template = null): void
     {
         $useLogo = $this->useLogo();
-        $rendered = $this->renderer->render($kind, $sample, $context, $useLogo ? 'cid:logo' : null);
+        $logoSrc = $useLogo ? 'cid:logo' : null;
+        $rendered = $template !== null
+            ? $this->renderer->renderTemplate($template, $sample, $context, $logoSrc)
+            : $this->renderer->render($kind, $sample, $context, $logoSrc);
         $this->dispatch($to, $rendered, $useLogo, []);
     }
 

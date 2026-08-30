@@ -13,6 +13,7 @@ namespace App\Repository;
 
 use App\Entity\MessageTemplate;
 use App\Enum\MessageKind;
+use App\Mail\MessageLocales;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -26,8 +27,8 @@ class MessageTemplateRepository extends ServiceEntityRepository
         parent::__construct($registry, MessageTemplate::class);
     }
 
-    public function findByKind(MessageKind $kind): ?MessageTemplate
+    public function findByKind(MessageKind $kind, string $locale = MessageLocales::BASE): ?MessageTemplate
     {
-        return $this->findOneBy(['kind' => $kind]);
+        return $this->findOneBy(['kind' => $kind, 'locale' => $locale]);
     }
 }

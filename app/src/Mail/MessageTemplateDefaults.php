@@ -149,6 +149,114 @@ final class MessageTemplateDefaults
         ],
     ];
 
+    /**
+     * Překlady výchozích textů. Nesou jen předmět a tělo — režim odesílání
+     * i časování se čtou ze základního jazyka.
+     *
+     * @var array<string, array<string, array{subject: string, body: string}>>
+     */
+    private const TRANSLATIONS = [
+        'en' => [
+            'reservation_request' => [
+                'subject' => 'Booking {{ variable_symbol }} — deposit outstanding · {{ accommodation_name }}',
+                'body' => <<<'MD'
+                    Dear {{ guest_first_name }},
+
+                    thank you for your booking. We are holding **{{ check_in }} — {{ check_out }}** for you.
+
+                    We will confirm the booking once we receive the deposit of **{{ deposit_amount }}** (deducted from the total price):
+
+                    - **Account number:** {{ bank_account }}
+                    - **Payment reference:** {{ variable_symbol }}
+                    - **Due date:** {{ deposit_due }}
+
+                    You can scan the payment from a QR code:
+
+                    {{ deposit_qr }}
+
+                    We will send you a confirmation as soon as the deposit arrives. Thank you!
+                    MD,
+            ],
+            'reservation_confirmed' => [
+                'subject' => 'Booking confirmed — {{ accommodation_name }}, arrival {{ check_in }}',
+                'body' => <<<'MD'
+                    Dear {{ guest_first_name }},
+
+                    your booking is **confirmed** — we are looking forward to your stay!
+
+                    - **Arrival:** {{ check_in }} from {{ check_in_time }}
+                    - **Departure:** {{ check_out }} until {{ check_out_time }}
+                    - **Nights:** {{ nights }}
+
+                    A few days before arrival we will send you directions and details about the keys.
+
+                    Should you have any questions, we are here for you.
+                    MD,
+            ],
+            'pre_arrival' => [
+                'subject' => 'See you soon — {{ accommodation_name }}, arrival {{ check_in }}',
+                'body' => <<<'MD'
+                    Dear {{ guest_first_name }},
+
+                    we are looking forward to your visit! A reminder of your stay:
+
+                    - **Arrival:** {{ check_in }} from {{ check_in_time }}
+                    - **Departure:** {{ check_out }} until {{ check_out_time }}
+                    - **Nights:** {{ nights }}
+                    - **Guests:** {{ guests_total }}
+
+                    If you have not done so yet, please complete the online check-in:
+
+                    [[button:Complete online check-in|{{ checkin_url }}]]
+
+                    Should you have any questions, we are here for you. Have a safe trip!
+                    MD,
+            ],
+            'post_stay' => [
+                'subject' => 'Thank you for your visit — {{ accommodation_name }}',
+                'body' => <<<'MD'
+                    Dear {{ guest_first_name }},
+
+                    thank you for spending {{ nights }} nights with us. We hope you enjoyed your stay.
+
+                    We would appreciate your feedback or a review — it helps us and future guests alike.
+
+                    We hope to welcome you again!
+                    MD,
+            ],
+            'balance_reminder' => [
+                'subject' => 'Balance due for your stay — {{ accommodation_name }}',
+                'body' => <<<'MD'
+                    Dear {{ guest_first_name }},
+
+                    this is a reminder of the outstanding balance for your stay: **{{ balance_due }}**.
+
+                    You can pay it by bank transfer according to the invoice, or in cash on arrival ({{ check_in }}).
+
+                    Thank you!
+                    MD,
+            ],
+            'invoice' => [
+                'subject' => 'Invoice no. {{ invoice_number }} — {{ accommodation_name }}',
+                'body' => <<<'MD'
+                    Dear {{ guest_first_name }},
+
+                    please find attached invoice no. {{ invoice_number }} for your stay ({{ check_in }} — {{ check_out }}).
+
+                    Thank you and have a pleasant day.
+                    MD,
+            ],
+            'custom' => [
+                'subject' => 'Message — {{ accommodation_name }}',
+                'body' => <<<'MD'
+                    Dear {{ guest_first_name }},
+
+
+                    MD,
+            ],
+        ],
+    ];
+
     public static function for(MessageKind $kind): MessageTemplate
     {
         $default = self::DEFAULTS[$kind->value]
@@ -161,5 +269,16 @@ final class MessageTemplateDefaults
         }
 
         return $template;
+    }
+
+    /** Výchozí překlad, nebo null, když pro daný jazyk žádný není. */
+    public static function forLocale(MessageKind $kind, string $locale): ?MessageTemplate
+    {
+        $default = self::TRANSLATIONS[$locale][$kind->value] ?? null;
+        if ($default === null) {
+            return null;
+        }
+
+        return new MessageTemplate($kind, $default['subject'], $default['body'], $locale);
     }
 }

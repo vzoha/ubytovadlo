@@ -17,9 +17,11 @@ use App\Enum\MessageKind;
 use App\Form\MessageTemplateType;
 use App\Mail\GuestMessageRenderer;
 use App\Mail\GuestMessageSender;
+use App\Mail\MessageLocales;
 use App\Mail\MessageTemplateProvider;
 use App\Mail\MessageVariableResolver;
 use App\Mail\SampleReservationFactory;
+use App\Repository\MessageTemplateRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -39,6 +41,7 @@ class MessageTemplatesController extends AbstractController
 
     public function __construct(
         private readonly MessageTemplateProvider $templates,
+        private readonly MessageTemplateRepository $savedTemplates,
         private readonly GuestMessageRenderer $renderer,
         private readonly GuestMessageSender $sender,
         private readonly SampleReservationFactory $sampleFactory,
@@ -52,19 +55,26 @@ class MessageTemplatesController extends AbstractController
     {
         $rows = [];
         foreach (MessageKind::cases() as $kind) {
-            $rows[] = ['kind' => $kind, 'template' => $this->templates->for($kind)];
+            $rows[] = [
+                'kind' => $kind,
+                'template' => $this->templates->for($kind),
+                'translated' => $this->translatedLocales($kind),
+            ];
         }
 
-        return $this->render('message_templates/index.html.twig', ['rows' => $rows]);
+        return $this->render('message_templates/index.html.twig', [
+            'rows' => $rows,
+            'locales' => MessageLocales::ALL,
+        ]);
     }
 
-    #[Route('/nastaveni/zpravy/{kind}', name: 'message_templates_edit', methods: ['GET', 'POST'])]
-    public function edit(string $kind, Request $request): Response
+    #[Route('/nastaveni/zpravy/{kind}/{locale}', name: 'message_templates_edit', methods: ['GET', 'POST'], requirements: ['locale' => 'cs|en'])]
+    public function edit(string $kind, Request $request, string $locale = MessageLocales::BASE): Response
     {
         $messageKind = $this->kindOr404($kind);
-        $template = $this->templates->for($messageKind);
+        $template = $this->templates->forLocale($messageKind, $locale);
 
-        $form = $this->createForm(MessageTemplateType::class, $template);
+        $form = $this->createForm(MessageTemplateType::class, $template, ['translation' => !$template->isBaseLocale()]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
@@ -74,7 +84,7 @@ class MessageTemplatesController extends AbstractController
             $this->em->flush();
             $this->addFlash('success', 'Šablona uložena.');
 
-            return $this->redirectToRoute('message_templates_edit', ['kind' => $kind]);
+            return $this->redirectToRoute('message_templates_edit', ['kind' => $kind, 'locale' => $locale]);
         }
 
         return $this->render('message_templates/edit.html.twig', [
@@ -82,6 +92,9 @@ class MessageTemplatesController extends AbstractController
             'form' => $form->createView(),
             'variables' => MessageVariableResolver::variables(),
             'testRecipient' => $this->getUser()?->getUserIdentifier() ?? '',
+            'locale' => $locale,
+            'locales' => MessageLocales::ALL,
+            'translated' => $this->translatedLocales($messageKind),
         ]);
     }
 
@@ -106,8 +119,8 @@ class MessageTemplatesController extends AbstractController
         return new Response($rendered->html);
     }
 
-    #[Route('/nastaveni/zpravy/{kind}/test', name: 'message_templates_test', methods: ['POST'])]
-    public function test(string $kind, Request $request): Response
+    #[Route('/nastaveni/zpravy/{kind}/test/{locale}', name: 'message_templates_test', methods: ['POST'], requirements: ['locale' => 'cs|en'])]
+    public function test(string $kind, Request $request, string $locale = MessageLocales::BASE): Response
     {
         $messageKind = $this->kindOr404($kind);
         $recipient = trim((string) $request->request->get('email'));
@@ -118,14 +131,33 @@ class MessageTemplatesController extends AbstractController
             $this->addFlash('danger', 'Zadej e-mail pro testovací odeslání.');
         } else {
             try {
-                $this->sender->sendTest($recipient, $messageKind, $this->sampleFactory->create(), self::SAMPLE_CONTEXT);
+                $this->sender->sendTest(
+                    $recipient,
+                    $messageKind,
+                    $this->sampleFactory->create(),
+                    self::SAMPLE_CONTEXT,
+                    $this->templates->forLocale($messageKind, $locale),
+                );
                 $this->addFlash('success', sprintf('Testovací zpráva odeslána na %s.', $recipient));
             } catch (\Throwable $e) {
                 $this->addFlash('danger', 'Odeslání selhalo: ' . $e->getMessage());
             }
         }
 
-        return $this->redirectToRoute('message_templates_edit', ['kind' => $kind]);
+        return $this->redirectToRoute('message_templates_edit', ['kind' => $kind, 'locale' => $locale]);
+    }
+
+    /**
+     * Jazyky, ve kterých má druh zprávy uložený vlastní text.
+     *
+     * @return list<string>
+     */
+    private function translatedLocales(MessageKind $kind): array
+    {
+        return array_values(array_filter(
+            MessageLocales::translations(),
+            fn (string $locale): bool => $this->savedTemplates->findByKind($kind, $locale) !== null,
+        ));
     }
 
     private function kindOr404(string $kind): MessageKind

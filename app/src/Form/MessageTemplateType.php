@@ -48,14 +48,18 @@ class MessageTemplateType extends AbstractType
 
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
-        $builder
-            ->add('mode', EnumType::class, [
+        // Překlad nese jen text — režim odesílání i časování drží základní jazyk.
+        if ($options['translation'] === false) {
+            $builder->add('mode', EnumType::class, [
                 'class' => SendMode::class,
                 'label' => 'Režim odesílání',
                 'expanded' => true,
                 'choice_label' => fn (SendMode $m) => $m->label(),
                 'choice_attr' => fn (SendMode $m) => ['data-help' => $m->description()],
-            ])
+            ]);
+        }
+
+        $builder
             ->add('subject', TextType::class, [
                 'label' => 'Předmět',
                 'constraints' => [new NotBlank()],
@@ -66,6 +70,10 @@ class MessageTemplateType extends AbstractType
                 'attr' => ['rows' => 14, 'class' => 'font-monospace'],
                 'help' => 'Tlačítko do e-mailu: [[button:Text|odkaz]], např. [[button:Dokončit check-in|{{ checkin_url }}]].',
             ]);
+
+        if ($options['translation'] === true) {
+            return;
+        }
 
         $builder->addEventListener(FormEvents::PRE_SET_DATA, [$this, 'onPreSetData']);
         $builder->addEventListener(FormEvents::SUBMIT, [$this, 'onSubmit']);
@@ -153,6 +161,11 @@ class MessageTemplateType extends AbstractType
 
     public function configureOptions(OptionsResolver $resolver): void
     {
-        $resolver->setDefaults(['data_class' => MessageTemplate::class]);
+        $resolver->setDefaults([
+            'data_class' => MessageTemplate::class,
+            // Překlad do dalšího jazyka: jen předmět a tělo, bez režimu a časování.
+            'translation' => false,
+        ]);
+        $resolver->setAllowedTypes('translation', 'bool');
     }
 }

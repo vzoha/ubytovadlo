@@ -16,14 +16,15 @@ use App\Entity\Reservation;
 use App\Enum\MessageKind;
 
 /**
- * Sestaví zprávu hostovi: vezme šablonu (předmět + tělo v Markdownu), dosadí
- * proměnné a zabalí do master layoutu (EmailLayoutRenderer) s barevným tématem.
- * Logo se předává zvlášť (cid pro odeslání, URL pro náhled).
+ * Sestaví zprávu hostovi: vezme šablonu (předmět + tělo v Markdownu) v jazyce
+ * hosta, dosadí proměnné a zabalí do master layoutu (EmailLayoutRenderer)
+ * s barevným tématem. Logo se předává zvlášť (cid pro odeslání, URL pro náhled).
  */
 final class GuestMessageRenderer
 {
     public function __construct(
         private readonly MessageTemplateProvider $templates,
+        private readonly GuestLocaleResolver $guestLocale,
         private readonly MessageVariableResolver $variables,
         private readonly MailSettingsProvider $mailSettings,
         private readonly EmailLayoutRenderer $layout,
@@ -36,7 +37,9 @@ final class GuestMessageRenderer
      */
     public function render(MessageKind $kind, Reservation $reservation, array $context = [], ?string $logoSrc = null): RenderedMessage
     {
-        return $this->renderTemplate($this->templates->for($kind), $reservation, $context, $logoSrc);
+        $template = $this->templates->forLocale($kind, $this->guestLocale->forReservation($reservation));
+
+        return $this->renderTemplate($template, $reservation, $context, $logoSrc);
     }
 
     /**
