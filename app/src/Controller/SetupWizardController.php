@@ -15,6 +15,7 @@ use App\Config\InstanceSettings;
 use App\Config\InstanceSettingsWriter;
 use App\Config\LogoStorage;
 use App\Connector\ConnectorManager;
+use App\Form\AccommodationProfileType;
 use App\Form\GeneralSettingsType;
 use App\Form\IssuerSettingsType;
 use App\Form\MailSettingsType;
@@ -25,6 +26,7 @@ use App\Mail\MailSettingsProvider;
 use App\Mail\MailSettingsWriter;
 use App\Mail\MailThemes;
 use App\Setup\SetupChecklist;
+use App\Ubyport\AccommodationProfileWriter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -33,7 +35,8 @@ use Symfony\Component\Routing\Attribute\Route;
 
 /**
  * Průvodce prvotním nastavením — provede ubytovatele klíčovými kroky v pořadí:
- * identita instance → dodavatel a daňový profil → připojení → e-maily → souhrn.
+ * identita instance → dodavatel a daňový profil → ubytovací zařízení → připojení →
+ * e-maily → souhrn.
  * Formulářové kroky znovupoužívají tytéž form typy i providery jako samostatné
  * stránky nastavení; „Připojení" (šifrované přístupy) odkazuje na svou stránku.
  *
@@ -45,6 +48,7 @@ class SetupWizardController extends AbstractController
     private const STEPS = [
         'instance' => ['Aplikace', 'Název a veřejná adresa instance, logo.'],
         'dodavatel' => ['Dodavatel', 'Fakturační identita, banka a daňový profil.'],
+        'ubytovani' => ['Ubytování', 'Údaje objektu pro hlášení ubytovaných cizinců na Ubyport.'],
         'pripojeni' => ['Připojení', 'Automatizační schránka, web (MotoPress), kanály.'],
         'mail' => ['E-maily', 'Odesílatel a vzhled zpráv hostům.'],
         'hotovo' => ['Hotovo', 'Souhrn nastavení.'],
@@ -61,6 +65,7 @@ class SetupWizardController extends AbstractController
         private readonly MailSettingsWriter $mailWriter,
         private readonly SetupChecklist $checklist,
         private readonly ConnectorManager $connectors,
+        private readonly AccommodationProfileWriter $accommodationWriter,
     ) {
     }
 
@@ -70,7 +75,7 @@ class SetupWizardController extends AbstractController
         return $this->redirectToRoute('setup_wizard_step', ['step' => array_key_first(self::STEPS)]);
     }
 
-    #[Route('/nastaveni/pruvodce/{step}', name: 'setup_wizard_step', methods: ['GET', 'POST'], requirements: ['step' => 'instance|dodavatel|pripojeni|mail|hotovo'])]
+    #[Route('/nastaveni/pruvodce/{step}', name: 'setup_wizard_step', methods: ['GET', 'POST'], requirements: ['step' => 'instance|dodavatel|ubytovani|pripojeni|mail|hotovo'])]
     public function step(string $step, Request $request): Response
     {
         $form = $this->buildForm($step);
@@ -108,6 +113,7 @@ class SetupWizardController extends AbstractController
             'dodavatel' => $this->createForm(IssuerSettingsType::class, $this->issuerProvider->currentValues() + [
                 'taxProfile' => $this->taxProfile->current(),
             ]),
+            'ubytovani' => $this->createForm(AccommodationProfileType::class, $this->accommodationWriter->current()),
             'mail' => $this->createForm(MailSettingsType::class, $this->mailSettings->currentValues()),
             default => null,
         };
@@ -119,6 +125,7 @@ class SetupWizardController extends AbstractController
         match ($step) {
             'instance' => $this->instanceWriter->save($form),
             'dodavatel' => $this->issuerWriter->save($form),
+            'ubytovani' => $this->accommodationWriter->save($form->getData()),
             'mail' => $this->mailWriter->save($form),
             default => null,
         };
@@ -140,10 +147,23 @@ class SetupWizardController extends AbstractController
         return [
             'instance' => $configured['instance'] ?? false,
             'dodavatel' => $configured['issuer'] ?? false,
-            'pripojeni' => ($configured['imap'] ?? false) || ($configured['smtp'] ?? false) || ($configured['motopress'] ?? false),
+            'ubytovani' => $configured['accommodation'] ?? false,
+            // Bez SMTP neodejde hostovi ani zpráva, ani notifikace — IMAP a MotoPress
+            // jsou volitelné konektory, samy o sobě krok za hotový nevydávají.
+            'pripojeni' => $configured['smtp'] ?? false,
             'mail' => $configured['mail'] ?? false,
             'hotovo' => $this->checklist->pending() === [],
         ];
+    }
+
+    #[Route('/nastaveni/pruvodce/hotovo/uzavrit', name: 'setup_wizard_finish', methods: ['POST'])]
+    public function finish(Request $request): Response
+    {
+        if ($this->isCsrfTokenValid('setup_wizard_finish', (string) $request->request->get('_token'))) {
+            $this->checklist->completeWizard();
+        }
+
+        return $this->redirectToRoute('dashboard');
     }
 
     private function nextStep(string $step): string

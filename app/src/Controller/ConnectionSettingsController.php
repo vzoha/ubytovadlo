@@ -59,7 +59,7 @@ class ConnectionSettingsController extends AbstractController
             if (!$this->cipher->isReady()) {
                 $this->addFlash('warning', 'Chování MotoPressu uloženo. Přístupové údaje ale vyžadují APP_CREDENTIALS_KEY (base64 32 B) v .env.local — bez něj se neuloží.');
 
-                return $this->redirectToRoute('connection_settings_edit');
+                return $this->afterSave($request);
             }
 
             foreach (CredentialProvider::FIELDS as $field => [$key, $isSecret]) {
@@ -73,7 +73,7 @@ class ConnectionSettingsController extends AbstractController
             $this->em->flush();
             $this->addFlash('success', 'Nastavení připojení uloženo.');
 
-            return $this->redirectToRoute('connection_settings_edit');
+            return $this->afterSave($request);
         }
 
         $icalFeedUrl = $this->generateUrl(
@@ -96,6 +96,19 @@ class ConnectionSettingsController extends AbstractController
             'motopressType' => ConnectorType::MOTOPRESS->value,
             'connectors' => $this->connectors->health(),
         ]);
+    }
+
+    /**
+     * Průvodce nastavením sem posílá s `?pruvodce=1` — po uložení se do něj
+     * uživatel vrátí, aby mohl pokračovat dalším krokem.
+     */
+    private function afterSave(Request $request): Response
+    {
+        if ($request->query->getBoolean('pruvodce')) {
+            return $this->redirectToRoute('setup_wizard_step', ['step' => 'pripojeni']);
+        }
+
+        return $this->redirectToRoute('connection_settings_edit');
     }
 
     private function saveMapping(?string $petIds, ?string $babyCotIds, bool $push): void

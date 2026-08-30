@@ -29,6 +29,9 @@ final class SetupChecklist
 {
     private const DISMISS_PREFIX = 'setup.dismissed.';
 
+    /** Průvodce prvotním nastavením provozovatel uzavřel — po přihlášení se už nenabízí. */
+    private const WIZARD_DONE_KEY = 'setup.wizard.completed';
+
     public function __construct(
         private readonly SettingRepository $settings,
         private readonly IssuerProfileProvider $issuer,
@@ -121,6 +124,27 @@ final class SetupChecklist
             $this->items(),
             static fn (SetupChecklistItem $i): bool => !$i->configured && $i->dismissed,
         ));
+    }
+
+    /**
+     * Má se po přihlášení nabídnout průvodce? Nabízí se, dokud ho provozovatel
+     * neuzavřel a zároveň zbývá aspoň jedna nenastavená položka.
+     */
+    public function needsWizard(): bool
+    {
+        return !$this->wizardCompleted() && $this->pending() !== [];
+    }
+
+    public function wizardCompleted(): bool
+    {
+        return $this->settings->getString(self::WIZARD_DONE_KEY) === '1';
+    }
+
+    /** Uzavře průvodce — po přihlášení se už nenabízí, spustit jde dál z přehledu. */
+    public function completeWizard(): void
+    {
+        $this->settings->set(self::WIZARD_DONE_KEY, '1', 'Průvodce nastavením: uzavřen provozovatelem.');
+        $this->em->flush();
     }
 
     /** Skryje položku (jen známý klíč). */

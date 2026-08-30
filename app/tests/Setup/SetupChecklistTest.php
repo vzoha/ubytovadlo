@@ -99,6 +99,27 @@ final class SetupChecklistTest extends KernelTestCase
         self::assertNull($this->settings->getString('setup.dismissed.neexistuje'));
     }
 
+    public function testWizardIsOfferedUntilItIsClosed(): void
+    {
+        self::assertTrue($this->checklist->needsWizard(), 'Prázdná instance průvodce potřebuje');
+        self::assertFalse($this->checklist->wizardCompleted());
+
+        $this->checklist->completeWizard();
+
+        self::assertTrue($this->checklist->wizardCompleted());
+        self::assertFalse($this->checklist->needsWizard(), 'Uzavřený průvodce se už nenabízí');
+        self::assertNotEmpty($this->checklist->pending(), 'Nedodělané položky uzavřením průvodce nezmizí');
+    }
+
+    public function testWizardIsNotOfferedWhenNothingIsPending(): void
+    {
+        foreach ($this->checklist->items() as $item) {
+            $this->checklist->dismiss($item->key);
+        }
+
+        self::assertFalse($this->checklist->needsWizard());
+    }
+
     /** @return list<string> */
     private function pendingKeys(): array
     {

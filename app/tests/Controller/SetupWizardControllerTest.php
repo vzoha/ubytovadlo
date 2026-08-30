@@ -11,11 +11,14 @@ declare(strict_types=1);
 
 namespace App\Tests\Controller;
 
+use App\Entity\AccommodationProfile;
 use App\Entity\Setting;
 use App\Entity\User;
 use App\Enum\TaxProfile;
+use App\Repository\AccommodationProfileRepository;
 use App\Repository\SettingRepository;
 use App\Repository\UserRepository;
+use App\Setup\SetupChecklist;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -34,6 +37,7 @@ final class SetupWizardControllerTest extends WebTestCase
         \assert($em instanceof EntityManagerInterface);
         $this->em = $em;
 
+        $this->em->createQuery('DELETE FROM ' . AccommodationProfile::class . ' a')->execute();
         $this->em->createQuery('DELETE FROM ' . Setting::class . ' s')->execute();
         $this->em->createQuery('DELETE FROM ' . User::class . ' u')->execute();
 
@@ -55,7 +59,7 @@ final class SetupWizardControllerTest extends WebTestCase
 
     public function testEachStepRenders(): void
     {
-        foreach (['instance', 'dodavatel', 'pripojeni', 'mail', 'hotovo'] as $step) {
+        foreach (['instance', 'dodavatel', 'ubytovani', 'pripojeni', 'mail', 'hotovo'] as $step) {
             $this->client->request('GET', '/nastaveni/pruvodce/' . $step);
             self::assertResponseIsSuccessful(sprintf('Krok %s se má vykreslit', $step));
             self::assertStringContainsString('Průvodce nastavením', (string) $this->client->getResponse()->getContent());
@@ -134,10 +138,53 @@ final class SetupWizardControllerTest extends WebTestCase
         $form['issuer_settings[taxProfile]'] = 'vat_payer';
         $this->client->submit($form);
 
-        self::assertResponseRedirects('/nastaveni/pruvodce/pripojeni');
+        self::assertResponseRedirects('/nastaveni/pruvodce/ubytovani');
         $settings = static::getContainer()->get(SettingRepository::class);
         self::assertSame('Malý Statek Lniště', $settings->getString('invoice.issuer.name'));
         self::assertSame(TaxProfile::VAT_PAYER->value, $settings->getString('invoice.issuer.tax_profile'));
+    }
+
+    public function testAccommodationStepSavesProfileAndAdvances(): void
+    {
+        $crawler = $this->client->request('GET', '/nastaveni/pruvodce/ubytovani');
+        $form = $crawler->selectButton('Uložit a pokračovat →')->form();
+        $form['accommodation_profile[idub]'] = '100000000001';
+        $form['accommodation_profile[kod]'] = 'UBYT1';
+        $form['accommodation_profile[nazev]'] = 'Apartmán U Lesa';
+        $form['accommodation_profile[spojeni]'] = 'Jana Hostinská, tel: 000 000 000';
+        $form['accommodation_profile[okres]'] = 'Jihočeský';
+        $form['accommodation_profile[obec]'] = 'Lhota';
+        $form['accommodation_profile[psc]'] = '38901';
+        $this->client->submit($form);
+
+        self::assertResponseRedirects('/nastaveni/pruvodce/pripojeni');
+
+        $profile = static::getContainer()->get(AccommodationProfileRepository::class)->getSingleton();
+        self::assertNotNull($profile, 'Krok má založit profil ubytovacího zařízení');
+        self::assertSame('Apartmán U Lesa', $profile->getNazev());
+    }
+
+    public function testConnectionStepSendsUserBackToWizard(): void
+    {
+        $crawler = $this->client->request('GET', '/nastaveni/pruvodce/pripojeni');
+
+        self::assertGreaterThan(
+            0,
+            $crawler->filter('a[href="/nastaveni/pripojeni?pruvodce=1"]')->count(),
+            'Odkaz na přístupy nese značku průvodce, aby se uživatel vrátil zpět',
+        );
+    }
+
+    public function testFinishClosesWizardAndGoesToDashboard(): void
+    {
+        $crawler = $this->client->request('GET', '/nastaveni/pruvodce/hotovo');
+        $this->client->submit($crawler->selectButton('Hotovo — na přehled')->form());
+
+        self::assertResponseRedirects('/');
+        self::assertTrue(
+            static::getContainer()->get(SetupChecklist::class)->wizardCompleted(),
+            'Uzavřením se průvodce označí za dokončený',
+        );
     }
 
     public function testUnknownStepIsNotFound(): void

@@ -44,6 +44,14 @@
                                 zpráv se ladí později v <strong>Šablonách zpráv</strong>.
                             </p>
                             {{ include('mail_settings/_editor.html.twig') }}
+                        {% elseif step == 'ubytovani' %}
+                            <p class="text-muted small mb-4">
+                                Údaje o objektu, ve kterém hosty ubytováváte. Aplikace je používá při
+                                <strong>hlášení ubytovaných cizinců na Ubyport</strong> — bez nich hlášení
+                                neprojde. Identifikátor ubytovatele (IDUB) a přihlašovací údaje přidělí
+                                cizinecká policie při registraci ubytovacího zařízení.
+                            </p>
+                            {{ form_widget(form) }}
                         {% else %}
                             {{ form_widget(form) }}
                         {% endif %}
@@ -190,7 +198,7 @@
                             {% if prevStep %}
                                 <a href="{{ path('setup_wizard_step', {step: prevStep}) }}" class="btn btn-link text-muted text-decoration-none px-0">← Zpět</a>
                             {% endif %}
-                            <a href="{{ path('connection_settings_edit') }}" class="btn btn-outline-primary">Vyplnit přístupy k připojení</a>
+                            <a href="{{ path('connection_settings_edit', {pruvodce: 1}) }}" class="btn btn-outline-primary">Vyplnit přístupy k připojení</a>
                         </div>
                         <a href="{{ path('setup_wizard_step', {step: nextStep}) }}" class="btn btn-primary">Pokračovat →</a>
                     </div>
@@ -221,7 +229,11 @@
                                 <a href="{{ path('setup_wizard_step', {step: prevStep}) }}" class="btn btn-link text-muted text-decoration-none px-0">← Zpět</a>
                             {% endif %}
                         </div>
-                        <a href="{{ path('dashboard') }}" class="btn btn-primary">Hotovo — na přehled</a>
+                        <form method="post" action="{{ path('setup_wizard_finish') }}" class="text-end">
+                            <div class="small text-muted mb-2">Průvodce se pak nabízí už jen tlačítkem na přehledu.</div>
+                            <input type="hidden" name="_token" value="{{ csrf_token('setup_wizard_finish') }}">
+                            <button type="submit" class="btn btn-primary">Hotovo — na přehled</button>
+                        </form>
                     </div>
                 {% endif %}
             </div>

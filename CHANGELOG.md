@@ -6,7 +6,25 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ## [Unreleased]
 
+### Přidáno
+
+- **Průvodce nastavením vede k údajům ubytovacího zařízení.** Mezi krokem
+  *Dodavatel* a *Připojení* přibyl krok **Ubytování** — název objektu, adresa,
+  kontaktní spojení a identifikátory od cizinecké policie (IDUB, kód zařízení),
+  ze kterých se skládá hlavička hlášení na Ubyport. Vyplnit je jde dál i
+  samostatně v **Nastavení → Ubytovací zařízení**.
+
 ### Změněno
+
+- **Po přihlášení na nenastavené instanci otevře správce průvodce nastavením.**
+  Nabízí se, dokud zbývá co nastavit a dokud ho správce tlačítkem *Hotovo*
+  neuzavře; pak se spouští z karty na přehledu. Uklízečka ani provozní správce
+  průvodce nedostanou.
+
+- **Krok Připojení vrací zpět do průvodce.** Odkaz na vyplnění přístupů se po
+  uložení vrátí na krok průvodce, ne na stránku nastavení. Za hotový se krok
+  považuje po vyplnění SMTP serveru — bez něj hostovi neodejde ani zpráva, ani
+  notifikace.
 
 - **Aplikace se ovládá i z telefonu.** Přehledy s mnoha sloupci — rezervace, účty,
   DPH, termíny — se na úzké obrazovce zobrazují jako karty, kde má každý údaj svůj

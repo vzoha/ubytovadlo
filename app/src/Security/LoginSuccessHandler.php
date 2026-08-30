@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Security;
 
+use App\Setup\SetupChecklist;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -24,6 +25,9 @@ use Symfony\Component\Security\Http\Util\TargetPathTrait;
  * Po přihlášení pokračuje na původně žádanou stránku (byl-li uživatel na login
  * přesměrován odjinud), jinak na první stránku, kterou jeho role vidí:
  * uklízečka na úklid, ostatní na seznam rezervací.
+ *
+ * Na nedonastavené instanci má správce přednostně průvodce nastavením — dokud
+ * ho neuzavře a zbývá co nastavit.
  */
 class LoginSuccessHandler implements AuthenticationSuccessHandlerInterface
 {
@@ -34,6 +38,7 @@ class LoginSuccessHandler implements AuthenticationSuccessHandlerInterface
     public function __construct(
         private readonly UrlGeneratorInterface $urls,
         private readonly AuthorizationCheckerInterface $authorization,
+        private readonly SetupChecklist $checklist,
     ) {
     }
 
@@ -47,6 +52,10 @@ class LoginSuccessHandler implements AuthenticationSuccessHandlerInterface
 
                 return new RedirectResponse($target);
             }
+        }
+
+        if ($this->authorization->isGranted('ROLE_ADMIN') && $this->checklist->needsWizard()) {
+            return new RedirectResponse($this->urls->generate('setup_wizard'));
         }
 
         $route = $this->authorization->isGranted('ROLE_USER') ? 'reservation_list' : 'cleaning_index';
