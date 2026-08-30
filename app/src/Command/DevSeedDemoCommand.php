@@ -584,6 +584,9 @@ class DevSeedDemoCommand extends Command
 
     /**
      * Definice demo rezervací. Stav se odvodí z dat vůči dnešku (pokud není 'status').
+     * Historie má pevná data kvůli DPH a ekonomice po měsících; nadcházející pobyty
+     * jsou relativní k dnešku (`today +N days`), ať kalendář i přehled ukazují provoz
+     * bez ohledu na to, kdy se demo seeduje.
      *
      * @return array<int, array<string, mixed>>
      */
@@ -789,6 +792,30 @@ class DevSeedDemoCommand extends Command
                 'adults' => 2, 'children' => 2, 'price' => '3900.00', 'acq' => 'rodina', 'leadDays' => 30, 'inv' => 'none',
             ],
 
+            // ── Nadcházející pobyty (IN_PROGRESS / CONFIRMED) ────────────────
+            [
+                'channel' => Channel::WEB, 'billing' => \App\Enum\BillingMode::STANDARD_WITH_DEPOSIT, 'gateway' => 'bank',
+                'ext' => '119', 'in' => 'today -1 day', 'out' => 'today +2 days', 'name' => 'Tereza Bláhová',
+                'email' => 'tereza.blahova@email.cz', 'phone' => '+420 605 909 101', 'street' => 'Nádražní 8',
+                'city' => 'Jindřichův Hradec', 'zip' => '37701', 'adults' => 2, 'children' => 2, 'price' => '4700.00',
+                'acq' => 'Google', 'clean' => [CleaningType::CLEANER, 700, 700], 'leadDays' => 45,
+                'inv' => 'deposit_only',
+            ],
+            [
+                'channel' => Channel::AIRBNB, 'billing' => \App\Enum\BillingMode::AIRBNB,
+                'ext' => '120', 'in' => 'today +3 days', 'out' => 'today +7 days', 'name' => 'Nora Lindqvist',
+                'region' => 'Stockholm', 'adults' => 2, 'price' => '6100.00', 'acq' => 'Airbnb',
+                'clean' => [CleaningType::CLEANER_LAUNDRY, 800, 800], 'leadDays' => 25, 'inv' => 'none',
+            ],
+            [
+                'channel' => Channel::WEB, 'billing' => \App\Enum\BillingMode::STANDARD_WITH_DEPOSIT, 'gateway' => 'bank',
+                'ext' => '121', 'in' => 'today +18 days', 'out' => 'today +21 days', 'name' => 'Radek Šimek',
+                'email' => 'radek.simek@email.cz', 'phone' => '+420 604 707 808', 'street' => 'Zámecká 2',
+                'city' => 'Písek', 'zip' => '39701', 'adults' => 2, 'children' => 2, 'price' => '5200.00',
+                'acq' => 'doporučení', 'clean' => [CleaningType::OWNER, 700, 0], 'leadDays' => 30,
+                'inv' => 'deposit_only',
+            ],
+
             // ── Čeká na doplnění údajů (NEEDS_DETAILS) ───────────────────────
             [
                 'channel' => Channel::BOOKING, 'billing' => \App\Enum\BillingMode::BOOKING_COM, 'needsDetails' => true,
@@ -797,6 +824,11 @@ class DevSeedDemoCommand extends Command
             [
                 'channel' => Channel::BOOKING, 'billing' => \App\Enum\BillingMode::BOOKING_COM, 'needsDetails' => true,
                 'ext' => '7000000208', 'in' => '2026-08-02', 'name' => null, 'price' => null, 'leadDays' => 15, 'inv' => 'none',
+            ],
+            [
+                'channel' => Channel::BOOKING, 'billing' => \App\Enum\BillingMode::BOOKING_COM, 'needsDetails' => true,
+                'ext' => '7000000209', 'in' => 'today +9 days', 'out' => 'today +12 days',
+                'name' => null, 'price' => null, 'leadDays' => 10, 'inv' => 'none',
             ],
         ];
     }
