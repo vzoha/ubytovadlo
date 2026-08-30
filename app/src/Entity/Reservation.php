@@ -152,6 +152,13 @@ class Reservation
     #[ORM\Column(length: 64, nullable: true)]
     private ?string $acquisitionSource = null;
 
+    /**
+     * Jazyk, ve kterém hostovi píšeme. `null` = odvodí se ze země v adrese
+     * (GuestLocaleResolver); vyplněná hodnota je ruční volba ubytovatele.
+     */
+    #[ORM\Column(length: 5, nullable: true)]
+    private ?string $guestLocale = null;
+
     #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
     private bool $hasPet = false;
 
@@ -626,6 +633,20 @@ class Reservation
     {
         $value = $acquisitionSource !== null ? trim($acquisitionSource) : null;
         $this->acquisitionSource = $value === '' ? null : $value;
+        $this->touch();
+
+        return $this;
+    }
+
+    public function getGuestLocale(): ?string
+    {
+        return $this->guestLocale;
+    }
+
+    public function setGuestLocale(?string $guestLocale): self
+    {
+        $value = $guestLocale !== null ? trim($guestLocale) : null;
+        $this->guestLocale = $value === '' ? null : $value;
         $this->touch();
 
         return $this;

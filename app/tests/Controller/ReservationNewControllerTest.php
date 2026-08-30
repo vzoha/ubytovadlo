@@ -119,4 +119,43 @@ final class ReservationNewControllerTest extends WebTestCase
         self::assertStringContainsString('Odjezd musí být po příjezdu', (string) $this->client->getResponse()->getContent());
         self::assertNull($this->em->getRepository(Reservation::class)->findOneBy(['guestName' => 'Špatný Termín']));
     }
+
+    public function testOwnerCanPickMessageLanguage(): void
+    {
+        $crawler = $this->client->request('GET', '/rezervace/nova');
+        $form = $crawler->selectButton('Přidat rezervaci')->form();
+        $form['reservation_manual[checkIn]'] = '2026-08-10';
+        $form['reservation_manual[checkOut]'] = '2026-08-14';
+        $form['reservation_manual[guestName]'] = 'Anglický Host';
+        $form['reservation_manual[guestsAdult]'] = '2';
+        $form['reservation_manual[guestsChild]'] = '0';
+        $form['reservation_manual[priceTotal]'] = '5 000';
+        $form['reservation_manual[billingMode]'] = BillingMode::ADMIN_BOOKING->value;
+        $form['reservation_manual[guestLocale]'] = 'en';
+        $this->client->submit($form);
+
+        self::assertResponseRedirects();
+
+        $reservation = $this->em->getRepository(Reservation::class)->findOneBy(['guestName' => 'Anglický Host']);
+        self::assertNotNull($reservation);
+        self::assertSame('en', $reservation->getGuestLocale());
+    }
+
+    public function testLanguageStaysAutomaticWhenNotChosen(): void
+    {
+        $crawler = $this->client->request('GET', '/rezervace/nova');
+        $form = $crawler->selectButton('Přidat rezervaci')->form();
+        $form['reservation_manual[checkIn]'] = '2026-08-10';
+        $form['reservation_manual[checkOut]'] = '2026-08-14';
+        $form['reservation_manual[guestName]'] = 'Automatický Host';
+        $form['reservation_manual[guestsAdult]'] = '1';
+        $form['reservation_manual[guestsChild]'] = '0';
+        $form['reservation_manual[priceTotal]'] = '3 000';
+        $form['reservation_manual[billingMode]'] = BillingMode::ADMIN_BOOKING->value;
+        $this->client->submit($form);
+
+        $reservation = $this->em->getRepository(Reservation::class)->findOneBy(['guestName' => 'Automatický Host']);
+        self::assertNotNull($reservation);
+        self::assertNull($reservation->getGuestLocale(), 'Bez volby se jazyk odvozuje ze země');
+    }
 }

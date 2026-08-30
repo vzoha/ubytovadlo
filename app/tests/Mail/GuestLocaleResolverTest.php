@@ -29,6 +29,33 @@ final class GuestLocaleResolverTest extends TestCase
         self::assertSame($expected, (new GuestLocaleResolver())->forReservation($reservation));
     }
 
+    public function testManualChoiceBeatsCountry(): void
+    {
+        $reservation = new Reservation(Channel::DIRECT, new \DateTimeImmutable('2026-09-01'));
+        $reservation->setGuestAddress(new Address(country: 'CZ'));
+        $reservation->setGuestLocale('en');
+
+        self::assertSame('en', (new GuestLocaleResolver())->forReservation($reservation));
+    }
+
+    public function testManualCzechForGuestWithForeignAddress(): void
+    {
+        $reservation = new Reservation(Channel::DIRECT, new \DateTimeImmutable('2026-09-01'));
+        $reservation->setGuestAddress(new Address(country: 'DE'));
+        $reservation->setGuestLocale('cs');
+
+        self::assertSame('cs', (new GuestLocaleResolver())->forReservation($reservation));
+    }
+
+    public function testUnsupportedManualChoiceFallsBackToCountry(): void
+    {
+        $reservation = new Reservation(Channel::DIRECT, new \DateTimeImmutable('2026-09-01'));
+        $reservation->setGuestAddress(new Address(country: 'DE'));
+        $reservation->setGuestLocale('de');
+
+        self::assertSame('en', (new GuestLocaleResolver())->forReservation($reservation));
+    }
+
     /** @return iterable<string, array{?string, string}> */
     public static function countries(): iterable
     {

@@ -12,8 +12,10 @@ declare(strict_types=1);
 namespace App\Form;
 
 use App\Entity\Reservation;
+use App\Mail\MessageLocales;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
@@ -38,6 +40,13 @@ class ReservationDetailsType extends AbstractType
             ->add('guestContact', GuestContactType::class)
             ->add('guestAddress', AddressType::class)
             ->add('guestBilling', BillingIdentityType::class)
+            ->add('guestLocale', ChoiceType::class, [
+                'label' => 'Jazyk zpráv',
+                'required' => false,
+                'placeholder' => 'Automaticky podle země',
+                'choices' => array_flip(MessageLocales::ALL),
+                'help' => 'Jazyk e-mailů hostovi. Bez volby: česky pro Česko a Slovensko, jinak anglicky.',
+            ])
             ->add('guestsAdult', IntegerType::class, [
                 'label' => 'Dospělých',
                 'required' => true,

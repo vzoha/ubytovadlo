@@ -109,6 +109,12 @@
                         <dt class="col-5 col-sm-4">Adresa</dt>
                         <dd class="col-7 col-sm-8">{{ reservation.guestAddress.format ?? '—' }}</dd>
 
+                        <dt class="col-5 col-sm-4">Jazyk zpráv</dt>
+                        <dd class="col-7 col-sm-8">
+                            {{ guest_locale.forReservation(reservation) == 'en' ? 'angličtina' : 'čeština' }}
+                            <span class="text-muted small">({{ reservation.guestLocale ? 'ručně' : 'podle země' }})</span>
+                        </dd>
+
                         {% if reservation.guestBilling.companyName %}
                             <dt class="col-5 col-sm-4">Firma</dt>
                             <dd class="col-7 col-sm-8">{{ reservation.guestBilling.companyName }}</dd>

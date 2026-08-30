@@ -8,6 +8,11 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Přidáno
 
+- **Jazyk zpráv jde u rezervace zvolit ručně.** V údajích hosta je pole
+  *Jazyk zpráv*: ve výchozím stavu se jazyk odvodí ze země v adrese, volbou
+  *Čeština* nebo *Angličtina* se přebije. Na detailu rezervace je u hosta vidět,
+  který jazyk platí a jestli plyne ze země, nebo z ruční volby.
+
 - **Zprávy hostům umí anglicky.** Každá šablona má záložky *Čeština* a *Angličtina*;
   anglická verze je předvyplněná hotovým textem, takže funguje i bez úprav. Hosté
   s jinou zemí v adrese než Česko nebo Slovensko dostanou anglickou verzi, ostatní

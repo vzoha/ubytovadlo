@@ -14,9 +14,10 @@ namespace App\Mail;
 use App\Entity\Reservation;
 
 /**
- * V jakém jazyce psát hostovi. Rozhoduje země z adresy hosta: česky pro
- * tuzemsko a Slovensko, jinak anglicky. Bez vyplněné země zůstává základní
- * jazyk — u českého ubytovatele je host bez adresy nejčastěji Čech.
+ * V jakém jazyce psát hostovi. Přednost má ruční volba na rezervaci; jinak
+ * rozhoduje země z adresy hosta — česky pro tuzemsko a Slovensko, jinak
+ * anglicky. Bez vyplněné země zůstává základní jazyk: u českého ubytovatele
+ * je host bez adresy nejčastěji Čech.
  */
 final class GuestLocaleResolver
 {
@@ -24,6 +25,16 @@ final class GuestLocaleResolver
     private const CZECH_SPEAKING = ['CZ', 'SK'];
 
     public function forReservation(Reservation $reservation): string
+    {
+        $chosen = $reservation->getGuestLocale();
+        if ($chosen !== null && MessageLocales::isSupported($chosen)) {
+            return $chosen;
+        }
+
+        return $this->fromCountry($reservation);
+    }
+
+    private function fromCountry(Reservation $reservation): string
     {
         $country = $reservation->getGuestAddress()->getCountry();
         if ($country === null || $country === '') {

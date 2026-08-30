@@ -5,6 +5,7 @@ twig:
         issuer: '@App\Invoice\IssuerProfileProvider'
         tax_profile: '@App\Invoice\TaxProfileConfig'
         brand_name: '@App\Config\BrandName'
+        guest_locale: '@App\Mail\GuestLocaleResolver'
         product_name: 'Ubytovadlo'
         product_url: 'https://ubytovadlo.cz'
         product_repo_url: 'https://github.com/vzoha/ubytovadlo'
