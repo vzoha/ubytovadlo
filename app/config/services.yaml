@@ -28,6 +28,11 @@ services:
     App\:
         resource: '../src/'
 
+    # Kalendář kreslí řádek na jednotku. Dokud instance eviduje jedno ubytování,
+    # dodává jediný řádek SingleUnitProvider — víc jednotek znamená vyměnit
+    # tuhle implementaci, ne builder ani šablony.
+    App\Calendar\UnitProvider: '@App\Calendar\SingleUnitProvider'
+
     App\MotoPress\MotoPressBookingMapper:
         factory: ['@App\MotoPress\MotoPressSettings', 'createMapper']
 

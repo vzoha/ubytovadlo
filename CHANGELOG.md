@@ -8,6 +8,16 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Přidáno
 
+- **Kalendář obsazenosti.** V menu *Kalendář* ukazuje měsíc ve dvou pohledech:
+  **osa** (řádek na jednotku, sloupec na den) a **měsíc** (klasická mřížka týdnů).
+  Pás rezervace nese jméno hosta a barvu prodejního kanálu, začíná odpoledne
+  příjezdu a končí dopoledne odjezdu — den, kdy jeden host odjíždí a druhý
+  přijíždí, je tak vidět jako obsazený z obou půlek. Překrývající se rezervace
+  leží nad sebou s červeným rámem a hlášením o dvojím obsazení, rezervace bez
+  údajů hosta má šrafovaný pás. Pod jednotkami jsou řádky *Úklid* (na den odjezdu)
+  a *Termíny* (hlídané revize a servis). Klik na pás otevře rezervaci. Na přehledu
+  je stejná osa pro nejbližší dva týdny.
+
 - **Jazyk zpráv jde u rezervace zvolit ručně.** V údajích hosta je pole
   *Jazyk zpráv*: ve výchozím stavu se jazyk odvodí ze země v adrese, volbou
   *Čeština* nebo *Angličtina* se přebije. Na detailu rezervace je u hosta vidět,

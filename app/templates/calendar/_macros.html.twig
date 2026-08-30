@@ -1,0 +1,18 @@
+{# Pás rezervace. Pozice i šířka jsou v procentech okna, které se zrovna kreslí
+   (měsíc na ose, týden v mřížce) — půldny drží příjezd a odjezd uprostřed sloupce. #}
+{% macro bar(bar, days) %}
+    <a class="cal-bar cal-bar--{{ bar.channel }}{{ bar.unconfirmed ? ' cal-bar--unconfirmed' }}{{ bar.conflict ? ' cal-bar--conflict' }}{{ bar.span.continuesBefore ? ' cal-bar--open-start' }}{{ bar.span.continuesAfter ? ' cal-bar--open-end' }}"
+       style="left: {{ bar.span.leftPercent(days) }}%; width: {{ bar.span.widthPercent(days) }}%;"
+       href="{{ path('reservation_detail', {id: bar.reservationId}) }}"
+       title="{{ bar.summary }}">
+        <span class="cal-bar__label">{{ bar.label }}</span>
+    </a>
+{% endmacro %}
+
+{# Bod v konkrétním dni — úklid, hlídaný termín. #}
+{% macro marker(marker) %}
+    <a class="cal-marker text-bg-{{ marker.tone }}" href="{{ marker.url }}" title="{{ marker.label }}">
+        <span class="cal-marker__icon">{{ marker.icon }}</span>
+        <span class="cal-marker__label">{{ marker.label }}</span>
+    </a>
+{% endmacro %}

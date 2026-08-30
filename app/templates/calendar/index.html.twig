@@ -1,0 +1,53 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Kalendář — {{ brand_name }}{% endblock %}
+
+{% block stylesheets %}
+    {% include 'calendar/_styles.html.twig' %}
+{% endblock %}
+
+{% block body %}
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <h1 class="h3 mb-0">Kalendář</h1>
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            <div class="btn-group btn-group-sm" role="group" aria-label="Pohled">
+                <a class="btn btn-outline-secondary{{ view == 'osa' ? ' active' }}" href="{{ path('calendar_index', {pohled: 'osa', mesic: month.value}) }}">Osa</a>
+                <a class="btn btn-outline-secondary{{ view == 'mesic' ? ' active' }}" href="{{ path('calendar_index', {pohled: 'mesic', mesic: month.value}) }}">Měsíc</a>
+            </div>
+            <div class="btn-group btn-group-sm" role="group" aria-label="Měsíc">
+                <a class="btn btn-outline-secondary" href="{{ path('calendar_index', {mesic: month.previous.value}) }}" title="{{ month.previous.label }}">←</a>
+                <a class="btn btn-outline-secondary" href="{{ path('calendar_index', {mesic: today|date('Y-m')}) }}">Dnes</a>
+                <a class="btn btn-outline-secondary" href="{{ path('calendar_index', {mesic: month.next.value}) }}" title="{{ month.next.label }}">→</a>
+            </div>
+        </div>
+    </div>
+
+    <h2 class="h5 mb-3">{{ month.label|capitalize }}</h2>
+
+    {% if calendar.conflictingReservations > 0 %}
+        <div class="alert alert-danger py-2 small">
+            Dvojí obsazení termínu — {{ calendar.conflictingReservations }} rezervace se překrývají s jinou. V kalendáři mají červený rám.
+        </div>
+    {% endif %}
+
+    {% if view == 'mesic' %}
+        {% include 'calendar/_month.html.twig' %}
+    {% else %}
+        {% include 'calendar/_timeline.html.twig' %}
+    {% endif %}
+
+    {% if calendar.isEmpty %}
+        <p class="text-muted small mt-3 mb-0">
+            V tomto měsíci není žádná rezervace.
+            <a class="text-decoration-none" href="{{ path('reservation_new') }}">Rezervace →</a>
+        </p>
+    {% endif %}
+
+    <div class="cal-legend text-muted mt-3">
+        {% for key, label in {'web': 'Web', 'direct': 'Přímá', 'booking': 'Booking.com', 'airbnb': 'Airbnb', 'echalupy': 'eChalupy', 'cs_chalupy': 'CS chalupy'} %}
+            <span><span class="cal-swatch cal-bar--{{ key }}" style="background: var(--cal-bar-color);"></span> {{ label }}</span>
+        {% endfor %}
+        <span><span class="cal-swatch bg-secondary" style="background-image: repeating-linear-gradient(45deg, rgba(255,255,255,.3) 0 4px, transparent 4px 8px);"></span> bez údajů hosta</span>
+        <span>Pás začíná odpoledne příjezdu a končí dopoledne odjezdu.</span>
+    </div>
+{% endblock %}

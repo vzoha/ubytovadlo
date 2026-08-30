@@ -1,0 +1,43 @@
+{# Měsíční mřížka: týden pod týdnem, pás přes přelom týdne pokračuje v dalším. #}
+{% import 'calendar/_macros.html.twig' as cal %}
+<div class="cal">
+    <div class="cal-body cal-body--fill" style="--cal-days: 7; --cal-label: 0;">
+        {% set firstWeek = weeks|first %}
+        <div class="cal-days mb-1">
+            {% for day in firstWeek.days %}
+                <div><span class="cal-dow">{{ day.shortName }}</span></div>
+            {% endfor %}
+        </div>
+
+        {% for week in weeks %}
+            <div class="cal-week bg-white">
+                {% include 'calendar/_cells.html.twig' with {days: week.days} only %}
+                <div class="cal-numbers">
+                    {% for day in week.days %}
+                        <div class="{{ day.outsideMonth ? 'text-body-tertiary' }}{{ day.today ? ' fw-bold text-primary' }}">{{ day.number }}</div>
+                    {% endfor %}
+                </div>
+                {% for row in week.rows %}
+                    {% if row.lanes is not empty %}
+                        {% if week.rows|length > 1 %}<div class="cal-week-unit">{{ row.title }}</div>{% endif %}
+                        <div class="cal-lanes">
+                            {% for lane in row.lanes %}
+                                <div class="cal-lane">
+                                    {% for bar in lane %}{{ cal.bar(bar, 7) }}{% endfor %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endfor %}
+                {% if week.markers is not empty %}
+                    <div class="cal-markers">
+                        {% for day in week.days %}
+                            {% set localDay = loop.index0 %}
+                            <div>{% for marker in week.markersOn(localDay) %}{{ cal.marker(marker) }}{% endfor %}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+</div>

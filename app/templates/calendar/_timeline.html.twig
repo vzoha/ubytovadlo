@@ -1,0 +1,67 @@
+{# Vodorovná osa: řádek = jednotka, sloupec = den. Pod jednotkami servisní řádky. #}
+{% import 'calendar/_macros.html.twig' as cal %}
+{% set days = calendar.range.days %}
+<div class="cal cal-scroll border rounded bg-white">
+    <div class="cal-body" style="--cal-days: {{ days }}">
+        <div class="cal-row border-bottom">
+            <div class="cal-label"></div>
+            <div class="cal-track">
+                {% include 'calendar/_cells.html.twig' with {days: calendar.days} only %}
+                <div class="cal-days">
+                    {% for day in calendar.days %}
+                        <div>
+                            <span class="cal-dow">{{ day.shortName }}</span>
+                            <span class="cal-num{{ day.today ? ' cal-num--today' }}">{{ day.number }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        {% for row in calendar.unitRows %}
+            <div class="cal-row border-bottom">
+                <div class="cal-label fw-semibold">{{ row.title }}</div>
+                <div class="cal-track">
+                    {% include 'calendar/_cells.html.twig' with {days: calendar.days} only %}
+                    <div class="cal-lanes">
+                        {% for lane in row.lanes %}
+                            <div class="cal-lane">
+                                {% for bar in lane %}{{ cal.bar(bar, days) }}{% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="cal-lane"></div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+
+        {% for row in calendar.serviceRows %}
+            {% if row.markers is not empty %}
+                <div class="cal-row border-top">
+                    <div class="cal-label text-muted">{{ row.title }}</div>
+                    <div class="cal-track">
+                        {% include 'calendar/_cells.html.twig' with {days: calendar.days} only %}
+                        <div class="cal-markers cal-markers--icons">
+                            {% for day in calendar.days %}
+                                <div>{% for marker in row.markersOn(day.index) %}{{ cal.marker(marker) }}{% endfor %}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+</div>
+
+{# Osa se otevře tak, aby byl vidět dnešek — u běžícího měsíce se jinak začíná prvním dnem. #}
+<script>
+    document.querySelectorAll('.cal-scroll').forEach(function (box) {
+        var today = box.querySelector('.cal-cell--today');
+        if (!today) {
+            return;
+        }
+        var offset = today.getBoundingClientRect().left - box.getBoundingClientRect().left;
+        box.scrollLeft += offset - box.clientWidth / 3;
+    });
+</script>

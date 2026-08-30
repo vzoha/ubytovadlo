@@ -86,6 +86,24 @@ class RecurringTaskRepository extends ServiceEntityRepository
         ));
     }
 
+    /**
+     * Aktivní termíny s datem v rozsahu [$from; $to) — body do kalendáře.
+     *
+     * @return RecurringTask[]
+     */
+    public function findDueBetween(\DateTimeImmutable $from, \DateTimeImmutable $to): array
+    {
+        return $this->createQueryBuilder('t')
+            ->andWhere('t.active = true')
+            ->andWhere('t.dueOn >= :from')
+            ->andWhere('t.dueOn < :to')
+            ->setParameter('from', $from)
+            ->setParameter('to', $to)
+            ->orderBy('t.dueOn', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
     /** @return array<string, RecurringTask> klíč katalogu → úloha */
     public function findByCatalogKeys(): array
     {

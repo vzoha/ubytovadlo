@@ -362,6 +362,28 @@ class ReservationRepository extends ServiceEntityRepository
     }
 
     /**
+     * Rezervace, jejichž pobyt zasahuje do rozsahu [$from; $to) — podklad pro
+     * kalendář obsazenosti. Pobyt je půlotevřený interval, bez odjezdu se bere
+     * jedna noc. `needs_details` patří dovnitř: termín je obsazený i bez údajů
+     * hosta. Zrušené ven.
+     *
+     * @return Reservation[]
+     */
+    public function findOverlappingRange(\DateTimeImmutable $from, \DateTimeImmutable $to): array
+    {
+        return $this->createQueryBuilder('r')
+            ->andWhere('r.status != :cancelled')
+            ->andWhere('r.checkIn < :to')
+            ->andWhere("COALESCE(r.checkOut, DATE_ADD(r.checkIn, 1, 'day')) >= :from")
+            ->setParameter('cancelled', ReservationStatus::CANCELLED)
+            ->setParameter('from', $from)
+            ->setParameter('to', $to)
+            ->orderBy('r.checkIn', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
      * Rezervace blokující kapacitu pro iCal export obsazenosti — vše nezrušené,
      * jehož pobyt končí od `$from` dál (probíhající i budoucí). Skryté detaily
      * (needs_details) blokují taky — dokud rezervaci nezrušíme, termín je obsazený.

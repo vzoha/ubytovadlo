@@ -1,0 +1,6 @@
+{# Podklad se sloupci dnů — víkend, dnešek, dny mimo zobrazený měsíc. #}
+<div class="cal-cells" aria-hidden="true">
+    {% for day in days %}
+        <div class="cal-cell{{ day.weekend ? ' cal-cell--weekend' }}{{ day.outsideMonth ? ' cal-cell--outside' }}{{ day.today ? ' cal-cell--today' }}"></div>
+    {% endfor %}
+</div>

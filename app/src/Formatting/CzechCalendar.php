@@ -23,6 +23,15 @@ final class CzechCalendar
         'červenec', 'srpen', 'září', 'říjen', 'listopad', 'prosinec',
     ];
 
+    /** @var list<string> Zkratky dní indexované výsledkem date('w') — 0 = neděle. */
+    private const DAY_SHORT = ['ne', 'po', 'út', 'st', 'čt', 'pá', 'so'];
+
+    /** Zkratka dne v týdnu podle date('w') (0 = neděle), nebo prázdný řetězec mimo rozsah. */
+    public static function dayShort(int $weekday): string
+    {
+        return self::DAY_SHORT[$weekday] ?? '';
+    }
+
     /** Název měsíce (1 = leden), nebo prázdný řetězec mimo rozsah 1–12. */
     public static function monthName(int $month): string
     {

@@ -1,0 +1,5 @@
+{# Pásek obsazenosti na přehledu — stejná osa jako v kalendáři, jen kratší rozsah. #}
+{% include 'calendar/_timeline.html.twig' %}
+{% if calendar.isEmpty %}
+    <p class="text-muted small mt-2 mb-1 px-1">V nejbližších dvou týdnech je volno.</p>
+{% endif %}
