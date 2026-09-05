@@ -15,6 +15,7 @@ use App\Entity\Reservation;
 use App\Entity\ReservationAction;
 use App\Enum\ActionStatus;
 use App\Enum\ActionType;
+use App\Enum\ReservationStatus;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -61,6 +62,27 @@ class ReservationActionRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    /**
+     * Akce zrušené se zadaným výsledkem — pro obnovení storna, které vrací mezi
+     * naplánované právě ty akce, které storno samo zavřelo.
+     *
+     * @return ReservationAction[]
+     */
+    public function findCancelledWithResult(Reservation $reservation, string $result): array
+    {
+        return $this->createQueryBuilder('a')
+            ->andWhere('a.reservation = :r')
+            ->andWhere('a.status = :cancelled')
+            ->andWhere('a.result = :result')
+            ->setParameter('r', $reservation)
+            ->setParameter('cancelled', ActionStatus::CANCELLED)
+            ->setParameter('result', $result)
+            ->orderBy('a.scheduledFor', 'ASC')
+            ->addOrderBy('a.id', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
     public function hasOfType(Reservation $reservation, ActionType $type): bool
     {
         $count = (int) $this->createQueryBuilder('a')
@@ -77,15 +99,20 @@ class ReservationActionRepository extends ServiceEntityRepository
 
     /**
      * Naplánované akce, kterým nadešel čas — vstup pro cron app:actions:run.
+     * Akce zrušených rezervací vynechává: storno může přijít odkudkoli (UI,
+     * MotoPress, iCal) a hostovi zrušeného pobytu už nemá nic odejít.
      *
      * @return ReservationAction[]
      */
     public function findDue(\DateTimeImmutable $now): array
     {
         return $this->createQueryBuilder('a')
+            ->join('a.reservation', 'r')
             ->andWhere('a.status = :planned')
             ->andWhere('a.scheduledFor <= :now')
+            ->andWhere('r.status != :cancelled')
             ->setParameter('planned', ActionStatus::PLANNED)
+            ->setParameter('cancelled', ReservationStatus::CANCELLED)
             ->setParameter('now', $now)
             ->orderBy('a.scheduledFor', 'ASC')
             ->addOrderBy('a.id', 'ASC')

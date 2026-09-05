@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Booking\BookingHotelId;
 use App\Connector\ConnectorManager;
 use App\Credential\CredentialCipher;
 use App\Credential\CredentialProvider;
@@ -20,6 +21,7 @@ use App\Ical\IcalFeedToken;
 use App\MotoPress\MotoPressSettings;
 use App\Repository\CredentialRepository;
 use App\Repository\SettingRepository;
+use App\Reservation\ExtranetLink;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -34,6 +36,7 @@ class ConnectionSettingsController extends AbstractController
         private readonly CredentialRepository $credentials,
         private readonly CredentialCipher $cipher,
         private readonly MotoPressSettings $motopress,
+        private readonly ExtranetLink $extranetLink,
         private readonly SettingRepository $settings,
         private readonly EntityManagerInterface $em,
         private readonly IcalFeedToken $icalFeedToken,
@@ -45,7 +48,10 @@ class ConnectionSettingsController extends AbstractController
     public function edit(Request $request): Response
     {
         $state = $this->provider->formState();
-        $form = $this->createForm(ConnectionSettingsType::class, $state['values'] + $this->motopress->currentValues());
+        $form = $this->createForm(
+            ConnectionSettingsType::class,
+            $state['values'] + $this->motopress->currentValues() + ['bookingHotelId' => $this->extranetLink->bookingHotelId()],
+        );
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
@@ -55,6 +61,7 @@ class ConnectionSettingsController extends AbstractController
                 $form->get('babyCotServiceIds')->getData(),
                 (bool) $form->get('pushPayments')->getData(),
             );
+            $this->saveBookingHotelId((string) $form->get('bookingHotelId')->getData());
 
             if (!$this->cipher->isReady()) {
                 $this->addFlash('warning', 'Chování MotoPressu uloženo. Přístupové údaje ale vyžadují APP_CREDENTIALS_KEY (base64 32 B) v .env.local — bez něj se neuloží.');
@@ -109,6 +116,16 @@ class ConnectionSettingsController extends AbstractController
         }
 
         return $this->redirectToRoute('connection_settings_edit');
+    }
+
+    private function saveBookingHotelId(string $raw): void
+    {
+        $this->settings->set(
+            BookingHotelId::SETTING_KEY,
+            BookingHotelId::normalize($raw) ?? '',
+            'Booking.com: ID ubytování pro odkaz do extranetu.',
+        );
+        $this->em->flush();
     }
 
     private function saveMapping(?string $petIds, ?string $babyCotIds, bool $push): void

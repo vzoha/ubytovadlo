@@ -248,8 +248,10 @@ V panelu **Cron úlohy** založ čtyři úlohy á 15 min a jednu denní:
 konektorů — Booking, Airbnb, eChalupy, CS chalupy; URL feedu se zadává na stránce
 Připojení). iCal import založí/aktualizuje obsazenost a blok, který z feedu zmizí,
 stornuje; bez vyplněné URL feedu se konektor přeskočí.
-`actions-plan` doplní automatické akce na časovou osu (pre-arrival/post-stay zprávy,
-doplatek, Ubyport u cizinců) i u rezervací potvrzených přes MotoPress sync.
+`actions-plan` nejdřív srovná stav rezervací s kalendářem (`app:reservations:advance`
+— v den příjezdu „probíhá", den po odjezdu „dokončeno") a pak doplní automatické akce
+na časovou osu (`app:actions:plan` — pre-arrival/post-stay zprávy, doplatek, Ubyport
+u cizinců) i u rezervací potvrzených přes MotoPress sync.
 `process-due` (á 15 min) vyhodnotí akce, kterým nadešel čas (zprávy hostům,
 self-resolving připomínky, Ubyport) a hned pak rozešle **okamžité notifikace
 ubytovateli** z fronty — i ty, které během běhu vznikly (`app:actions:run` +

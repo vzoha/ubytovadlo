@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Email;
 
+use App\Booking\BookingHotelId;
 use App\Email\Dto\BookingTriggerData;
 use App\Formatting\CzechCalendar;
 
@@ -18,6 +19,9 @@ use App\Formatting\CzechCalendar;
  * Booking.com new-reservation e-mails carry no guest details — only the
  * reservation id and check-in date in the subject. This parser extracts
  * exactly that, so the IMAP poller can create a needs_details Reservation.
+ *
+ * The body also carries a link to the reservation in the extranet; its
+ * hotel_id is the property id, which the app needs to build such links itself.
  */
 class BookingTriggerParser
 {
@@ -47,6 +51,7 @@ class BookingTriggerParser
         return new BookingTriggerData(
             reservationId: $m['id'],
             checkIn: $checkIn,
+            hotelId: BookingHotelId::normalize($email->textBody),
         );
     }
 }

@@ -93,7 +93,7 @@ final class EmailDispatcherTest extends TestCase
         $handlers = [
             new AirbnbReservationHandler($airbnb, $this->reservations, $notifier, $this->createMock(IncomeUpserter::class), $this->em),
             new AirbnbPayoutHandler(new AirbnbPayoutParser(), $this->reservations, $this->invoices, $this->createMock(IncomeUpserter::class)),
-            new BookingTriggerHandler(new BookingTriggerParser(), $this->reservations, $notifier, $this->em),
+            new BookingTriggerHandler(new BookingTriggerParser(), $this->reservations, $notifier, $this->createMock(SettingRepository::class), $this->em),
             new BookingInvoiceHandler($bookingInvoiceImporter),
             new CsPaymentHandler(new CsPaymentParser(), $this->paymentProcessor),
         ];

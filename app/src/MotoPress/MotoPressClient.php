@@ -87,6 +87,18 @@ class MotoPressClient
     }
 
     /**
+     * Nastaví stav rezervace (např. "cancelled"). Zrušená rezervace uvolní
+     * v MotoPressu obsazenost, takže se termín vrátí do prodeje na webu.
+     * Vyžaduje API klíč s právem Write.
+     *
+     * @return array<int|string, mixed>
+     */
+    public function updateBookingStatus(int $id, string $status): array
+    {
+        return $this->request('PATCH', sprintf('/bookings/%d', $id), ['status' => $status]);
+    }
+
+    /**
      * @param array<string, scalar|array<scalar>> $query
      *
      * @return list<array<string, mixed>>

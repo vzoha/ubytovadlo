@@ -6,7 +6,7 @@
 # parametrů, mrtvý kód, vazby mezi třídami) pouští přes PHPMD jen na tom, co
 # se v téhle větvi změnilo. Je to branka pro nový kód, ne audit historie.
 #
-#   tools/review-changed.sh [base]     # výchozí base: origin/main, jinak main
+#   tools/review-changed.sh [base]     # výchozí base: origin/main, jinak main (vč. nových souborů mimo git)
 #   tools/review-changed.sh --staged   # jen stagované soubory (pouští pre-commit hook)
 #
 # Co PHPMD neumí — pojmenování, skutečné SRP, duplicitní *záměr* napříč soubory —
@@ -41,6 +41,10 @@ fi
 if [ -z "${files:-}" ]; then
     merge_base=$(git merge-base "$base" HEAD 2>/dev/null || echo "$base")
     files=$(git diff --name-only --diff-filter=ACMR "$merge_base" -- 'app/src/**/*.php' 'app/src/*.php')
+    # Rozdělaný soubor, který ještě není v gitu, v diffu není — a přitom je to
+    # ten nejnovější kód. Přidáme ho, ať branka platí i před `git add`.
+    untracked=$(git ls-files --others --exclude-standard -- 'app/src/**/*.php' 'app/src/*.php')
+    files=$(printf '%s\n%s\n' "$files" "$untracked" | sed '/^$/d' | sort -u)
 fi
 
 if [ -z "$files" ]; then

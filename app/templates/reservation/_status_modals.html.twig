@@ -1,0 +1,83 @@
+{# Storno rezervace a jeho zrušení. Očekává: reservation, extranet. #}
+{% set is_ota = reservation.channel.isOta %}
+{% set has_motopress = reservation.motopressExternalId is not null %}
+
+{% if reservation.status.value == 'cancelled' %}
+    <div class="modal fade" id="restoreReservation" tabindex="-1" aria-labelledby="restoreReservationLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title h6 mb-0" id="restoreReservationLabel">Obnovit rezervaci</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zavřít"></button>
+                </div>
+                <form method="post" action="{{ path('reservation_restore', {id: reservation.id}) }}">
+                    <div class="modal-body">
+                        <input type="hidden" name="_token" value="{{ csrf_token('restore-' ~ reservation.id) }}">
+                        <p class="mb-2">Rezervace se vrátí do stavu podle kalendáře — bez údajů hosta mezi nedotažené. Akce, které storno zavřelo, se znovu naplánují a příjem se přepočítá.</p>
+                        {% if is_ota %}
+                            <p class="text-muted small mb-2">Termín drží {{ reservation.channel.label }}. Pokud je rezervace zrušená i tam, obsazenost se sem vrátí až po obnovení v extranetu.</p>
+                        {% endif %}
+                        {% if has_motopress %}
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="push_motopress" value="1" id="restorePushMotopress" checked>
+                                <label class="form-check-label" for="restorePushMotopress">
+                                    Potvrdit i v MotoPressu
+                                    <span class="d-block text-muted small">Termín se na webu opět zablokuje.</span>
+                                </label>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Zavřít</button>
+                        <button class="btn btn-sm btn-primary">Obnovit rezervaci</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% else %}
+    <div class="modal fade" id="cancelReservation" tabindex="-1" aria-labelledby="cancelReservationLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title h6 mb-0" id="cancelReservationLabel">Zrušit rezervaci</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zavřít"></button>
+                </div>
+                <form method="post" action="{{ path('reservation_cancel', {id: reservation.id}) }}">
+                    <div class="modal-body">
+                        <input type="hidden" name="_token" value="{{ csrf_token('cancel-' ~ reservation.id) }}">
+                        {% if is_ota %}
+                            <div class="alert alert-warning py-2 mb-3">
+                                O stornu rozhoduje {{ reservation.channel.label }}. Zruš rezervaci nejdřív tam — sem se storno promítne samo při dalším čtení kalendáře.
+                                {% if extranet %}
+                                    <a href="{{ extranet }}" target="_blank" rel="noopener" class="d-inline-block mt-1">Otevřít v {{ reservation.channel.label }} ↗</a>
+                                {% endif %}
+                            </div>
+                            <p class="mb-2">Tímhle srovnáš evidenci v Ubytovadle: termín se uvolní v přehledu i v iCal feedu pro ostatní portály.</p>
+                        {% else %}
+                            <p class="mb-2">Termín se uvolní v přehledu i v iCal feedu pro prodejní portály.</p>
+                        {% endif %}
+                        <ul class="small text-muted mb-3">
+                            <li>Naplánované akce se zavřou — hostovi už žádná zpráva neodejde.</li>
+                            <li>Příjem se přepočítá: zůstanou jen reálně přijaté peníze, odhad výplaty zmizí.</li>
+                            <li>Vystavené faktury zůstávají — případný dobropis vystav sám.</li>
+                        </ul>
+                        {% if has_motopress %}
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="push_motopress" value="1" id="cancelPushMotopress" checked>
+                                <label class="form-check-label" for="cancelPushMotopress">
+                                    Zrušit i v MotoPressu
+                                    <span class="d-block text-muted small">Bez toho zůstane termín na webu blokovaný.</span>
+                                </label>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Zavřít</button>
+                        <button class="btn btn-sm btn-outline-danger">Zrušit rezervaci</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endif %}

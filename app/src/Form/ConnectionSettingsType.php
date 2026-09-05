@@ -63,6 +63,11 @@ class ConnectionSettingsType extends AbstractType
                 'label' => 'Posílat potvrzené platby zpět do MotoPressu',
                 'required' => false,
             ])
+            ->add('bookingHotelId', TextType::class, [
+                'label' => 'ID ubytování na Booking.com',
+                'required' => false,
+                'help' => 'Číslo z adresy extranetu (hotel_id). Doplní se samo z e-mailu o nové rezervaci, vlepit jde i celá adresa.',
+            ])
             ->add('smtpHost', TextType::class, ['label' => 'SMTP server', 'required' => false, 'help' => 'Prázdné = použije se MAILER_DSN z prostředí.'])
             ->add('smtpPort', IntegerType::class, ['label' => 'Port', 'required' => false, 'help' => 'Obvykle 465 (SSL) nebo 587 (TLS).', 'attr' => ['min' => 1, 'max' => 65535]])
             ->add('smtpEncryption', ChoiceType::class, [

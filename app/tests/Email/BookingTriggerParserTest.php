@@ -55,6 +55,15 @@ final class BookingTriggerParserTest extends TestCase
         self::assertSame($expectedDate, $data->checkIn->format('Y-m-d'));
     }
 
+    public function testPicksPropertyIdFromExtranetLink(): void
+    {
+        $email = $this->reader->fromFile(__DIR__ . '/../Fixtures/Booking/Booking.com - Nová rezervace! (7000000001, pondělí 15. dubna 2026).eml');
+
+        // Odkaz na rezervaci v těle e-mailu nese hotel_id — ID ubytování, bez
+        // kterého by aplikace neuměla postavit odkaz do extranetu.
+        self::assertSame('10718270', $this->parser->parse($email)->hotelId);
+    }
+
     public function testRejectsUnrelatedSender(): void
     {
         $email = new EmailMessage(

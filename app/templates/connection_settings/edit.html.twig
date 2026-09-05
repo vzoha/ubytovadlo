@@ -123,6 +123,18 @@
         </div>
 
         <div class="card mb-3">
+            <div class="card-header py-2 fw-semibold">Booking.com — extranet</div>
+            <div class="card-body">
+                <p class="text-muted small mb-3">
+                    ID ubytování drží odkaz z rezervace rovnou na její stránku v extranetu,
+                    kde se řeší storno i změny termínu. Vyplní se samo z prvního e-mailu
+                    o nové rezervaci.
+                </p>
+                <div class="col-md-6">{{ form_row(form.bookingHotelId) }}</div>
+            </div>
+        </div>
+
+        <div class="card mb-3">
             <div class="card-header py-2 fw-semibold">SMTP — odchozí e-maily</div>
             <div class="card-body">
                 <p class="text-muted small mb-3">

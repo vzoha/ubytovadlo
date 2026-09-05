@@ -16,6 +16,8 @@ final class BookingTriggerData
     public function __construct(
         public readonly string $reservationId,
         public readonly \DateTimeImmutable $checkIn,
+        /** ID ubytování v Booking extranetu — z odkazu na rezervaci v e-mailu. */
+        public readonly ?string $hotelId = null,
     ) {
     }
 }

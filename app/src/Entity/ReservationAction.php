@@ -195,9 +195,24 @@ class ReservationAction
         return $this;
     }
 
-    public function cancel(): self
+    public function cancel(?string $result = null): self
     {
         $this->status = ActionStatus::CANCELLED;
+        $this->result = $result;
+        $this->touch();
+
+        return $this;
+    }
+
+    /**
+     * Vrátí zrušenou akci mezi naplánované — v původním čase, o jehož platnosti
+     * rozhodne až vykonavatel.
+     */
+    public function replan(): self
+    {
+        $this->status = ActionStatus::PLANNED;
+        $this->result = null;
+        $this->executedAt = null;
         $this->touch();
 
         return $this;

@@ -8,6 +8,26 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Přidáno
 
+- **Zrušení rezervace.** Na detailu rezervace je tlačítko *Zrušit rezervaci*
+  a u zrušené *Obnovit rezervaci*. Storno zavře naplánované akce, takže hostovi
+  zrušeného pobytu už žádná zpráva neodejde, a přepočítá příjem — zůstanou jen
+  reálně přijaté peníze, odhad výplaty zmizí. Termín se uvolní v přehledu,
+  kalendáři i v iCal feedu pro prodejní portály. U rezervací z vlastního webu
+  jde storno zaškrtnutím propsat i do MotoPressu, aby se termín vrátil do
+  prodeje; u Bookingu a Airbnb dialog vede nejdřív do extranetu, kde o stornu
+  rozhoduje portál. Obnovení vrátí stav podle kalendáře a znovu naplánuje akce,
+  které storno zavřelo.
+
+- **Odkaz z rezervace do extranetu.** Rezervace z Bookingu a Airbnb mají v hlavičce
+  tlačítko *Otevřít v Booking.com* / *Otevřít v Airbnb* — vede rovnou na stránku
+  té rezervace v extranetu portálu. Airbnb stačí potvrzující kód; ID ubytování pro
+  Booking se vyplní samo z e-mailu o nové rezervaci a je i v **Nastavení →
+  Připojení**.
+
+- **Stav rezervace se posouvá podle kalendáře.** V den příjezdu rezervace přejde
+  na *Probíhá*, den po odjezdu na *Dokončeno*. Běží v cronu jako součást plánování
+  akcí; storno a *Doplnit údaje* zůstávají, dokud je nezmění člověk nebo import.
+
 - **Zpráva před odjezdem.** Nový druh zprávy hostům — odejde den před odjezdem
   v 17:00 a připomene čas odchodu, klíče a co nechat v pořádku. Text je
   předvyplněný česky i anglicky, časování i režim se nastavují v **Nastavení →

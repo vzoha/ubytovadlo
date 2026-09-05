@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Email\Handler;
 
+use App\Booking\BookingHotelId;
 use App\Email\BookingTriggerParser;
 use App\Email\Dto\BookingTriggerData;
 use App\Email\EmailMessage;
@@ -22,6 +23,7 @@ use App\Enum\OwnerNotificationType;
 use App\Enum\ReservationStatus;
 use App\Notification\OwnerNotifier;
 use App\Repository\ReservationRepository;
+use App\Repository\SettingRepository;
 use Doctrine\ORM\EntityManagerInterface;
 
 /**
@@ -34,6 +36,7 @@ final class BookingTriggerHandler implements EmailHandler
         private readonly BookingTriggerParser $parser,
         private readonly ReservationRepository $reservations,
         private readonly OwnerNotifier $notifier,
+        private readonly SettingRepository $settings,
         private readonly EntityManagerInterface $em,
     ) {
     }
@@ -50,7 +53,22 @@ final class BookingTriggerHandler implements EmailHandler
 
     public function handle(EmailMessage $email, EmailLog $log): void
     {
-        $log->markProcessed($this->upsert($this->parser->parse($email)));
+        $data = $this->parser->parse($email);
+        $this->rememberHotelId($data->hotelId);
+        $log->markProcessed($this->upsert($data));
+    }
+
+    /**
+     * ID ubytování z odkazu v e-mailu — drží ho odkaz z rezervace do extranetu.
+     * Jednou zapsanou hodnotu už nepřepisuje, ať zůstane, co si majitel nastavil.
+     */
+    private function rememberHotelId(?string $hotelId): void
+    {
+        if ($hotelId === null || (string) $this->settings->getString(BookingHotelId::SETTING_KEY) !== '') {
+            return;
+        }
+
+        $this->settings->set(BookingHotelId::SETTING_KEY, $hotelId, 'Booking.com: ID ubytování pro odkaz do extranetu.');
     }
 
     private function upsert(BookingTriggerData $data): Reservation

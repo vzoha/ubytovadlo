@@ -320,6 +320,27 @@ class ReservationRepository extends ServiceEntityRepository
     }
 
     /**
+     * Rezervace, jejichž stav může kalendář posunout dál: potvrzené a probíhající,
+     * kterým už nastal den příjezdu. Vstup pro app:reservations:advance.
+     *
+     * Posun jde jen dopředu (potvrzeno → probíhá → dokončeno), takže dotaz nemusí
+     * sahat na dokončené ani na budoucí pobyty.
+     *
+     * @return Reservation[]
+     */
+    public function findForStatusAdvance(\DateTimeImmutable $today): array
+    {
+        return $this->createQueryBuilder('r')
+            ->andWhere('r.checkIn <= :today')
+            ->andWhere('r.status IN (:advancing)')
+            ->setParameter('today', $today)
+            ->setParameter('advancing', [ReservationStatus::CONFIRMED, ReservationStatus::IN_PROGRESS])
+            ->orderBy('r.checkIn', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
      * Rezervace pro roční ekonomický přehled — podle roku příjezdu, bez zrušených
      * a bez nedoplněných (needs_details nemá cenu ani hosta, řádek by byl prázdný).
      *

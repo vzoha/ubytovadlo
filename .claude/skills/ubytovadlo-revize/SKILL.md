@@ -15,7 +15,7 @@ tools/review-changed.sh HEAD~1     # jen poslední commit
 docker compose exec app composer check   # cs:check + PHPStan L6 + testy
 ```
 
-`review-changed.sh` pustí **PHPMD** (`app/phpmd.xml`) jen na soubory v `app/src`, které se v téhle větvi změnily — je to branka pro nový kód, ne audit historie. Hlídá délku a složitost metod, NPath, počet parametrů, `else` větve, mrtvý kód, vazby mezi třídami.
+`review-changed.sh` pustí **PHPMD** (`app/phpmd.xml`) jen na soubory v `app/src`, které se v téhle větvi změnily, včetně nových, které ještě nejsou v gitu — je to branka pro nový kód, ne audit historie. Hlídá délku a složitost metod, NPath, počet parametrů, `else` větve, mrtvý kód, vazby mezi třídami.
 
 Kde běží sama:
 

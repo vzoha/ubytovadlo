@@ -9,8 +9,15 @@
 
 declare(strict_types=1);
 
-/* Cron wrapper: doplní automatické akce na časovou osu nadcházejících rezervací (idempotentní). */
+/*
+ * Cron wrapper: srovná stav rezervací s kalendářem (probíhá / dokončeno) a doplní
+ * automatické akce na časovou osu nadcházejících rezervací. Pořadí je závazné —
+ * dokončenému pobytu se akce už neplánují. Oba kroky jsou idempotentní.
+ */
 
 $run = require __DIR__ . '/_kernel.php';
 
-exit($run('app:actions:plan'));
+$advance = $run('app:reservations:advance');
+$plan = $run('app:actions:plan');
+
+exit($advance !== 0 ? $advance : $plan);

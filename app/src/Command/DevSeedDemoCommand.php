@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Command;
 
+use App\Booking\BookingHotelId;
 use App\Cashflow\IncomeUpserter;
 use App\Entity\Account;
 use App\Entity\BalanceStatement;
@@ -153,6 +154,8 @@ class DevSeedDemoCommand extends Command
 
         $this->em->persist((new Setting('recreation_fee.per_adult_night', '15'))
             ->setNote('Rekreační poplatek obce — Kč / dospělý / noc.'));
+        $this->em->persist((new Setting(BookingHotelId::SETTING_KEY, '1000001'))
+            ->setNote('Booking.com: ID ubytování pro odkaz do extranetu.'));
 
         $this->em->flush();
         $io->writeln('  Uživatel, tarif a nastavení vytvořeny.');
@@ -608,7 +611,7 @@ class DevSeedDemoCommand extends Command
             ],
             [
                 'channel' => Channel::AIRBNB, 'billing' => \App\Enum\BillingMode::AIRBNB,
-                'ext' => '102', 'in' => '2026-01-23', 'out' => '2026-01-26', 'name' => 'Markéta Dvořáková',
+                'ext' => 'HMAB102CDE', 'in' => '2026-01-23', 'out' => '2026-01-26', 'name' => 'Markéta Dvořáková',
                 'region' => 'Praha', 'adults' => 2, 'price' => '4200.00', 'acq' => 'Airbnb',
                 'vtKwh' => 30, 'ntKwh' => 19, 'clean' => [CleaningType::OWNER, 700, 0], 'inv' => 'full',
             ],
@@ -646,7 +649,7 @@ class DevSeedDemoCommand extends Command
             ],
             [
                 'channel' => Channel::AIRBNB, 'billing' => \App\Enum\BillingMode::AIRBNB,
-                'ext' => '105', 'in' => '2026-03-06', 'out' => '2026-03-09', 'name' => 'Lucie Horáková',
+                'ext' => 'HMAB105CDE', 'in' => '2026-03-06', 'out' => '2026-03-09', 'name' => 'Lucie Horáková',
                 'region' => 'Brno', 'adults' => 2, 'children' => 1, 'price' => '4500.00', 'acq' => 'Airbnb',
                 'vtKwh' => 31, 'ntKwh' => 20, 'clean' => [CleaningType::CLEANER, 700, 700], 'inv' => 'full',
             ],
@@ -682,7 +685,7 @@ class DevSeedDemoCommand extends Command
             ],
             [
                 'channel' => Channel::AIRBNB, 'billing' => \App\Enum\BillingMode::AIRBNB,
-                'ext' => '107', 'in' => '2026-04-10', 'out' => '2026-04-12', 'name' => 'Jakub Černý',
+                'ext' => 'HMAB107CDE', 'in' => '2026-04-10', 'out' => '2026-04-12', 'name' => 'Jakub Černý',
                 'region' => 'Plzeň', 'adults' => 2, 'price' => '3000.00', 'acq' => 'Airbnb', 'pet' => true,
                 'vtKwh' => 20, 'ntKwh' => 13, 'clean' => [CleaningType::EXTERNAL, 800, 800], 'inv' => 'full',
             ],
@@ -703,7 +706,7 @@ class DevSeedDemoCommand extends Command
             ],
             [
                 'channel' => Channel::AIRBNB, 'billing' => \App\Enum\BillingMode::AIRBNB,
-                'ext' => '109', 'in' => '2026-05-08', 'out' => '2026-05-11', 'name' => 'Veronika Marková',
+                'ext' => 'HMAB109CDE', 'in' => '2026-05-08', 'out' => '2026-05-11', 'name' => 'Veronika Marková',
                 'region' => 'Olomouc', 'adults' => 2, 'children' => 1, 'price' => '4650.00', 'acq' => 'Airbnb',
                 'vtKwh' => 32, 'ntKwh' => 20, 'clean' => [CleaningType::OWNER, 700, 0], 'inv' => 'full',
             ],
@@ -725,7 +728,7 @@ class DevSeedDemoCommand extends Command
             ],
             [
                 'channel' => Channel::AIRBNB, 'billing' => \App\Enum\BillingMode::AIRBNB,
-                'ext' => '111', 'in' => '2026-05-29', 'out' => '2026-06-01', 'name' => 'Ondřej Beneš',
+                'ext' => 'HMAB111CDE', 'in' => '2026-05-29', 'out' => '2026-06-01', 'name' => 'Ondřej Beneš',
                 'region' => 'Hradec Králové', 'adults' => 2, 'price' => '4500.00', 'acq' => 'Airbnb',
                 'vtKwh' => 31, 'ntKwh' => 20, 'clean' => [CleaningType::CLEANER, 700, 700], 'inv' => 'full',
             ],
@@ -754,7 +757,7 @@ class DevSeedDemoCommand extends Command
             // ── Potvrzené budoucí (CONFIRMED) ────────────────────────────────
             [
                 'channel' => Channel::AIRBNB, 'billing' => \App\Enum\BillingMode::AIRBNB,
-                'ext' => '114', 'in' => '2026-06-15', 'out' => '2026-06-18', 'name' => 'Filip Růžička',
+                'ext' => 'HMAB114CDE', 'in' => '2026-06-15', 'out' => '2026-06-18', 'name' => 'Filip Růžička',
                 'region' => 'Liberec', 'adults' => 2, 'children' => 2, 'price' => '6000.00', 'acq' => 'Airbnb',
                 'pet' => true, 'leadDays' => 28, 'clean' => [CleaningType::CLEANER, 700, 700], 'inv' => 'none',
             ],
@@ -774,7 +777,7 @@ class DevSeedDemoCommand extends Command
             ],
             [
                 'channel' => Channel::AIRBNB, 'billing' => \App\Enum\BillingMode::AIRBNB,
-                'ext' => '116', 'in' => '2026-07-03', 'out' => '2026-07-06', 'name' => 'Simona Králová',
+                'ext' => 'HMAB116CDE', 'in' => '2026-07-03', 'out' => '2026-07-06', 'name' => 'Simona Králová',
                 'region' => 'Pardubice', 'adults' => 2, 'infants' => 1, 'price' => '4800.00', 'acq' => 'Airbnb',
                 'cot' => true, 'leadDays' => 35, 'clean' => [CleaningType::CLEANER, 700, 700], 'inv' => 'none',
             ],
@@ -803,7 +806,7 @@ class DevSeedDemoCommand extends Command
             ],
             [
                 'channel' => Channel::AIRBNB, 'billing' => \App\Enum\BillingMode::AIRBNB,
-                'ext' => '120', 'in' => 'today +3 days', 'out' => 'today +7 days', 'name' => 'Nora Lindqvist',
+                'ext' => 'HMAB120CDE', 'in' => 'today +3 days', 'out' => 'today +7 days', 'name' => 'Nora Lindqvist',
                 'region' => 'Stockholm', 'adults' => 2, 'price' => '6100.00', 'acq' => 'Airbnb',
                 'clean' => [CleaningType::CLEANER_LAUNDRY, 800, 800], 'leadDays' => 25, 'inv' => 'none',
             ],
