@@ -14,6 +14,7 @@ namespace App\Tests\Controller;
 use App\Entity\Embeddable\GuestContact;
 use App\Entity\GuestMessage;
 use App\Entity\Invoice;
+use App\Entity\QuickMessage;
 use App\Entity\Reservation;
 use App\Entity\ReservationAction;
 use App\Entity\ReservationNote;
@@ -48,6 +49,7 @@ final class ReservationTimelineControllerTest extends WebTestCase
         $this->em->createQuery('DELETE FROM ' . Invoice::class . ' i')->execute();
         $this->em->createQuery('DELETE FROM ' . GuestMessage::class . ' g')->execute();
         $this->em->createQuery('DELETE FROM ' . ReservationAction::class . ' a')->execute();
+        $this->em->createQuery('DELETE FROM ' . QuickMessage::class . ' q')->execute();
         $this->em->createQuery('DELETE FROM ' . ReservationNote::class . ' n')->execute();
         $this->em->createQuery('DELETE FROM ' . Reservation::class . ' r')->execute();
         $this->em->createQuery('DELETE FROM ' . User::class . ' u')->execute();
@@ -177,6 +179,23 @@ final class ReservationTimelineControllerTest extends WebTestCase
         $this->client->request('GET', '/reservation/action/' . $action->getId() . '/nahled');
 
         self::assertResponseStatusCodeSame(404);
+    }
+
+    public function testOtaReservationWithoutEmailOffersChatInsteadOfSending(): void
+    {
+        $this->em->persist(new QuickMessage('Uvítání', 'Dobrý den.'));
+        $r = new Reservation(Channel::AIRBNB, new \DateTimeImmutable('+5 days'));
+        $r->setCheckOut(new \DateTimeImmutable('+7 days'));
+        $r->setStatus(ReservationStatus::CONFIRMED);
+        $r->setGuestName('Chatový Host');
+        $this->em->persist($r);
+        $this->em->persist(new ReservationAction($r, ActionType::PRE_ARRIVAL_MESSAGE, new \DateTimeImmutable('+1 day')));
+        $this->em->flush();
+
+        $crawler = $this->client->request('GET', '/reservation/' . $r->getId());
+
+        self::assertCount(0, $crawler->filter('form[action$="/send"]'), 'Bez e-mailu se zpráva odeslat nedá');
+        self::assertGreaterThan(0, $crawler->filter('button[data-bs-target="#chatMessage"]')->count());
     }
 
     private function reservation(): Reservation

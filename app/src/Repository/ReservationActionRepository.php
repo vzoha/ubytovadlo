@@ -98,6 +98,34 @@ class ReservationActionRepository extends ServiceEntityRepository
     }
 
     /**
+     * Otevřené zprávy hostům, kterým nadešel čas — podklad pro kartu na přehledu.
+     * Ruční režim je nechává na ose k odeslání, tohle je jejich souhrn přes
+     * všechny rezervace.
+     *
+     * @param list<ActionType> $types
+     *
+     * @return ReservationAction[]
+     */
+    public function findOpenMessages(\DateTimeImmutable $until, array $types): array
+    {
+        return $this->createQueryBuilder('a')
+            ->join('a.reservation', 'r')
+            ->addSelect('r')
+            ->andWhere('a.status = :planned')
+            ->andWhere('a.type IN (:types)')
+            ->andWhere('a.scheduledFor <= :until')
+            ->andWhere('r.status != :cancelled')
+            ->setParameter('planned', ActionStatus::PLANNED)
+            ->setParameter('types', $types)
+            ->setParameter('cancelled', ReservationStatus::CANCELLED)
+            ->setParameter('until', $until)
+            ->orderBy('a.scheduledFor', 'ASC')
+            ->addOrderBy('a.id', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
      * Naplánované akce, kterým nadešel čas — vstup pro cron app:actions:run.
      * Akce zrušených rezervací vynechává: storno může přijít odkudkoli (UI,
      * MotoPress, iCal) a hostovi zrušeného pobytu už nemá nic odejít.

@@ -41,13 +41,19 @@
                             {% if item.isOpenAction %}
                                 <div class="d-flex gap-1 mt-1 flex-wrap align-items-center">
                                     {% if item.action.type.sendsGuestMessage %}
-                                        <button class="btn btn-outline-secondary btn-sm py-0" type="button"
-                                                data-bs-toggle="modal" data-bs-target="#modalMessagePreview"
-                                                data-preview-url="{{ path('reservation_action_preview', {id: item.action.id}) }}">Náhled</button>
-                                        <form method="post" action="{{ path('reservation_action_send', {id: item.action.id}) }}" class="d-inline" onsubmit="return confirm('Odeslat zprávu hostovi teď?');">
-                                            <input type="hidden" name="_token" value="{{ csrf_token('action-edit-' ~ item.action.id) }}">
-                                            <button class="btn btn-outline-primary btn-sm py-0">Odeslat</button>
-                                        </form>
+                                        {% if reservation.guestContact.email %}
+                                            <button class="btn btn-outline-secondary btn-sm py-0" type="button"
+                                                    data-bs-toggle="modal" data-bs-target="#modalMessagePreview"
+                                                    data-preview-url="{{ path('reservation_action_preview', {id: item.action.id}) }}">Náhled</button>
+                                            <form method="post" action="{{ path('reservation_action_send', {id: item.action.id}) }}" class="d-inline" onsubmit="return confirm('Odeslat zprávu hostovi teď?');">
+                                                <input type="hidden" name="_token" value="{{ csrf_token('action-edit-' ~ item.action.id) }}">
+                                                <button class="btn btn-outline-primary btn-sm py-0">Odeslat</button>
+                                            </form>
+                                        {% elseif reservation.channel.isOta and quick_messages is not empty %}
+                                            {# Bez e-mailu vede komunikace přes chat portálu — text se zkopíruje a vloží tam. #}
+                                            <button class="btn btn-outline-primary btn-sm py-0" type="button"
+                                                    data-bs-toggle="modal" data-bs-target="#chatMessage">Zpráva do chatu</button>
+                                        {% endif %}
                                     {% endif %}
                                     <form method="post" action="{{ path('reservation_action_done', {id: item.action.id}) }}" class="d-inline">
                                         <input type="hidden" name="_token" value="{{ csrf_token('action-edit-' ~ item.action.id) }}">

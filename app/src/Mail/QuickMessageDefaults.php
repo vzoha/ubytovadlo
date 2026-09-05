@@ -38,7 +38,7 @@ final class QuickMessageDefaults
             'label' => 'Online check-in',
             'body' => 'Dobrý den {{ guest_first_name_vocative }}, před příjezdem prosím vyplňte '
                 . 'online check-in — potřebujeme ho kvůli povinné evidenci hostů: '
-                . '{{ checkin_lookup_url }} Zadáte kód rezervace {{ checkin_code }} a své příjmení. Děkujeme!',
+                . '{{ checkin_url }} Odkaz vede rovnou na vaši rezervaci, stačí ho otevřít. Děkujeme!',
         ],
         [
             'label' => 'Pokyny k příjezdu',

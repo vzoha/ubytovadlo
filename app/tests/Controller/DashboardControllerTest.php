@@ -17,8 +17,10 @@ use App\Entity\Embeddable\VatReverseCharge;
 use App\Entity\Invoice;
 use App\Entity\InvoiceLine;
 use App\Entity\Reservation;
+use App\Entity\ReservationAction;
 use App\Entity\User;
 use App\Entity\VatPeriod;
+use App\Enum\ActionType;
 use App\Enum\BillingMode;
 use App\Enum\Channel;
 use App\Enum\InvoiceType;
@@ -47,6 +49,7 @@ final class DashboardControllerTest extends WebTestCase
         $this->em->createQuery('DELETE FROM ' . AirbnbStatement::class . ' a')->execute();
         $this->em->createQuery('DELETE FROM ' . BookingMonthlyInvoice::class . ' b')->execute();
         $this->em->createQuery('DELETE FROM ' . VatPeriod::class . ' v')->execute();
+        $this->em->createQuery('DELETE FROM ' . ReservationAction::class . ' a')->execute();
         $this->em->createQuery('DELETE FROM ' . Reservation::class . ' r')->execute();
         $this->em->createQuery('DELETE FROM ' . User::class . ' u')->execute();
 
@@ -179,5 +182,38 @@ final class DashboardControllerTest extends WebTestCase
         $body = (string) $this->client->getResponse()->getContent();
         self::assertStringContainsString('PO TERMÍNU', $body);
         self::assertStringContainsString('chybí Booking PDF', $body);
+    }
+
+    public function testPendingMessagesCardListsDueMessages(): void
+    {
+        $r = new Reservation(Channel::AIRBNB, new \DateTimeImmutable('+3 days'));
+        $r->setCheckOut(new \DateTimeImmutable('+6 days'));
+        $r->setStatus(ReservationStatus::CONFIRMED);
+        $r->setGuestName('Chatový Host');
+        $this->em->persist($r);
+        $this->em->persist(new ReservationAction($r, ActionType::PRE_ARRIVAL_MESSAGE, new \DateTimeImmutable('-1 day')));
+        $this->em->flush();
+
+        $crawler = $this->client->request('GET', '/');
+        self::assertResponseIsSuccessful();
+
+        $card = $crawler->filter('.card')->reduce(
+            static fn ($node) => str_contains($node->text(), 'Zprávy k odeslání'),
+        )->first();
+
+        self::assertStringContainsString('Zpráva před příjezdem', $card->text());
+        self::assertStringContainsString('po termínu', $card->text());
+        self::assertStringContainsString('chat Airbnb', $card->text());
+    }
+
+    public function testPendingMessagesCardIsEmptyWithoutDueMessages(): void
+    {
+        $crawler = $this->client->request('GET', '/');
+
+        $card = $crawler->filter('.card')->reduce(
+            static fn ($node) => str_contains($node->text(), 'Zprávy k odeslání'),
+        )->first();
+
+        self::assertStringContainsString('Žádná zpráva nečeká na odeslání', $card->text());
     }
 }

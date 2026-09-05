@@ -12,22 +12,19 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Entity\Reservation;
-use App\Entity\VatPeriod;
 use App\Enum\BillingMode;
 use App\Enum\Channel;
 use App\Enum\InvoiceType;
 use App\Occupancy\OccupancyConflictFinder;
 use App\Profit\YearEconomicsBuilder;
-use App\Repository\AirbnbStatementRepository;
-use App\Repository\BookingMonthlyInvoiceRepository;
 use App\Repository\InvoiceRepository;
 use App\Repository\ReservationRepository;
-use App\Repository\VatPeriodRepository;
 use App\Setup\SetupChecklist;
 use App\Task\TaskOverview;
+use App\Timeline\PendingMessageOverview;
 use App\Ubyport\UbyportQueue;
 use App\Ubyport\UbyportRow;
-use App\Vat\VatMonthCalculator;
+use App\Vat\VatDashboardSummary;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -38,7 +35,6 @@ class DashboardController extends AbstractController
     private const UPCOMING_DAYS = 30;
 
     /** Kolik měsíců zpět hlídat DPH (kromě běžícího aktuálního měsíce). */
-    private const VAT_LOOKBACK_MONTHS = 6;
 
     /** Airbnb údaje hosta dostaneme až osobně na startu pobytu — připomínat dřív nemá smysl. */
     private const AIRBNB_DETAILS_LEAD_DAYS = 7;
@@ -46,15 +42,13 @@ class DashboardController extends AbstractController
     public function __construct(
         private readonly ReservationRepository $reservations,
         private readonly InvoiceRepository $invoices,
-        private readonly BookingMonthlyInvoiceRepository $bookingInvoices,
-        private readonly AirbnbStatementRepository $airbnbStatements,
-        private readonly VatPeriodRepository $vatPeriods,
-        private readonly VatMonthCalculator $vatCalculator,
+        private readonly VatDashboardSummary $vatSummary,
         private readonly UbyportQueue $ubyportQueue,
         private readonly YearEconomicsBuilder $economicsBuilder,
         private readonly SetupChecklist $setupChecklist,
         private readonly OccupancyConflictFinder $occupancyFinder,
         private readonly TaskOverview $taskOverview,
+        private readonly PendingMessageOverview $pendingMessages,
     ) {
     }
 
@@ -68,13 +62,14 @@ class DashboardController extends AbstractController
             'upcoming' => $this->buildUpcoming($today),
             'needsDetails' => $this->buildNeedsDetails($today),
             'missingInvoices' => $this->buildMissingInvoices($today),
-            'vat' => $this->buildVat($today),
+            'vat' => $this->vatSummary->build($today),
             'ubyport' => $this->buildUbyport($today),
             'economics' => $this->buildEconomics($today),
             'setupPending' => $this->setupChecklist->pending(),
             'setupDismissedCount' => $this->setupChecklist->dismissedCount(),
             'occupancyConflicts' => $this->occupancyFinder->find($this->reservations->findActiveForOccupancy($today)),
             'tasks' => $this->taskOverview->summary($today),
+            'pendingMessages' => $this->pendingMessages->due($today),
         ]);
     }
 
@@ -250,65 +245,6 @@ class DashboardController extends AbstractController
         }
 
         return $mode === BillingMode::STANDARD_WITH_DEPOSIT ? 'final' : 'full';
-    }
-
-    /**
-     * @return array{
-     *   current: array{year:int, month:int, base:float, vat:float, dueAt:\DateTimeImmutable, daysToDue:int},
-     *   pending: list<array{
-     *     year:int, month:int, base:float, vat:float,
-     *     dueAt:\DateTimeImmutable, overdue:bool, daysToDue:int,
-     *     missingBookingPdf:bool, missingAirbnbStatement:bool
-     *   }>
-     * }
-     */
-    private function buildVat(\DateTimeImmutable $today): array
-    {
-        $current = $this->vatMonthSummary((int) $today->format('Y'), (int) $today->format('n'), $today);
-        $filedKeys = $this->vatPeriods->findFiledKeySet();
-        $pending = [];
-
-        $cursor = $today->modify('first day of previous month');
-        for ($i = 0; $i < self::VAT_LOOKBACK_MONTHS; ++$i, $cursor = $cursor->modify('first day of previous month')) {
-            if (isset($filedKeys[$cursor->format('Y-m')])) {
-                continue;
-            }
-
-            $row = $this->vatMonthSummary((int) $cursor->format('Y'), (int) $cursor->format('n'), $today);
-            // Měsíce, ve kterých nic neproběhlo (0 Kč) a nemají žádné podklady, neukazujeme.
-            if ($row['base'] > 0.0 || $row['missingBookingPdf'] || $row['missingAirbnbStatement']) {
-                $pending[] = $row;
-            }
-        }
-
-        return ['current' => $current, 'pending' => $pending];
-    }
-
-    /**
-     * @return array{
-     *   year:int, month:int, base:float, vat:float,
-     *   dueAt:\DateTimeImmutable, overdue:bool, daysToDue:int,
-     *   missingBookingPdf:bool, missingAirbnbStatement:bool
-     * }
-     */
-    private function vatMonthSummary(int $year, int $month, \DateTimeImmutable $today): array
-    {
-        $summary = $this->vatCalculator->summarize($year, $month);
-        $dueAt = (new VatPeriod($year, $month))->getFilingDueAt();
-
-        return [
-            'year' => $year,
-            'month' => $month,
-            'base' => $summary->sumBaseCzk,
-            'vat' => $summary->sumVatCzk,
-            'dueAt' => $dueAt,
-            'overdue' => $today > $dueAt,
-            'daysToDue' => self::daysBetween($today, $dueAt),
-            'missingBookingPdf' => $summary->hasBookingReservations
-                && $this->bookingInvoices->findByPeriodMonth($year, $month) === null,
-            'missingAirbnbStatement' => $summary->hasAirbnbReservations
-                && $this->airbnbStatements->findAllByPeriodMonth($year, $month) === [],
-        ];
     }
 
     /**

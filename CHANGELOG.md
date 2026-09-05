@@ -63,11 +63,20 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
   samostatně v **Nastavení → Ubytovací zařízení**.
 
 - **Připravené texty rychlých zpráv.** Formulář nové rychlé zprávy nabízí výběr
-  *Začít ze vzoru* — uvítání, výzva k online check-inu s odkazem a kódem, pokyny
-  k příjezdu a poděkování po pobytu. Vzor název i text jen předvyplní, dál je
+  *Začít ze vzoru* — uvítání, výzva k online check-inu s odkazem na check-in té
+  rezervace, pokyny k příjezdu a poděkování po pobytu. Vzor název i text jen předvyplní, dál je
   zpráva samostatná. Dokončením průvodce nastavením dostane instance stejnou sadu
   rovnou do seznamu; příkaz `app:quick-messages:seed` ji naplní i jindy, pokud je
   seznam prázdný.
+
+- **Zprávy k odeslání na přehledu.** Karta shrnuje zprávy hostům, kterým nadešel
+  čas a čekají na ruční odeslání — s termínem, jménem hosta, štítkem *po termínu*
+  a u hosta bez e-mailu štítkem chatu portálu. Proklik vede na rezervaci.
+
+- **Zpráva do chatu přímo z časové osy.** U rezervace z portálu bez e-mailu hosta
+  nabídne naplánovaná zpráva tlačítko *Zpráva do chatu*, které otevře okno
+  s připravenými texty ke zkopírování. Odeslání e-mailem se nabízí tam, kde
+  je na co odeslat.
 
 - **Vstup do check-inu kódem rezervace.** Adresa `/checkin` otevře formulář, kde
   host zadá kód rezervace z potvrzení a své příjmení, a dostane se tím na svou
