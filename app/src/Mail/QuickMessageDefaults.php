@@ -30,9 +30,15 @@ final class QuickMessageDefaults
     private const DEFAULTS = [
         [
             'label' => 'Uvítání',
-            'body' => 'Dobrý den {{ guest_first_name_vocative }}, děkujeme za rezervaci '
-                . '{{ check_in }} — {{ check_out }}. Těšíme se na vás! Pár dní před příjezdem '
-                . 'se ozveme s podrobnostmi k cestě a předání klíčů.',
+            'body' => <<<'TXT'
+                Dobrý den,
+
+                moc děkujeme za Vaši rezervaci. Termín {{ check_in }} — {{ check_out }} pro Vás držíme.
+
+                Pár dní před příjezdem se ozveme s podrobnostmi k cestě a předání klíčů. Kdybyste cokoli potřebovali dřív, stačí napsat.
+
+                Budeme se na Vás těšit.
+                TXT,
         ],
         [
             'label' => 'Online check-in',
@@ -43,22 +49,37 @@ final class QuickMessageDefaults
 
                 {{ checkin_url }}
 
-                Ptáme se v něm na fakturační údaje a na doklady ubytovaných — evidenci hostů nám ukládá zákon.
+                Ptáme se v něm na fakturační údaje a na údaje ubytovaných — evidenci hostů nám ukládá zákon.
 
                 Budeme se na Vás těšit.
                 TXT,
         ],
         [
             'label' => 'Pokyny k příjezdu',
-            'body' => 'Dobrý den {{ guest_first_name_vocative }}, příjezd {{ check_in }} '
-                . 'od {{ check_in_time }}, odjezd {{ check_out }} do {{ check_out_time }}. '
-                . 'Adresa: {{ accommodation_address }}. Kdyby cokoli, ozvěte se.',
+            'body' => <<<'TXT'
+                Dobrý den,
+
+                Váš pobyt se blíží, a tak Vám posíláme podrobnosti k příjezdu.
+
+                Adresa: {{ accommodation_address }}
+                Příjezd {{ check_in }} od {{ check_in_time }}, odjezd {{ check_out }} do {{ check_out_time }}.
+
+                Po příjezdu se prosím ozvěte, domluvíme se na předání klíčů.
+
+                V kolik hodin Vás máme očekávat?
+                TXT,
         ],
         [
             'label' => 'Poděkování po pobytu',
-            'body' => 'Dobrý den {{ guest_first_name_vocative }}, děkujeme za návštěvu — '
-                . 'doufáme, že jste si pobyt užili. Budeme rádi za hodnocení a kdykoli '
-                . 'se k nám můžete vrátit.',
+            'body' => <<<'TXT'
+                Dobrý den,
+
+                moc děkujeme za návštěvu — doufáme, že jste si pobyt užili a odjížděli spokojení.
+
+                Kdyby Vám cokoli chybělo nebo Vás něco napadlo, budeme rádi za zpětnou vazbu. A pokud se Vám u nás líbilo, potěší nás i hodnocení.
+
+                Budeme se těšit na shledanou.
+                TXT,
         ],
     ];
 
