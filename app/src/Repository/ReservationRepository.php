@@ -37,6 +37,26 @@ class ReservationRepository extends ServiceEntityRepository
         return $this->findOneBy(['motopressExternalId' => $motopressExternalId]);
     }
 
+    /**
+     * Rezervace, jejichž kód host zná z potvrzení — kód portálu nebo číslo
+     * rezervace z webu. Kód se porovnává bez ohledu na velikost písmen;
+     * shod může být víc, o výběru rozhoduje {@see \App\Checkin\CheckinLookup}.
+     *
+     * @return list<Reservation>
+     */
+    public function findByGuestCode(string $code): array
+    {
+        /** @var list<Reservation> $found */
+        $found = $this->createQueryBuilder('r')
+            ->andWhere('UPPER(r.externalId) = :code OR UPPER(r.motopressExternalId) = :code')
+            ->setParameter('code', $code)
+            ->orderBy('r.checkIn', 'DESC')
+            ->getQuery()
+            ->getResult();
+
+        return $found;
+    }
+
     /** Rezervace podle UID iCal bloku obsazenosti (stabilní identita OTA feedu). */
     public function findByIcalUid(string $icalUid): ?Reservation
     {

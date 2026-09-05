@@ -320,6 +320,14 @@
                         <button class="btn btn-outline-secondary" type="button" data-copy="#checkin-link">Zkopírovat</button>
                     </div>
 
+                    {% set checkin_code = reservation.externalId ?? reservation.motopressExternalId %}
+                    {% if checkin_code %}
+                        <p class="small text-muted mb-2">
+                            Host se dostane dovnitř i přes {{ url('checkin_lookup') }} — zadá kód
+                            <code>{{ checkin_code }}</code> a své příjmení.
+                        </p>
+                    {% endif %}
+
                     {% if guest_documents is not empty %}
                         <div class="table-responsive">
                             <table class="table table-sm small mb-2">

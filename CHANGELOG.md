@@ -62,6 +62,15 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
   ze kterých se skládá hlavička hlášení na Ubyport. Vyplnit je jde dál i
   samostatně v **Nastavení → Ubytovací zařízení**.
 
+- **Vstup do check-inu kódem rezervace.** Adresa `/checkin` otevře formulář, kde
+  host zadá kód rezervace z potvrzení a své příjmení, a dostane se tím na svou
+  check-in stránku. Adresa je pro všechny hosty stejná, takže se dá napsat do
+  šablony zprávy vedle kódu — hodí se do chatu portálu, kam odkaz s tokenem
+  posílat nechcete. Sedět musí obojí, kód i příjmení, rezervace musí být kolem
+  termínu pobytu a počet pokusů z jedné adresy je omezený; neúspěch nerozliší,
+  co bylo špatně. Šablony zpráv mají k tomu proměnné `checkin_lookup_url`
+  a `checkin_code`.
+
 - **Zpráva do chatu portálu.** Na detailu rezervace otevře tlačítko *Zpráva do chatu*
   okno s rychlými zprávami vyplněnými údaji té rezervace — včetně odkazu na online
   check-in. Text jde před zkopírováním upravit, tlačítko *Zkopírovat* ho dá do

@@ -155,3 +155,15 @@ flash:
 error:
     mrz_missing: 'MRZ text is missing.'
     mrz_unrecognized: 'Failed to recognize the MRZ zone of the document.'
+
+lookup:
+    title: 'Online check-in'
+    intro: 'Enter the reservation code from your confirmation and the last name the booking is under. We will open the form for your reservation.'
+    code: 'Reservation code'
+    code_help: 'You will find it in your booking confirmation — the confirmation code on Airbnb and Booking.com, the reservation number for a direct booking.'
+    code_placeholder: 'e.g. HM3XAMPLE7'
+    last_name: 'Last name'
+    submit: 'Continue'
+    not_found: 'We could not find the reservation. Check the code and the last name, or write to us.'
+    too_many: 'Too many attempts. Please try again in 15 minutes.'
+    help: 'Do you have a check-in link from us? Just open it, no code needed.'

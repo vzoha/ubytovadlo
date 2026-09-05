@@ -155,3 +155,15 @@ flash:
 error:
     mrz_missing: 'Brak tekstu MRZ.'
     mrz_unrecognized: 'Nie udało się rozpoznać strefy MRZ dokumentu.'
+
+lookup:
+    title: 'Odprawa online'
+    intro: 'Wpisz kod rezerwacji z potwierdzenia i nazwisko, na które jest rezerwacja. Otworzymy formularz Twojej rezerwacji.'
+    code: 'Kod rezerwacji'
+    code_help: 'Znajdziesz go w potwierdzeniu rezerwacji — w Airbnb i Booking.com to kod potwierdzenia, przy rezerwacji bezpośredniej numer rezerwacji.'
+    code_placeholder: 'np. HM3XAMPLE7'
+    last_name: 'Nazwisko'
+    submit: 'Dalej'
+    not_found: 'Nie znaleźliśmy rezerwacji. Sprawdź kod i nazwisko albo napisz do nas.'
+    too_many: 'Zbyt wiele prób. Spróbuj ponownie za 15 minut.'
+    help: 'Masz od nas link do odprawy? Po prostu go otwórz, kod nie jest potrzebny.'

@@ -1,0 +1,27 @@
+{% extends 'checkin/_base.html.twig' %}
+
+{% block title %}{{ 'lookup.title'|trans({}, 'checkin') }} — {{ brand_name }}{% endblock %}
+
+{% block body %}
+    <div class="row justify-content-center">
+        <div class="col-lg-5 col-md-7">
+            <h1 class="h3 mb-2">{{ 'lookup.title'|trans({}, 'checkin') }}</h1>
+            <p class="small text-muted mb-3">{{ 'lookup.intro'|trans({}, 'checkin') }}</p>
+
+            {{ form_start(form) }}
+                <div class="card">
+                    <div class="card-body">
+                        {{ form_errors(form) }}
+                        <div class="row g-3">
+                            <div class="col-12">{{ form_row(form.code) }}</div>
+                            <div class="col-12">{{ form_row(form.lastName) }}</div>
+                        </div>
+                        <button type="submit" class="btn btn-primary mt-3">{{ 'lookup.submit'|trans({}, 'checkin') }}</button>
+                    </div>
+                </div>
+            {{ form_end(form) }}
+
+            <p class="small text-muted mt-3 mb-0">{{ 'lookup.help'|trans({}, 'checkin') }}</p>
+        </div>
+    </div>
+{% endblock %}

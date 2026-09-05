@@ -155,3 +155,15 @@ flash:
 error:
     mrz_missing: 'Chybí MRZ text.'
     mrz_unrecognized: 'Nepodařilo se rozpoznat MRZ zónu dokladu.'
+
+lookup:
+    title: 'Online check-in'
+    intro: 'Zadejte kód rezervace z potvrzení a příjmení, na které je rezervace vedená. Otevřeme vám formulář vaší rezervace.'
+    code: 'Kód rezervace'
+    code_help: 'Najdete ho v potvrzení rezervace — u Airbnb a Booking.com je to potvrzovací kód, u rezervace z webu její číslo.'
+    code_placeholder: 'např. HM3XAMPLE7'
+    last_name: 'Příjmení'
+    submit: 'Pokračovat'
+    not_found: 'Rezervaci se nepodařilo najít. Zkontrolujte kód i příjmení, nebo nám napište.'
+    too_many: 'Příliš mnoho pokusů. Zkuste to prosím za 15 minut.'
+    help: 'Máte odkaz na check-in přímo od nás? Stačí ho otevřít, kód zadávat nemusíte.'

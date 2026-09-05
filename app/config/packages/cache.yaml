@@ -24,3 +24,9 @@ when@test:
     framework:
         cache:
             app: cache.adapter.array
+            pools:
+                # Počitadlo pokusů o dohledání check-inu musí přežít i mezi
+                # requesty jednoho testu — paměťová cache se po každém requestu
+                # resetuje. Klíčem je IP, takže si testy nelezou do zelí.
+                cache.rate_limiter:
+                    adapter: cache.adapter.filesystem

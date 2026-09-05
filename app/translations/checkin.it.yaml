@@ -155,3 +155,15 @@ flash:
 error:
     mrz_missing: 'Testo MRZ mancante.'
     mrz_unrecognized: 'Non è stato possibile riconoscere la zona MRZ del documento.'
+
+lookup:
+    title: 'Check-in online'
+    intro: 'Inserisci il codice della prenotazione riportato nella conferma e il cognome a cui è intestata. Apriremo il modulo della tua prenotazione.'
+    code: 'Codice prenotazione'
+    code_help: 'Lo trovi nella conferma della prenotazione — su Airbnb e Booking.com è il codice di conferma, per una prenotazione diretta è il numero della prenotazione.'
+    code_placeholder: 'es. HM3XAMPLE7'
+    last_name: 'Cognome'
+    submit: 'Continua'
+    not_found: 'Non abbiamo trovato la prenotazione. Controlla il codice e il cognome, oppure scrivici.'
+    too_many: 'Troppi tentativi. Riprova tra 15 minuti.'
+    help: 'Hai ricevuto da noi un link al check-in? Aprilo direttamente, il codice non serve.'

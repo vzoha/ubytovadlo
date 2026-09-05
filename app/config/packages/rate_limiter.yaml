@@ -1,0 +1,22 @@
+framework:
+    rate_limiter:
+        # Dohledání check-inu podle kódu rezervace je veřejné, takže hádání kódu
+        # brzdíme dvěma limity: jednou IP a celým provozem dohromady.
+        checkin_lookup_ip:
+            policy: 'sliding_window'
+            limit: 10
+            interval: '15 minutes'
+        checkin_lookup_global:
+            policy: 'sliding_window'
+            limit: 120
+            interval: '1 hour'
+
+# Celkový strop by v testech sčítal pokusy napříč běhy a po pár spuštěních
+# by je zablokoval. Limit na IP zůstává ostrý — právě ten se testuje.
+when@test:
+    framework:
+        rate_limiter:
+            checkin_lookup_global:
+                policy: 'sliding_window'
+                limit: 100000
+                interval: '1 hour'
