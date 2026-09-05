@@ -2,13 +2,12 @@
    Očekává: c (ConnectorHealth), motopressForm, bookingForm, motopressWebhookUrl, secretsSet. #}
 {% set is_motopress = c.type.value == 'motopress' %}
 {% set is_booking = c.type.value == 'booking' %}
-{# Rozbalené jsou kanály, které něco potřebují — u ostatních stačí stav v hlavičce. #}
-{% set needs_attention = c.state in ['needs_setup', 'error'] %}
+{# Karta je sbalená — hlavička nese stav, detaily se rozbalí, až když je člověk chce. #}
 <div class="card mb-3">
     <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2 py-2">
         <span class="d-flex align-items-center gap-2">
             <button class="btn btn-sm btn-outline-secondary py-0 px-1" type="button" data-bs-toggle="collapse"
-                    data-bs-target="#channel-{{ c.type.value }}" aria-expanded="{{ needs_attention ? 'true' : 'false' }}"
+                    data-bs-target="#channel-{{ c.type.value }}" aria-expanded="false"
                     aria-controls="channel-{{ c.type.value }}" aria-label="Nastavení kanálu {{ c.type.label }}">▾</button>
             <span class="fw-semibold">{{ c.type.label }}</span>
             <span class="badge text-bg-{{ c.badge }}">{{ c.stateLabel }}</span>
@@ -30,7 +29,7 @@
             </form>
         </span>
     </div>
-    <div class="collapse {{ needs_attention ? 'show' : '' }}" id="channel-{{ c.type.value }}">
+    <div class="collapse" id="channel-{{ c.type.value }}">
     <div class="card-body">
         <p class="text-muted small mb-2">{{ c.type.description }}</p>
         <p class="small mb-3 {{ c.state == 'error' ? 'text-danger' : 'text-muted' }}">

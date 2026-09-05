@@ -68,21 +68,34 @@ final class ChannelSettingsControllerTest extends WebTestCase
         self::assertSame(['Prodejní kanály', 'Platby'], $groups);
     }
 
-    public function testOwnCalendarIsOfferedAboveTheChannelsAndInsideThem(): void
+    public function testOwnCalendarClosesTheListAndIsCopyableFromCards(): void
     {
         $this->enable(ConnectorType::BOOKING);
 
         $crawler = $this->client->request('GET', '/nastaveni/kanaly');
         self::assertResponseIsSuccessful();
 
-        // Vlastní kalendář je jeden pro všechny portály, proto stojí nad seznamem…
+        // Vlastní kalendář je jeden pro všechny portály a uzavírá stránku.
         self::assertCount(1, $crawler->filter('#ical-feed-url'));
-        // …a v kartě kanálu je po ruce jen tlačítko, ať se nemíchá s feedem portálu.
+        $body = (string) $this->client->getResponse()->getContent();
+        self::assertGreaterThan(strrpos($body, 'id="channel-booking"'), strpos($body, 'id="ical-feed-url"'));
+
+        // V kartě kanálu je po ruce jen tlačítko, ať se nemíchá s feedem portálu.
         $card = $crawler->filter('.card')->reduce(
             static fn ($node) => str_contains($node->text(), 'Booking.com'),
         )->first();
         self::assertStringContainsString('Kalendář portálu', $card->text());
         self::assertGreaterThan(0, $card->filter('[data-copy="#ical-feed-url"]')->count());
+    }
+
+    public function testChannelCardsStartCollapsed(): void
+    {
+        $this->enable(ConnectorType::BOOKING);
+
+        $crawler = $this->client->request('GET', '/nastaveni/kanaly');
+
+        self::assertCount(1, $crawler->filter('#channel-booking.collapse'));
+        self::assertCount(0, $crawler->filter('#channel-booking.show'));
     }
 
     public function testUnusedChannelsAreOfferedInsteadOfListed(): void

@@ -48,20 +48,6 @@
         </div>
     {% endif %}
 
-    <div class="border rounded p-3 mb-4 bg-body-tertiary">
-        <label class="form-label fw-semibold mb-1" for="ical-feed-url">Náš kalendář → do portálů</label>
-        <p class="text-muted small mb-2">
-            Jedna adresa pro všechny portály: obsahuje všechny rezervace jako obsazené termíny.
-            Vložte ji v každém portálu do <em>importu kalendáře</em> — portál pak neprodá termín
-            obsazený jiným kanálem, webem ani přímou rezervací. Ven jde jen „obsazeno",
-            žádné údaje hosta.
-        </p>
-        <div class="input-group input-group-sm">
-            <input type="text" class="form-control font-monospace" id="ical-feed-url" value="{{ icalFeedUrl }}" readonly>
-            <button type="button" class="btn btn-outline-secondary" data-copy="#ical-feed-url">Kopírovat</button>
-        </div>
-    </div>
-
     {% if active is empty %}
         <div class="alert alert-light border text-muted">
             Zatím žádné napojení. Přidejte to, přes které prodáváte nebo přijímáte platby —
@@ -82,6 +68,20 @@
             {{ include('channels/_card.html.twig') }}
         {% endfor %}
     {% endif %}
+
+    <div class="border rounded p-3 mt-4 bg-body-tertiary">
+        <label class="form-label fw-semibold mb-1" for="ical-feed-url">Náš kalendář → do portálů</label>
+        <p class="text-muted small mb-2">
+            Jedna adresa pro všechny portály: obsahuje všechny rezervace jako obsazené termíny.
+            Vložte ji v každém portálu do <em>importu kalendáře</em> — portál pak neprodá termín
+            obsazený jiným kanálem, webem ani přímou rezervací. Ven jde jen „obsazeno",
+            žádné údaje hosta.
+        </p>
+        <div class="input-group input-group-sm">
+            <input type="text" class="form-control font-monospace" id="ical-feed-url" value="{{ icalFeedUrl }}" readonly>
+            <button type="button" class="btn btn-outline-secondary" data-copy="#ical-feed-url">Kopírovat</button>
+        </div>
+    </div>
 
 {% endblock %}
 

@@ -71,10 +71,10 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 - **Kanály a platby jako vlastní sekce nastavení.** Každé napojení má kartu se stavem,
   přepínačem, testem spojení, adresou iCal feedu i vlastním nastavením a ukládá se
-  samostatně; karta se rozbalí, když něco potřebuje, jinak stačí stav v hlavičce.
+  samostatně; ve výchozím stavu je sbalená a stav nese hlavička.
   Portály jsou pod nadpisem *Prodejní kanály*, banka pod *Platby*. Vypisují se jen
   napojení, která instance používá — zbytek nabídne tlačítko *Přidat napojení*.
-  Nad seznamem stojí adresa vlastního kalendáře pro import do portálů; obě strany
+  Seznam uzavírá adresa vlastního kalendáře pro import do portálů; obě strany
   výměny obsazenosti se jmenují podle směru (*Kalendář portálu → k nám* a
   *Náš kalendář → do portálů*) a karta kanálu nabízí naši adresu ke zkopírování
   rovnou u pole pro feed portálu.
