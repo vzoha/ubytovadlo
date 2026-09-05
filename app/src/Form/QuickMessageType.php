@@ -33,13 +33,13 @@ class QuickMessageType extends AbstractType
             ->add('label', TextType::class, [
                 'label' => 'Název',
                 'constraints' => [new NotBlank(), new Length(max: 64)],
-                'help' => 'Zobrazí se v nabídce u tlačítek SMS a WhatsApp.',
+                'help' => 'Zobrazí se v nabídce u SMS, WhatsAppu i zprávy do chatu.',
             ])
             ->add('body', TextareaType::class, [
                 'label' => 'Text zprávy',
                 'constraints' => [new NotBlank()],
                 'attr' => ['rows' => 5],
-                'help' => 'Krátký text pro SMS/WhatsApp. Proměnné vložíš tlačítky níže.',
+                'help' => 'Krátký text bez formátování. Proměnné vložíš tlačítky níže.',
             ]);
     }
 

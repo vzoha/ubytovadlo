@@ -125,24 +125,28 @@ final class QuickMessageControllerTest extends WebTestCase
         self::assertSame('První', $ordered[1]->getLabel());
     }
 
-    public function testDefaultsSeedEmptyList(): void
+    public function testNewMessageFormOffersTemplates(): void
     {
         $crawler = $this->client->request('GET', '/nastaveni/rychle-zpravy');
         self::assertResponseIsSuccessful();
 
-        $this->client->submit($crawler->selectButton('Založit výchozí zprávy')->form());
-
-        self::assertResponseRedirects('/nastaveni/rychle-zpravy');
-        $labels = array_map(static fn ($m) => $m->getLabel(), $this->messages->findOrdered());
-        self::assertSame(['Uvítání', 'Online check-in', 'Pokyny k příjezdu', 'Poděkování po pobytu'], $labels);
+        $options = $crawler->filter('#quick-message-new-form-template option')->extract(['_text']);
+        self::assertContains('Uvítání', $options);
+        self::assertContains('Online check-in', $options);
     }
 
-    public function testDefaultsLeaveExistingListAlone(): void
+    public function testEmptyListOffersNoSeedingButton(): void
     {
-        $this->seed('Vlastní', 'Text.', 0);
+        $crawler = $this->client->request('GET', '/nastaveni/rychle-zpravy');
 
+        self::assertCount(0, $crawler->filter('form[action$="/rychle-zpravy/vychozi"]'));
+    }
+
+    public function testSeederFillsOnlyAnEmptyList(): void
+    {
         $seeder = static::getContainer()->get(QuickMessageSeeder::class);
+        self::assertSame(4, $seeder->seedIfEmpty());
         self::assertSame(0, $seeder->seedIfEmpty());
-        self::assertCount(1, $this->messages->findOrdered());
+        self::assertCount(4, $this->messages->findOrdered());
     }
 }

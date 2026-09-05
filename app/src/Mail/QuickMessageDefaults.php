@@ -14,10 +14,11 @@ namespace App\Mail;
 use App\Entity\QuickMessage;
 
 /**
- * Výchozí sada rychlých zpráv — texty, které pokrývají běžný pobyt od potvrzení
- * po poděkování. Na rozdíl od e-mailových šablon jde o obyčejný seznam, který si
- * provozovatel spravuje sám, takže se sada do databáze jednou založí a od té
- * chvíle žije vlastním životem.
+ * Připravené texty rychlých zpráv pokrývající běžný pobyt od potvrzení
+ * po poděkování. Slouží dvěma způsoby: nastavená instance jimi dostane seznam
+ * naplněný ({@see QuickMessageSeeder}) a formulář nové zprávy je nabízí jako
+ * vzor k předvyplnění. Zpráva v databázi je od té chvíle samostatná — vzor
+ * se do ní nijak nepromítá.
  *
  * Texty jsou prostý text bez formátování — míří do SMS, WhatsAppu a chatu portálů.
  *
@@ -52,6 +53,16 @@ final class QuickMessageDefaults
                 . 'se k nám můžete vrátit.',
         ],
     ];
+
+    /**
+     * Vzory pro předvyplnění formuláře.
+     *
+     * @return list<array{label: string, body: string}>
+     */
+    public static function templates(): array
+    {
+        return self::DEFAULTS;
+    }
 
     /** @return list<QuickMessage> */
     public static function create(): array

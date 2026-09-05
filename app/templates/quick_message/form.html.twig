@@ -13,6 +13,9 @@
     <div class="card">
         <div class="card-body">
             {{ form_start(form, { attr: { id: 'quick-message-form' } }) }}
+                {% if message.id is null %}
+                    {{ include('quick_message/_template_picker.html.twig', {form_id: 'quick-message-form'}) }}
+                {% endif %}
                 <div class="mb-3">{{ form_row(form.label) }}</div>
                 <div class="mb-2">
                     {{ form_label(form.body) }}

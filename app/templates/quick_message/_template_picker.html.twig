@@ -1,0 +1,29 @@
+{# Předvyplnění formuláře připraveným textem. Očekává: templates, form_id. #}
+<div class="mb-3">
+    <label class="form-label" for="{{ form_id }}-template">Začít ze vzoru</label>
+    <select class="form-select" id="{{ form_id }}-template"
+            data-template-picker="#{{ form_id }}"
+            data-templates="{{ templates|json_encode }}">
+        <option value="">— vlastní text —</option>
+        {% for template in templates %}
+            <option value="{{ loop.index0 }}">{{ template.label }}</option>
+        {% endfor %}
+    </select>
+    <div class="form-text">Název i text se předvyplní, dál si je upravte podle sebe.</div>
+</div>
+
+<script>
+    (function () {
+        document.querySelectorAll('[data-template-picker]').forEach(function (picker) {
+            const form = document.querySelector(picker.dataset.templatePicker);
+            if (!form) { return; }
+            const templates = JSON.parse(picker.dataset.templates);
+            picker.addEventListener('change', function () {
+                if (picker.value === '') { return; }
+                const template = templates[picker.value];
+                form.querySelector('[name$="[label]"]').value = template.label;
+                form.querySelector('[name$="[body]"]').value = template.body;
+            });
+        });
+    })();
+</script>

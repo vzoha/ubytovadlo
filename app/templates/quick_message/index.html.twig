@@ -17,14 +17,8 @@
 
     {% if messages is empty %}
         <div class="alert alert-light border text-muted">
-            <p class="mb-2">
-                Zatím žádná rychlá zpráva. Výchozí sada pokrývá uvítání, výzvu k check-inu,
-                pokyny k příjezdu a poděkování — texty si pak upravíte podle sebe.
-            </p>
-            <form method="post" action="{{ path('quick_message_defaults') }}">
-                <input type="hidden" name="_token" value="{{ csrf_token('quick-message-defaults') }}">
-                <button type="submit" class="btn btn-sm btn-primary">Založit výchozí zprávy</button>
-            </form>
+            Zatím žádná rychlá zpráva. Přidejte ji tlačítkem nahoře — začít můžete
+            z připraveného vzoru pro uvítání, check-in, pokyny k příjezdu nebo poděkování.
         </div>
     {% else %}
         <div class="list-group">
@@ -66,6 +60,7 @@
                 </div>
                 {{ form_start(newForm, { attr: { id: 'quick-message-new-form' } }) }}
                     <div class="modal-body">
+                        {{ include('quick_message/_template_picker.html.twig', {form_id: 'quick-message-new-form'}) }}
                         <div class="mb-3">{{ form_row(newForm.label) }}</div>
                         <div class="mb-2">
                             {{ form_label(newForm.body) }}
