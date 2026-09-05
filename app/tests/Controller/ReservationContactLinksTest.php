@@ -177,4 +177,23 @@ final class ReservationContactLinksTest extends WebTestCase
         self::assertCount(0, $crawler->filter('a[href^="tel:"]'));
         self::assertCount(0, $crawler->filter('a[href^="https://wa.me/"]'));
     }
+
+    public function testChatMessageModalIsOfferedWithoutPhoneOrEmail(): void
+    {
+        $this->seedQuickMessages();
+        $r = new Reservation(Channel::AIRBNB, new \DateTimeImmutable('+10 days'));
+        $r->setCheckOut(new \DateTimeImmutable('+13 days'));
+        $r->setStatus(ReservationStatus::CONFIRMED);
+        $r->setGuestName('Bez Kontaktu');
+        $this->persist($r);
+
+        $crawler = $this->client->request('GET', '/reservation/' . $r->getId());
+        self::assertResponseIsSuccessful();
+
+        self::assertCount(1, $crawler->filter('button[data-bs-target="#chatMessage"]'));
+        self::assertStringContainsString(
+            'Dobrý den Bezi',
+            $crawler->filter('#chat-message-text')->text(),
+        );
+    }
 }

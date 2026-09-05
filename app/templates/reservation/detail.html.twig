@@ -156,7 +156,7 @@
                         {% endif %}
                     </dl>
 
-                    {% if phone or reservation.guestContact.email %}
+                    {% if phone or reservation.guestContact.email or quick_messages is not empty %}
                         <div class="d-flex gap-2 flex-wrap mt-3">
                             {% if phone %}
                                 <a href="tel:{{ phone.e164 }}" class="btn btn-sm btn-outline-primary">📞 Volat</a>
@@ -189,6 +189,9 @@
                             {% endif %}
                             {% if reservation.guestContact.email %}
                                 <a href="mailto:{{ reservation.guestContact.email }}" class="btn btn-sm btn-outline-primary">✉️ E-mail</a>
+                            {% endif %}
+                            {% if quick_messages is not empty %}
+                                <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#chatMessage">Zpráva do chatu</button>
                             {% endif %}
                         </div>
                     {% endif %}
@@ -651,6 +654,7 @@
 
     {{ include('reservation/_timeline.html.twig') }}
     {{ include('reservation/_status_modals.html.twig') }}
+    {% if quick_messages is not empty %}{{ include('reservation/_chat_message_modal.html.twig') }}{% endif %}
 {% endblock %}
 
 {% block stylesheets %}
@@ -695,6 +699,14 @@
 
 {% block javascripts %}
     <script>
+        var chatTemplates = document.querySelector('[data-chat-templates]');
+        if (chatTemplates) {
+            var chatText = document.querySelector('#chat-message-text');
+            var texts = JSON.parse(chatTemplates.dataset.chatTemplates);
+            chatTemplates.addEventListener('change', function () {
+                chatText.value = texts[chatTemplates.value].text;
+            });
+        }
         document.querySelectorAll('[data-copy]').forEach(function (btn) {
             btn.addEventListener('click', function () {
                 var input = document.querySelector(btn.dataset.copy);

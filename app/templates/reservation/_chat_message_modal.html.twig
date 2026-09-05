@@ -1,0 +1,35 @@
+{# Text zprávy k vložení do chatu portálu. Očekává: reservation, quick_messages, extranet. #}
+<div class="modal fade" id="chatMessage" tabindex="-1" aria-labelledby="chatMessageLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title h6 mb-0" id="chatMessageLabel">Zpráva do chatu</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zavřít"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small">Šablona se vyplní údaji této rezervace. Text jde před zkopírováním upravit.</p>
+
+                <label class="form-label" for="chat-message-template">Šablona</label>
+                <select class="form-select form-select-sm mb-2" id="chat-message-template" data-chat-templates="{{ quick_messages|json_encode }}">
+                    {% for m in quick_messages %}
+                        <option value="{{ loop.index0 }}">{{ m.label }}</option>
+                    {% endfor %}
+                </select>
+
+                <label class="form-label" for="chat-message-text">Text</label>
+                <textarea class="form-control" id="chat-message-text" rows="8">{{ quick_messages|first.text }}</textarea>
+            </div>
+            <div class="modal-footer justify-content-between">
+                {% if extranet %}
+                    <a href="{{ extranet }}" target="_blank" rel="noopener" class="text-decoration-none small">Otevřít chat v {{ reservation.channel.label }} ↗</a>
+                {% else %}
+                    <span></span>
+                {% endif %}
+                <span class="d-flex gap-2">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Zavřít</button>
+                    <button type="button" class="btn btn-primary" data-copy="#chat-message-text">Zkopírovat</button>
+                </span>
+            </div>
+        </div>
+    </div>
+</div>

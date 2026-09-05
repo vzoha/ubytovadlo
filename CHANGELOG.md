@@ -62,6 +62,12 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
   ze kterých se skládá hlavička hlášení na Ubyport. Vyplnit je jde dál i
   samostatně v **Nastavení → Ubytovací zařízení**.
 
+- **Zpráva do chatu portálu.** Na detailu rezervace otevře tlačítko *Zpráva do chatu*
+  okno s rychlými zprávami vyplněnými údaji té rezervace — včetně odkazu na online
+  check-in. Text jde před zkopírováním upravit, tlačítko *Zkopírovat* ho dá do
+  schránky a odkaz vedle vede rovnou do konverzace v Bookingu či Airbnb. Nabízí se
+  i u hostů bez telefonu a e-mailu, tedy tam, kde komunikace běží jen přes chat portálu.
+
 ### Opraveno
 
 - **Upozornění „čeká na doplnění údajů" říká, co konkrétně chybí.** Když není
