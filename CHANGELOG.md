@@ -62,6 +62,15 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
   ze kterých se skládá hlavička hlášení na Ubyport. Vyplnit je jde dál i
   samostatně v **Nastavení → Ubytovací zařízení**.
 
+### Opraveno
+
+- **Ekonomika zrušené rezervace počítá jen to, co se opravdu stalo.** Příjmem
+  jsou peníze, které dorazily (nevrácená záloha, storno poplatek), ne cena
+  pobytu. Úklid, elektřina ani rekreační poplatek se k neuskutečněnému pobytu
+  neúčtují a provize portálu se počítá jen tehdy, když ji portál skutečně
+  vyúčtoval. Karta *Ekonomika* to označuje štítkem a zisk na noc u zrušeného
+  pobytu neukazuje.
+
 ### Změněno
 
 - **Po přihlášení na nenastavené instanci otevře správce průvodce nastavením.**

@@ -76,6 +76,39 @@ class ReservationReceiptRepository extends ServiceEntityRepository
         return $out;
     }
 
+    /**
+     * Součet reálně přijatých peněz po rezervacích (bez odhadů), dávkově.
+     * Odpověď na otázku „kolik z toho opravdu dorazilo" — u zrušeného pobytu
+     * je to jediný příjem, který dává smysl.
+     *
+     * @param int[] $reservationIds
+     *
+     * @return array<int, float> reservationId => součet CZK
+     */
+    public function sumRealMoneyForReservations(array $reservationIds): array
+    {
+        if ($reservationIds === []) {
+            return [];
+        }
+
+        $rows = $this->createQueryBuilder('r')
+            ->select('IDENTITY(r.reservation) AS rid', 'SUM(r.amountCzk) AS total')
+            ->andWhere('r.reservation IN (:ids)')
+            ->andWhere('r.source != :estimate')
+            ->setParameter('ids', $reservationIds)
+            ->setParameter('estimate', IncomeSource::ESTIMATE)
+            ->groupBy('r.reservation')
+            ->getQuery()
+            ->getResult();
+
+        $out = [];
+        foreach ($rows as $row) {
+            $out[(int) $row['rid']] = (float) $row['total'];
+        }
+
+        return $out;
+    }
+
     public function findOneByOrigin(Reservation $reservation, ReceiptOrigin $originType, int $originId): ?ReservationReceipt
     {
         return $this->findOneBy([

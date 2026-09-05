@@ -18,9 +18,12 @@ use App\Entity\Embeddable\VatReverseCharge;
 use App\Entity\Invoice;
 use App\Entity\InvoiceLine;
 use App\Entity\Reservation;
+use App\Entity\ReservationReceipt;
 use App\Entity\Setting;
 use App\Enum\Channel;
+use App\Enum\IncomeSource;
 use App\Enum\InvoiceType;
+use App\Enum\ReceiptOrigin;
 use App\Enum\ReservationStatus;
 use App\Invoice\TaxProfileConfig;
 use App\Profit\ReservationProfitCalculator;
@@ -42,6 +45,7 @@ class ReservationProfitCalculatorTest extends KernelTestCase
         $this->em = $em;
         $this->calculator = $container->get(ReservationProfitCalculator::class);
 
+        $this->em->createQuery('DELETE FROM ' . ReservationReceipt::class . ' rr')->execute();
         $this->em->createQuery('DELETE FROM ' . Cleaning::class . ' c')->execute();
         $this->em->createQuery('DELETE FROM ' . InvoiceLine::class . ' l')->execute();
         $this->em->createQuery('DELETE FROM ' . Invoice::class . ' i')->execute();
@@ -213,6 +217,86 @@ class ReservationProfitCalculatorTest extends KernelTestCase
         self::assertEquals($this->calculator->calculate($b), $batch[$b->getId()]);
         self::assertSame('400.00', $batch[$a->getId()]->cleaningCzk); // auto Barča pro 2
         self::assertSame('5000.00', $batch[$b->getId()]->incomeCzk);
+    }
+
+    public function testCancelledStayCountsOnlyMoneyThatArrived(): void
+    {
+        // Host zaplatil zálohu 1 000 Kč a pobyt zrušil: doplatek nedorazí, úklid
+        // ani poplatek obci nevznikly. Cena rezervace tu není příjmem.
+        $r = $this->makeReservation(Channel::WEB, '2026-09-04', '2026-09-06', adults: 2);
+        $r->setPriceTotal('4200.00')->setPriceCurrency('CZK');
+        $r->setStatus(ReservationStatus::CANCELLED);
+        $this->makeInvoice($r, InvoiceType::DEPOSIT, '1000.00');
+        // Úklid rezervaci auto-zakládá listener — u zrušeného pobytu se nesmí účtovat.
+        $receipt = new ReservationReceipt($r, '1000.00', IncomeSource::PAID_INVOICE, ReceiptOrigin::INVOICE, 1);
+        $receipt->setReceivedOn(new \DateTimeImmutable('2026-09-01'));
+        $this->em->persist($receipt);
+        $this->em->flush();
+
+        $p = $this->calculator->calculate($r);
+
+        self::assertTrue($p->cancelled);
+        self::assertSame('1000.00', $p->incomeCzk);
+        self::assertFalse($p->incomeIsEstimate);
+        self::assertSame('0.00', $p->cleaningCzk);
+        self::assertSame('0.00', $p->recreationFeeCzk);
+        self::assertSame('0.00', $p->electricityCzk);
+        self::assertSame('0.00', $p->expensesTotalCzk);
+        self::assertSame('1000.00', $p->profitCzk);
+        // Nocí se nevyužila žádná → zisk na noc nedává smysl.
+        self::assertNull($p->profitPerNightCzk);
+    }
+
+    public function testCancelledStayWithoutPaymentHasZeroIncome(): void
+    {
+        $r = $this->makeReservation(Channel::WEB, '2026-09-04', '2026-09-06', adults: 2);
+        $r->setPriceTotal('4200.00')->setPriceCurrency('CZK');
+        $r->setStatus(ReservationStatus::CANCELLED);
+        $this->em->flush();
+
+        $p = $this->calculator->calculate($r);
+
+        self::assertSame('0.00', $p->incomeCzk);
+        self::assertSame('0.00', $p->profitCzk);
+        // Chybějící odečet ani úklid u zrušeného pobytu nejsou nedodělek.
+        self::assertFalse($p->missingElectricity);
+        self::assertFalse($p->missingCleaning);
+    }
+
+    public function testCancelledOtaStayIgnoresCommissionThatWasNeverInvoiced(): void
+    {
+        // Provize z importu rezervace je jen očekávání — u zrušeného pobytu
+        // portál nic nevyúčtuje, takže výdajem není.
+        $r = $this->makeReservation(Channel::BOOKING, '2026-03-13', '2026-03-15', adults: 2);
+        $r->setPriceTotal('150.00')->setPriceCurrency('EUR');
+        $r->setCommissionAmount('22.50')->setCommissionCurrency('EUR');
+        $r->setStatus(ReservationStatus::CANCELLED);
+        $this->em->flush();
+
+        $p = $this->calculator->calculate($r);
+
+        self::assertSame('0.00', $p->commissionCzk);
+        self::assertSame('0.00', $p->vatCzk);
+        self::assertSame('0.00', $p->expensesTotalCzk);
+        self::assertSame('0.00', $p->profitCzk);
+    }
+
+    public function testCancelledOtaStayKeepsInvoicedCommission(): void
+    {
+        // Vyúčtovanou provizi (potvrzenou reverse charge z faktury portálu)
+        // storno neodpáře — peníze odešly.
+        $r = $this->makeReservation(Channel::BOOKING, '2026-03-13', '2026-03-15', adults: 2);
+        $r->setPriceTotal('150.00')->setPriceCurrency('EUR');
+        $r->setStatus(ReservationStatus::CANCELLED);
+        $r->setVatReverseCharge(new VatReverseCharge(baseCzk: '558.00', amountCzk: '117.18', cnbRate: '24.80'));
+        $this->em->flush();
+
+        $p = $this->calculator->calculate($r);
+
+        self::assertSame('558.00', $p->commissionCzk);
+        self::assertSame('117.18', $p->vatCzk);
+        self::assertSame('675.18', $p->expensesTotalCzk);
+        self::assertSame('-675.18', $p->profitCzk);
     }
 
     private function makeReservation(Channel $channel, string $checkIn, string $checkOut, int $adults): Reservation

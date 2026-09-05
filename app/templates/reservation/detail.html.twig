@@ -348,7 +348,9 @@
                 <div class="card-header d-flex justify-content-between align-items-center gap-2 flex-wrap">
                     <span>Ekonomika</span>
                     <span>
-                        {% if (reservation.checkOut ?? reservation.checkIn) > date('today') %}
+                        {% if profit.cancelled %}
+                            <span class="badge text-bg-secondary">zrušeno — jen reálné peníze</span>
+                        {% elseif (reservation.checkOut ?? reservation.checkIn) > date('today') %}
                             <span class="badge text-bg-warning">výhled — pobyt neproběhl</span>
                         {% endif %}
                         {% if profit.incomeIsEstimate %}
@@ -409,6 +411,9 @@
                     </dl>
                     {% if profit.incomeIsEstimate %}
                         <p class="small text-muted mb-0 mt-2">* Orientační přepočet kurzem ČNB — faktura zatím nevystavena.</p>
+                    {% endif %}
+                    {% if profit.cancelled %}
+                        <p class="small text-muted mb-0 mt-2">Pobyt se neuskutečnil: příjmem jsou jen peníze, které opravdu dorazily. Úklid, elektřina ani rekreační poplatek k němu nevznikly.</p>
                     {% endif %}
                 </div>
             </div>

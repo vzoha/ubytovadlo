@@ -18,6 +18,9 @@ namespace App\Profit;
  *
  * U plátce DPH má reverse charge z provize nárok na odpočet (`vatDeductible`), takže
  * se do výdajů nezapočítává — `vatCzk` zůstává jen informativní částkou.
+ *
+ * Zrušená rezervace (`cancelled`) nese jen reálně přijaté peníze proti provizi a DPH;
+ * úklid, elektřina ani rekreační poplatek se k neuskutečněnému pobytu neváží.
  */
 final readonly class ReservationProfit
 {
@@ -34,6 +37,8 @@ final readonly class ReservationProfit
         public string $expensesTotalCzk,
         public ?string $profitCzk,
         public ?string $profitPerNightCzk,
+        /** Zrušený pobyt — příjmem jsou jen reálně přijaté peníze, výdaje pobytu nevznikly. */
+        public bool $cancelled,
         public bool $missingIncome,
         public bool $missingElectricity,
         public bool $missingCleaning,
