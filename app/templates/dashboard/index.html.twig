@@ -355,7 +355,7 @@
         {% endif %}
 
         {# === UBYPORT === #}
-        {% if ubyport.toReport > 0 or ubyport.incomplete > 0 %}
+        {% if ubyport and (ubyport.toReport > 0 or ubyport.incomplete > 0) %}
             <div class="col-12">
                 <a href="{{ path('ubyport_index') }}"
                    class="card shadow-sm text-decoration-none text-body {{ ubyport.overdue > 0 ? 'border-danger ubyport-overdue' : '' }}">

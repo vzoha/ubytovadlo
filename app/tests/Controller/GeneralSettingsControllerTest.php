@@ -75,4 +75,24 @@ final class GeneralSettingsControllerTest extends WebTestCase
         self::assertCount(1, $crawler->filter('input[type="file"][name="general_settings[logoFile]"]'));
         self::assertStringContainsString('multipart/form-data', (string) $crawler->filter('form')->first()->attr('enctype'));
     }
+
+    public function testTurningUbyportOffHidesItsPagesAndTabs(): void
+    {
+        $crawler = $this->client->request('GET', '/nastaveni/obecne');
+        self::assertGreaterThan(0, $crawler->filter('a[href="/nastaveni/ubyport"]')->count(), 'Zapnutý modul má záložku');
+
+        $this->client->submit($crawler->selectButton('Uložit')->form([
+            'general_settings[brandName]' => 'Ukázka',
+            'general_settings[ubyportEnabled]' => false,
+        ]));
+        $crawler = $this->client->followRedirect();
+
+        self::assertCount(0, $crawler->filter('a[href="/nastaveni/ubyport"]'), 'Vypnutý modul nemá záložku');
+        self::assertCount(0, $crawler->filter('a[href="/ubyport"]'), 'Ani položku v hlavním menu');
+
+        $this->client->request('GET', '/nastaveni/ubyport');
+        self::assertResponseStatusCodeSame(404);
+        $this->client->request('GET', '/ubyport');
+        self::assertResponseStatusCodeSame(404);
+    }
 }

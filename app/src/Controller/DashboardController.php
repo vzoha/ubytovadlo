@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Config\UbyportSettings;
 use App\Entity\Reservation;
 use App\Enum\BillingMode;
 use App\Enum\Channel;
@@ -44,6 +45,7 @@ class DashboardController extends AbstractController
         private readonly InvoiceRepository $invoices,
         private readonly VatDashboardSummary $vatSummary,
         private readonly UbyportQueue $ubyportQueue,
+        private readonly UbyportSettings $ubyportSettings,
         private readonly YearEconomicsBuilder $economicsBuilder,
         private readonly SetupChecklist $setupChecklist,
         private readonly OccupancyConflictFinder $occupancyFinder,
@@ -63,7 +65,7 @@ class DashboardController extends AbstractController
             'needsDetails' => $this->buildNeedsDetails($today),
             'missingInvoices' => $this->buildMissingInvoices($today),
             'vat' => $this->vatSummary->build($today),
-            'ubyport' => $this->buildUbyport($today),
+            'ubyport' => $this->ubyportSettings->isEnabled() ? $this->buildUbyport($today) : null,
             'economics' => $this->buildEconomics($today),
             'setupPending' => $this->setupChecklist->pending(),
             'setupDismissedCount' => $this->setupChecklist->dismissedCount(),

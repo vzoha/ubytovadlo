@@ -80,7 +80,9 @@
                         <li class="nav-item"><a class="nav-link" href="{{ path('task_index') }}">Termíny</a></li>
                     {% endif %}
                     {% if is_granted('ROLE_USER') %}
-                        <li class="nav-item"><a class="nav-link" href="{{ path('ubyport_index') }}">Ubyport</a></li>
+                        {% if ubyport_module.isEnabled %}
+                            <li class="nav-item"><a class="nav-link" href="{{ path('ubyport_index') }}">Ubyport</a></li>
+                        {% endif %}
                     {% endif %}
                     {% if is_granted('ROLE_ADMIN') %}
                         <li class="nav-item"><a class="nav-link" href="{{ path('general_settings_edit') }}">Nastavení</a></li>

@@ -21,8 +21,9 @@ use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Constraints\Regex;
 
 /**
- * Identifikátory, které ubytovateli přidělila cizinecká policie. Jsou jediné,
- * co se používá výhradně pro hlášení — název a adresa objektu patří k ubytování.
+ * Údaje, které používá jen hlášení cizinecké policii — identifikátory z registrace
+ * a kontakt na ubytovatele v hlavičce hlášení. Název a adresa objektu patří
+ * k ubytování, protože je čtou i zprávy hostům.
  *
  * @extends AbstractType<AccommodationProfile>
  */
@@ -51,6 +52,11 @@ class UbyportIdentifiersType extends AbstractType
                     new NotBlank(),
                     new Regex(pattern: '/^\d{12}$/', message: 'IDUB musí být 12 číslic.'),
                 ],
+            ])
+            ->add('spojeni', TextType::class, [
+                'label' => 'Kontakt na ubytovatele',
+                'help' => 'Jméno a telefon, na který se v hlášení obrátí cizinecká policie. Např. „Jan Novák, tel: 261 197 135".',
+                'constraints' => [new NotBlank()],
             ])
             ->add('kod', TextType::class, [
                 'label' => 'Kód zařízení (5 znaků, např. UBYT1)',

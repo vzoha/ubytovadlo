@@ -15,6 +15,7 @@ use App\Config\GuestRegistrationSettings;
 use App\Config\InstanceSettings;
 use App\Config\InstanceSettingsWriter;
 use App\Config\LogoStorage;
+use App\Config\UbyportSettings;
 use App\Form\GeneralSettingsType;
 use App\Repository\SettingRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -30,6 +31,7 @@ class GeneralSettingsController extends AbstractController
         private readonly InstanceSettingsWriter $writer,
         private readonly LogoStorage $logo,
         private readonly GuestRegistrationSettings $guestRegistration,
+        private readonly UbyportSettings $ubyport,
         private readonly SettingRepository $settings,
         private readonly EntityManagerInterface $em,
     ) {
@@ -38,7 +40,7 @@ class GeneralSettingsController extends AbstractController
     #[Route('/nastaveni/obecne', name: 'general_settings_edit', methods: ['GET', 'POST'])]
     public function edit(Request $request): Response
     {
-        $values = $this->instance->currentValues() + $this->guestRegistration->currentValues();
+        $values = $this->instance->currentValues() + $this->guestRegistration->currentValues() + $this->ubyport->currentValues();
         $form = $this->createForm(GeneralSettingsType::class, $values);
         $form->handleRequest($request);
 
@@ -48,6 +50,11 @@ class GeneralSettingsController extends AbstractController
                 GuestRegistrationSettings::KEY_REGISTER_CZECH,
                 $form->get('registerCzechGuests')->getData() ? '1' : '0',
                 'Evidovat i české hosty v evidenční knize.',
+            );
+            $this->settings->set(
+                UbyportSettings::KEY_ENABLED,
+                $form->get('ubyportEnabled')->getData() ? '1' : '0',
+                'Hlásit ubytované cizince na Ubyport.',
             );
             $this->em->flush();
             $this->addFlash('success', 'Obecné nastavení uloženo.');

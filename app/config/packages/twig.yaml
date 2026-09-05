@@ -6,6 +6,7 @@ twig:
         tax_profile: '@App\Invoice\TaxProfileConfig'
         brand_name: '@App\Config\BrandName'
         instance: '@App\Config\InstanceSettings'
+        ubyport_module: '@App\Config\UbyportSettings'
         mail_settings: '@App\Mail\MailSettingsProvider'
         guest_locale: '@App\Mail\GuestLocaleResolver'
         product_name: 'Ubytovadlo'

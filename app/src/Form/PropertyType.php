@@ -49,11 +49,6 @@ class PropertyType extends AbstractType
                 'help' => 'Jak se objekt jmenuje pro hosty — objeví se ve zprávách i v hlášení na Ubyport.',
                 'constraints' => [new NotBlank()],
             ])
-            ->add('spojeni', TextType::class, [
-                'label' => 'Kontaktní spojení (jméno + telefon)',
-                'help' => 'Např. „Jan Novák, tel: 261 197 135"',
-                'constraints' => [new NotBlank()],
-            ])
             ->add('okres', TextType::class, [
                 'label' => 'Okres',
                 'constraints' => [new NotBlank()],

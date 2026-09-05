@@ -69,10 +69,15 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
   rovnou do seznamu; příkaz `app:quick-messages:seed` ji naplní i jindy, pokud je
   seznam prázdný.
 
+- **Hlášení na Ubyport jde vypnout.** V Nastavení → Obecné je přepínač *Hlásit
+  ubytované cizince na Ubyport*. Vypnutá instance nemá modul v hlavním menu ani
+  v nastavení a jeho adresy vracejí 404; evidenční knihy hostů se přepínač netýká.
+
 - **Ubytování jako vlastní sekce nastavení.** Název objektu, jeho adresa a kontakt
   pro hosty mají domov v sekci *Ubytování* — odtud je berou zprávy hostům i hlášení
   na Ubyport. Sekce *Ubyport* drží identifikátory od cizinecké policie (IDUB, kód
-  zařízení) a údaje objektu jen ukazuje s odkazem na jejich úpravu. Fakturační adresa
+  zařízení) i kontakt na ubytovatele, který jde do hlavičky hlášení, a údaje
+  objektu jen ukazuje s odkazem na jejich úpravu. Fakturační adresa
   dodavatele zůstává ve *Fakturaci*; obě stránky říkají, čím se od sebe liší.
 
 - **Kanály a platby jako vlastní sekce nastavení.** Každé napojení má kartu se stavem,

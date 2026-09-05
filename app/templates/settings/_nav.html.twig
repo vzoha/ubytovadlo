@@ -14,6 +14,8 @@
     'ubyport': { label: 'Ubyport', route: 'ubyport_settings_edit' },
     'users': { label: 'Uživatelé', route: 'user_index' },
 } %}
+{# Ubyport se ukazuje jen instanci, která cizince hlásí (Nastavení → Obecné). #}
+{% set tabs = tabs|filter((tab, key) => key != 'ubyport' or ubyport_module.isEnabled) %}
 {# Mobil: kompaktní dropdown; desktop (lg+): svislý sidebar. #}
 <div class="d-lg-none mb-3">
     <label class="form-label small text-muted mb-1" for="settings-nav-select">Sekce nastavení</label>

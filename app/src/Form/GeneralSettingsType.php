@@ -58,6 +58,12 @@ class GeneralSettingsType extends AbstractType
                     ),
                 ],
             ])
+            ->add('ubyportEnabled', CheckboxType::class, [
+                'label' => 'Hlásit ubytované cizince na Ubyport',
+                'required' => false,
+                'help' => 'Zapnuté drží v aplikaci frontu hlášení cizinecké policii a její nastavení. '
+                    . 'Vypněte, pokud cizince neubytováváte — modul se schová.',
+            ])
             ->add('registerCzechGuests', CheckboxType::class, [
                 'label' => 'Evidovat i české hosty',
                 'required' => false,

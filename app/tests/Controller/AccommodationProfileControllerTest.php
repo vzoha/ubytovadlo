@@ -62,7 +62,6 @@ final class AccommodationProfileControllerTest extends WebTestCase
         $crawler = $this->client->request('GET', '/nastaveni/ubytovani');
         $this->client->submit($crawler->selectButton('Uložit')->form([
             'property[nazev]' => 'Apartmán Ukázka',
-            'property[spojeni]' => 'Jan Novák, tel: 777 000 000',
             'property[okres]' => 'Mladá Boleslav',
             'property[obec]' => 'Ukázkov',
             'property[castObce]' => 'Lhota',
@@ -97,6 +96,7 @@ final class AccommodationProfileControllerTest extends WebTestCase
         $this->client->submit($crawler->selectButton('Uložit')->form([
             'ubyport_identifiers[idub]' => '999988887777',
             'ubyport_identifiers[kod]' => 'novy',
+            'ubyport_identifiers[spojeni]' => 'Jan Novák, tel: 777 000 000',
         ]));
 
         self::assertResponseRedirects('/nastaveni/ubyport');
@@ -115,6 +115,7 @@ final class AccommodationProfileControllerTest extends WebTestCase
         $this->client->submit($crawler->selectButton('Uložit')->form([
             'ubyport_identifiers[idub]' => 'NENI-CISLO',
             'ubyport_identifiers[kod]' => 'VEJMI',
+            'ubyport_identifiers[spojeni]' => 'Jan Novák, tel: 777 000 000',
         ]));
 
         self::assertSelectorTextContains('body', 'IDUB musí být 12 číslic');

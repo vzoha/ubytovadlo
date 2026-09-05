@@ -21,6 +21,7 @@
                 <div class="row g-3">
                     <div class="col-md-6">{{ form_row(form.idub) }}</div>
                     <div class="col-md-6">{{ form_row(form.kod) }}</div>
+                    <div class="col-12">{{ form_row(form.spojeni) }}</div>
                 </div>
             </div>
         </div>
@@ -38,8 +39,6 @@
                 <dd class="col-sm-8">{{ profile.id ? profile.nazev : '—' }}</dd>
                 <dt class="col-sm-4">Adresa</dt>
                 <dd class="col-sm-8">{{ profile.id ? property_address : '—' }}</dd>
-                <dt class="col-sm-4">Kontaktní spojení</dt>
-                <dd class="col-sm-8">{{ profile.id ? profile.spojeni : '—' }}</dd>
             </dl>
             <a href="{{ path('accommodation_profile_edit') }}" class="text-decoration-none small">Upravit v Ubytování →</a>
         </div>
