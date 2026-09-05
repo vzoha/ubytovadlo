@@ -27,9 +27,12 @@ final class CheckinLookupTest extends WebTestCase
 {
     private KernelBrowser $client;
     private EntityManagerInterface $em;
+    /** Počitadlo pokusů drží cache na disku, takže každý běh potřebuje vlastní adresu. */
+    private string $ip;
 
     protected function setUp(): void
     {
+        $this->ip = sprintf('10.%d.%d.%d', random_int(0, 255), random_int(0, 255), random_int(1, 254));
         $this->client = static::createClient();
         $em = static::getContainer()->get('doctrine')->getManager();
         \assert($em instanceof EntityManagerInterface);
@@ -57,12 +60,9 @@ final class CheckinLookupTest extends WebTestCase
         return $r;
     }
 
-    /**
-     * Každý test má vlastní IP, aby si testy navzájem nevyčerpaly limit pokusů.
-     */
-    private function submit(string $code, string $lastName, string $ip): void
+    private function submit(string $code, string $lastName): void
     {
-        $server = ['REMOTE_ADDR' => $ip, 'HTTP_ACCEPT_LANGUAGE' => 'cs'];
+        $server = ['REMOTE_ADDR' => $this->ip, 'HTTP_ACCEPT_LANGUAGE' => 'cs'];
         $crawler = $this->client->request('GET', '/checkin', server: $server);
         self::assertResponseIsSuccessful();
 
@@ -76,7 +76,7 @@ final class CheckinLookupTest extends WebTestCase
     {
         $r = $this->persist('HMEWRF28CN', 'Richard Franz');
 
-        $this->submit('hmewrf 28cn', 'franz', '10.0.0.1');
+        $this->submit('hmewrf 28cn', 'franz');
 
         self::assertResponseRedirects('/checkin/' . $r->getCheckinToken());
     }
@@ -85,7 +85,7 @@ final class CheckinLookupTest extends WebTestCase
     {
         $r = $this->persist('HMABCDE123', 'Markéta Dvořáková');
 
-        $this->submit('HMABCDE123', 'dvorakova', '10.0.0.2');
+        $this->submit('HMABCDE123', 'dvorakova');
 
         self::assertResponseRedirects('/checkin/' . $r->getCheckinToken());
     }
@@ -94,7 +94,7 @@ final class CheckinLookupTest extends WebTestCase
     {
         $this->persist('HMEWRF28CN', 'Richard Franz');
 
-        $this->submit('HMEWRF28CN', 'Novak', '10.0.0.3');
+        $this->submit('HMEWRF28CN', 'Novak');
 
         self::assertResponseStatusCodeSame(422);
         self::assertSelectorTextContains('.alert, .invalid-feedback, form', 'nepodařilo najít');
@@ -104,7 +104,7 @@ final class CheckinLookupTest extends WebTestCase
     {
         $this->persist('HMEWRF28CN', 'Richard Franz');
 
-        $this->submit('HMXXXXXXXX', 'Franz', '10.0.0.4');
+        $this->submit('HMXXXXXXXX', 'Franz');
 
         self::assertResponseStatusCodeSame(422);
         self::assertSelectorTextContains('form', 'nepodařilo najít');
@@ -114,7 +114,7 @@ final class CheckinLookupTest extends WebTestCase
     {
         $this->persist('HMEWRF28CN', 'Richard Franz', status: ReservationStatus::CANCELLED);
 
-        $this->submit('HMEWRF28CN', 'Franz', '10.0.0.5');
+        $this->submit('HMEWRF28CN', 'Franz');
 
         self::assertResponseStatusCodeSame(422);
     }
@@ -123,7 +123,7 @@ final class CheckinLookupTest extends WebTestCase
     {
         $this->persist('HMEWRF28CN', 'Richard Franz', checkIn: '-2 years');
 
-        $this->submit('HMEWRF28CN', 'Franz', '10.0.0.6');
+        $this->submit('HMEWRF28CN', 'Franz');
 
         self::assertResponseStatusCodeSame(422);
     }
@@ -131,17 +131,12 @@ final class CheckinLookupTest extends WebTestCase
     public function testAttemptsFromOneAddressAreLimited(): void
     {
         $this->persist('HMEWRF28CN', 'Richard Franz');
-        // Počitadlo pokusů drží cache na disku, aby přežilo mezi requesty.
-        // Adresa je proto pro každý běh jiná — jinak by okno 15 minut
-        // přeteklo z minulého běhu.
-        $ip = '10.1.' . random_int(0, 255) . '.' . random_int(0, 255);
-
         for ($i = 0; $i < 10; $i++) {
-            $this->submit('HMXXXXXXXX', 'Novak', $ip);
+            $this->submit('HMXXXXXXXX', 'Novak');
             self::assertResponseStatusCodeSame(422);
         }
 
-        $this->submit('HMEWRF28CN', 'Franz', $ip);
+        $this->submit('HMEWRF28CN', 'Franz');
         self::assertResponseStatusCodeSame(429);
     }
 }
