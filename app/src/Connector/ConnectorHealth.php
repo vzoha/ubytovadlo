@@ -49,6 +49,8 @@ final class ConnectorHealth
         public readonly ?int $staleDays,
         public readonly string $state,
         public readonly ?string $feedUrl,
+        /** Konektor už má záznam v databázi — někdo ho zapnul, vypnul nebo z něj něco dorazilo. */
+        public readonly bool $persisted,
     ) {
     }
 
@@ -74,6 +76,7 @@ final class ConnectorHealth
             $staleDays,
             self::deriveState($connector, $configured, $staleDays),
             $connector->getConfigValue(ConnectorManager::ICAL_FEED_URL_KEY),
+            $connector->getId() !== null,
         );
     }
 

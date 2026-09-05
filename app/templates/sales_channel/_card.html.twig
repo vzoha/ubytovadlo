@@ -1,0 +1,152 @@
+{# Jeden prodejní kanál: stav, přepínač, feed a vlastní nastavení pohromadě.
+   Očekává: c (ConnectorHealth), motopressForm, bookingForm, motopressWebhookUrl, secretsSet. #}
+{% set is_motopress = c.type.value == 'motopress' %}
+{% set is_booking = c.type.value == 'booking' %}
+{# Rozbalené jsou kanály, které něco potřebují — u ostatních stačí stav v hlavičce. #}
+{% set needs_attention = c.state in ['needs_setup', 'error'] %}
+<div class="card mb-3">
+    <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2 py-2">
+        <span class="d-flex align-items-center gap-2">
+            <button class="btn btn-sm btn-outline-secondary py-0 px-1" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#channel-{{ c.type.value }}" aria-expanded="{{ needs_attention ? 'true' : 'false' }}"
+                    aria-controls="channel-{{ c.type.value }}" aria-label="Nastavení kanálu {{ c.type.label }}">▾</button>
+            <span class="fw-semibold">{{ c.type.label }}</span>
+            <span class="badge text-bg-{{ c.badge }}">{{ c.stateLabel }}</span>
+            {% if c.lastActivityAt %}<span class="small text-muted d-none d-sm-inline">poslední data {{ c.lastActivityAt|date('d. m. Y') }}</span>{% endif %}
+        </span>
+        <span class="d-flex align-items-center gap-3">
+            <form method="post" action="{{ path('connector_test', { type: c.type.value }) }}">
+                <input type="hidden" name="_token" value="{{ csrf_token('connector') }}">
+                <button type="submit" class="btn btn-sm btn-outline-secondary" {{ c.configured ? '' : 'disabled' }}>Otestovat</button>
+            </form>
+            <form method="post" action="{{ path('connector_toggle', { type: c.type.value }) }}">
+                <input type="hidden" name="_token" value="{{ csrf_token('connector') }}">
+                <div class="form-check form-switch m-0">
+                    <input class="form-check-input" type="checkbox" role="switch"
+                           id="connector-{{ c.type.value }}" {{ c.enabled ? 'checked' : '' }}
+                           onchange="this.form.submit()">
+                    <label class="form-check-label small" for="connector-{{ c.type.value }}">Zapnuto</label>
+                </div>
+            </form>
+        </span>
+    </div>
+    <div class="collapse {{ needs_attention ? 'show' : '' }}" id="channel-{{ c.type.value }}">
+    <div class="card-body">
+        <p class="text-muted small mb-2">{{ c.type.description }}</p>
+        <p class="small mb-3 {{ c.state == 'error' ? 'text-danger' : 'text-muted' }}">
+            {% if c.state == 'error' and c.lastError %}
+                Poslední běh selhal: {{ c.lastError }}
+            {% elseif c.lastActivityAt %}
+                Poslední data {{ c.lastActivityAt|date('d. m. Y H:i') }}
+                {%- if c.state == 'stale' %} · {{ c.staleDays }} dní ticho{% endif %}
+            {% elseif not c.configured %}
+                Chybí přístupy — doplňte je níže.
+            {% elseif c.enabled %}
+                Zatím nedorazila žádná data.
+            {% endif %}
+        </p>
+
+        {% if c.supportsIcalImport %}
+            <form method="post" action="{{ path('connector_feed', { type: c.type.value }) }}" class="mb-3">
+                <input type="hidden" name="_token" value="{{ csrf_token('connector') }}">
+                <label class="form-label small text-muted mb-1" for="feed-{{ c.type.value }}">URL iCal feedu obsazenosti</label>
+                <div class="input-group input-group-sm">
+                    <input type="url" class="form-control font-monospace" id="feed-{{ c.type.value }}"
+                           name="feed_url" value="{{ c.feedUrl }}" placeholder="https://…/calendar.ics">
+                    <button type="submit" class="btn btn-outline-primary">Uložit feed</button>
+                </div>
+                <details class="mt-1">
+                    <summary class="small text-muted" style="cursor:pointer;">Kde vzít tento odkaz</summary>
+                    <div class="small text-muted mt-1 ps-1">
+                        {% if c.type.value == 'echalupy' %}
+                            V administraci e-chalupy.cz otevřete <em>Export kalendáře (iCal)</em>. Nabídne
+                            dva odkazy — vložte ten <strong>„s podrobnostmi"</strong> (obsahuje privátní
+                            klíč). Odkaz „základní bez podrobností" sem nedávejte.
+                        {% elseif c.type.value == 'airbnb' %}
+                            V Airbnb otevřete <em>Kalendář → dostupnost → připojení kalendářů</em> a
+                            zkopírujte odkaz na export kalendáře. Ručně zavřené termíny se nenačtou jako
+                            rezervace, jen skutečné rezervace.
+                        {% elseif c.type.value == 'booking' %}
+                            V extranetu Booking.com otevřete <em>Kalendář → synchronizace kalendářů</em>
+                            a zkopírujte odkaz u exportu kalendáře.
+                        {% else %}
+                            V administraci portálu najděte export kalendáře (iCal) a zkopírujte odkaz.
+                        {% endif %}
+                    </div>
+                </details>
+            </form>
+        {% endif %}
+
+        {% if is_booking %}
+            {{ form_start(bookingForm) }}
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-6">{{ form_row(bookingForm.bookingHotelId) }}</div>
+                    <div class="col-md-6 d-flex justify-content-md-end">
+                        <button type="submit" class="btn btn-primary">Uložit Booking.com</button>
+                    </div>
+                </div>
+            {{ form_end(bookingForm) }}
+
+            {{ include('sales_channel/_booking_security.html.twig') }}
+        {% endif %}
+
+        {% if is_motopress %}
+            {{ form_start(motopressForm) }}
+                <div class="mb-3">{{ form_row(motopressForm.motopressBaseUrl) }}</div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        {{ form_row(motopressForm.motopressConsumerKey) }}
+                        {% if secretsSet.motopressConsumerKey %}<span class="badge text-bg-success">klíč nastaven</span>{% else %}<span class="badge text-bg-secondary">klíč nenastaven</span>{% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        {{ form_row(motopressForm.motopressConsumerSecret) }}
+                        {% if secretsSet.motopressConsumerSecret %}<span class="badge text-bg-success">secret nastaven</span>{% else %}<span class="badge text-bg-secondary">secret nenastaven</span>{% endif %}
+                    </div>
+                </div>
+                <hr>
+                <p class="text-muted small mb-2">
+                    Příplatkové služby z webu se překládají na příznaky rezervace — ID najdete
+                    v MotoPressu u jednotlivých služeb.
+                </p>
+                <div class="row g-3">
+                    <div class="col-md-6">{{ form_row(motopressForm.petServiceIds) }}</div>
+                    <div class="col-md-6">{{ form_row(motopressForm.babyCotServiceIds) }}</div>
+                </div>
+                <div class="mt-2">{{ form_row(motopressForm.pushPayments) }}</div>
+                <div class="d-flex justify-content-end">
+                    <button type="submit" class="btn btn-primary">Uložit vlastní web</button>
+                </div>
+            {{ form_end(motopressForm) }}
+
+            <details class="mt-3">
+                <summary class="small text-muted" style="cursor:pointer;">Okamžitý import z webu (webhook)</summary>
+                <div class="mt-2">
+                    <p class="text-muted small mb-2">
+                        Bez tohohle naskočí nová rezervace z webu až s pravidelnou kontrolou (á 15 min).
+                        Vložte tuhle adresu do WordPressu (rozšíření <code>ubytovadlo-motopress-webhook</code>)
+                        a web po každé potvrzené rezervaci sám ťukne — objeví se tu během pár vteřin.
+                        Adresa je tajná: kdo ji zná, může spustit import.
+                    </p>
+                    <div class="input-group input-group-sm">
+                        <input type="text" class="form-control font-monospace" id="motopress-webhook-url" value="{{ motopressWebhookUrl }}" readonly>
+                        <button type="button" class="btn btn-outline-secondary" data-copy="#motopress-webhook-url">Kopírovat</button>
+                    </div>
+                    <form method="post" action="{{ path('connector_webhook_regenerate', { type: c.type.value }) }}" class="mt-2"
+                          onsubmit="return confirm('Vygenerovat novou adresu? Ta stávající hned přestane fungovat, dokud novou nevložíte do WordPressu.')">
+                        <input type="hidden" name="_token" value="{{ csrf_token('connector') }}">
+                        <button type="submit" class="btn btn-sm btn-outline-danger">Vygenerovat novou adresu</button>
+                    </form>
+                </div>
+            </details>
+        {% endif %}
+
+        {% if c.type.value == 'airbnb' %}
+            <p class="text-muted small mb-0">
+                Airbnb žádné přístupy nepotřebuje — rezervace chodí e-mailem do automatizační
+                schránky. E-mail hosta Airbnb neposkytuje, proto se hostům píše přes chat;
+                text k vložení nabídne tlačítko <strong>Zpráva do chatu</strong> na rezervaci.
+            </p>
+        {% endif %}
+    </div>
+</div>
+</div>

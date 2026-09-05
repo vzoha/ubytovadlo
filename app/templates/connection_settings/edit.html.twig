@@ -5,107 +5,30 @@
 {% block settings_active %}connection{% endblock %}
 
 {% block settings_content %}
-    <h2 class="h5 mb-2">Připojení a přístupové údaje</h2>
+    <h2 class="h5 mb-2">Připojení k poště</h2>
     <p class="text-muted small">
-        Údaje se ukládají <strong>šifrovaně</strong> v databázi (master klíč žije jen v env).
-        Hesla a klíče se nikdy nezobrazují zpět — prázdné pole = beze změny.
-        Dokud nejsou vyplněné, použijí se hodnoty z <code>.env</code>.
+        Schránka, ze které aplikace čte zprávy portálů a banky, a server, kterým
+        odesílá. Údaje se ukládají <strong>šifrovaně</strong> v databázi a hesla
+        se nikdy nezobrazují zpět — prázdné pole znamená beze změny.
+        Přístupy k jednotlivým portálům patří do <a href="{{ path('sales_channel_index') }}">Prodejních kanálů</a>.
     </p>
 
     {% if not cipherReady %}
         <div class="alert alert-warning">
             Není nastaven <code>APP_CREDENTIALS_KEY</code> — uložení do databáze je vypnuté.
-            Vygeneruj klíč a vlož do <code>.env.local</code>:
+            Vygenerujte klíč a vložte do <code>.env.local</code>:
             <code>php -r "echo base64_encode(random_bytes(32)).PHP_EOL;"</code>
         </div>
     {% endif %}
 
-    <div class="card mb-4">
-        <div class="card-header py-2 fw-semibold">Konektory — zdroje rezervací a plateb</div>
-        <div class="list-group list-group-flush">
-            {% for c in connectors %}
-                <div class="list-group-item">
-                    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
-                        <div class="me-2">
-                            <div class="d-flex align-items-center gap-2">
-                                <span class="fw-semibold">{{ c.type.label }}</span>
-                                <span class="badge text-bg-{{ c.badge }}">{{ c.stateLabel }}</span>
-                            </div>
-                            <div class="small text-muted">{{ c.type.description }}</div>
-                            <div class="small text-muted mt-1">
-                                {% if c.lastActivityAt %}
-                                    Poslední data {{ c.lastActivityAt|date('d. m. Y H:i') }}
-                                    {%- if c.state == 'stale' %} · {{ c.staleDays }} dní ticho{% endif %}
-                                {% elseif not c.configured %}
-                                    Chybí přístupy — vyplňte je níže.
-                                {% elseif c.enabled %}
-                                    Zatím nedorazila žádná data.
-                                {% endif %}
-                            </div>
-                            {% if c.state == 'error' and c.lastError %}
-                                <div class="small text-danger mt-1">Poslední běh selhal: {{ c.lastError }}</div>
-                            {% endif %}
-                        </div>
-                        <div class="d-flex align-items-center gap-3">
-                            <form method="post" action="{{ path('connector_test', { type: c.type.value }) }}">
-                                <input type="hidden" name="_token" value="{{ csrf_token('connector') }}">
-                                <button type="submit" class="btn btn-sm btn-outline-secondary" {{ c.configured ? '' : 'disabled' }}>Otestovat</button>
-                            </form>
-                            <form method="post" action="{{ path('connector_toggle', { type: c.type.value }) }}">
-                                <input type="hidden" name="_token" value="{{ csrf_token('connector') }}">
-                                <div class="form-check form-switch m-0">
-                                    <input class="form-check-input" type="checkbox" role="switch"
-                                           id="connector-{{ c.type.value }}"
-                                           {{ c.enabled ? 'checked' : '' }}
-                                           onchange="this.form.submit()">
-                                    <label class="form-check-label small" for="connector-{{ c.type.value }}">Zapnuto</label>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                    {% if c.supportsIcalImport %}
-                        <form method="post" action="{{ path('connector_feed', { type: c.type.value }) }}" class="mt-2">
-                            <input type="hidden" name="_token" value="{{ csrf_token('connector') }}">
-                            <label class="form-label small text-muted mb-1" for="feed-{{ c.type.value }}">URL iCal feedu obsazenosti</label>
-                            <div class="input-group input-group-sm">
-                                <input type="url" class="form-control font-monospace" id="feed-{{ c.type.value }}"
-                                       name="feed_url" value="{{ c.feedUrl }}" placeholder="https://…/calendar.ics">
-                                <button type="submit" class="btn btn-outline-primary">Uložit feed</button>
-                            </div>
-                            <details class="mt-1">
-                                <summary class="small text-muted" style="cursor:pointer;">Kde vzít tento odkaz</summary>
-                                <div class="small text-muted mt-1 ps-1">
-                                    {% if c.type.value == 'echalupy' %}
-                                        V administraci e-chalupy.cz otevřete <em>Export kalendáře (iCal)</em>. Nabídne
-                                        dva odkazy — vložte ten <strong>„s podrobnostmi"</strong> (obsahuje privátní
-                                        klíč). Odkaz „základní bez podrobností" sem nedávejte.
-                                    {% elseif c.type.value == 'airbnb' %}
-                                        V Airbnb otevřete <em>Kalendář → dostupnost → připojení kalendářů</em> a
-                                        zkopírujte odkaz na export kalendáře. Ručně zavřené termíny se nenačtou jako
-                                        rezervace, jen skutečné rezervace.
-                                    {% elseif c.type.value == 'booking' %}
-                                        V extranetu Booking.com otevřete <em>Kalendář → synchronizace kalendářů</em>
-                                        a zkopírujte odkaz u exportu kalendáře.
-                                    {% else %}
-                                        V administraci portálu najděte export kalendáře (iCal) a zkopírujte odkaz.
-                                    {% endif %}
-                                </div>
-                            </details>
-                        </form>
-                    {% endif %}
-                </div>
-            {% endfor %}
-        </div>
-        <div class="card-footer py-2 text-muted small">
-            Vypnutý konektor pollery přeskočí. „Otestovat" jen ověří přístup, data nemění.
-            Obsazenost se z feedu načte i bez MotoPressu.
-        </div>
-    </div>
-
     {{ form_start(form) }}
         <div class="card mb-3">
-            <div class="card-header py-2 fw-semibold">IMAP — automatizační schránka</div>
+            <div class="card-header py-2 fw-semibold">Příchozí pošta (IMAP)</div>
             <div class="card-body">
+                <p class="text-muted small mb-3">
+                    Automatizační schránka, do které chodí e-maily portálů a oznámení banky.
+                    Aplikace je čte a zakládá z nich rezervace a platby.
+                </p>
                 <div class="row g-3">
                     <div class="col-md-6">{{ form_row(form.imapHost) }}</div>
                     <div class="col-md-3">{{ form_row(form.imapPort) }}</div>
@@ -115,7 +38,7 @@
                     <div class="col-md-6">{{ form_row(form.imapUsername) }}</div>
                     <div class="col-md-6">{{ form_row(form.imapFolder) }}</div>
                 </div>
-                <div class="mb-1">
+                <div class="mt-3">
                     {{ form_row(form.imapPassword) }}
                     {% if secretsSet.imapPassword %}<span class="badge text-bg-success">heslo nastaveno</span>{% else %}<span class="badge text-bg-secondary">heslo nenastaveno</span>{% endif %}
                 </div>
@@ -123,7 +46,7 @@
         </div>
 
         <div class="card mb-3">
-            <div class="card-header py-2 fw-semibold">SMTP — odchozí e-maily</div>
+            <div class="card-header py-2 fw-semibold">Odchozí pošta (SMTP)</div>
             <div class="card-body">
                 <p class="text-muted small mb-3">
                     Odesílání zpráv hostům, faktur a notifikací. Dokud tu server není,
@@ -144,103 +67,8 @@
             </div>
         </div>
 
-        <details class="mb-3">
-            <summary class="fw-semibold py-1" style="cursor:pointer;">
-                Booking.com
-                <span class="text-muted fw-normal small">— jen když prodáváte přes Booking.com</span>
-            </summary>
-            <div class="card mt-2">
-                <div class="card-body">
-                    <p class="text-muted small mb-3">
-                        ID ubytování drží odkaz z rezervace rovnou na její stránku v extranetu,
-                        kde se řeší storno i změny termínu. Vyplní se samo z prvního e-mailu
-                        o nové rezervaci.
-                    </p>
-                    <div class="col-md-6">{{ form_row(form.bookingHotelId) }}</div>
-                </div>
-            </div>
-            {{ include('connection_settings/_booking_security.html.twig') }}
-        </details>
-
-        <details class="mb-3">
-            <summary class="fw-semibold py-1" style="cursor:pointer;">
-                Napojení na vlastní web (MotoPress)
-                <span class="text-muted fw-normal small">— jen když web pohání plugin MotoPress</span>
-            </summary>
-            <div class="card mt-2">
-                <div class="card-body">
-                    <p class="text-muted small mb-3">
-                        Rezervace z vlastního webu se pak natáhnou i s údaji hosta. Prodáváte-li jen
-                        přes Booking, Airbnb nebo napřímo, tuhle část nechte prázdnou.
-                    </p>
-                    <div class="mb-3">{{ form_row(form.motopressBaseUrl) }}</div>
-                    <div class="mb-1">
-                        {{ form_row(form.motopressConsumerKey) }}
-                        {% if secretsSet.motopressConsumerKey %}<span class="badge text-bg-success">nastaveno</span>{% else %}<span class="badge text-bg-secondary">nenastaveno</span>{% endif %}
-                    </div>
-                    <div class="mb-1">
-                        {{ form_row(form.motopressConsumerSecret) }}
-                        {% if secretsSet.motopressConsumerSecret %}<span class="badge text-bg-success">nastaveno</span>{% else %}<span class="badge text-bg-secondary">nenastaveno</span>{% endif %}
-                    </div>
-                    <hr>
-                    <p class="text-muted small mb-3">
-                        Které MotoPress služby znamenají psa nebo dětskou postýlku a jestli
-                        posílat potvrzené platby zpět do MotoPressu. Import zapnete nahoře
-                        v <em>Konektorech</em>.
-                    </p>
-                    <div class="row g-3">
-                        <div class="col-md-6">{{ form_row(form.petServiceIds) }}</div>
-                        <div class="col-md-6">{{ form_row(form.babyCotServiceIds) }}</div>
-                    </div>
-                    <div class="mt-2">{{ form_row(form.pushPayments) }}</div>
-                </div>
-            </div>
-        </details>
-
         <div class="d-flex justify-content-end">
             <button type="submit" class="btn btn-primary">Uložit</button>
         </div>
     {{ form_end(form) }}
-
-    <div class="card mb-3">
-        <div class="card-header py-2 fw-semibold">Export obsazenosti (iCal)</div>
-        <div class="card-body">
-            <p class="text-muted small mb-3">
-                Adresa kalendáře se všemi rezervacemi jako obsazenými termíny. Vlož ji
-                v Booking i Airbnb extranetu do <em>importu kalendáře</em> — OTA pak
-                neprodá termín obsazený jiným kanálem, webem ani přímou rezervací.
-                Ven jde jen „obsazeno", žádné údaje hosta.
-            </p>
-            <div class="input-group">
-                <input type="text" class="form-control font-monospace small" id="ical-feed-url" value="{{ icalFeedUrl }}" readonly>
-                <button type="button" class="btn btn-outline-secondary" onclick="navigator.clipboard.writeText(document.getElementById('ical-feed-url').value)">Kopírovat</button>
-            </div>
-        </div>
-    </div>
-
-    <details class="mb-3">
-        <summary class="fw-semibold py-1" style="cursor:pointer;">
-            Okamžitý import z webu
-            <span class="text-muted fw-normal small">— jen pro vlastní web s pluginem MotoPress</span>
-        </summary>
-        <div class="card mt-2">
-            <div class="card-body">
-                <p class="text-muted small mb-3">
-                    Bez tohohle naskočí nová rezervace z webu až s pravidelnou kontrolou (á 15 min).
-                    Vložte tuhle adresu do WordPressu (rozšíření <code>ubytovadlo-motopress-webhook</code>)
-                    a web po každé potvrzené rezervaci sám ťukne — objeví se tu během pár vteřin.
-                    Adresa je tajná: kdo ji zná, může spustit import. Sdílejte ji jen s vlastním webem.
-                </p>
-                <div class="input-group">
-                    <input type="text" class="form-control font-monospace small" id="motopress-webhook-url" value="{{ motopressWebhookUrl }}" readonly>
-                    <button type="button" class="btn btn-outline-secondary" onclick="navigator.clipboard.writeText(document.getElementById('motopress-webhook-url').value)">Kopírovat</button>
-                </div>
-                <form method="post" action="{{ path('connector_webhook_regenerate', { type: motopressType }) }}" class="mt-2"
-                      onsubmit="return confirm('Vygenerovat novou adresu? Ta stávající hned přestane fungovat, dokud novou nevložíte do WordPressu.')">
-                    <input type="hidden" name="_token" value="{{ csrf_token('connector') }}">
-                    <button type="submit" class="btn btn-sm btn-outline-danger">Vygenerovat novou adresu</button>
-                </form>
-            </div>
-        </div>
-    </details>
 {% endblock %}

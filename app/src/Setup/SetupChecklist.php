@@ -93,7 +93,7 @@ final class SetupChecklist
                 'motopress',
                 'Napojení na web (MotoPress)',
                 'Import rezervací z vlastního webu přes REST API.',
-                'connection_settings_edit',
+                'sales_channel_index',
                 $this->credentialSet('motopress.base_url'),
             ),
             $this->item(

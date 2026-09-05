@@ -11,36 +11,23 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
-use App\Booking\BookingHotelId;
-use App\Connector\ConnectorManager;
-use App\Credential\CredentialCipher;
+use App\Credential\CredentialFormWriter;
 use App\Credential\CredentialProvider;
-use App\Enum\ConnectorType;
-use App\Form\ConnectionSettingsType;
-use App\Ical\IcalFeedToken;
-use App\MotoPress\MotoPressSettings;
-use App\Repository\CredentialRepository;
-use App\Repository\SettingRepository;
-use App\Reservation\ExtranetLink;
-use Doctrine\ORM\EntityManagerInterface;
+use App\Form\MailboxSettingsType;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
+/**
+ * Přístupy k poště — příchozí schránka a odchozí server. Nastavení jednotlivých
+ * prodejních kanálů má vlastní stránku ({@see SalesChannelController}).
+ */
 class ConnectionSettingsController extends AbstractController
 {
     public function __construct(
         private readonly CredentialProvider $provider,
-        private readonly CredentialRepository $credentials,
-        private readonly CredentialCipher $cipher,
-        private readonly MotoPressSettings $motopress,
-        private readonly ExtranetLink $extranetLink,
-        private readonly SettingRepository $settings,
-        private readonly EntityManagerInterface $em,
-        private readonly IcalFeedToken $icalFeedToken,
-        private readonly ConnectorManager $connectors,
+        private readonly CredentialFormWriter $credentialWriter,
     ) {
     }
 
@@ -48,60 +35,24 @@ class ConnectionSettingsController extends AbstractController
     public function edit(Request $request): Response
     {
         $state = $this->provider->formState();
-        $form = $this->createForm(
-            ConnectionSettingsType::class,
-            $state['values'] + $this->motopress->currentValues() + ['bookingHotelId' => $this->extranetLink->bookingHotelId()],
-        );
+        $form = $this->createForm(MailboxSettingsType::class, $state['values']);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            // Chování MotoPressu (Setting) nešifrujeme — uloží se i bez klíče.
-            $this->saveMapping(
-                $form->get('petServiceIds')->getData(),
-                $form->get('babyCotServiceIds')->getData(),
-                (bool) $form->get('pushPayments')->getData(),
+            $this->addFlash(
+                $this->credentialWriter->save($form) ? 'success' : 'warning',
+                $this->credentialWriter->isReady()
+                    ? 'Přístupy k poště uloženy.'
+                    : 'Přístupy vyžadují APP_CREDENTIALS_KEY (base64 32 B) v .env.local — bez něj se neuloží.',
             );
-            $this->saveBookingHotelId((string) $form->get('bookingHotelId')->getData());
-
-            if (!$this->cipher->isReady()) {
-                $this->addFlash('warning', 'Chování MotoPressu uloženo. Přístupové údaje ale vyžadují APP_CREDENTIALS_KEY (base64 32 B) v .env.local — bez něj se neuloží.');
-
-                return $this->afterSave($request);
-            }
-
-            foreach (CredentialProvider::FIELDS as $field => [$key, $isSecret]) {
-                $value = trim((string) $form->get($field)->getData());
-                // Tajemství s prázdným polem necháváme být (beze změny).
-                if ($isSecret && $value === '') {
-                    continue;
-                }
-                $this->credentials->setEncrypted($key, $value);
-            }
-            $this->em->flush();
-            $this->addFlash('success', 'Nastavení připojení uloženo.');
 
             return $this->afterSave($request);
         }
 
-        $icalFeedUrl = $this->generateUrl(
-            'ical_feed',
-            ['token' => $this->icalFeedToken->getOrCreate()],
-            UrlGeneratorInterface::ABSOLUTE_URL,
-        );
-        $motopressWebhookUrl = $this->generateUrl(
-            'motopress_webhook',
-            ['token' => $this->connectors->getOrCreateWebhookToken(ConnectorType::MOTOPRESS)],
-            UrlGeneratorInterface::ABSOLUTE_URL,
-        );
-
         return $this->render('connection_settings/edit.html.twig', [
             'form' => $form->createView(),
             'secretsSet' => $state['secretsSet'],
-            'cipherReady' => $this->cipher->isReady(),
-            'icalFeedUrl' => $icalFeedUrl,
-            'motopressWebhookUrl' => $motopressWebhookUrl,
-            'motopressType' => ConnectorType::MOTOPRESS->value,
-            'connectors' => $this->connectors->health(),
+            'cipherReady' => $this->credentialWriter->isReady(),
         ]);
     }
 
@@ -116,24 +67,5 @@ class ConnectionSettingsController extends AbstractController
         }
 
         return $this->redirectToRoute('connection_settings_edit');
-    }
-
-    private function saveBookingHotelId(string $raw): void
-    {
-        $this->settings->set(
-            BookingHotelId::SETTING_KEY,
-            BookingHotelId::normalize($raw) ?? '',
-            'Booking.com: ID ubytování pro odkaz do extranetu.',
-        );
-        $this->em->flush();
-    }
-
-    private function saveMapping(?string $petIds, ?string $babyCotIds, bool $push): void
-    {
-        // Vstup normalizujeme přes parseIds, ať se uloží čistý seznam ID.
-        $this->settings->set(MotoPressSettings::KEY_PET, implode(',', MotoPressSettings::parseIds((string) $petIds)), 'MotoPress: ID služeb „pes".');
-        $this->settings->set(MotoPressSettings::KEY_BABY_COT, implode(',', MotoPressSettings::parseIds((string) $babyCotIds)), 'MotoPress: ID služeb „dětská postýlka".');
-        $this->settings->set(MotoPressSettings::KEY_PUSH, $push ? '1' : '0', 'MotoPress: posílat platby zpět.');
-        $this->em->flush();
     }
 }

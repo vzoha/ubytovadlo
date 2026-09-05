@@ -69,12 +69,17 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
   rovnou do seznamu; příkaz `app:quick-messages:seed` ji naplní i jindy, pokud je
   seznam prázdný.
 
-- **Nastavení Booking.com pohromadě.** Nastavení → Připojení má sbalenou sekci
-  *Booking.com* s ID ubytování pro proklik do extranetu a s návodem, co v extranetu
-  schválit, aby zprávy hostům procházely: adresu odesílatele mezi schválené adresy
-  a doménu aplikace mezi schválené odkazy. Obě hodnoty jsou vypsané tak, jak je má
-  daná instance nastavené, včetně upozornění na přepínače blokující odkazy a e-maily.
-  Koho Booking.com netýká, ten sekci nechá zavřenou.
+- **Prodejní kanály jako vlastní sekce nastavení.** Každý kanál má kartu se stavem,
+  přepínačem, testem spojení, adresou iCal feedu i vlastním nastavením a ukládá se
+  samostatně; karta se rozbalí, když kanál něco potřebuje, jinak stačí stav v hlavičce.
+  Vypisují se jen kanály, které instance používá — zbytek nabídne tlačítko *Přidat kanál*.
+  Sekce *Připojení* drží přístupy k poště, tedy příchozí schránku a odchozí server.
+
+- **Návod na zabezpečení zpráv v Booking.com.** Karta kanálu *Booking.com* říká,
+  co v extranetu schválit, aby zprávy hostům procházely: adresu odesílatele mezi
+  schválené adresy a doménu aplikace mezi schválené odkazy. Obě hodnoty jsou vypsané
+  tak, jak je má daná instance nastavené, včetně upozornění na přepínače blokující
+  odkazy a e-maily.
 
 - **Zprávy k odeslání na přehledu.** Karta shrnuje zprávy hostům, kterým nadešel
   čas a čekají na ruční odeslání — s termínem, jménem hosta, štítkem *po termínu*

@@ -47,13 +47,14 @@ final class ConnectorControllerTest extends WebTestCase
 
     public function testTogglingFromSettingsPageDisablesConnector(): void
     {
-        $crawler = $this->client->request('GET', '/nastaveni/pripojeni');
+        $this->useChannel(ConnectorType::MOTOPRESS);
+        $crawler = $this->client->request('GET', '/nastaveni/kanaly');
         self::assertResponseIsSuccessful();
 
         $form = $crawler->filter('form[action*="konektory/motopress/prepnout"]')->form();
         $this->client->submit($form);
 
-        self::assertResponseRedirects('/nastaveni/pripojeni');
+        self::assertResponseRedirects('/nastaveni/kanaly');
 
         $manager = static::getContainer()->get(ConnectorManager::class);
         self::assertFalse($manager->isEnabled(ConnectorType::MOTOPRESS));
@@ -67,22 +68,29 @@ final class ConnectorControllerTest extends WebTestCase
 
     public function testSavesAndClearsFeedUrl(): void
     {
-        $crawler = $this->client->request('GET', '/nastaveni/pripojeni');
+        $this->useChannel(ConnectorType::ECHALUPY);
+        $crawler = $this->client->request('GET', '/nastaveni/kanaly');
         self::assertResponseIsSuccessful();
 
         $form = $crawler->filter('form[action*="konektory/echalupy/feed"]')->form();
         $form['feed_url'] = 'https://example.test/echalupy.ics';
         $this->client->submit($form);
-        self::assertResponseRedirects('/nastaveni/pripojeni');
+        self::assertResponseRedirects('/nastaveni/kanaly');
         // Klient rebootuje kernel mezi requesty → manager čteme z aktuálního containeru.
         self::assertSame('https://example.test/echalupy.ics', $this->currentFeedUrl(ConnectorType::ECHALUPY));
 
         // Prázdné pole feed odebere.
-        $crawler = $this->client->request('GET', '/nastaveni/pripojeni');
+        $crawler = $this->client->request('GET', '/nastaveni/kanaly');
         $form = $crawler->filter('form[action*="konektory/echalupy/feed"]')->form();
         $form['feed_url'] = '';
         $this->client->submit($form);
         self::assertNull($this->currentFeedUrl(ConnectorType::ECHALUPY));
+    }
+
+    /** Kanál se na stránce vypíše, teprve když ho instance používá. */
+    private function useChannel(ConnectorType $type): void
+    {
+        static::getContainer()->get(ConnectorManager::class)->setEnabled($type, true);
     }
 
     private function currentFeedUrl(ConnectorType $type): ?string
@@ -92,7 +100,8 @@ final class ConnectorControllerTest extends WebTestCase
 
     public function testFeedRouteRejectsConnectorWithoutIcalSupport(): void
     {
-        $crawler = $this->client->request('GET', '/nastaveni/pripojeni');
+        $this->useChannel(ConnectorType::MOTOPRESS);
+        $crawler = $this->client->request('GET', '/nastaveni/kanaly');
         // Platný CSRF token ze stránky — ať 404 pochází z kontroly iCal podpory, ne z CSRF.
         $token = $crawler->filter('input[name="_token"]')->first()->attr('value');
 

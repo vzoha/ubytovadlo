@@ -1,0 +1,81 @@
+{% extends 'settings/base.html.twig' %}
+
+{% block title %}Nastavení — prodejní kanály{% endblock %}
+
+{% block settings_active %}channels{% endblock %}
+
+{% block settings_content %}
+    <div class="d-flex justify-content-between align-items-center mb-2 gap-2 flex-wrap">
+        <h2 class="h5 mb-0">Prodejní kanály</h2>
+        {% if available is not empty %}
+            <div class="dropdown">
+                <button class="btn btn-sm btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    + Přidat kanál
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    {% for c in available %}
+                        <li>
+                            <form method="post" action="{{ path('sales_channel_add', { type: c.type.value }) }}">
+                                <input type="hidden" name="_token" value="{{ csrf_token('connector') }}">
+                                <button type="submit" class="dropdown-item">{{ c.type.label }}</button>
+                            </form>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+    </div>
+    <p class="text-muted small">
+        Odkud chodí rezervace a platby. Každý kanál má vlastní stav, přístupy i feed
+        obsazenosti; vypnutý kanál pravidelné kontroly přeskočí.
+    </p>
+
+    {% if not cipherReady %}
+        <div class="alert alert-warning">
+            Není nastaven <code>APP_CREDENTIALS_KEY</code> — přístupy se do databáze neuloží.
+            Vygenerujte klíč a vložte do <code>.env.local</code>:
+            <code>php -r "echo base64_encode(random_bytes(32)).PHP_EOL;"</code>
+        </div>
+    {% endif %}
+
+    {% if active is empty %}
+        <div class="alert alert-light border text-muted">
+            Zatím žádný kanál. Přidejte ten, přes který prodáváte — tlačítkem nahoře.
+        </div>
+    {% endif %}
+
+    {% for c in active %}
+        {{ include('sales_channel/_card.html.twig') }}
+    {% endfor %}
+
+    <div class="card mb-3">
+        <div class="card-header py-2 fw-semibold">Export obsazenosti (iCal)</div>
+        <div class="card-body">
+            <p class="text-muted small mb-3">
+                Adresa kalendáře se všemi rezervacemi jako obsazenými termíny. Vložte ji
+                v Booking i Airbnb extranetu do <em>importu kalendáře</em> — portál pak
+                neprodá termín obsazený jiným kanálem, webem ani přímou rezervací.
+                Ven jde jen „obsazeno", žádné údaje hosta.
+            </p>
+            <div class="input-group">
+                <input type="text" class="form-control font-monospace small" id="ical-feed-url" value="{{ icalFeedUrl }}" readonly>
+                <button type="button" class="btn btn-outline-secondary" data-copy="#ical-feed-url">Kopírovat</button>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+    document.querySelectorAll('[data-copy]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            const field = document.querySelector(btn.dataset.copy);
+            navigator.clipboard.writeText(field.value).then(function () {
+                const orig = btn.textContent;
+                btn.textContent = 'Zkopírováno';
+                setTimeout(function () { btn.textContent = orig; }, 1500);
+            });
+        });
+    });
+</script>
+{% endblock %}

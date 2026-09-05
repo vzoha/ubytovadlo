@@ -19,7 +19,7 @@ use App\Repository\SettingRepository;
  *  - zda posílat potvrzené platby zpět do MotoPressu.
  *
  * Zapnutí/vypnutí importu drží konektor (App\Connector\ConnectorManager).
- * Hodnoty se čtou z DB (setting), nastavují se v UI (/nastaveni/pripojeni).
+ * Hodnoty se čtou z DB (setting), nastavují se v UI (/nastaveni/kanaly).
  */
 final class MotoPressSettings
 {

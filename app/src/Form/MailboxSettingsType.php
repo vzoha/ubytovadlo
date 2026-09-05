@@ -12,24 +12,22 @@ declare(strict_types=1);
 namespace App\Form;
 
 use Symfony\Component\Form\AbstractType;
-use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\PasswordType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
-use Symfony\Component\Form\Extension\Core\Type\UrlType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
- * Nastavení připojení: přístupové údaje (IMAP, MotoPress REST, SMTP) i chování
- * MotoPressu (mapování služeb, push plateb). Údaje odpovídají CredentialProvider::FIELDS
- * (šifrují se), chování se ukládá do Setting — obojí řeší controller.
- * Tajemství (hesla, klíče) jsou write-only: prázdné = beze změny.
+ * Přístupy k poště: příchozí schránka (IMAP), ze které se čtou zprávy portálů
+ * a banky, a odchozí server (SMTP), kterým aplikace posílá. Názvy polí odpovídají
+ * {@see \App\Credential\CredentialProvider::FIELDS}, ukládá je controller šifrovaně.
+ * Tajemství jsou write-only: prázdné pole = beze změny.
  *
  * @extends AbstractType<mixed>
  */
-class ConnectionSettingsType extends AbstractType
+class MailboxSettingsType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
@@ -46,28 +44,6 @@ class ConnectionSettingsType extends AbstractType
             ->add('imapUsername', TextType::class, ['label' => 'Uživatel (e-mail)', 'required' => false])
             ->add('imapPassword', PasswordType::class, ['label' => 'Heslo', 'help' => 'Prázdné = beze změny.'] + $secret)
             ->add('imapFolder', TextType::class, ['label' => 'Složka', 'required' => false, 'help' => 'Obvykle INBOX.'])
-            ->add('motopressBaseUrl', UrlType::class, ['label' => 'MotoPress URL', 'required' => false, 'default_protocol' => null, 'help' => 'Adresa webu s pluginem, např. https://example.com'])
-            ->add('motopressConsumerKey', PasswordType::class, ['label' => 'Consumer key', 'help' => 'Prázdné = beze změny.'] + $secret)
-            ->add('motopressConsumerSecret', PasswordType::class, ['label' => 'Consumer secret', 'help' => 'Prázdné = beze změny.'] + $secret)
-            ->add('petServiceIds', TextType::class, [
-                'label' => 'ID služeb „pes"',
-                'required' => false,
-                'help' => 'ID MotoPress služeb, které znamenají „host se psem". Víc oddělte čárkou.',
-            ])
-            ->add('babyCotServiceIds', TextType::class, [
-                'label' => 'ID služeb „dětská postýlka"',
-                'required' => false,
-                'help' => 'ID MotoPress služeb pro dětskou postýlku. Víc oddělte čárkou.',
-            ])
-            ->add('pushPayments', CheckboxType::class, [
-                'label' => 'Posílat potvrzené platby zpět do MotoPressu',
-                'required' => false,
-            ])
-            ->add('bookingHotelId', TextType::class, [
-                'label' => 'ID ubytování na Booking.com',
-                'required' => false,
-                'help' => 'Číslo z adresy extranetu (hotel_id). Doplní se samo z e-mailu o nové rezervaci, vlepit jde i celá adresa.',
-            ])
             ->add('smtpHost', TextType::class, ['label' => 'SMTP server', 'required' => false, 'help' => 'Adresa odchozího serveru, např. mail.vasedomena.cz.'])
             ->add('smtpPort', IntegerType::class, ['label' => 'Port', 'required' => false, 'help' => 'Obvykle 465 (SSL) nebo 587 (TLS).', 'attr' => ['min' => 1, 'max' => 65535]])
             ->add('smtpEncryption', ChoiceType::class, [

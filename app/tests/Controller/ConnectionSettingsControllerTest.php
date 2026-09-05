@@ -13,8 +13,6 @@ namespace App\Tests\Controller;
 
 use App\Entity\Setting;
 use App\Entity\User;
-use App\MotoPress\MotoPressSettings;
-use App\Repository\SettingRepository;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -47,45 +45,30 @@ final class ConnectionSettingsControllerTest extends WebTestCase
         $this->client->loginUser($container->get(UserRepository::class)->findOneBy(['email' => 'connection@example.com']));
     }
 
-    public function testBookingSectionShowsWhatToApproveInExtranet(): void
+    public function testMailboxFormSubmitsAndSaysWhenKeyIsMissing(): void
     {
-        $settings = static::getContainer()->get(SettingRepository::class);
-        $settings->set('app.base_url', 'https://app.priklad.cz', 'Test.');
-        $settings->set('mail.sender.email', 'info@priklad.cz', 'Test.');
-        $this->em->flush();
-
-        $crawler = $this->client->request('GET', '/nastaveni/pripojeni');
+        $this->client->request('GET', '/nastaveni/pripojeni');
         self::assertResponseIsSuccessful();
 
-        $booking = $crawler->filter('details')->reduce(
-            static fn ($node) => str_contains($node->filter('summary')->text(), 'Booking.com'),
-        )->first();
-
-        // Sekce je sbalená — kdo přes Booking neprodává, o ni nezakopne.
-        self::assertCount(0, $booking->filter('details[open]'));
-        self::assertStringContainsString('info@priklad.cz', $booking->text());
-        self::assertStringContainsString('app.priklad.cz', $booking->text());
-    }
-
-    public function testFormSavesMotopressMappingSettings(): void
-    {
-        $crawler = $this->client->request('GET', '/nastaveni/pripojeni');
-        self::assertResponseIsSuccessful();
-
-        // Chování MotoPressu je součástí formuláře připojení; jeho hlavní tlačítko
-        // (btn-primary) je jednoznačné, konektory mají vlastní „Uložit feed".
-        $form = $crawler->filter('button.btn-primary')->form();
-        $this->client->submit($form, [
-            'connection_settings[petServiceIds]' => '925, 926',
-            'connection_settings[babyCotServiceIds]' => '866',
-            'connection_settings[pushPayments]' => '1',
+        $this->client->submitForm('Uložit', [
+            'mailbox_settings[imapHost]' => 'mail.priklad.cz',
+            'mailbox_settings[imapPort]' => '993',
+            'mailbox_settings[smtpHost]' => 'smtp.priklad.cz',
         ]);
 
         self::assertResponseRedirects('/nastaveni/pripojeni');
 
-        $settings = static::getContainer()->get(SettingRepository::class);
-        self::assertSame('925,926', $settings->getString(MotoPressSettings::KEY_PET));
-        self::assertSame('866', $settings->getString(MotoPressSettings::KEY_BABY_COT));
-        self::assertSame('1', $settings->getString(MotoPressSettings::KEY_PUSH));
+        // Testovací prostředí nemá APP_CREDENTIALS_KEY, takže se přístupy neuloží
+        // a uživatel se to musí dozvědět.
+        $this->client->followRedirect();
+        self::assertSelectorTextContains('.alert', 'APP_CREDENTIALS_KEY');
+    }
+
+    public function testChannelSettingsLiveElsewhere(): void
+    {
+        $crawler = $this->client->request('GET', '/nastaveni/pripojeni');
+
+        self::assertCount(0, $crawler->filter('[name="mailbox_settings[bookingHotelId]"]'));
+        self::assertGreaterThan(0, $crawler->filter('a[href="/nastaveni/kanaly"]')->count());
     }
 }
