@@ -49,7 +49,7 @@
         {% if c.supportsIcalImport %}
             <form method="post" action="{{ path('connector_feed', { type: c.type.value }) }}" class="mb-3">
                 <input type="hidden" name="_token" value="{{ csrf_token('connector') }}">
-                <label class="form-label small text-muted mb-1" for="feed-{{ c.type.value }}">URL iCal feedu obsazenosti</label>
+                <label class="form-label small text-muted mb-1" for="feed-{{ c.type.value }}">Kalendář portálu → k nám</label>
                 <div class="input-group input-group-sm">
                     <input type="url" class="form-control font-monospace" id="feed-{{ c.type.value }}"
                            name="feed_url" value="{{ c.feedUrl }}" placeholder="https://…/calendar.ics">
@@ -74,6 +74,10 @@
                         {% endif %}
                     </div>
                 </details>
+                <p class="small text-muted mt-2 mb-0">
+                    Na téže stránce portálu vložte do <em>importu kalendáře</em> náš kalendář:
+                    <button type="button" class="btn btn-sm btn-outline-secondary py-0" data-copy="#ical-feed-url">Kopírovat naši adresu</button>
+                </p>
             </form>
         {% endif %}
 

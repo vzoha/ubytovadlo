@@ -48,6 +48,20 @@
         </div>
     {% endif %}
 
+    <div class="border rounded p-3 mb-4 bg-body-tertiary">
+        <label class="form-label fw-semibold mb-1" for="ical-feed-url">Náš kalendář → do portálů</label>
+        <p class="text-muted small mb-2">
+            Jedna adresa pro všechny portály: obsahuje všechny rezervace jako obsazené termíny.
+            Vložte ji v každém portálu do <em>importu kalendáře</em> — portál pak neprodá termín
+            obsazený jiným kanálem, webem ani přímou rezervací. Ven jde jen „obsazeno",
+            žádné údaje hosta.
+        </p>
+        <div class="input-group input-group-sm">
+            <input type="text" class="form-control font-monospace" id="ical-feed-url" value="{{ icalFeedUrl }}" readonly>
+            <button type="button" class="btn btn-outline-secondary" data-copy="#ical-feed-url">Kopírovat</button>
+        </div>
+    </div>
+
     {% if active is empty %}
         <div class="alert alert-light border text-muted">
             Zatím žádné napojení. Přidejte to, přes které prodáváte nebo přijímáte platby —
@@ -69,21 +83,6 @@
         {% endfor %}
     {% endif %}
 
-    <div class="card mb-3">
-        <div class="card-header py-2 fw-semibold">Export obsazenosti (iCal)</div>
-        <div class="card-body">
-            <p class="text-muted small mb-3">
-                Adresa kalendáře se všemi rezervacemi jako obsazenými termíny. Vložte ji
-                v Booking i Airbnb extranetu do <em>importu kalendáře</em> — portál pak
-                neprodá termín obsazený jiným kanálem, webem ani přímou rezervací.
-                Ven jde jen „obsazeno", žádné údaje hosta.
-            </p>
-            <div class="input-group">
-                <input type="text" class="form-control font-monospace small" id="ical-feed-url" value="{{ icalFeedUrl }}" readonly>
-                <button type="button" class="btn btn-outline-secondary" data-copy="#ical-feed-url">Kopírovat</button>
-            </div>
-        </div>
-    </div>
 {% endblock %}
 
 {% block javascripts %}

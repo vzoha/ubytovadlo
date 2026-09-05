@@ -74,6 +74,10 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
   samostatně; karta se rozbalí, když něco potřebuje, jinak stačí stav v hlavičce.
   Portály jsou pod nadpisem *Prodejní kanály*, banka pod *Platby*. Vypisují se jen
   napojení, která instance používá — zbytek nabídne tlačítko *Přidat napojení*.
+  Nad seznamem stojí adresa vlastního kalendáře pro import do portálů; obě strany
+  výměny obsazenosti se jmenují podle směru (*Kalendář portálu → k nám* a
+  *Náš kalendář → do portálů*) a karta kanálu nabízí naši adresu ke zkopírování
+  rovnou u pole pro feed portálu.
   Sekce *Připojení* drží přístupy k poště, tedy příchozí schránku a odchozí server.
 
 - **Návod na zabezpečení zpráv v Booking.com.** Karta kanálu *Booking.com* říká,

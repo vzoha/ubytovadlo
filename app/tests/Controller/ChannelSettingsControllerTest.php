@@ -68,6 +68,23 @@ final class ChannelSettingsControllerTest extends WebTestCase
         self::assertSame(['Prodejní kanály', 'Platby'], $groups);
     }
 
+    public function testOwnCalendarIsOfferedAboveTheChannelsAndInsideThem(): void
+    {
+        $this->enable(ConnectorType::BOOKING);
+
+        $crawler = $this->client->request('GET', '/nastaveni/kanaly');
+        self::assertResponseIsSuccessful();
+
+        // Vlastní kalendář je jeden pro všechny portály, proto stojí nad seznamem…
+        self::assertCount(1, $crawler->filter('#ical-feed-url'));
+        // …a v kartě kanálu je po ruce jen tlačítko, ať se nemíchá s feedem portálu.
+        $card = $crawler->filter('.card')->reduce(
+            static fn ($node) => str_contains($node->text(), 'Booking.com'),
+        )->first();
+        self::assertStringContainsString('Kalendář portálu', $card->text());
+        self::assertGreaterThan(0, $card->filter('[data-copy="#ical-feed-url"]')->count());
+    }
+
     public function testUnusedChannelsAreOfferedInsteadOfListed(): void
     {
         $crawler = $this->client->request('GET', '/nastaveni/kanaly');
