@@ -69,6 +69,12 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
   rovnou do seznamu; příkaz `app:quick-messages:seed` ji naplní i jindy, pokud je
   seznam prázdný.
 
+- **Návod na zabezpečení zpráv v Booking.com.** Nastavení → E-maily i krok
+  průvodce nastavením ukazují, co doplnit v extranetu, aby zprávy hostům
+  procházely: adresu odesílatele mezi schválené adresy a doménu aplikace mezi
+  schválené odkazy. Obě hodnoty jsou vypsané tak, jak je má daná instance
+  nastavené, včetně upozornění na přepínače blokující odkazy a e-maily.
+
 - **Zprávy k odeslání na přehledu.** Karta shrnuje zprávy hostům, kterým nadešel
   čas a čekají na ruční odeslání — s termínem, jménem hosta, štítkem *po termínu*
   a u hosta bez e-mailu štítkem chatu portálu. Proklik vede na rezervaci.

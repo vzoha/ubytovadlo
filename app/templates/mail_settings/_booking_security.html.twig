@@ -1,0 +1,33 @@
+{# Návod na povolení adresy a odkazů v Booking extranetu. Čte odesílatele z formuláře. #}
+{% set sender = form.senderEmail.vars.value|default('') %}
+{% set app_host = instance.baseUrl|split('//')|last|split('/')|first %}
+<div class="card mt-3">
+    <div class="card-header py-2 fw-semibold">Zprávy hostům z Booking.com</div>
+    <div class="card-body">
+        <p class="small text-muted mb-2">
+            Booking.com hosta chrání aliasem <code>@guest.booking.com</code> a propouští jen zprávy
+            z adres a odkazy z domén, které máte v extranetu schválené. Ostatní zahodí,
+            odkaz nahradí poznámkou, že byl odebrán.
+        </p>
+        <p class="small mb-2">
+            V extranetu otevřete <strong>Property → Messaging preferences → Security settings</strong>
+            (potřebujete admin účet a dvoufázové ověření) a doplňte:
+        </p>
+        <dl class="row small mb-2">
+            <dt class="col-sm-5">Your email addresses</dt>
+            <dd class="col-sm-7">
+                {% if sender %}<code>{{ sender }}</code>{% else %}<span class="text-muted">nejdřív vyplňte e-mail odesílatele</span>{% endif %}
+            </dd>
+            <dt class="col-sm-5">Approved links</dt>
+            <dd class="col-sm-7">
+                {% if app_host %}<code>{{ app_host }}</code>{% else %}<span class="text-muted">nejdřív vyplňte adresu aplikace v Obecném nastavení</span>{% endif %}
+                <span class="d-block text-muted">jen doména, ne celá adresa — bez ní hostovi nedorazí odkaz na check-in</span>
+            </dd>
+        </dl>
+        <p class="small text-muted mb-0">
+            Přepínače <em>Block all links</em> a <em>Block all email communication</em> ve stejné sekci
+            přebijí i schválené položky, takže je nechte vypnuté. Airbnb e-mail hosta neposkytuje,
+            tam vede komunikace přes chat — na rezervaci je k tomu tlačítko <strong>Zpráva do chatu</strong>.
+        </p>
+    </div>
+</div>
