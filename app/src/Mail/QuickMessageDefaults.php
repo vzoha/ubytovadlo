@@ -66,6 +66,8 @@ final class QuickMessageDefaults
 
                 Po příjezdu se prosím ozvěte, domluvíme se na předání klíčů.
 
+                Pokud jste ještě nevyplnili online check-in, moc nám pomůže, když to stihnete před příjezdem: {{ checkin_url }}
+
                 V kolik hodin Vás máme očekávat?
                 TXT,
         ],
