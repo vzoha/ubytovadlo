@@ -14,6 +14,7 @@ namespace App\Setup;
 use App\Config\InstanceSettings;
 use App\Invoice\IssuerProfileProvider;
 use App\Mail\MailSettingsProvider;
+use App\Mail\QuickMessageSeeder;
 use App\Repository\AccommodationProfileRepository;
 use App\Repository\CredentialRepository;
 use App\Repository\SettingRepository;
@@ -38,6 +39,7 @@ final class SetupChecklist
         private readonly MailSettingsProvider $mail,
         private readonly CredentialRepository $credentials,
         private readonly AccommodationProfileRepository $accommodation,
+        private readonly QuickMessageSeeder $quickMessages,
         private readonly EntityManagerInterface $em,
     ) {
     }
@@ -140,11 +142,16 @@ final class SetupChecklist
         return $this->settings->getString(self::WIZARD_DONE_KEY) === '1';
     }
 
-    /** Uzavře průvodce — po přihlášení se už nenabízí, spustit jde dál z přehledu. */
+    /**
+     * Uzavře průvodce — po přihlášení se už nenabízí, spustit jde dál z přehledu.
+     * Nastavená instance k tomu dostane výchozí rychlé zprávy, aby bylo u první
+     * rezervace z čeho vybírat.
+     */
     public function completeWizard(): void
     {
         $this->settings->set(self::WIZARD_DONE_KEY, '1', 'Průvodce nastavením: uzavřen provozovatelem.');
         $this->em->flush();
+        $this->quickMessages->seedIfEmpty();
     }
 
     /** Skryje položku (jen známý klíč). */

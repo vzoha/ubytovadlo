@@ -15,6 +15,7 @@ use App\Controller\Concern\ChecksCsrf;
 use App\Entity\QuickMessage;
 use App\Form\QuickMessageType;
 use App\Mail\MessageVariableResolver;
+use App\Mail\QuickMessageSeeder;
 use App\Repository\QuickMessageRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -44,6 +45,22 @@ class QuickMessageController extends AbstractController
             'newForm' => $newForm->createView(),
             'variables' => MessageVariableResolver::plainTextVariables(),
         ]);
+    }
+
+    #[Route('/nastaveni/rychle-zpravy/vychozi', name: 'quick_message_defaults', methods: ['POST'])]
+    public function defaults(Request $request, QuickMessageSeeder $seeder): Response
+    {
+        $this->assertCsrf($request, 'quick-message-defaults');
+
+        $created = $seeder->seedIfEmpty();
+        $this->addFlash(
+            $created > 0 ? 'success' : 'warning',
+            $created > 0
+                ? 'Výchozí zprávy založeny — upravte si je podle sebe.'
+                : 'Seznam už nějaké zprávy obsahuje, výchozí sada se nezakládá.',
+        );
+
+        return $this->redirectToRoute('quick_message_index');
     }
 
     #[Route('/nastaveni/rychle-zpravy/nova', name: 'quick_message_new', methods: ['GET', 'POST'])]

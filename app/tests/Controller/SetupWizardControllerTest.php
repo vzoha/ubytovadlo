@@ -12,10 +12,12 @@ declare(strict_types=1);
 namespace App\Tests\Controller;
 
 use App\Entity\AccommodationProfile;
+use App\Entity\QuickMessage;
 use App\Entity\Setting;
 use App\Entity\User;
 use App\Enum\TaxProfile;
 use App\Repository\AccommodationProfileRepository;
+use App\Repository\QuickMessageRepository;
 use App\Repository\SettingRepository;
 use App\Repository\UserRepository;
 use App\Setup\SetupChecklist;
@@ -37,6 +39,7 @@ final class SetupWizardControllerTest extends WebTestCase
         \assert($em instanceof EntityManagerInterface);
         $this->em = $em;
 
+        $this->em->createQuery('DELETE FROM ' . QuickMessage::class . ' q')->execute();
         $this->em->createQuery('DELETE FROM ' . AccommodationProfile::class . ' a')->execute();
         $this->em->createQuery('DELETE FROM ' . Setting::class . ' s')->execute();
         $this->em->createQuery('DELETE FROM ' . User::class . ' u')->execute();
@@ -184,6 +187,17 @@ final class SetupWizardControllerTest extends WebTestCase
         self::assertTrue(
             static::getContainer()->get(SetupChecklist::class)->wizardCompleted(),
             'Uzavřením se průvodce označí za dokončený',
+        );
+    }
+
+    public function testFinishSeedsDefaultQuickMessages(): void
+    {
+        $crawler = $this->client->request('GET', '/nastaveni/pruvodce/hotovo');
+        $this->client->submit($crawler->selectButton('Hotovo — na přehled')->form());
+
+        self::assertNotEmpty(
+            static::getContainer()->get(QuickMessageRepository::class)->findOrdered(),
+            'Dokončená instance má připravené rychlé zprávy',
         );
     }
 

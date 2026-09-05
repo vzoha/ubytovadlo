@@ -14,6 +14,7 @@ namespace App\Tests\Controller;
 use App\Entity\QuickMessage;
 use App\Entity\User;
 use App\Enum\UserRole;
+use App\Mail\QuickMessageSeeder;
 use App\Repository\QuickMessageRepository;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -122,5 +123,26 @@ final class QuickMessageControllerTest extends WebTestCase
         $ordered = $this->messages->findOrdered();
         self::assertSame('Druhá', $ordered[0]->getLabel());
         self::assertSame('První', $ordered[1]->getLabel());
+    }
+
+    public function testDefaultsSeedEmptyList(): void
+    {
+        $crawler = $this->client->request('GET', '/nastaveni/rychle-zpravy');
+        self::assertResponseIsSuccessful();
+
+        $this->client->submit($crawler->selectButton('Založit výchozí zprávy')->form());
+
+        self::assertResponseRedirects('/nastaveni/rychle-zpravy');
+        $labels = array_map(static fn ($m) => $m->getLabel(), $this->messages->findOrdered());
+        self::assertSame(['Uvítání', 'Online check-in', 'Pokyny k příjezdu', 'Poděkování po pobytu'], $labels);
+    }
+
+    public function testDefaultsLeaveExistingListAlone(): void
+    {
+        $this->seed('Vlastní', 'Text.', 0);
+
+        $seeder = static::getContainer()->get(QuickMessageSeeder::class);
+        self::assertSame(0, $seeder->seedIfEmpty());
+        self::assertCount(1, $this->messages->findOrdered());
     }
 }

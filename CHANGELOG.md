@@ -62,6 +62,12 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
   ze kterých se skládá hlavička hlášení na Ubyport. Vyplnit je jde dál i
   samostatně v **Nastavení → Ubytovací zařízení**.
 
+- **Výchozí sada rychlých zpráv.** Nastavení → Rychlé zprávy nabídne prázdnému
+  seznamu čtyři připravené texty — uvítání, výzva k online check-inu s odkazem
+  a kódem, pokyny k příjezdu a poděkování po pobytu. Instance je dostane
+  i dokončením průvodce nastavením. Zakládají se jen do prázdného seznamu, takže
+  vlastní zprávy zůstanou nedotčené, a po založení jde každá upravit či smazat.
+
 - **Vstup do check-inu kódem rezervace.** Adresa `/checkin` otevře formulář, kde
   host zadá kód rezervace z potvrzení a své příjmení, a dostane se tím na svou
   check-in stránku. Adresa je pro všechny hosty stejná, takže se dá napsat do

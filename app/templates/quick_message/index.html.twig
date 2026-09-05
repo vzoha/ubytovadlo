@@ -10,16 +10,21 @@
         <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#modalNewQuickMessage">+ Přidat zprávu</button>
     </div>
     <p class="text-muted small">
-        Krátké texty pro rychlé předvyplnění <strong>SMS</strong> a <strong>WhatsApp</strong>
-        u tlačítek na detailu rezervace. V textu lze používat proměnné jako
+        Krátké texty pro <strong>SMS</strong>, <strong>WhatsApp</strong> a <strong>zprávu do chatu</strong>
+        portálu — nabídnou se u tlačítek na detailu rezervace. V textu lze používat proměnné jako
         <code>{{ '{{ guest_first_name_vocative }}' }}</code>.
     </p>
 
     {% if messages is empty %}
         <div class="alert alert-light border text-muted">
-            Zatím žádná rychlá zpráva.
-            <button type="button" class="btn btn-link p-0 align-baseline" data-bs-toggle="modal" data-bs-target="#modalNewQuickMessage">Přidej první</button> —
-            objeví se v nabídce u SMS a WhatsApp.
+            <p class="mb-2">
+                Zatím žádná rychlá zpráva. Výchozí sada pokrývá uvítání, výzvu k check-inu,
+                pokyny k příjezdu a poděkování — texty si pak upravíte podle sebe.
+            </p>
+            <form method="post" action="{{ path('quick_message_defaults') }}">
+                <input type="hidden" name="_token" value="{{ csrf_token('quick-message-defaults') }}">
+                <button type="submit" class="btn btn-sm btn-primary">Založit výchozí zprávy</button>
+            </form>
         </div>
     {% else %}
         <div class="list-group">
