@@ -112,6 +112,10 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Opraveno
 
+- **Krok fakturace v check-inu mluví o vystavení faktury.** Host se dozví, že fakturu
+  za pobyt vystavíme na jméno a adresu, které vyplní, a že u firmy patří do formuláře
+  i její údaje.
+
 - **Adresa ubytování ve zprávách drží část obce a mezeru v PSČ.** Na vesnici bez ulic
   nese adresu část obce (*Lniště 30, 374 01 Slavče*), ve městě se uvádí vedle ulice
   (*Horova 12/3, Žabovřesky, 616 00 Brno*). Číslo popisné a orientační odděluje lomítko.

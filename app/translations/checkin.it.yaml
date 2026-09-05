@@ -18,7 +18,7 @@ index:
     invoice_heading: 'Fattura'
     billing_have: 'I dati di fatturazione sono compilati.'
     billing_edit: 'Modifica i dati di fatturazione'
-    billing_want: 'Desiderate una fattura per il soggiorno (intestata a voi o a un''azienda)? Compilate l''indirizzo di fatturazione. Se non vi serve la fattura, saltate questo passaggio.'
+    billing_want: 'La fattura per il soggiorno la intestiamo al nome e all''indirizzo che compilate qui. Se deve essere intestata a un''azienda, aggiungete anche i suoi dati.'
     billing_add: 'Aggiungi indirizzo di fatturazione'
     guests_heading: 'Ospiti'
     guests_note: 'La legge ci obbliga a notificare alla polizia degli stranieri (Ubyport) <strong>solo gli stranieri alloggiati</strong>. I cittadini cechi non vengono registrati — non inseriteli.'

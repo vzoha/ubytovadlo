@@ -18,7 +18,7 @@ index:
     invoice_heading: 'Invoice'
     billing_have: 'We have your billing details on file.'
     billing_edit: 'Edit billing details'
-    billing_want: 'Would you like an invoice for your stay (to yourself or to a company)? Please add your billing address. If you do not need an invoice, skip this step.'
+    billing_want: 'We will issue the invoice for your stay to the name and address you fill in here. If it goes to a company, add its details as well.'
     billing_add: 'Add billing address'
     guests_heading: 'Guests'
     guests_note: 'By law we are required to report to the foreign police (Ubyport) <strong>only foreign guests</strong>. We do not register Czech citizens anywhere — do not enter them.'

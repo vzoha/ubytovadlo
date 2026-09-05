@@ -18,7 +18,7 @@ index:
     invoice_heading: 'Faktura'
     billing_have: 'Dane do faktury mamy uzupełnione.'
     billing_edit: 'Edytuj dane do faktury'
-    billing_want: 'Chcesz fakturę za pobyt (na siebie lub na firmę)? Uzupełnij prosimy adres do faktury. Jeśli nie potrzebujesz faktury, pomiń ten krok.'
+    billing_want: 'Fakturę za pobyt wystawimy na imię i adres, które tu podasz. Jeśli ma być na firmę, uzupełnij także jej dane.'
     billing_add: 'Uzupełnij adres do faktury'
     guests_heading: 'Goście'
     guests_note: 'Prawo nakazuje nam zgłosić policji ds. cudzoziemców (Ubyport) <strong>tylko zakwaterowanych cudzoziemców</strong>. Obywateli Czech nigdzie nie ewidencjonujemy — nie wpisuj ich.'

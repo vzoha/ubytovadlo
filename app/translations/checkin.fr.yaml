@@ -18,7 +18,7 @@ index:
     invoice_heading: 'Facture'
     billing_have: 'Nous avons vos coordonnées de facturation.'
     billing_edit: 'Modifier les coordonnées de facturation'
-    billing_want: 'Souhaitez-vous une facture pour le séjour (à votre nom ou au nom d''une société) ? Veuillez renseigner l''adresse de facturation. Si vous n''avez pas besoin de facture, ignorez cette étape.'
+    billing_want: 'Nous établirons la facture du séjour au nom et à l''adresse que vous indiquez ici. Si elle doit être au nom d''une société, ajoutez également ses coordonnées.'
     billing_add: 'Ajouter l''adresse de facturation'
     guests_heading: 'Hôtes'
     guests_note: 'La loi nous impose de déclarer à la police des étrangers (Ubyport) <strong>uniquement les étrangers hébergés</strong>. Nous n''enregistrons pas les citoyens tchèques — ne les renseignez pas.'

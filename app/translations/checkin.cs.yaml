@@ -18,7 +18,7 @@ index:
     invoice_heading: 'Faktura'
     billing_have: 'Fakturační údaje máme vyplněné.'
     billing_edit: 'Upravit fakturační údaje'
-    billing_want: 'Chcete za pobyt fakturu (na sebe, nebo na firmu)? Doplňte prosím fakturační adresu. Pokud fakturu nepotřebujete, tento krok přeskočte.'
+    billing_want: 'Fakturu za pobyt vystavíme na jméno a adresu, které tu vyplníte. Fakturujete-li na firmu, doplňte i její údaje.'
     billing_add: 'Doplnit fakturační adresu'
     guests_heading: 'Hosté'
     guests_note: 'Zákon nám ukládá nahlásit cizinecké policii (Ubyport) <strong>jen ubytované cizince</strong>. Občany ČR nikde neevidujeme — nevyplňujte je.'

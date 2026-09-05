@@ -18,7 +18,7 @@ index:
     invoice_heading: 'Rechnung'
     billing_have: 'Ihre Rechnungsdaten liegen uns vor.'
     billing_edit: 'Rechnungsdaten bearbeiten'
-    billing_want: 'Möchten Sie für den Aufenthalt eine Rechnung (auf sich selbst oder auf eine Firma)? Bitte ergänzen Sie die Rechnungsadresse. Wenn Sie keine Rechnung benötigen, überspringen Sie diesen Schritt.'
+    billing_want: 'Die Rechnung für Ihren Aufenthalt stellen wir auf den Namen und die Adresse aus, die Sie hier angeben. Soll sie auf eine Firma lauten, ergänzen Sie bitte auch deren Daten.'
     billing_add: 'Rechnungsadresse ergänzen'
     guests_heading: 'Gäste'
     guests_note: 'Das Gesetz verpflichtet uns, der Ausländerpolizei (Ubyport) <strong>nur untergebrachte ausländische Gäste</strong> zu melden. Tschechische Staatsbürger erfassen wir nirgends — bitte tragen Sie diese nicht ein.'
