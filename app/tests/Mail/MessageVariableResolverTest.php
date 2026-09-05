@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Mail;
 
+use App\Entity\AccommodationProfile;
 use App\Entity\Reservation;
 use App\Enum\Channel;
 use App\Invoice\BalanceCalculator;
@@ -118,10 +119,40 @@ final class MessageVariableResolverTest extends TestCase
         self::assertStringContainsString('![QR platba zálohy](https://example.test/checkin/abc)', $out);
     }
 
-    private function resolver(?BalanceResult $balance, ?DepositPayment $deposit = null): MessageVariableResolver
+    public function testAddressUsesVillagePartWhenThereIsNoStreet(): void
+    {
+        $profile = (new AccommodationProfile())
+            ->setNazev('Vejminek')
+            ->setObec('Slavče')
+            ->setCastObce('Lniště')
+            ->setCp('30')
+            ->setPsc('37401');
+
+        $out = $this->resolver(null, profile: $profile)->render('{{ accommodation_address }}', $this->reservation());
+
+        self::assertSame('Lniště 30, 374 01 Slavče', $out);
+    }
+
+    public function testAddressKeepsStreetAndVillagePartApart(): void
+    {
+        $profile = (new AccommodationProfile())
+            ->setNazev('Apartmán')
+            ->setObec('Brno')
+            ->setCastObce('Žabovřesky')
+            ->setUlice('Horova')
+            ->setCp('12')
+            ->setCo('3')
+            ->setPsc('61600');
+
+        $out = $this->resolver(null, profile: $profile)->render('{{ accommodation_address }}', $this->reservation());
+
+        self::assertSame('Horova 12/3, Žabovřesky, 616 00 Brno', $out);
+    }
+
+    private function resolver(?BalanceResult $balance, ?DepositPayment $deposit = null, ?AccommodationProfile $profile = null): MessageVariableResolver
     {
         $profiles = $this->createStub(AccommodationProfileRepository::class);
-        $profiles->method('getSingleton')->willReturn(null);
+        $profiles->method('getSingleton')->willReturn($profile);
 
         $calc = $this->createStub(BalanceCalculator::class);
         $calc->method('forReservation')->willReturn($balance);

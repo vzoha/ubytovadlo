@@ -112,6 +112,10 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Opraveno
 
+- **Adresa ubytování ve zprávách drží část obce a mezeru v PSČ.** Na vesnici bez ulic
+  nese adresu část obce (*Lniště 30, 374 01 Slavče*), ve městě se uvádí vedle ulice
+  (*Horova 12/3, Žabovřesky, 616 00 Brno*). Číslo popisné a orientační odděluje lomítko.
+
 - **Upozornění „čeká na doplnění údajů" říká, co konkrétně chybí.** Když není
   známé jméno hosta, odkáže na extranet portálu, který termín drží. Když chybí
   jen fakturační adresa, vede u Bookingu do detailu rezervace v extranetu a

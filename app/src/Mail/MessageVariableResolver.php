@@ -211,10 +211,29 @@ final class MessageVariableResolver
         if ($profile === null) {
             return '';
         }
-        $street = trim(($profile->getUlice() ?? '') . ' ' . ($profile->getCp() ?? ''));
-        $cityLine = trim($profile->getPsc() . ' ' . $profile->getObec());
+        // Na vesnici bez ulic nese adresu část obce („Lniště 30, 374 01 Slavče"),
+        // ve městě ulice a část obce se uvádí navíc. Číslo popisné a orientační
+        // se píšou lomítkem.
+        $number = implode('/', array_filter([$profile->getCp(), $profile->getCo()]));
+        $street = trim(($profile->getUlice() ?: $profile->getCastObce() ?? '') . ' ' . $number);
 
-        return trim($street . ', ' . $cityLine, ', ');
+        $lines = array_filter([
+            $street,
+            $profile->getUlice() ? $profile->getCastObce() : null,
+            trim(self::postalCode($profile->getPsc()) . ' ' . $profile->getObec()),
+        ]);
+
+        return implode(', ', $lines);
+    }
+
+    /** PSČ se píše po trojicích a dvojicích: 37401 → 374 01. */
+    private static function postalCode(?string $psc): string
+    {
+        $digits = preg_replace('/\D/', '', (string) $psc);
+
+        return \strlen((string) $digits) === 5
+            ? substr((string) $digits, 0, 3) . ' ' . substr((string) $digits, 3)
+            : trim((string) $psc);
     }
 
     /**
