@@ -22,8 +22,7 @@ final class PropertyAddress
 {
     public static function format(?AccommodationProfile $profile): string
     {
-        // Nevyplněný profil ještě nemá povinná pole inicializovaná.
-        if ($profile === null || $profile->getId() === null) {
+        if ($profile === null) {
             return '';
         }
 

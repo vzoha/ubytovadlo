@@ -34,16 +34,16 @@ class AccommodationProfile
     private string $kod = '';
 
     #[ORM\Column(length: 255)]
-    private string $nazev;
+    private string $nazev = '';
 
     #[ORM\Column(length: 255)]
-    private string $spojeni;
+    private string $spojeni = '';
 
     #[ORM\Column(length: 128)]
-    private string $okres;
+    private string $okres = '';
 
     #[ORM\Column(length: 128)]
-    private string $obec;
+    private string $obec = '';
 
     #[ORM\Column(length: 128, nullable: true)]
     private ?string $castObce = null;
@@ -58,7 +58,7 @@ class AccommodationProfile
     private ?string $co = null;
 
     #[ORM\Column(length: 8)]
-    private string $psc;
+    private string $psc = '';
 
     public function getId(): ?int
     {
