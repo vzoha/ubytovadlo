@@ -50,8 +50,14 @@
         <div class="alert alert-warning d-flex align-items-center flex-wrap gap-2">
             <span class="me-3">
                 Tato rezervace čeká na doplnění údajů hosta.
-                {% if reservation.motopressExternalId and reservation.channel.value != 'web' %}
-                    Vznikla z iCal bloku v MotoPressu — host data dohledej v {{ reservation.channel.label }} extranetu.
+                {% if reservation.guestName is empty %}
+                    Termín drží blok z kalendáře — jméno i kontakt dohledej v {{ reservation.channel.label }} extranetu.
+                {% elseif reservation.guestAddress.isEmpty %}
+                    {% if reservation.channel.value == 'airbnb' %}
+                        Adresu Airbnb neposkytuje — vyžádej si ji odkazem na online check-in, nebo ji zadej ručně.
+                    {% elseif reservation.channel.value == 'booking' %}
+                        Adresu najdeš v detailu rezervace v Booking extranetu.
+                    {% endif %}
                 {% endif %}
             </span>
             <a href="{{ path('reservation_details', {id: reservation.id}) }}" class="btn btn-primary btn-sm">Doplnit</a>

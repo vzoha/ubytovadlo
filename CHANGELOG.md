@@ -64,6 +64,11 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Opraveno
 
+- **Upozornění „čeká na doplnění údajů" říká, co konkrétně chybí.** Když není
+  známé jméno hosta, odkáže na extranet portálu, který termín drží. Když chybí
+  jen fakturační adresa, vede u Bookingu do detailu rezervace v extranetu a
+  u Airbnb k odkazu na online check-in, protože Airbnb adresu hosta neposkytuje.
+
 - **Ekonomika zrušené rezervace počítá jen to, co se opravdu stalo.** Příjmem
   jsou peníze, které dorazily (nevrácená záloha, storno poplatek), ne cena
   pobytu. Úklid, elektřina ani rekreační poplatek se k neuskutečněnému pobytu
