@@ -13,6 +13,7 @@ namespace App\Mail;
 
 use App\Entity\Reservation;
 use App\Formatting\Money;
+use App\Formatting\PropertyAddress;
 use App\Invoice\BalanceCalculator;
 use App\Invoice\DepositPayment;
 use App\Invoice\DepositPaymentBuilder;
@@ -136,7 +137,7 @@ final class MessageVariableResolver
                 : '',
             'channel' => $reservation->getChannel()->label(),
             'accommodation_name' => $profile?->getNazev() ?? '',
-            'accommodation_address' => $this->address($profile),
+            'accommodation_address' => PropertyAddress::format($profile),
             'checkin_url' => $this->checkinUrl($reservation),
             'checkin_lookup_url' => $this->urlGenerator->generate('checkin_lookup', [], UrlGeneratorInterface::ABSOLUTE_URL),
             'checkin_code' => $reservation->getExternalId() ?? $reservation->getMotopressExternalId() ?? '',
@@ -204,36 +205,6 @@ final class MessageVariableResolver
         $formatted = number_format((float) $amount, 0, ',', "\u{00a0}");
 
         return $formatted . "\u{00a0}" . Money::symbol($currency);
-    }
-
-    private function address(?\App\Entity\AccommodationProfile $profile): string
-    {
-        if ($profile === null) {
-            return '';
-        }
-        // Na vesnici bez ulic nese adresu část obce („Lniště 30, 374 01 Slavče"),
-        // ve městě ulice a část obce se uvádí navíc. Číslo popisné a orientační
-        // se píšou lomítkem.
-        $number = implode('/', array_filter([$profile->getCp(), $profile->getCo()]));
-        $street = trim(($profile->getUlice() ?: $profile->getCastObce() ?? '') . ' ' . $number);
-
-        $lines = array_filter([
-            $street,
-            $profile->getUlice() ? $profile->getCastObce() : null,
-            trim(self::postalCode($profile->getPsc()) . ' ' . $profile->getObec()),
-        ]);
-
-        return implode(', ', $lines);
-    }
-
-    /** PSČ se píše po trojicích a dvojicích: 37401 → 374 01. */
-    private static function postalCode(?string $psc): string
-    {
-        $digits = preg_replace('/\D/', '', (string) $psc);
-
-        return \strlen((string) $digits) === 5
-            ? substr((string) $digits, 0, 3) . ' ' . substr((string) $digits, 3)
-            : trim((string) $psc);
     }
 
     /**

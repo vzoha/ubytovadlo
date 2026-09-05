@@ -28,10 +28,10 @@ class AccommodationProfile
     private ?int $id = null;
 
     #[ORM\Column(length: 12)]
-    private string $idub;
+    private string $idub = '';
 
     #[ORM\Column(length: 5)]
-    private string $kod;
+    private string $kod = '';
 
     #[ORM\Column(length: 255)]
     private string $nazev;

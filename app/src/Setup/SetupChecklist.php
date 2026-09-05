@@ -98,10 +98,17 @@ final class SetupChecklist
             ),
             $this->item(
                 'accommodation',
-                'Ubytovací zařízení (Ubyport)',
-                'Údaje objektu pro hlášení ubytovaných cizinců.',
+                'Údaje o ubytování',
+                'Název, adresa a kontakt objektu — vidí je host ve zprávách.',
                 'accommodation_profile_edit',
-                $this->accommodation->getSingleton() !== null,
+                $this->filled($this->accommodation->getSingleton()?->getObec() ?? ''),
+            ),
+            $this->item(
+                'ubyport',
+                'Identifikátory pro Ubyport',
+                'IDUB a kód zařízení od cizinecké policie pro hlášení cizinců.',
+                'ubyport_settings_edit',
+                $this->filled($this->accommodation->getSingleton()?->getIdub() ?? ''),
             ),
         ];
     }

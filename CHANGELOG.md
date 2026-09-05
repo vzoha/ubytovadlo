@@ -69,6 +69,12 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
   rovnou do seznamu; příkaz `app:quick-messages:seed` ji naplní i jindy, pokud je
   seznam prázdný.
 
+- **Ubytování jako vlastní sekce nastavení.** Název objektu, jeho adresa a kontakt
+  pro hosty mají domov v sekci *Ubytování* — odtud je berou zprávy hostům i hlášení
+  na Ubyport. Sekce *Ubyport* drží identifikátory od cizinecké policie (IDUB, kód
+  zařízení) a údaje objektu jen ukazuje s odkazem na jejich úpravu. Fakturační adresa
+  dodavatele zůstává ve *Fakturaci*; obě stránky říkají, čím se od sebe liší.
+
 - **Kanály a platby jako vlastní sekce nastavení.** Každé napojení má kartu se stavem,
   přepínačem, testem spojení, adresou iCal feedu i vlastním nastavením a ukládá se
   samostatně; ve výchozím stavu je sbalená a stav nese hlavička.

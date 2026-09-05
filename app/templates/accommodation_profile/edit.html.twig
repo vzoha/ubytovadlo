@@ -1,41 +1,46 @@
 {% extends 'settings/base.html.twig' %}
 
-{% block title %}Ubyport{% endblock %}
+{% block title %}Nastavení — ubytování{% endblock %}
 
 {% block settings_active %}accommodation{% endblock %}
 
 {% block settings_content %}
-    <h2 class="h5 mb-2">Ubyport — ubytovací zařízení</h2>
+    <h2 class="h5 mb-2">Ubytování</h2>
 
     <p class="text-muted small">
-        Údaje slouží jako hlavička UNL souboru pro
-        <a href="https://ubyport.policie.cz" target="_blank" rel="noopener">Ubyport</a>
-        (hlášení ubytovaných cizinců). IDUB a kód zařízení přidělila cizinecká policie při registraci.
+        Objekt, který pronajímáte. Název a adresu odtud vidí host ve zprávách
+        (pokyny k příjezdu) a jdou i do hlášení ubytovaných cizinců na
+        <a href="{{ path('ubyport_settings_edit') }}">Ubyport</a>. Adresa dodavatele,
+        která se tiskne na faktury, je jiná věc a nastavuje se ve
+        <a href="{{ path('issuer_settings_edit') }}">Fakturaci</a>.
     </p>
 
     {% if isNew %}
-        <div class="alert alert-warning">Profil ještě nebyl vyplněn. Po uložení bude možné generovat UNL exporty.</div>
+        <div class="alert alert-warning">Údaje ještě nejsou vyplněné — bez nich zůstane adresa ve zprávách hostům prázdná.</div>
     {% endif %}
 
     {{ form_start(form) }}
         <div class="card mb-3">
+            <div class="card-header py-2 fw-semibold">Objekt</div>
             <div class="card-body">
                 <div class="row g-3">
-                    <div class="col-md-6">{{ form_row(form.idub) }}</div>
-                    <div class="col-md-6">{{ form_row(form.kod) }}</div>
                     <div class="col-12">{{ form_row(form.nazev) }}</div>
                     <div class="col-12">{{ form_row(form.spojeni) }}</div>
                 </div>
-                <hr>
-                <h2 class="h6 text-muted mb-3">Adresa</h2>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header py-2 fw-semibold">Adresa</div>
+            <div class="card-body">
                 <div class="row g-3">
-                    <div class="col-md-6">{{ form_row(form.okres) }}</div>
                     <div class="col-md-6">{{ form_row(form.obec) }}</div>
                     <div class="col-md-6">{{ form_row(form.castObce) }}</div>
                     <div class="col-md-6">{{ form_row(form.ulice) }}</div>
                     <div class="col-md-3">{{ form_row(form.cp) }}</div>
                     <div class="col-md-3">{{ form_row(form.co) }}</div>
                     <div class="col-md-6">{{ form_row(form.psc) }}</div>
+                    <div class="col-md-6">{{ form_row(form.okres) }}</div>
                 </div>
             </div>
         </div>

@@ -44,7 +44,7 @@ final class SetupChecklistTest extends KernelTestCase
     public function testEmptyInstanceHasEverythingPending(): void
     {
         self::assertEqualsCanonicalizing(
-            ['instance', 'issuer', 'mail', 'smtp', 'imap', 'motopress', 'accommodation'],
+            ['instance', 'issuer', 'mail', 'smtp', 'imap', 'motopress', 'accommodation', 'ubyport'],
             $this->pendingKeys(),
         );
         self::assertSame(0, $this->checklist->dismissedCount());

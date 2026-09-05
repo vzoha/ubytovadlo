@@ -49,114 +49,97 @@ final class AccommodationProfileControllerTest extends WebTestCase
         );
     }
 
-    public function testEmptyFormShowsWarning(): void
+    public function testEmptyPropertyShowsWarning(): void
     {
-        $crawler = $this->client->request('GET', '/nastaveni/ubytovani');
+        $this->client->request('GET', '/nastaveni/ubytovani');
 
         self::assertResponseIsSuccessful();
-        self::assertSelectorTextContains('.alert-warning', 'ještě nebyl vyplněn');
+        self::assertSelectorTextContains('.alert-warning', 'ještě nejsou vyplněné');
     }
 
-    public function testCreateProfile(): void
+    public function testPropertyPageSavesNameAndAddress(): void
     {
         $crawler = $this->client->request('GET', '/nastaveni/ubytovani');
-        $form = $crawler->selectButton('Uložit')->form([
-            'accommodation_profile[idub]' => '123456789012',
-            'accommodation_profile[kod]' => 'VEJMI',
-            'accommodation_profile[nazev]' => 'Apartmán Ukázka',
-            'accommodation_profile[spojeni]' => 'Jan Novák, tel: 777 000 000',
-            'accommodation_profile[okres]' => 'Mladá Boleslav',
-            'accommodation_profile[obec]' => 'Ukázkov',
-            'accommodation_profile[castObce]' => '',
-            'accommodation_profile[ulice]' => '',
-            'accommodation_profile[cp]' => '12',
-            'accommodation_profile[co]' => '',
-            'accommodation_profile[psc]' => '29464',
-        ]);
+        $this->client->submit($crawler->selectButton('Uložit')->form([
+            'property[nazev]' => 'Apartmán Ukázka',
+            'property[spojeni]' => 'Jan Novák, tel: 777 000 000',
+            'property[okres]' => 'Mladá Boleslav',
+            'property[obec]' => 'Ukázkov',
+            'property[castObce]' => 'Lhota',
+            'property[cp]' => '12',
+            'property[psc]' => '29464',
+        ]));
 
-        $this->client->submit($form);
-        self::assertResponseRedirects('/nastaveni/ubytovani');
+        self::assertResponseRedirects('/nastaveni/ubytovani', 302, (string) $this->client->getResponse()->getContent());
 
         $profile = static::getContainer()->get(AccommodationProfileRepository::class)->getSingleton();
         self::assertNotNull($profile);
-        self::assertSame('123456789012', $profile->getIdub());
-        self::assertSame('VEJMI', $profile->getKod());
+        self::assertSame('Apartmán Ukázka', $profile->getNazev());
+        self::assertSame('Lhota', $profile->getCastObce());
     }
 
-    public function testUpdateExistingProfileDoesNotCreateDuplicate(): void
+    public function testPropertyPageDoesNotAskForUbyportIdentifiers(): void
     {
-        $existing = new AccommodationProfile();
-        $existing->setIdub('111122223333');
-        $existing->setKod('OLD');
-        $existing->setNazev('Stary nazev');
-        $existing->setSpojeni('X');
-        $existing->setOkres('X');
-        $existing->setObec('X');
-        $existing->setPsc('29464');
-        $this->em->persist($existing);
-        $this->em->flush();
-        $originalId = $existing->getId();
-        $this->em->clear();
-
         $crawler = $this->client->request('GET', '/nastaveni/ubytovani');
-        $form = $crawler->selectButton('Uložit')->form([
-            'accommodation_profile[idub]' => '999988887777',
-            'accommodation_profile[kod]' => 'NOVY',
-            'accommodation_profile[nazev]' => 'Novy nazev',
-            'accommodation_profile[spojeni]' => 'Y',
-            'accommodation_profile[okres]' => 'Y',
-            'accommodation_profile[obec]' => 'Y',
-            'accommodation_profile[psc]' => '38901',
-        ]);
 
-        $this->client->submit($form);
+        self::assertCount(0, $crawler->filter('[name="property[idub]"]'));
+        self::assertGreaterThan(0, $crawler->filter('a[href="/nastaveni/ubyport"]')->count());
+    }
+
+    public function testUbyportPageSavesIdentifiersAndShowsPropertyAddress(): void
+    {
+        $this->persistProfile();
+
+        $crawler = $this->client->request('GET', '/nastaveni/ubyport');
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString('Lniště 30, 374 01 Slavče', $crawler->filter('.card')->last()->text());
+
+        $this->client->submit($crawler->selectButton('Uložit')->form([
+            'ubyport_identifiers[idub]' => '999988887777',
+            'ubyport_identifiers[kod]' => 'novy',
+        ]));
+
+        self::assertResponseRedirects('/nastaveni/ubyport');
 
         $repo = static::getContainer()->get(AccommodationProfileRepository::class);
         self::assertCount(1, $repo->findAll(), 'po updatu nesmi vzniknout druhy radek');
-        $updated = $repo->getSingleton();
-        self::assertSame($originalId, $updated->getId(), 'menime tentyz radek');
-        self::assertSame('999988887777', $updated->getIdub());
-        self::assertSame('NOVY', $updated->getKod());
-    }
-
-    public function testKodIsStoredUppercase(): void
-    {
-        $crawler = $this->client->request('GET', '/nastaveni/ubytovani');
-        $form = $crawler->selectButton('Uložit')->form([
-            'accommodation_profile[idub]' => '123456789012',
-            'accommodation_profile[kod]' => 'vejmi',
-            'accommodation_profile[nazev]' => 'X',
-            'accommodation_profile[spojeni]' => 'X',
-            'accommodation_profile[okres]' => 'X',
-            'accommodation_profile[obec]' => 'X',
-            'accommodation_profile[psc]' => '29464',
-        ]);
-
-        $this->client->submit($form);
-
-        $profile = static::getContainer()->get(AccommodationProfileRepository::class)->getSingleton();
-        self::assertSame('VEJMI', $profile->getKod());
+        self::assertSame('999988887777', $repo->getSingleton()->getIdub());
+        self::assertSame('NOVY', $repo->getSingleton()->getKod(), 'kód se ukládá velkými písmeny');
     }
 
     public function testInvalidIdubRejected(): void
     {
-        $crawler = $this->client->request('GET', '/nastaveni/ubytovani');
-        $form = $crawler->selectButton('Uložit')->form([
-            'accommodation_profile[idub]' => 'NENI-CISLO',
-            'accommodation_profile[kod]' => 'VEJMI',
-            'accommodation_profile[nazev]' => 'X',
-            'accommodation_profile[spojeni]' => 'X',
-            'accommodation_profile[okres]' => 'X',
-            'accommodation_profile[obec]' => 'X',
-            'accommodation_profile[psc]' => '29464',
-        ]);
+        $this->persistProfile();
 
-        $this->client->submit($form);
+        $crawler = $this->client->request('GET', '/nastaveni/ubyport');
+        $this->client->submit($crawler->selectButton('Uložit')->form([
+            'ubyport_identifiers[idub]' => 'NENI-CISLO',
+            'ubyport_identifiers[kod]' => 'VEJMI',
+        ]));
 
-        // Form se znovuvykreslí s chybou; nesmí se nic uložit
         self::assertSelectorTextContains('body', 'IDUB musí být 12 číslic');
 
-        $profile = static::getContainer()->get(AccommodationProfileRepository::class)->getSingleton();
-        self::assertNull($profile);
+        // Čteme mimo identity mapu requestu, ať je vidět, co je opravdu v databázi.
+        $em = static::getContainer()->get('doctrine')->getManager();
+        \assert($em instanceof EntityManagerInterface);
+        $em->clear();
+        self::assertSame('111122223333', static::getContainer()->get(AccommodationProfileRepository::class)->getSingleton()->getIdub());
+    }
+
+    private function persistProfile(): void
+    {
+        $profile = new AccommodationProfile();
+        $profile->setIdub('111122223333');
+        $profile->setKod('OLD');
+        $profile->setNazev('Vejminek');
+        $profile->setSpojeni('Jan Novák, tel: 777 000 000');
+        $profile->setOkres('České Budějovice');
+        $profile->setObec('Slavče');
+        $profile->setCastObce('Lniště');
+        $profile->setCp('30');
+        $profile->setPsc('37401');
+        $this->em->persist($profile);
+        $this->em->flush();
+        $this->em->clear();
     }
 }
