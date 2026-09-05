@@ -1,9 +1,9 @@
-{# Návod na povolení adresy a odkazů v Booking extranetu. Čte odesílatele z formuláře. #}
-{% set sender = form.senderEmail.vars.value|default('') %}
+{# Návod na povolení adresy a odkazů v Booking extranetu. #}
+{% set sender = mail_settings.current.senderEmail %}
 {% set app_host = instance.baseUrl|split('//')|last|split('/')|first %}
-<div class="card mt-3">
-    <div class="card-header py-2 fw-semibold">Zprávy hostům z Booking.com</div>
+<div class="card mt-2">
     <div class="card-body">
+        <h3 class="h6">Zprávy hostům</h3>
         <p class="small text-muted mb-2">
             Booking.com hosta chrání aliasem <code>@guest.booking.com</code> a propouští jen zprávy
             z adres a odkazy z domén, které máte v extranetu schválené. Ostatní zahodí,
@@ -16,7 +16,7 @@
         <dl class="row small mb-2">
             <dt class="col-sm-5">Your email addresses</dt>
             <dd class="col-sm-7">
-                {% if sender %}<code>{{ sender }}</code>{% else %}<span class="text-muted">nejdřív vyplňte e-mail odesílatele</span>{% endif %}
+                {% if sender %}<code>{{ sender }}</code>{% else %}<span class="text-muted">nejdřív vyplňte odesílatele v nastavení e-mailů</span>{% endif %}
             </dd>
             <dt class="col-sm-5">Approved links</dt>
             <dd class="col-sm-7">

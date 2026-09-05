@@ -123,23 +123,11 @@
         </div>
 
         <div class="card mb-3">
-            <div class="card-header py-2 fw-semibold">Booking.com — extranet</div>
-            <div class="card-body">
-                <p class="text-muted small mb-3">
-                    ID ubytování drží odkaz z rezervace rovnou na její stránku v extranetu,
-                    kde se řeší storno i změny termínu. Vyplní se samo z prvního e-mailu
-                    o nové rezervaci.
-                </p>
-                <div class="col-md-6">{{ form_row(form.bookingHotelId) }}</div>
-            </div>
-        </div>
-
-        <div class="card mb-3">
             <div class="card-header py-2 fw-semibold">SMTP — odchozí e-maily</div>
             <div class="card-body">
                 <p class="text-muted small mb-3">
-                    Odesílání zpráv hostům, faktur a notifikací. Bez vyplnění se použije
-                    <code>MAILER_DSN</code> z prostředí (na produkci default <code>null://null</code> = neodesílá).
+                    Odesílání zpráv hostům, faktur a notifikací. Dokud tu server není,
+                    aplikace nemá kudy poštu poslat a nic neodejde.
                 </p>
                 <div class="row g-3">
                     <div class="col-md-6">{{ form_row(form.smtpHost) }}</div>
@@ -155,6 +143,24 @@
                 </div>
             </div>
         </div>
+
+        <details class="mb-3">
+            <summary class="fw-semibold py-1" style="cursor:pointer;">
+                Booking.com
+                <span class="text-muted fw-normal small">— jen když prodáváte přes Booking.com</span>
+            </summary>
+            <div class="card mt-2">
+                <div class="card-body">
+                    <p class="text-muted small mb-3">
+                        ID ubytování drží odkaz z rezervace rovnou na její stránku v extranetu,
+                        kde se řeší storno i změny termínu. Vyplní se samo z prvního e-mailu
+                        o nové rezervaci.
+                    </p>
+                    <div class="col-md-6">{{ form_row(form.bookingHotelId) }}</div>
+                </div>
+            </div>
+            {{ include('connection_settings/_booking_security.html.twig') }}
+        </details>
 
         <details class="mb-3">
             <summary class="fw-semibold py-1" style="cursor:pointer;">

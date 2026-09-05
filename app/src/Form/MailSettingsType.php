@@ -41,7 +41,7 @@ class MailSettingsType extends AbstractType
             ->add('senderEmail', EmailType::class, [
                 'label' => 'E-mail odesílatele',
                 'constraints' => [new NotBlank(), new Email()],
-                'help' => 'Musí odpovídat schránce nakonfigurované v MAILER_DSN.',
+                'help' => 'Musí odpovídat schránce, ze které odesílá SMTP server v Připojení.',
             ])
             ->add('replyTo', EmailType::class, [
                 'label' => 'Odpovědět na (Reply-To)',

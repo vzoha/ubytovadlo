@@ -190,22 +190,6 @@ final class SetupWizardControllerTest extends WebTestCase
         );
     }
 
-    public function testMailStepShowsBookingSecurityGuideWithOwnValues(): void
-    {
-        $settings = static::getContainer()->get(SettingRepository::class);
-        $settings->set('app.base_url', 'https://app.priklad.cz', 'Test.');
-        $settings->set('mail.sender.email', 'info@priklad.cz', 'Test.');
-        $this->em->flush();
-
-        $crawler = $this->client->request('GET', '/nastaveni/pruvodce/mail');
-        $guide = $crawler->filter('.card')->reduce(
-            static fn ($node) => str_contains($node->text(), 'Zprávy hostům z Booking.com'),
-        )->first();
-
-        self::assertStringContainsString('info@priklad.cz', $guide->text());
-        self::assertStringContainsString('app.priklad.cz', $guide->text());
-    }
-
     public function testFinishSeedsDefaultQuickMessages(): void
     {
         $crawler = $this->client->request('GET', '/nastaveni/pruvodce/hotovo');

@@ -47,6 +47,26 @@ final class ConnectionSettingsControllerTest extends WebTestCase
         $this->client->loginUser($container->get(UserRepository::class)->findOneBy(['email' => 'connection@example.com']));
     }
 
+    public function testBookingSectionShowsWhatToApproveInExtranet(): void
+    {
+        $settings = static::getContainer()->get(SettingRepository::class);
+        $settings->set('app.base_url', 'https://app.priklad.cz', 'Test.');
+        $settings->set('mail.sender.email', 'info@priklad.cz', 'Test.');
+        $this->em->flush();
+
+        $crawler = $this->client->request('GET', '/nastaveni/pripojeni');
+        self::assertResponseIsSuccessful();
+
+        $booking = $crawler->filter('details')->reduce(
+            static fn ($node) => str_contains($node->filter('summary')->text(), 'Booking.com'),
+        )->first();
+
+        // Sekce je sbalená — kdo přes Booking neprodává, o ni nezakopne.
+        self::assertCount(0, $booking->filter('details[open]'));
+        self::assertStringContainsString('info@priklad.cz', $booking->text());
+        self::assertStringContainsString('app.priklad.cz', $booking->text());
+    }
+
     public function testFormSavesMotopressMappingSettings(): void
     {
         $crawler = $this->client->request('GET', '/nastaveni/pripojeni');
