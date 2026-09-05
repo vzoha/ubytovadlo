@@ -1,33 +1,43 @@
 {% extends 'settings/base.html.twig' %}
 
-{% block title %}Nastavení — prodejní kanály{% endblock %}
+{% block title %}Nastavení — kanály a platby{% endblock %}
 
 {% block settings_active %}channels{% endblock %}
 
 {% block settings_content %}
+    {% set channels = active|filter(c => not c.type.isPaymentSource) %}
+    {% set payments = active|filter(c => c.type.isPaymentSource) %}
     <div class="d-flex justify-content-between align-items-center mb-2 gap-2 flex-wrap">
-        <h2 class="h5 mb-0">Prodejní kanály</h2>
+        <h2 class="h5 mb-0">Kanály a platby</h2>
         {% if available is not empty %}
             <div class="dropdown">
                 <button class="btn btn-sm btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    + Přidat kanál
+                    + Přidat napojení
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end">
-                    {% for c in available %}
-                        <li>
-                            <form method="post" action="{{ path('sales_channel_add', { type: c.type.value }) }}">
-                                <input type="hidden" name="_token" value="{{ csrf_token('connector') }}">
-                                <button type="submit" class="dropdown-item">{{ c.type.label }}</button>
-                            </form>
-                        </li>
+                    {% for group in [
+                        {label: 'Prodejní kanály', items: available|filter(c => not c.type.isPaymentSource)},
+                        {label: 'Platby', items: available|filter(c => c.type.isPaymentSource)}
+                    ] %}
+                        {% if group.items is not empty %}
+                            <li><h6 class="dropdown-header">{{ group.label }}</h6></li>
+                            {% for c in group.items %}
+                                <li>
+                                    <form method="post" action="{{ path('channel_settings_add', { type: c.type.value }) }}">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('connector') }}">
+                                        <button type="submit" class="dropdown-item">{{ c.type.label }}</button>
+                                    </form>
+                                </li>
+                            {% endfor %}
+                        {% endif %}
                     {% endfor %}
                 </ul>
             </div>
         {% endif %}
     </div>
     <p class="text-muted small">
-        Odkud chodí rezervace a platby. Každý kanál má vlastní stav, přístupy i feed
-        obsazenosti; vypnutý kanál pravidelné kontroly přeskočí.
+        Odkud chodí rezervace a platby. Každé napojení má vlastní stav, přístupy
+        i feed obsazenosti; vypnuté pravidelné kontroly přeskočí.
     </p>
 
     {% if not cipherReady %}
@@ -40,13 +50,24 @@
 
     {% if active is empty %}
         <div class="alert alert-light border text-muted">
-            Zatím žádný kanál. Přidejte ten, přes který prodáváte — tlačítkem nahoře.
+            Zatím žádné napojení. Přidejte to, přes které prodáváte nebo přijímáte platby —
+            tlačítkem nahoře.
         </div>
     {% endif %}
 
-    {% for c in active %}
-        {{ include('sales_channel/_card.html.twig') }}
-    {% endfor %}
+    {% if channels is not empty %}
+        <h3 class="h6 text-muted mt-3">Prodejní kanály</h3>
+        {% for c in channels %}
+            {{ include('channels/_card.html.twig') }}
+        {% endfor %}
+    {% endif %}
+
+    {% if payments is not empty %}
+        <h3 class="h6 text-muted mt-3">Platby</h3>
+        {% for c in payments %}
+            {{ include('channels/_card.html.twig') }}
+        {% endfor %}
+    {% endif %}
 
     <div class="card mb-3">
         <div class="card-header py-2 fw-semibold">Export obsazenosti (iCal)</div>

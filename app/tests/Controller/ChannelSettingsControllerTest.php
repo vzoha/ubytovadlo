@@ -25,10 +25,11 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 /**
- * Prodejní kanály: vypisují se jen ty používané, zbytek se přidává tlačítkem
- * a nastavení každého kanálu se ukládá vlastním formulářem.
+ * Kanály a platby: vypisují se jen používaná napojení, zbytek se přidává
+ * tlačítkem a nastavení každého se ukládá vlastním formulářem. Banka patří
+ * mezi platby, portály mezi prodejní kanály.
  */
-final class SalesChannelControllerTest extends WebTestCase
+final class ChannelSettingsControllerTest extends WebTestCase
 {
     private KernelBrowser $client;
     private EntityManagerInterface $em;
@@ -53,6 +54,18 @@ final class SalesChannelControllerTest extends WebTestCase
         $this->em->flush();
 
         $this->client->loginUser($container->get(UserRepository::class)->findOneBy(['email' => 'channels@example.com']));
+    }
+
+    public function testPaymentSourceIsListedApartFromSalesChannels(): void
+    {
+        $this->enable(ConnectorType::BANK_CS);
+        $this->enable(ConnectorType::BOOKING);
+
+        $crawler = $this->client->request('GET', '/nastaveni/kanaly');
+        self::assertResponseIsSuccessful();
+
+        $groups = $crawler->filter('h3.text-muted')->each(static fn ($node) => $node->text());
+        self::assertSame(['Prodejní kanály', 'Platby'], $groups);
     }
 
     public function testUnusedChannelsAreOfferedInsteadOfListed(): void

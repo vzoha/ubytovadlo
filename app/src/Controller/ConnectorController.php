@@ -39,7 +39,7 @@ class ConnectorController extends AbstractController
         $this->manager->setEnabled($connector, $enable);
         $this->addFlash('success', sprintf('Konektor „%s" %s.', $connector->label(), $enable ? 'zapnut' : 'vypnut'));
 
-        return $this->redirectToRoute('sales_channel_index');
+        return $this->redirectToRoute('channel_settings_index');
     }
 
     #[Route('/nastaveni/konektory/{type}/feed', name: 'connector_feed', methods: ['POST'])]
@@ -54,7 +54,7 @@ class ConnectorController extends AbstractController
         $this->manager->setFeedUrl($connector, $url === '' ? null : $url);
         $this->addFlash('success', sprintf('Feed konektoru „%s" %s.', $connector->label(), $url === '' ? 'odebrán' : 'uložen'));
 
-        return $this->redirectToRoute('sales_channel_index');
+        return $this->redirectToRoute('channel_settings_index');
     }
 
     #[Route('/nastaveni/konektory/{type}/webhook/obnovit', name: 'connector_webhook_regenerate', methods: ['POST'])]
@@ -68,7 +68,7 @@ class ConnectorController extends AbstractController
         $this->manager->regenerateWebhookToken($connector);
         $this->addFlash('success', 'Adresa pro okamžitý import se změnila — vložte novou do WordPressu, jinak přestane chodit.');
 
-        return $this->redirectToRoute('sales_channel_index');
+        return $this->redirectToRoute('channel_settings_index');
     }
 
     #[Route('/nastaveni/konektory/{type}/test', name: 'connector_test', methods: ['POST'])]
@@ -82,7 +82,7 @@ class ConnectorController extends AbstractController
             sprintf('%s: %s', $connector->label(), $result->message),
         );
 
-        return $this->redirectToRoute('sales_channel_index');
+        return $this->redirectToRoute('channel_settings_index');
     }
 
     /** Ověří CSRF a přeloží řetězec na typ konektoru (jinak 404). */

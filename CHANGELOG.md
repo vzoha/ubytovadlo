@@ -69,10 +69,11 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
   rovnou do seznamu; příkaz `app:quick-messages:seed` ji naplní i jindy, pokud je
   seznam prázdný.
 
-- **Prodejní kanály jako vlastní sekce nastavení.** Každý kanál má kartu se stavem,
+- **Kanály a platby jako vlastní sekce nastavení.** Každé napojení má kartu se stavem,
   přepínačem, testem spojení, adresou iCal feedu i vlastním nastavením a ukládá se
-  samostatně; karta se rozbalí, když kanál něco potřebuje, jinak stačí stav v hlavičce.
-  Vypisují se jen kanály, které instance používá — zbytek nabídne tlačítko *Přidat kanál*.
+  samostatně; karta se rozbalí, když něco potřebuje, jinak stačí stav v hlavičce.
+  Portály jsou pod nadpisem *Prodejní kanály*, banka pod *Platby*. Vypisují se jen
+  napojení, která instance používá — zbytek nabídne tlačítko *Přidat napojení*.
   Sekce *Připojení* drží přístupy k poště, tedy příchozí schránku a odchozí server.
 
 - **Návod na zabezpečení zpráv v Booking.com.** Karta kanálu *Booking.com* říká,

@@ -32,11 +32,12 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 /**
- * Prodejní kanály — jeden kanál = jedna karta se stavem, přepínačem, feedem
- * obsazenosti i vlastním nastavením. Kanály, které instance nepoužívá, se
- * nevypisují; přidávají se tlačítkem, které je rovnou zapne.
+ * Odkud chodí rezervace a platby — jeden konektor = jedna karta se stavem,
+ * přepínačem, feedem obsazenosti i vlastním nastavením. Prodejní kanály
+ * a zdroje plateb jsou dvě skupiny téhož seznamu. Konektory, které instance
+ * nepoužívá, se nevypisují; přidávají se tlačítkem, které je rovnou zapne.
  */
-class SalesChannelController extends AbstractController
+class ChannelSettingsController extends AbstractController
 {
     public function __construct(
         private readonly ConnectorManager $connectors,
@@ -50,13 +51,13 @@ class SalesChannelController extends AbstractController
     ) {
     }
 
-    #[Route('/nastaveni/kanaly', name: 'sales_channel_index', methods: ['GET'])]
+    #[Route('/nastaveni/kanaly', name: 'channel_settings_index', methods: ['GET'])]
     public function index(): Response
     {
         $state = $this->provider->formState();
         $health = $this->connectors->health();
 
-        return $this->render('sales_channel/index.html.twig', [
+        return $this->render('channels/index.html.twig', [
             'active' => array_values(array_filter($health, self::isInUse(...))),
             'available' => array_values(array_filter($health, static fn (ConnectorHealth $c): bool => !self::isInUse($c))),
             'secretsSet' => $state['secretsSet'],
@@ -70,7 +71,7 @@ class SalesChannelController extends AbstractController
         ]);
     }
 
-    #[Route('/nastaveni/kanaly/{type}/pridat', name: 'sales_channel_add', methods: ['POST'])]
+    #[Route('/nastaveni/kanaly/{type}/pridat', name: 'channel_settings_add', methods: ['POST'])]
     public function add(string $type, Request $request): Response
     {
         if (!$this->isCsrfTokenValid('connector', (string) $request->request->get('_token'))) {
@@ -79,12 +80,12 @@ class SalesChannelController extends AbstractController
 
         $connector = ConnectorType::tryFrom($type) ?? throw $this->createNotFoundException();
         $this->connectors->setEnabled($connector, true);
-        $this->addFlash('success', sprintf('Kanál „%s" přidán — doplňte mu nastavení.', $connector->label()));
+        $this->addFlash('success', sprintf('Napojení „%s" přidáno — doplňte mu nastavení.', $connector->label()));
 
-        return $this->redirectToRoute('sales_channel_index');
+        return $this->redirectToRoute('channel_settings_index');
     }
 
-    #[Route('/nastaveni/kanaly/booking', name: 'sales_channel_booking_save', methods: ['POST'])]
+    #[Route('/nastaveni/kanaly/booking', name: 'channel_settings_booking_save', methods: ['POST'])]
     public function saveBooking(Request $request): Response
     {
         $form = $this->bookingForm();
@@ -100,10 +101,10 @@ class SalesChannelController extends AbstractController
             $this->addFlash('success', 'Nastavení Booking.com uloženo.');
         }
 
-        return $this->redirectToRoute('sales_channel_index');
+        return $this->redirectToRoute('channel_settings_index');
     }
 
-    #[Route('/nastaveni/kanaly/motopress', name: 'sales_channel_motopress_save', methods: ['POST'])]
+    #[Route('/nastaveni/kanaly/motopress', name: 'channel_settings_motopress_save', methods: ['POST'])]
     public function saveMotoPress(Request $request): Response
     {
         $form = $this->motopressForm($this->provider->formState()['values']);
@@ -125,7 +126,7 @@ class SalesChannelController extends AbstractController
             );
         }
 
-        return $this->redirectToRoute('sales_channel_index');
+        return $this->redirectToRoute('channel_settings_index');
     }
 
     /**
@@ -145,7 +146,7 @@ class SalesChannelController extends AbstractController
     private function motopressForm(array $values): FormInterface
     {
         return $this->createForm(MotoPressChannelType::class, $values + $this->motopress->currentValues(), [
-            'action' => $this->generateUrl('sales_channel_motopress_save'),
+            'action' => $this->generateUrl('channel_settings_motopress_save'),
         ]);
     }
 
@@ -153,7 +154,7 @@ class SalesChannelController extends AbstractController
     private function bookingForm(): FormInterface
     {
         return $this->createForm(BookingChannelType::class, ['bookingHotelId' => $this->extranetLink->bookingHotelId()], [
-            'action' => $this->generateUrl('sales_channel_booking_save'),
+            'action' => $this->generateUrl('channel_settings_booking_save'),
         ]);
     }
 

@@ -49,6 +49,12 @@ enum ConnectorType: string
         };
     }
 
+    /** Konektor přináší peníze, ne rezervace — patří mezi platby, ne mezi prodejní kanály. */
+    public function isPaymentSource(): bool
+    {
+        return $this === self::BANK_CS;
+    }
+
     /**
      * Kanál rezervace, do kterého iCal feed tohoto konektoru zakládá obsazenost.
      * Null u konektorů bez iCal importu (MotoPress = REST, banka = platby).
