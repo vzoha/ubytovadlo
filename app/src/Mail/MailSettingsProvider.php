@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Mail;
 
+use App\Config\PropertyName;
 use App\Invoice\IssuerProfileProvider;
 use App\Repository\SettingRepository;
 
@@ -33,6 +34,7 @@ final class MailSettingsProvider
     public function __construct(
         private readonly SettingRepository $settings,
         private readonly IssuerProfileProvider $issuerProvider,
+        private readonly PropertyName $propertyName,
     ) {
     }
 
@@ -41,7 +43,7 @@ final class MailSettingsProvider
         $issuer = $this->issuerProvider->current();
 
         return new MailSettings(
-            senderName: $this->value(self::SENDER_NAME, $issuer->name),
+            senderName: $this->value(self::SENDER_NAME, (string) $this->propertyName ?: $issuer->name),
             senderEmail: $this->value(self::SENDER_EMAIL, $issuer->email),
             replyTo: $this->nullableValue(self::REPLY_TO),
             footer: $this->value(self::FOOTER, ''),

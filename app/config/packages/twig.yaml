@@ -5,6 +5,7 @@ twig:
         issuer: '@App\Invoice\IssuerProfileProvider'
         tax_profile: '@App\Invoice\TaxProfileConfig'
         brand_name: '@App\Config\BrandName'
+        property_name: '@App\Config\PropertyName'
         instance: '@App\Config\InstanceSettings'
         ubyport_module: '@App\Config\UbyportSettings'
         mail_settings: '@App\Mail\MailSettingsProvider'

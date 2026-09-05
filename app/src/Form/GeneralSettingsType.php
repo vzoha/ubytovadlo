@@ -36,7 +36,8 @@ class GeneralSettingsType extends AbstractType
         $builder
             ->add('brandName', TextType::class, [
                 'label' => 'Název instance',
-                'help' => 'Zobrazuje se v hlavičce, titulcích a na fakturách.',
+                'help' => 'Jak se aplikace jmenuje pro vás — hlavička a titulky stránek. Jméno, které vidí host, '
+                    . 'je název ubytování.',
                 'constraints' => [new NotBlank()],
             ])
             ->add('baseUrl', UrlType::class, [

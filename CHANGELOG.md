@@ -69,6 +69,12 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
   rovnou do seznamu; příkaz `app:quick-messages:seed` ji naplní i jindy, pokud je
   seznam prázdný.
 
+- **Jedno jméno pro hosty.** Název ubytování je jméno, které host vidí ve zprávách
+  i na stránkách online check-inu, a slouží jako výchozí jméno odesílatele e-mailů.
+  Název instance zůstává v hlavičce a titulcích aplikace pro provozovatele.
+  Hlášení na Ubyport má volitelné pole *Název zařízení v hlášení* pro případ, kdy je
+  zařízení u policie zapsané pod jiným názvem; prázdné znamená stejný jako pro hosty.
+
 - **Hlášení na Ubyport jde vypnout.** V Nastavení → Obecné je přepínač *Hlásit
   ubytované cizince na Ubyport*. Vypnutá instance nemá modul v hlavním menu ani
   v nastavení a jeho adresy vracejí 404; evidenční knihy hostů se přepínač netýká.

@@ -22,6 +22,7 @@
                     <div class="col-md-6">{{ form_row(form.idub) }}</div>
                     <div class="col-md-6">{{ form_row(form.kod) }}</div>
                     <div class="col-12">{{ form_row(form.spojeni) }}</div>
+                    <div class="col-12">{{ form_row(form.nazevHlaseni) }}</div>
                 </div>
             </div>
         </div>
@@ -36,7 +37,7 @@
         <div class="card-body">
             <dl class="row mb-2 small">
                 <dt class="col-sm-4">Název zařízení</dt>
-                <dd class="col-sm-8">{{ profile.id ? profile.nazev : '—' }}</dd>
+                <dd class="col-sm-8">{{ profile.id ? profile.nazevProHlaseni : '—' }}</dd>
                 <dt class="col-sm-4">Adresa</dt>
                 <dd class="col-sm-8">{{ profile.id ? property_address : '—' }}</dd>
             </dl>

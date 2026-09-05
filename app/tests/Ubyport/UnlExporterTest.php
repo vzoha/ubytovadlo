@@ -46,6 +46,18 @@ class UnlExporterTest extends TestCase
         );
     }
 
+    public function testHeaderPrefersTheRegisteredName(): void
+    {
+        $profile = $this->buildProfile();
+        $profile->setNazevHlaseni('Ubytovna Pošta, s. r. o.');
+
+        $result = $this->exporter->build($profile, [], new \DateTimeImmutable('2015-12-06 04:31:26'));
+        $utf8 = (string) iconv('WINDOWS-1250', 'UTF-8', $result->content);
+
+        self::assertStringContainsString('|Ubytovna Pošta, s. r. o.|', $utf8);
+        self::assertStringNotContainsString('|Hotel Pošta|', $utf8);
+    }
+
     public function testGuestLineMatchesUbyportFormat(): void
     {
         $reservation = $this->buildReservation(

@@ -71,7 +71,7 @@ final class UnlExporter
             self::FORMAT_VERSION,
             $p->getIdub(),
             $p->getKod(),
-            $p->getNazev(),
+            $p->nazevProHlaseni(),
             $p->getSpojeni(),
             $p->getOkres(),
             $p->getObec(),

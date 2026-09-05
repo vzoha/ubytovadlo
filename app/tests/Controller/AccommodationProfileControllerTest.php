@@ -127,6 +127,31 @@ final class AccommodationProfileControllerTest extends WebTestCase
         self::assertSame('111122223333', static::getContainer()->get(AccommodationProfileRepository::class)->getSingleton()->getIdub());
     }
 
+    public function testReportNameFallsBackToTheGuestFacingName(): void
+    {
+        $this->persistProfile();
+
+        $crawler = $this->client->request('GET', '/nastaveni/ubyport');
+        self::assertStringContainsString('Vejminek', $crawler->filter('.card')->last()->text());
+
+        $this->client->submit($crawler->selectButton('Uložit')->form([
+            'ubyport_identifiers[idub]' => '111122223333',
+            'ubyport_identifiers[kod]' => 'OLD',
+            'ubyport_identifiers[spojeni]' => 'Jan Novák, tel: 777 000 000',
+            'ubyport_identifiers[nazevHlaseni]' => 'Vejminek u Žohů, č. p. 30',
+        ]));
+
+        $crawler = $this->client->followRedirect();
+        self::assertStringContainsString('Vejminek u Žohů', $crawler->filter('.card')->last()->text());
+
+        $em = static::getContainer()->get('doctrine')->getManager();
+        \assert($em instanceof EntityManagerInterface);
+        $em->clear();
+        $profile = static::getContainer()->get(AccommodationProfileRepository::class)->getSingleton();
+        self::assertSame('Vejminek', $profile->getNazev(), 'Název pro hosty zůstává');
+        self::assertSame('Vejminek u Žohů, č. p. 30', $profile->nazevProHlaseni());
+    }
+
     private function persistProfile(): void
     {
         $profile = new AccommodationProfile();

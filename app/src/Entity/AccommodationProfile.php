@@ -36,6 +36,9 @@ class AccommodationProfile
     #[ORM\Column(length: 255)]
     private string $nazev = '';
 
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $nazevHlaseni = null;
+
     #[ORM\Column(length: 255)]
     private string $spojeni = '';
 
@@ -102,6 +105,26 @@ class AccommodationProfile
         $this->nazev = $nazev;
 
         return $this;
+    }
+
+    /** Název, pod kterým je zařízení zapsané u policie — prázdné = stejný jako pro hosty. */
+    public function getNazevHlaseni(): ?string
+    {
+        return $this->nazevHlaseni;
+    }
+
+    public function setNazevHlaseni(?string $nazevHlaseni): self
+    {
+        $nazevHlaseni = trim((string) $nazevHlaseni);
+        $this->nazevHlaseni = $nazevHlaseni !== '' ? $nazevHlaseni : null;
+
+        return $this;
+    }
+
+    /** Název do hlavičky hlášení: vlastní, jinak ten, který zná host. */
+    public function nazevProHlaseni(): string
+    {
+        return $this->nazevHlaseni ?? $this->nazev;
     }
 
     public function getSpojeni(): string

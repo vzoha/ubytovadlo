@@ -53,6 +53,11 @@ class UbyportIdentifiersType extends AbstractType
                     new Regex(pattern: '/^\d{12}$/', message: 'IDUB musí být 12 číslic.'),
                 ],
             ])
+            ->add('nazevHlaseni', TextType::class, [
+                'label' => 'Název zařízení v hlášení',
+                'required' => false,
+                'help' => 'Vyplňte, jen když je zařízení u policie zapsané pod jiným názvem, než jaký znají hosté.',
+            ])
             ->add('spojeni', TextType::class, [
                 'label' => 'Kontakt na ubytovatele',
                 'help' => 'Jméno a telefon, na který se v hlášení obrátí cizinecká policie. Např. „Jan Novák, tel: 261 197 135".',
