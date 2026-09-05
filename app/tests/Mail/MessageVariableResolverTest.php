@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace App\Tests\Mail;
 
 use App\Entity\AccommodationProfile;
+use App\Entity\Embeddable\PropertyAddress;
 use App\Entity\Reservation;
 use App\Enum\Channel;
 use App\Invoice\BalanceCalculator;
@@ -123,10 +124,7 @@ final class MessageVariableResolverTest extends TestCase
     {
         $profile = (new AccommodationProfile())
             ->setNazev('Vejminek')
-            ->setObec('Slavče')
-            ->setCastObce('Lniště')
-            ->setCp('30')
-            ->setPsc('37401');
+            ->setAddress(new PropertyAddress(obec: 'Slavče', castObce: 'Lniště', cp: '30', psc: '37401'));
 
         $out = $this->resolver(null, profile: $profile)->render('{{ accommodation_address }}', $this->reservation());
 
@@ -137,12 +135,7 @@ final class MessageVariableResolverTest extends TestCase
     {
         $profile = (new AccommodationProfile())
             ->setNazev('Apartmán')
-            ->setObec('Brno')
-            ->setCastObce('Žabovřesky')
-            ->setUlice('Horova')
-            ->setCp('12')
-            ->setCo('3')
-            ->setPsc('61600');
+            ->setAddress(new PropertyAddress(obec: 'Brno', castObce: 'Žabovřesky', ulice: 'Horova', cp: '12', co: '3', psc: '61600'));
 
         $out = $this->resolver(null, profile: $profile)->render('{{ accommodation_address }}', $this->reservation());
 

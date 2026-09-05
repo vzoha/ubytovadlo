@@ -13,7 +13,6 @@ namespace App\Controller;
 
 use App\Form\PropertyType;
 use App\Form\UbyportIdentifiersType;
-use App\Formatting\PropertyAddress;
 use App\Ubyport\AccommodationProfileWriter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -21,9 +20,9 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
 /**
- * Ubytování je domov údajů o objektu (název, adresa, kontakt) — čtou je zprávy
- * hostům i hlášení na Ubyport. Ubyport má vlastní stránku jen na identifikátory
- * od cizinecké policie, adresu odtud jen ukazuje.
+ * Ubytování je domov údajů o objektu (název, adresa) — čtou je zprávy hostům
+ * i hlášení na Ubyport. Stránka Ubyport drží identifikátory od cizinecké
+ * policie a podobu zařízení v hlášení: buď převzatou z ubytování, nebo vlastní.
  */
 class AccommodationProfileController extends AbstractController
 {
@@ -71,7 +70,6 @@ class AccommodationProfileController extends AbstractController
         return $this->render('accommodation_profile/ubyport.html.twig', [
             'form' => $form->createView(),
             'profile' => $profile,
-            'property_address' => PropertyAddress::format($profile),
         ]);
     }
 }

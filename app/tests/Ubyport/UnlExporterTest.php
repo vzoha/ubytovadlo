@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace App\Tests\Ubyport;
 
 use App\Entity\AccommodationProfile;
+use App\Entity\Embeddable\PropertyAddress;
 use App\Entity\GuestDocument;
 use App\Entity\Reservation;
 use App\Enum\Channel;
@@ -49,13 +50,31 @@ class UnlExporterTest extends TestCase
     public function testHeaderPrefersTheRegisteredName(): void
     {
         $profile = $this->buildProfile();
-        $profile->setNazevHlaseni('Ubytovna Pošta, s. r. o.');
+        $profile->setReportingName('Ubytovna Pošta, s. r. o.');
 
         $result = $this->exporter->build($profile, [], new \DateTimeImmutable('2015-12-06 04:31:26'));
         $utf8 = (string) iconv('WINDOWS-1250', 'UTF-8', $result->content);
 
         self::assertStringContainsString('|Ubytovna Pošta, s. r. o.|', $utf8);
         self::assertStringNotContainsString('|Hotel Pošta|', $utf8);
+    }
+
+    public function testHeaderPrefersTheRegisteredAddress(): void
+    {
+        $profile = $this->buildProfile();
+        $profile->setReportingAddress(new PropertyAddress(
+            okres: 'Písek',
+            obec: 'Písek',
+            ulice: 'Velké náměstí',
+            cp: '1',
+            psc: '39701',
+        ));
+
+        $result = $this->exporter->build($profile, [], new \DateTimeImmutable('2015-12-06 04:31:26'));
+        $utf8 = (string) iconv('WINDOWS-1250', 'UTF-8', $result->content);
+
+        self::assertStringContainsString('|Písek|Písek||Velké náměstí|1||39701|', $utf8);
+        self::assertStringNotContainsString('Alešova', $utf8, 'adresa objektu se do hlášení neplete');
     }
 
     public function testGuestLineMatchesUbyportFormat(): void
@@ -177,13 +196,14 @@ class UnlExporterTest extends TestCase
         $p->setKod('VODPO');
         $p->setNazev('Hotel Pošta');
         $p->setSpojeni('Jan Sibelius, tel: 261 197 135');
-        $p->setOkres('Strakonice');
-        $p->setObec('Vodňany');
-        $p->setCastObce('Vodňany I');
-        $p->setUlice('Alešova');
-        $p->setCp('26');
-        $p->setCo(null);
-        $p->setPsc('38901');
+        $p->setAddress(new PropertyAddress(
+            okres: 'Strakonice',
+            obec: 'Vodňany',
+            castObce: 'Vodňany I',
+            ulice: 'Alešova',
+            cp: '26',
+            psc: '38901',
+        ));
 
         return $p;
     }

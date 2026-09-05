@@ -13,7 +13,6 @@ namespace App\Mail;
 
 use App\Entity\Reservation;
 use App\Formatting\Money;
-use App\Formatting\PropertyAddress;
 use App\Invoice\BalanceCalculator;
 use App\Invoice\DepositPayment;
 use App\Invoice\DepositPaymentBuilder;
@@ -137,7 +136,7 @@ final class MessageVariableResolver
                 : '',
             'channel' => $reservation->getChannel()->label(),
             'accommodation_name' => $profile?->getNazev() ?? '',
-            'accommodation_address' => PropertyAddress::format($profile),
+            'accommodation_address' => $profile?->getAddress()->format() ?? '',
             'checkin_url' => $this->checkinUrl($reservation),
             'checkin_lookup_url' => $this->urlGenerator->generate('checkin_lookup', [], UrlGeneratorInterface::ABSOLUTE_URL),
             'checkin_code' => $reservation->getExternalId() ?? $reservation->getMotopressExternalId() ?? '',

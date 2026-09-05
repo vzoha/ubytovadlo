@@ -11,12 +11,15 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Entity\Embeddable\PropertyAddress;
 use App\Repository\AccommodationProfileRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * Singleton — údaje ubytovacího zařízení pro hlavičku Ubyport UNL souboru.
- * IDUB a kód přiděluje cizinecká policie při registraci ubytovatele.
+ * Singleton — objekt, který se pronajímá. Název a adresa jsou ty, které zná
+ * host (zprávy, check-in). Hlášení na Ubyport nese název z registrace
+ * u cizinecké policie a k němu buď adresu objektu, nebo vlastní adresu
+ * zařízení; IDUB a kód přiděluje policie při registraci ubytovatele.
  */
 #[ORM\Entity(repositoryClass: AccommodationProfileRepository::class)]
 #[ORM\Table(name: 'accommodation_profile')]
@@ -36,32 +39,23 @@ class AccommodationProfile
     #[ORM\Column(length: 255)]
     private string $nazev = '';
 
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $nazevHlaseni = null;
-
     #[ORM\Column(length: 255)]
     private string $spojeni = '';
 
-    #[ORM\Column(length: 128)]
-    private string $okres = '';
+    #[ORM\Embedded(class: PropertyAddress::class, columnPrefix: false)]
+    private PropertyAddress $address;
 
-    #[ORM\Column(length: 128)]
-    private string $obec = '';
+    #[ORM\Column(name: 'nazev_hlaseni', length: 255, nullable: true)]
+    private ?string $reportingName = null;
 
-    #[ORM\Column(length: 128, nullable: true)]
-    private ?string $castObce = null;
+    #[ORM\Embedded(class: PropertyAddress::class, columnPrefix: 'reporting_')]
+    private PropertyAddress $reportingAddress;
 
-    #[ORM\Column(length: 128, nullable: true)]
-    private ?string $ulice = null;
-
-    #[ORM\Column(length: 16, nullable: true)]
-    private ?string $cp = null;
-
-    #[ORM\Column(length: 16, nullable: true)]
-    private ?string $co = null;
-
-    #[ORM\Column(length: 8)]
-    private string $psc = '';
+    public function __construct()
+    {
+        $this->address = PropertyAddress::empty();
+        $this->reportingAddress = PropertyAddress::empty();
+    }
 
     public function getId(): ?int
     {
@@ -107,26 +101,6 @@ class AccommodationProfile
         return $this;
     }
 
-    /** Název, pod kterým je zařízení zapsané u policie — prázdné = stejný jako pro hosty. */
-    public function getNazevHlaseni(): ?string
-    {
-        return $this->nazevHlaseni;
-    }
-
-    public function setNazevHlaseni(?string $nazevHlaseni): self
-    {
-        $nazevHlaseni = trim((string) $nazevHlaseni);
-        $this->nazevHlaseni = $nazevHlaseni !== '' ? $nazevHlaseni : null;
-
-        return $this;
-    }
-
-    /** Název do hlavičky hlášení: vlastní, jinak ten, který zná host. */
-    public function nazevProHlaseni(): string
-    {
-        return $this->nazevHlaseni ?? $this->nazev;
-    }
-
     public function getSpojeni(): string
     {
         return $this->spojeni;
@@ -139,87 +113,67 @@ class AccommodationProfile
         return $this;
     }
 
-    public function getOkres(): string
+    /** Adresa objektu, jak ji zná host. */
+    public function getAddress(): PropertyAddress
     {
-        return $this->okres;
+        return $this->address;
     }
 
-    public function setOkres(string $okres): self
+    public function setAddress(PropertyAddress $address): self
     {
-        $this->okres = $okres;
+        $this->address = $address;
 
         return $this;
     }
 
-    public function getObec(): string
+    /** Název zapsaný u cizinecké policie; dokud chybí, zastoupí ho název pro hosty. */
+    public function getReportingName(): ?string
     {
-        return $this->obec;
+        return $this->reportingName;
     }
 
-    public function setObec(string $obec): self
+    public function setReportingName(?string $reportingName): self
     {
-        $this->obec = $obec;
+        $reportingName = trim((string) $reportingName);
+        $this->reportingName = $reportingName !== '' ? $reportingName : null;
 
         return $this;
     }
 
-    public function getCastObce(): ?string
+    /** Adresa zapsaná u cizinecké policie; prázdná = shodná s adresou objektu. */
+    public function getReportingAddress(): PropertyAddress
     {
-        return $this->castObce;
+        return $this->reportingAddress;
     }
 
-    public function setCastObce(?string $castObce): self
+    public function setReportingAddress(PropertyAddress $address): self
     {
-        $this->castObce = $castObce;
+        $this->reportingAddress = $address;
 
         return $this;
     }
 
-    public function getUlice(): ?string
+    /** Zařízení je u policie vedené na vlastní adrese. */
+    public function hasOwnReportingAddress(): bool
     {
-        return $this->ulice;
+        return !$this->reportingAddress->isEmpty();
     }
 
-    public function setUlice(?string $ulice): self
+    /** Zařízení vystupuje v hlášení na adrese objektu. */
+    public function usesPropertyAddressInReport(): self
     {
-        $this->ulice = $ulice;
+        $this->reportingAddress = PropertyAddress::empty();
 
         return $this;
     }
 
-    public function getCp(): ?string
+    public function nameForReport(): string
     {
-        return $this->cp;
+        return $this->reportingName ?? $this->nazev;
     }
 
-    public function setCp(?string $cp): self
+    public function addressForReport(): PropertyAddress
     {
-        $this->cp = $cp;
-
-        return $this;
-    }
-
-    public function getCo(): ?string
-    {
-        return $this->co;
-    }
-
-    public function setCo(?string $co): self
-    {
-        $this->co = $co;
-
-        return $this;
-    }
-
-    public function getPsc(): string
-    {
-        return $this->psc;
-    }
-
-    public function setPsc(string $psc): self
-    {
-        $this->psc = $psc;
-
-        return $this;
+        return $this->reportingAddress->isEmpty() ? $this->address : $this->reportingAddress;
     }
 }

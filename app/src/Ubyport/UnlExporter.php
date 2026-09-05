@@ -66,20 +66,22 @@ final class UnlExporter
 
     private function headerLine(AccommodationProfile $p, \DateTimeImmutable $at): string
     {
+        $address = $p->addressForReport();
+
         return $this->joinRow([
             self::HEADER_RECORD,
             self::FORMAT_VERSION,
             $p->getIdub(),
             $p->getKod(),
-            $p->nazevProHlaseni(),
+            $p->nameForReport(),
             $p->getSpojeni(),
-            $p->getOkres(),
-            $p->getObec(),
-            $p->getCastObce() ?? '',
-            $p->getUlice() ?? '',
-            $p->getCp() ?? '',
-            $p->getCo() ?? '',
-            $p->getPsc(),
+            $address->getOkres() ?? '',
+            $address->getObec() ?? '',
+            $address->getCastObce() ?? '',
+            $address->getUlice() ?? '',
+            $address->getCp() ?? '',
+            $address->getCo() ?? '',
+            $address->getPsc() ?? '',
             $at->format('Y.m.d H:i:s'),
             '',
         ]);

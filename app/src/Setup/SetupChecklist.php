@@ -101,7 +101,7 @@ final class SetupChecklist
                 'Údaje o ubytování',
                 'Název, adresa a kontakt objektu — vidí je host ve zprávách.',
                 'accommodation_profile_edit',
-                $this->filled($this->accommodation->getSingleton()?->getObec() ?? ''),
+                $this->filled($this->accommodation->getSingleton()?->getAddress()->getObec() ?? ''),
             ),
             $this->item(
                 'ubyport',

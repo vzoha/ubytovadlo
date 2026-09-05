@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace App\Tests\Command;
 
 use App\Entity\AccommodationProfile;
+use App\Entity\Embeddable\PropertyAddress;
 use App\Entity\GuestDocument;
 use App\Entity\Invoice;
 use App\Entity\InvoiceLine;
@@ -68,11 +69,7 @@ final class UbyportExportCommandTest extends KernelTestCase
         $p->setKod('VODPO');
         $p->setNazev('Hotel Pošta');
         $p->setSpojeni('Jan Sibelius');
-        $p->setOkres('Strakonice');
-        $p->setObec('Vodňany');
-        $p->setUlice('Alešova');
-        $p->setCp('26');
-        $p->setPsc('38901');
+        $p->setAddress(new PropertyAddress(okres: 'Strakonice', obec: 'Vodňany', ulice: 'Alešova', cp: '26', psc: '38901'));
         $this->em->persist($p);
         $this->em->flush();
     }

@@ -8,6 +8,13 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Přidáno
 
+- **Zařízení v hlášení na Ubyport.** Nastavení → Ubyport drží pohromadě všechno
+  z registrace u cizinecké policie: IDUB, kód, kontakt na ubytovatele a **název
+  zařízení v hlášení** (nabídne se podle názvu objektu, dál žije samostatně).
+  Adresa v hlášení je buď stejná jako v Ubytování — je vidět rovnou u volby
+  i s odkazem, kde se mění — nebo jiná; jiná se vyplňuje celá, aby hlavička
+  nemíchala dva zdroje.
+
 - **Zrušení rezervace.** Na detailu rezervace je tlačítko *Zrušit rezervaci*
   a u zrušené *Obnovit rezervaci*. Storno zavře naplánované akce, takže hostovi
   zrušeného pobytu už žádná zpráva neodejde, a přepočítá příjem — zůstanou jen

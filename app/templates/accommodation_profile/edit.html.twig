@@ -9,9 +9,9 @@
 
     <p class="text-muted small">
         Objekt, který pronajímáte. Název a adresu odtud vidí host ve zprávách
-        (pokyny k příjezdu) a jdou i do hlášení ubytovaných cizinců na
-        <a href="{{ path('ubyport_settings_edit') }}">Ubyport</a>. Adresa dodavatele,
-        která se tiskne na faktury, je jiná věc a nastavuje se ve
+        (pokyny k příjezdu){% if ubyport_module.isEnabled %}; adresu bere i hlášení ubytovaných cizinců, pokud zařízení
+        nemá na stránce <a href="{{ path('ubyport_settings_edit') }}">Ubyport</a> vlastní{% endif %}.
+        Adresa dodavatele, která se tiskne na faktury, je jiná věc a nastavuje se ve
         <a href="{{ path('issuer_settings_edit') }}">Fakturaci</a>.
     </p>
 
@@ -31,13 +31,13 @@
             <div class="card-header py-2 fw-semibold">Adresa</div>
             <div class="card-body">
                 <div class="row g-3">
-                    <div class="col-md-6">{{ form_row(form.obec) }}</div>
-                    <div class="col-md-6">{{ form_row(form.castObce) }}</div>
-                    <div class="col-md-6">{{ form_row(form.ulice) }}</div>
-                    <div class="col-md-3">{{ form_row(form.cp) }}</div>
-                    <div class="col-md-3">{{ form_row(form.co) }}</div>
-                    <div class="col-md-6">{{ form_row(form.psc) }}</div>
-                    <div class="col-md-6">{{ form_row(form.okres) }}</div>
+                    <div class="col-md-6">{{ form_row(form.address.obec) }}</div>
+                    <div class="col-md-6">{{ form_row(form.address.castObce) }}</div>
+                    <div class="col-md-6">{{ form_row(form.address.ulice) }}</div>
+                    <div class="col-md-3">{{ form_row(form.address.cp) }}</div>
+                    <div class="col-md-3">{{ form_row(form.address.co) }}</div>
+                    <div class="col-md-6">{{ form_row(form.address.psc) }}</div>
+                    <div class="col-md-6">{{ form_row(form.address.okres) }}</div>
                 </div>
             </div>
         </div>

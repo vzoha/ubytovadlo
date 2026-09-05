@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace App\Tests\Controller;
 
 use App\Entity\AccommodationProfile;
+use App\Entity\Embeddable\PropertyAddress;
 use App\Entity\User;
 use App\Repository\AccommodationProfileRepository;
 use App\Repository\UserRepository;
@@ -62,11 +63,11 @@ final class AccommodationProfileControllerTest extends WebTestCase
         $crawler = $this->client->request('GET', '/nastaveni/ubytovani');
         $this->client->submit($crawler->selectButton('Uložit')->form([
             'property[nazev]' => 'Apartmán Ukázka',
-            'property[okres]' => 'Mladá Boleslav',
-            'property[obec]' => 'Ukázkov',
-            'property[castObce]' => 'Lhota',
-            'property[cp]' => '12',
-            'property[psc]' => '29464',
+            'property[address][okres]' => 'Mladá Boleslav',
+            'property[address][obec]' => 'Ukázkov',
+            'property[address][castObce]' => 'Lhota',
+            'property[address][cp]' => '12',
+            'property[address][psc]' => '29464',
         ]));
 
         self::assertResponseRedirects('/nastaveni/ubytovani', 302, (string) $this->client->getResponse()->getContent());
@@ -74,7 +75,7 @@ final class AccommodationProfileControllerTest extends WebTestCase
         $profile = static::getContainer()->get(AccommodationProfileRepository::class)->getSingleton();
         self::assertNotNull($profile);
         self::assertSame('Apartmán Ukázka', $profile->getNazev());
-        self::assertSame('Lhota', $profile->getCastObce());
+        self::assertSame('Lhota', $profile->getAddress()->getCastObce());
     }
 
     public function testPropertyPageDoesNotAskForUbyportIdentifiers(): void
@@ -91,7 +92,7 @@ final class AccommodationProfileControllerTest extends WebTestCase
 
         $crawler = $this->client->request('GET', '/nastaveni/ubyport');
         self::assertResponseIsSuccessful();
-        self::assertStringContainsString('Lniště 30, 374 01 Slavče', $crawler->filter('.card')->last()->text());
+        self::assertStringContainsString('Lniště 30, 374 01 Slavče', $crawler->filter('.reporting-address')->text());
 
         $this->client->submit($crawler->selectButton('Uložit')->form([
             'ubyport_identifiers[idub]' => '999988887777',
@@ -127,43 +128,152 @@ final class AccommodationProfileControllerTest extends WebTestCase
         self::assertSame('111122223333', static::getContainer()->get(AccommodationProfileRepository::class)->getSingleton()->getIdub());
     }
 
-    public function testReportNameFallsBackToTheGuestFacingName(): void
+    public function testReportNameIsSavedWithTheIdentifiers(): void
     {
         $this->persistProfile();
 
         $crawler = $this->client->request('GET', '/nastaveni/ubyport');
-        self::assertStringContainsString('Vejminek', $crawler->filter('.card')->last()->text());
+        self::assertSame(
+            'Vejminek',
+            $crawler->filter('[name="ubyport_identifiers[reportingName]"]')->attr('value'),
+            'políčko se nabídne s názvem objektu',
+        );
 
-        $this->client->submit($crawler->selectButton('Uložit')->form([
+        $this->client->submit($crawler->selectButton('Uložit')->form($this->identifiers([
+            'ubyport_identifiers[reportingName]' => 'Ubytovna Pošta, s. r. o.',
+        ])));
+        self::assertResponseRedirects('/nastaveni/ubyport');
+
+        $profile = $this->storedProfile();
+        self::assertSame('Vejminek', $profile->getNazev(), 'Název pro hosty zůstává');
+        self::assertSame('Ubytovna Pošta, s. r. o.', $profile->nameForReport());
+    }
+
+    public function testReportNameIsRequired(): void
+    {
+        $this->persistProfile();
+
+        $crawler = $this->client->request('GET', '/nastaveni/ubyport');
+        $this->client->submit($crawler->selectButton('Uložit')->form($this->identifiers([
+            'ubyport_identifiers[reportingName]' => '',
+        ])));
+
+        self::assertResponseIsSuccessful();
+        self::assertNull($this->storedProfile()->getReportingName());
+    }
+
+    public function testAddressInReportComesFromThePropertyByDefault(): void
+    {
+        $this->persistProfile();
+
+        $crawler = $this->client->request('GET', '/nastaveni/ubyport');
+        $this->client->submit($crawler->selectButton('Uložit')->form($this->identifiers()));
+        self::assertResponseRedirects('/nastaveni/ubyport');
+
+        $profile = $this->storedProfile();
+        self::assertFalse($profile->hasOwnReportingAddress());
+        self::assertSame('Lniště 30, 374 01 Slavče', $profile->addressForReport()->format());
+    }
+
+    public function testDeviceRegisteredOnItsOwnAddress(): void
+    {
+        $this->persistProfile();
+
+        $crawler = $this->client->request('GET', '/nastaveni/ubyport');
+        $this->client->submit($crawler->selectButton('Uložit')->form($this->identifiers([
+            'ubyport_identifiers[reportingSource]' => 'own',
+            'ubyport_identifiers[reportingAddress][okres]' => 'Písek',
+            'ubyport_identifiers[reportingAddress][obec]' => 'Písek',
+            'ubyport_identifiers[reportingAddress][castObce]' => '',
+            'ubyport_identifiers[reportingAddress][ulice]' => 'Velké náměstí',
+            'ubyport_identifiers[reportingAddress][cp]' => '1',
+            'ubyport_identifiers[reportingAddress][psc]' => '39701',
+        ])));
+        self::assertResponseRedirects('/nastaveni/ubyport');
+
+        $profile = $this->storedProfile();
+        self::assertSame('Velké náměstí 1, 397 01 Písek', $profile->addressForReport()->format());
+        self::assertSame('Lniště 30, 374 01 Slavče', $profile->getAddress()->format(), 'Adresa objektu zůstává');
+    }
+
+    public function testOwnAddressMustBeComplete(): void
+    {
+        $this->persistProfile();
+
+        $crawler = $this->client->request('GET', '/nastaveni/ubyport');
+        $this->client->submit($crawler->selectButton('Uložit')->form($this->identifiers([
+            'ubyport_identifiers[reportingSource]' => 'own',
+            'ubyport_identifiers[reportingAddress][okres]' => '',
+            'ubyport_identifiers[reportingAddress][obec]' => '',
+            'ubyport_identifiers[reportingAddress][castObce]' => '',
+            'ubyport_identifiers[reportingAddress][ulice]' => '',
+            'ubyport_identifiers[reportingAddress][cp]' => '',
+            'ubyport_identifiers[reportingAddress][psc]' => '',
+        ])));
+
+        self::assertSelectorTextContains('body', 'úplnou adresu zařízení');
+        self::assertFalse($this->storedProfile()->hasOwnReportingAddress(), 'nic se neuloží');
+    }
+
+    public function testSwitchingBackToThePropertyDropsTheOwnAddress(): void
+    {
+        $this->persistProfile(new PropertyAddress(okres: 'Písek', obec: 'Písek', ulice: 'Velké náměstí', cp: '1', psc: '39701'));
+
+        $crawler = $this->client->request('GET', '/nastaveni/ubyport');
+        $this->client->submit($crawler->selectButton('Uložit')->form($this->identifiers([
+            'ubyport_identifiers[reportingSource]' => 'property',
+        ])));
+        self::assertResponseRedirects('/nastaveni/ubyport');
+
+        $profile = $this->storedProfile();
+        self::assertFalse($profile->hasOwnReportingAddress());
+        self::assertSame('Lniště 30, 374 01 Slavče', $profile->addressForReport()->format());
+    }
+
+    /**
+     * @param array<string, string> $overrides
+     *
+     * @return array<string, string>
+     */
+    private function identifiers(array $overrides = []): array
+    {
+        return array_replace([
             'ubyport_identifiers[idub]' => '111122223333',
             'ubyport_identifiers[kod]' => 'OLD',
+            'ubyport_identifiers[reportingName]' => 'Vejminek',
             'ubyport_identifiers[spojeni]' => 'Jan Novák, tel: 777 000 000',
-            'ubyport_identifiers[nazevHlaseni]' => 'Vejminek u Žohů, č. p. 30',
-        ]));
+        ], $overrides);
+    }
 
-        $crawler = $this->client->followRedirect();
-        self::assertStringContainsString('Vejminek u Žohů', $crawler->filter('.card')->last()->text());
-
+    private function storedProfile(): AccommodationProfile
+    {
         $em = static::getContainer()->get('doctrine')->getManager();
         \assert($em instanceof EntityManagerInterface);
         $em->clear();
+
         $profile = static::getContainer()->get(AccommodationProfileRepository::class)->getSingleton();
-        self::assertSame('Vejminek', $profile->getNazev(), 'Název pro hosty zůstává');
-        self::assertSame('Vejminek u Žohů, č. p. 30', $profile->nazevProHlaseni());
+        self::assertNotNull($profile);
+
+        return $profile;
     }
 
-    private function persistProfile(): void
+    private function persistProfile(?PropertyAddress $reportingAddress = null): void
     {
         $profile = new AccommodationProfile();
         $profile->setIdub('111122223333');
         $profile->setKod('OLD');
         $profile->setNazev('Vejminek');
         $profile->setSpojeni('Jan Novák, tel: 777 000 000');
-        $profile->setOkres('České Budějovice');
-        $profile->setObec('Slavče');
-        $profile->setCastObce('Lniště');
-        $profile->setCp('30');
-        $profile->setPsc('37401');
+        $profile->setAddress(new PropertyAddress(
+            okres: 'České Budějovice',
+            obec: 'Slavče',
+            castObce: 'Lniště',
+            cp: '30',
+            psc: '37401',
+        ));
+        if ($reportingAddress !== null) {
+            $profile->setReportingAddress($reportingAddress);
+        }
         $this->em->persist($profile);
         $this->em->flush();
         $this->em->clear();

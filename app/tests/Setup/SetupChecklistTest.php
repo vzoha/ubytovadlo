@@ -14,6 +14,7 @@ namespace App\Tests\Setup;
 use App\Config\InstanceSettings;
 use App\Entity\AccommodationProfile;
 use App\Entity\Credential;
+use App\Entity\Embeddable\PropertyAddress;
 use App\Entity\Setting;
 use App\Invoice\IssuerProfileProvider;
 use App\Repository\SettingRepository;
@@ -69,9 +70,7 @@ final class SetupChecklistTest extends KernelTestCase
         $profile->setKod('ABC');
         $profile->setNazev('Vejminek');
         $profile->setSpojeni('X');
-        $profile->setOkres('X');
-        $profile->setObec('X');
-        $profile->setPsc('29464');
+        $profile->setAddress(new PropertyAddress(okres: 'X', obec: 'X', psc: '29464'));
         $this->em->persist($profile);
         $this->em->flush();
 

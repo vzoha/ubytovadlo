@@ -155,9 +155,9 @@ final class SetupWizardControllerTest extends WebTestCase
         $form['accommodation_profile[kod]'] = 'UBYT1';
         $form['accommodation_profile[nazev]'] = 'Apartmán U Lesa';
         $form['accommodation_profile[spojeni]'] = 'Jana Hostinská, tel: 000 000 000';
-        $form['accommodation_profile[okres]'] = 'Jihočeský';
-        $form['accommodation_profile[obec]'] = 'Lhota';
-        $form['accommodation_profile[psc]'] = '38901';
+        $form['accommodation_profile[address][okres]'] = 'Jihočeský';
+        $form['accommodation_profile[address][obec]'] = 'Lhota';
+        $form['accommodation_profile[address][psc]'] = '38901';
         $this->client->submit($form);
 
         self::assertResponseRedirects('/nastaveni/pruvodce/pripojeni');

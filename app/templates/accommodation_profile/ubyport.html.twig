@@ -4,44 +4,69 @@
 
 {% block settings_active %}ubyport{% endblock %}
 
+{% block stylesheets %}
+    <style>
+        /* Políčka vlastní adresy patří k druhé volbě — u první se schovají. */
+        .reporting-address:has(input[value="property"]:checked) .reporting-own-fields { display: none; }
+    </style>
+{% endblock %}
+
 {% block settings_content %}
     <h2 class="h5 mb-2">Ubyport</h2>
 
     <p class="text-muted small">
-        Hlášení ubytovaných cizinců cizinecké policii. IDUB a kód zařízení přidělila
-        <a href="https://ubyport.policie.cz" target="_blank" rel="noopener">cizinecká policie</a>
-        při registraci a používají se jen tady — zbytek hlavičky hlášení se bere
-        z údajů o ubytování.
+        Hlášení ubytovaných cizinců cizinecké policii. IDUB, kód a název zařízení má
+        ubytovatel z registrace u
+        <a href="https://ubyport.policie.cz" target="_blank" rel="noopener">cizinecké policie</a>
+        a používají se jen tady.
     </p>
 
     {{ form_start(form) }}
         <div class="card mb-3">
-            <div class="card-header py-2 fw-semibold">Identifikátory od cizinecké policie</div>
+            <div class="card-header py-2 fw-semibold">Zařízení u cizinecké policie</div>
             <div class="card-body">
                 <div class="row g-3">
                     <div class="col-md-6">{{ form_row(form.idub) }}</div>
                     <div class="col-md-6">{{ form_row(form.kod) }}</div>
+                    <div class="col-12">{{ form_row(form.reportingName) }}</div>
                     <div class="col-12">{{ form_row(form.spojeni) }}</div>
-                    <div class="col-12">{{ form_row(form.nazevHlaseni) }}</div>
                 </div>
             </div>
         </div>
 
-        <div class="d-flex justify-content-end mb-3">
+        <div class="card mb-3 reporting-address">
+            <div class="card-header py-2 fw-semibold">Adresa v hlášení</div>
+            <div class="card-body">
+                <p class="text-muted small">
+                    Adresa, na které je zařízení u policie zapsané. Obvykle je to adresa
+                    objektu; liší-li se, vyplňte ji celou.
+                </p>
+
+                <div class="mb-2">
+                    {{ form_row(form.reportingSource[0]) }}
+                    <div class="small text-muted ms-4 mb-3">
+                        {{ profile.address.format ?: 'adresa není vyplněná' }}
+                        <a href="{{ path('accommodation_profile_edit') }}" class="text-decoration-none ms-1">Upravit v Ubytování →</a>
+                    </div>
+                    {{ form_row(form.reportingSource[1]) }}
+                </div>
+
+                <div class="reporting-own-fields ms-4">
+                    <div class="row g-3">
+                        <div class="col-md-6">{{ form_row(form.reportingAddress.obec) }}</div>
+                        <div class="col-md-6">{{ form_row(form.reportingAddress.castObce) }}</div>
+                        <div class="col-md-6">{{ form_row(form.reportingAddress.ulice) }}</div>
+                        <div class="col-md-3">{{ form_row(form.reportingAddress.cp) }}</div>
+                        <div class="col-md-3">{{ form_row(form.reportingAddress.co) }}</div>
+                        <div class="col-md-6">{{ form_row(form.reportingAddress.psc) }}</div>
+                        <div class="col-md-6">{{ form_row(form.reportingAddress.okres) }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-end">
             <button type="submit" class="btn btn-primary">Uložit</button>
         </div>
     {{ form_end(form) }}
-
-    <div class="card">
-        <div class="card-header py-2 fw-semibold">Údaje objektu v hlášení</div>
-        <div class="card-body">
-            <dl class="row mb-2 small">
-                <dt class="col-sm-4">Název zařízení</dt>
-                <dd class="col-sm-8">{{ profile.id ? profile.nazevProHlaseni : '—' }}</dd>
-                <dt class="col-sm-4">Adresa</dt>
-                <dd class="col-sm-8">{{ profile.id ? property_address : '—' }}</dd>
-            </dl>
-            <a href="{{ path('accommodation_profile_edit') }}" class="text-decoration-none small">Upravit v Ubytování →</a>
-        </div>
-    </div>
 {% endblock %}
