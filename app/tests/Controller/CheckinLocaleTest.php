@@ -44,6 +44,18 @@ final class CheckinLocaleTest extends WebTestCase
         $em->flush();
     }
 
+    private function refreshed(): Reservation
+    {
+        $em = static::getContainer()->get('doctrine')->getManager();
+        \assert($em instanceof EntityManagerInterface);
+        $em->clear();
+
+        $reservation = $em->getRepository(Reservation::class)->find($this->reservation->getId());
+        \assert($reservation instanceof Reservation);
+
+        return $reservation;
+    }
+
     private function url(string $suffix = ''): string
     {
         return '/checkin/' . $this->reservation->getCheckinToken() . $suffix;
@@ -125,6 +137,47 @@ final class CheckinLocaleTest extends WebTestCase
         self::assertResponseIsSuccessful();
         self::assertSelectorExists('html[lang="pl"]');
         self::assertSelectorTextContains('h1', 'faktury');
+    }
+
+    public function testSwitchIsRememberedAsGuestChoiceForMessages(): void
+    {
+        // Host přepnul na němčinu → zprávy chodí anglicky (šablony umí cs/en)
+        // a rezervace si pamatuje, že jazyk vybral host.
+        $this->client->request('GET', $this->url('?_locale=de'));
+
+        $reservation = $this->refreshed();
+        self::assertSame('en', $reservation->getGuestLocale());
+        self::assertNotNull($reservation->getGuestLocaleChosenAt());
+    }
+
+    public function testSwitchToCzechIsRememberedAsCzech(): void
+    {
+        $this->client->request('GET', $this->url('?_locale=cs'));
+
+        self::assertSame('cs', $this->refreshed()->getGuestLocale());
+    }
+
+    public function testAutodetectedLanguageIsNotRemembered(): void
+    {
+        // Jazyk z prohlížeče není volba hosta — Čech s anglickým systémem
+        // by jinak dostával anglické e-maily.
+        $this->client->request('GET', $this->url(), [], [], ['HTTP_ACCEPT_LANGUAGE' => 'pl,en;q=0.8']);
+
+        $reservation = $this->refreshed();
+        self::assertNull($reservation->getGuestLocale());
+        self::assertNull($reservation->getGuestLocaleChosenAt());
+    }
+
+    public function testGuestChoiceOverridesOwnerChoice(): void
+    {
+        $em = static::getContainer()->get('doctrine')->getManager();
+        \assert($em instanceof EntityManagerInterface);
+        $this->reservation->setGuestLocale('cs');
+        $em->flush();
+
+        $this->client->request('GET', $this->url('?_locale=en'));
+
+        self::assertSame('en', $this->refreshed()->getGuestLocale());
     }
 
     public function testSessionRemembersChoiceAcrossRequests(): void

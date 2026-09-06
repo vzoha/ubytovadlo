@@ -154,10 +154,17 @@ class Reservation
 
     /**
      * Jazyk, ve kterém hostovi píšeme. `null` = odvodí se ze země v adrese
-     * (GuestLocaleResolver); vyplněná hodnota je ruční volba ubytovatele.
+     * (GuestLocaleResolver); vyplněná hodnota je volba ubytovatele nebo hosta.
      */
     #[ORM\Column(length: 5, nullable: true)]
     private ?string $guestLocale = null;
+
+    /**
+     * Kdy si jazyk zvolil sám host přepínačem v check-inu. Odlišuje jeho volbu
+     * od volby ubytovatele a nese čas pro časovou osu.
+     */
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $guestLocaleChosenAt = null;
 
     #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
     private bool $hasPet = false;
@@ -643,10 +650,27 @@ class Reservation
         return $this->guestLocale;
     }
 
+    /** Volba ubytovatele — přepíše i to, co si zvolil host. */
     public function setGuestLocale(?string $guestLocale): self
     {
         $value = $guestLocale !== null ? trim($guestLocale) : null;
         $this->guestLocale = $value === '' ? null : $value;
+        $this->guestLocaleChosenAt = null;
+        $this->touch();
+
+        return $this;
+    }
+
+    public function getGuestLocaleChosenAt(): ?\DateTimeImmutable
+    {
+        return $this->guestLocaleChosenAt;
+    }
+
+    /** Volba hosta z check-inu — má přednost před volbou ubytovatele. */
+    public function chooseGuestLocale(string $locale, \DateTimeImmutable $at): self
+    {
+        $this->guestLocale = $locale;
+        $this->guestLocaleChosenAt = $at;
         $this->touch();
 
         return $this;

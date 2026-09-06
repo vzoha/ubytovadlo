@@ -26,6 +26,18 @@ final class MessageLocales
         'en' => 'Angličtina',
     ];
 
+    /** Jazyky rozhraní, kterým píšeme česky. */
+    private const CZECH_SPEAKING = ['cs', 'sk'];
+
+    /**
+     * Jazyk rozhraní (check-in mluví šesti jazyky) → jazyk zpráv. Čeština
+     * a slovenština na češtinu, zbytek na angličtinu.
+     */
+    public static function fromInterfaceLocale(string $locale): string
+    {
+        return \in_array($locale, self::CZECH_SPEAKING, true) ? self::BASE : 'en';
+    }
+
     public static function isSupported(string $locale): bool
     {
         return isset(self::ALL[$locale]);

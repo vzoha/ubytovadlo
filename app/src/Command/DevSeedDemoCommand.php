@@ -42,6 +42,7 @@ use App\Enum\ReservationStatus;
 use App\Enum\UserRole;
 use App\Formatting\Money;
 use App\Invoice\InvoiceService;
+use App\Mail\MessageLocales;
 use App\Repository\CleaningRepository;
 use App\Task\TaskCatalog;
 use Doctrine\DBAL\Connection;
@@ -340,6 +341,28 @@ class DevSeedDemoCommand extends Command
             $r->setPriceCurrency($s['currency'] ?? 'CZK');
         }
 
+        $this->applyStayDetails($r, $s, $checkIn);
+        $this->applyOtaCommissionAndVat($r, $s);
+        $this->em->persist($r);
+
+        return $r;
+    }
+
+    /**
+     * Doprovodné údaje pobytu: jazyk zvolený hostem v check-inu, pes, postýlka
+     * a odečty elektřiny.
+     *
+     * @param array<string, mixed> $s
+     */
+    private function applyStayDetails(Reservation $r, array $s, \DateTimeImmutable $checkIn): void
+    {
+        if (isset($s['checkinLocale'])) {
+            $r->chooseGuestLocale(
+                MessageLocales::fromInterfaceLocale($s['checkinLocale']),
+                $checkIn->modify('-7 days'),
+            );
+        }
+
         $r->setHasPet($s['pet'] ?? false);
         if ($s['pet'] ?? false) {
             $r->setPetsNote('Malý pes, hlídaný.');
@@ -349,11 +372,6 @@ class DevSeedDemoCommand extends Command
         if (isset($s['vtKwh'])) {
             $r->setElectricity(ElectricityUsage::measured($s['vtKwh'], $s['ntKwh']));
         }
-
-        $this->applyOtaCommissionAndVat($r, $s);
-        $this->em->persist($r);
-
-        return $r;
     }
 
     /** @param array<string, mixed> $s */
@@ -620,6 +638,7 @@ class DevSeedDemoCommand extends Command
                 'ext' => '7000000201', 'in' => '2026-02-06', 'out' => '2026-02-09', 'name' => 'Klaus Müller',
                 'street' => 'Hauptstraße 5', 'city' => 'Passau', 'zip' => '94032', 'country' => 'DE',
                 'adults' => 2, 'price' => '210.00', 'currency' => 'EUR', 'acq' => 'Booking.com',
+                'checkinLocale' => 'de',
                 'vtKwh' => 28, 'ntKwh' => 18, 'clean' => [CleaningType::CLEANER_LAUNDRY, 800, 800], 'inv' => 'full',
             ],
             [

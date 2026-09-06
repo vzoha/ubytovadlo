@@ -45,7 +45,7 @@ class ReservationDetailsType extends AbstractType
                 'required' => false,
                 'placeholder' => 'Automaticky podle země',
                 'choices' => array_flip(MessageLocales::ALL),
-                'help' => 'Jazyk e-mailů hostovi. Bez volby: česky pro Česko a Slovensko, jinak anglicky.',
+                'help' => 'Jazyk e-mailů hostovi. Bez volby: česky pro Česko a Slovensko, jinak anglicky. Přepnutí jazyka hostem v check-inu má přednost.',
             ])
             ->add('guestsAdult', IntegerType::class, [
                 'label' => 'Dospělých',

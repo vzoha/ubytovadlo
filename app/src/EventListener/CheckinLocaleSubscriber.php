@@ -20,7 +20,8 @@ use Symfony\Component\HttpKernel\KernelEvents;
  * Volba jazyka pro veřejný online check-in. Token URL zůstává čistá (posílá se
  * hostovi e-mailem), takže jazyk nedržíme v cestě, ale rozhodujeme za běhu:
  *
- *   1. `?_locale=xx` (přepínač) → ulož do session a použij,
+ *   1. `?_locale=xx` (přepínač) → ulož do session, označ jako vědomou volbu
+ *      hosta (SWITCH_ATTRIBUTE) a použij,
  *   2. dřívější volba v session,
  *   3. autodetekce z hlavičky `Accept-Language` prohlížeče,
  *   4. výchozí jazyk aplikace.
@@ -30,6 +31,9 @@ use Symfony\Component\HttpKernel\KernelEvents;
  */
 final class CheckinLocaleSubscriber implements EventSubscriberInterface
 {
+    /** Atribut requestu: host jazyk vědomě přepnul, nešlo o odhad z prohlížeče. */
+    public const SWITCH_ATTRIBUTE = '_checkin_locale_switched';
+
     private const SESSION_KEY = '_checkin_locale';
 
     /**
@@ -59,6 +63,7 @@ final class CheckinLocaleSubscriber implements EventSubscriberInterface
             if ($request->hasSession()) {
                 $request->getSession()->set(self::SESSION_KEY, $requested);
             }
+            $request->attributes->set(self::SWITCH_ATTRIBUTE, true);
             $request->setLocale($requested);
 
             return;

@@ -8,6 +8,13 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Přidáno
 
+- **Jazyk zpráv podle volby hosta.** Když si host v online check-inu přepne jazyk,
+  rezervace si volbu zapamatuje a e-maily od nás chodí v něm — čeština a slovenština
+  vedou na české zprávy, ostatní jazyky na anglické. Volba hosta má přednost před
+  jazykem nastaveným na rezervaci; jazyk odhadnutý z prohlížeče se nezapisuje, rozhoduje
+  jen vědomé přepnutí. Na detailu rezervace je u jazyka zdroj (*podle hosta* / *ručně* /
+  *podle země*) a na časové ose okamžik, kdy si host jazyk zvolil.
+
 - **Zařízení v hlášení na Ubyport.** Nastavení → Ubyport drží pohromadě všechno
   z registrace u cizinecké policie: IDUB, kód, kontakt na ubytovatele a **název
   zařízení v hlášení** (nabídne se podle názvu objektu, dál žije samostatně).

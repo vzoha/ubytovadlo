@@ -129,7 +129,7 @@
                         <dt class="col-5 col-sm-4">Jazyk zpráv</dt>
                         <dd class="col-7 col-sm-8">
                             {{ guest_locale.forReservation(reservation) == 'en' ? 'angličtina' : 'čeština' }}
-                            <span class="text-muted small">({{ reservation.guestLocale ? 'ručně' : 'podle země' }})</span>
+                            <span class="text-muted small">({% if reservation.guestLocaleChosenAt %}podle hosta{% elseif reservation.guestLocale %}ručně{% else %}podle země{% endif %})</span>
                         </dd>
 
                         {% if reservation.guestBilling.companyName %}

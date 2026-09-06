@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace App\Timeline;
 
 use App\Entity\Reservation;
+use App\Mail\MessageLocales;
 use App\Repository\InvoiceRepository;
 use App\Repository\ReservationActionRepository;
 use App\Repository\ReservationNoteRepository;
@@ -91,6 +92,15 @@ class ReservationTimelineBuilder
 
         if ($reservation->getCheckinCompletedAt() !== null) {
             $items[] = TimelineItem::event($reservation->getCheckinCompletedAt(), '📋', 'Host dokončil online check-in');
+        }
+
+        if ($reservation->getGuestLocaleChosenAt() !== null) {
+            $items[] = TimelineItem::event(
+                $reservation->getGuestLocaleChosenAt(),
+                '🌐',
+                'Host si zvolil jazyk komunikace',
+                MessageLocales::label(MessageLocales::normalize($reservation->getGuestLocale())),
+            );
         }
 
         if ($reservation->getUbyportReport()->getExportedAt() !== null) {

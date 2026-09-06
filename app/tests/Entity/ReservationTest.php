@@ -57,4 +57,26 @@ final class ReservationTest extends TestCase
 
         self::assertSame($before, $r->getUpdatedAt());
     }
+
+    public function testOwnerLocaleChoiceReplacesGuestChoice(): void
+    {
+        $r = new Reservation(Channel::BOOKING, new \DateTimeImmutable('2026-08-10'));
+        $r->chooseGuestLocale('en', new \DateTimeImmutable('2026-08-01 10:00'));
+
+        $r->setGuestLocale('cs');
+
+        self::assertSame('cs', $r->getGuestLocale());
+        self::assertNull($r->getGuestLocaleChosenAt());
+    }
+
+    public function testGuestLocaleChoiceKeepsItsTime(): void
+    {
+        $r = new Reservation(Channel::BOOKING, new \DateTimeImmutable('2026-08-10'));
+        $at = new \DateTimeImmutable('2026-08-01 10:00');
+
+        $r->chooseGuestLocale('en', $at);
+
+        self::assertSame('en', $r->getGuestLocale());
+        self::assertSame($at, $r->getGuestLocaleChosenAt());
+    }
 }
