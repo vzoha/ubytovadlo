@@ -13,6 +13,7 @@ namespace App\Controller;
 
 use App\Booking\BookingExtranetParser;
 use App\Cashflow\IncomeUpserter;
+use App\Config\GuestRegistrationSettings;
 use App\Controller\Concern\ChecksCsrf;
 use App\Controller\Concern\ParsesRequestInput;
 use App\Currency\ReservationCzkPreviewResolver;
@@ -73,6 +74,7 @@ class ReservationController extends AbstractController
         private readonly DepositConfig $depositConfig,
         private readonly ReservationConfirmation $confirmation,
         private readonly GuestMessageTexts $guestMessageTexts,
+        private readonly GuestRegistrationSettings $guestRegistration,
     ) {
     }
 
@@ -159,6 +161,7 @@ class ReservationController extends AbstractController
             'deposit_applies' => $this->depositConfig->appliesTo($reservation->getBillingMode()),
             'deposit_amount' => $this->depositConfig->computeAmount($reservation->getPriceTotal()),
             'quick_messages' => $this->guestMessageTexts->forReservation($reservation),
+            'register_czech_guests' => $this->guestRegistration->registerCzechGuests(),
         ]);
     }
 

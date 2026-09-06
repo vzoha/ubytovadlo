@@ -345,6 +345,14 @@
                                 </tbody>
                             </table>
                         </div>
+                    {% elseif reservation.checkinCompletedAt %}
+                        <p class="text-muted small mb-2">
+                            {% if register_czech_guests %}
+                                Check-in je uzavřený bez záznamů v evidenční knize — doklady hostů doplň na místě.
+                            {% else %}
+                                Host uvedl, že jsou všichni Češi. Evidenční kniha vede jen cizince, proto je prázdná.
+                            {% endif %}
+                        </p>
                     {% else %}
                         <p class="text-muted small mb-2">Zatím žádný host nevyplnil check-in.</p>
                     {% endif %}

@@ -136,6 +136,12 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Opraveno
 
+- **Karta check-inu na detailu rezervace popisuje uzavřený check-in.** Když host
+  check-in dokončil a evidenční kniha zůstala prázdná, karta to řekne — buď že host
+  uvedl samé Čechy a kniha vede jen cizince, nebo (se zapnutou evidencí Čechů) že
+  doklady zbývá doplnit na místě. Výzva k vyplnění patří jen check-inu, který ještě
+  nikdo neuzavřel.
+
 - **Krok fakturace v check-inu mluví o vystavení faktury.** Host se dozví, že fakturu
   za pobyt vystavíme na jméno a adresu, které vyplní, a že u firmy patří do formuláře
   i její údaje.
