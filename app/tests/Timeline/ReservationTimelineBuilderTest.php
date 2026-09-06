@@ -15,6 +15,7 @@ use App\Entity\Embeddable\GuestContact;
 use App\Entity\Reservation;
 use App\Entity\ReservationAction;
 use App\Entity\ReservationNote;
+use App\Enum\ActionDelivery;
 use App\Enum\ActionType;
 use App\Enum\Channel;
 use App\Enum\NoteType;
@@ -116,6 +117,41 @@ final class ReservationTimelineBuilderTest extends KernelTestCase
         // Připomínka není zpráva hostovi — ikonu ani chování nemění.
         self::assertFalse($items[ActionType::CUSTOM_REMINDER->value]->byChat);
         self::assertSame(ActionType::CUSTOM_REMINDER->icon(), $items[ActionType::CUSTOM_REMINDER->value]->icon);
+    }
+
+    public function testManuallyClosedMessageShowsChatIcon(): void
+    {
+        // Host má e-mail, ale zprávu vyřídila ubytovatelka sama — osa ukazuje skutečnost.
+        $r = new Reservation(Channel::AIRBNB, new \DateTimeImmutable('+5 days'));
+        $r->setGuestName('Test');
+        $r->setGuestContact(new GuestContact('host@example.com'));
+        $this->em->persist($r);
+
+        $action = new ReservationAction($r, ActionType::PRE_ARRIVAL_MESSAGE, new \DateTimeImmutable('-1 day'));
+        $action->markDone('Vyřízeno ručně.', ActionDelivery::MANUAL);
+        $this->em->persist($action);
+        $this->em->flush();
+
+        $items = $this->actionsByType($this->builder->build($r));
+
+        self::assertSame('💬', $items[ActionType::PRE_ARRIVAL_MESSAGE->value]->icon);
+    }
+
+    public function testMessageSentByMailKeepsEnvelopeIcon(): void
+    {
+        $r = new Reservation(Channel::AIRBNB, new \DateTimeImmutable('+5 days'));
+        $r->setGuestName('Test');
+        $this->em->persist($r);
+
+        // Rezervace bez e-mailu, ale zpráva prokazatelně odešla poštou.
+        $action = new ReservationAction($r, ActionType::PRE_ARRIVAL_MESSAGE, new \DateTimeImmutable('-1 day'));
+        $action->markDone('Zpráva odeslána hostovi (host@example.com).', ActionDelivery::EMAIL);
+        $this->em->persist($action);
+        $this->em->flush();
+
+        $items = $this->actionsByType($this->builder->build($r));
+
+        self::assertSame(ActionType::PRE_ARRIVAL_MESSAGE->icon(), $items[ActionType::PRE_ARRIVAL_MESSAGE->value]->icon);
     }
 
     public function testMessageToGuestWithEmailStaysMail(): void

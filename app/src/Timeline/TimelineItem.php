@@ -13,6 +13,7 @@ namespace App\Timeline;
 
 use App\Entity\ReservationAction;
 use App\Entity\ReservationNote;
+use App\Enum\ActionDelivery;
 use App\Enum\ActionStatus;
 
 /**
@@ -86,14 +87,24 @@ final readonly class TimelineItem
         );
     }
 
-    /** Zpráva psaná do chatu portálu se od e-mailu pozná už na ose. */
+    /**
+     * Zpráva psaná do chatu portálu se od e-mailu pozná už na ose. Uzavřená akce
+     * ukazuje, jak dopadla (ručně vyřízená zpráva šla mimo aplikaci), otevřená to,
+     * kudy k hostovi povede.
+     */
     private static function actionIcon(ReservationAction $action, bool $byChat): string
     {
-        if ($byChat && $action->getType()->isGuestMessage()) {
-            return '💬';
+        if (!$action->getType()->isGuestMessage()) {
+            return $action->getType()->icon();
         }
 
-        return $action->getType()->icon();
+        $chat = match ($action->getDelivery()) {
+            ActionDelivery::MANUAL => true,
+            ActionDelivery::EMAIL => false,
+            null => $byChat,
+        };
+
+        return $chat ? '💬' : $action->getType()->icon();
     }
 
     /** Původ akce, a rozešel-li se výsledek s plánem, i původní termín. */

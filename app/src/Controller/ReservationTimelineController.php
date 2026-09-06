@@ -17,6 +17,7 @@ use App\Entity\Reservation;
 use App\Entity\ReservationAction;
 use App\Entity\ReservationNote;
 use App\Entity\User;
+use App\Enum\ActionDelivery;
 use App\Enum\ActionOrigin;
 use App\Enum\ActionStatus;
 use App\Enum\ActionType;
@@ -160,7 +161,8 @@ class ReservationTimelineController extends AbstractController
     {
         $this->assertCsrf($request, 'action-edit-' . $action->getId());
 
-        $action->markDone('Vyřízeno ručně.');
+        // Ručně uzavřená zpráva odešla mimo aplikaci — typicky v chatu portálu.
+        $action->markDone('Vyřízeno ručně.', ActionDelivery::MANUAL);
         $this->em->flush();
         $this->addFlash('success', 'Akce označena jako hotová.');
 

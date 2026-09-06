@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Enum\ActionDelivery;
 use App\Enum\ActionOrigin;
 use App\Enum\ActionStatus;
 use App\Enum\ActionType;
@@ -63,6 +64,9 @@ class ReservationAction
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $result = null;
+
+    #[ORM\Column(length: 16, nullable: true, enumType: ActionDelivery::class)]
+    private ?ActionDelivery $delivery = null;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeImmutable $createdAt;
@@ -165,14 +169,21 @@ class ReservationAction
         return $text !== '' ? $text : $this->type->label();
     }
 
-    public function markDone(?string $result = null): self
+    /** @param ActionDelivery|null $delivery jak zpráva k hostovi dorazila; null u akcí, které nic neodesílají */
+    public function markDone(?string $result = null, ?ActionDelivery $delivery = null): self
     {
         $this->status = ActionStatus::DONE;
         $this->executedAt = new \DateTimeImmutable();
         $this->result = $result;
+        $this->delivery = $delivery;
         $this->touch();
 
         return $this;
+    }
+
+    public function getDelivery(): ?ActionDelivery
+    {
+        return $this->delivery;
     }
 
     public function markFailed(string $result): self

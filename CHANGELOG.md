@@ -178,6 +178,10 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
   a označit hotové* text zkopíruje a akci na ose rovnou uzavře. Na přehledu
   čekajících zpráv drží rozlišení štítek *chat*.
 
+- **Uzavřená zpráva na ose ukazuje, jak dopadla.** Zpráva odeslaná poštou nese
+  ✉️, zpráva označená jako hotová ručně 💬 — vyřídila se mimo aplikaci, typicky
+  v chatu portálu. U dosud uzavřených akcí zůstává ikona podle kontaktu na hosta.
+
 - **Textová podoba zprávy je bez značek Markdownu.** Text vkládaný do chatu
   i textová část e-mailu mají nadpisy, tučné pasáže a odkazy převedené na čitelný
   prostý text (`Popisek: adresa`), odrážky zůstávají.

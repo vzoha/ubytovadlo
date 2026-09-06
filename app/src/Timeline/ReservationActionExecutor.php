@@ -14,6 +14,7 @@ namespace App\Timeline;
 use App\Entity\MessageTemplate;
 use App\Entity\Reservation;
 use App\Entity\ReservationAction;
+use App\Enum\ActionDelivery;
 use App\Enum\ActionType;
 use App\Enum\GuestMessageStatus;
 use App\Enum\InvoiceType;
@@ -249,7 +250,7 @@ class ReservationActionExecutor
         $message = $this->sender->send($action->getReservation(), $kind, [], [], $override);
 
         if ($message->getStatus() === GuestMessageStatus::SENT) {
-            $action->markDone(sprintf('Zpráva odeslána hostovi (%s).', $message->getToEmail()));
+            $action->markDone(sprintf('Zpráva odeslána hostovi (%s).', $message->getToEmail()), ActionDelivery::EMAIL);
         } else {
             $action->markFailed('Odeslání selhalo: ' . (string) $message->getError());
             $this->notifier->notify(OwnerNotificationType::GUEST_MESSAGE_FAILED, $action->getReservation(), [

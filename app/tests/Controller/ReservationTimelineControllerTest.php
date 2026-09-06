@@ -19,6 +19,7 @@ use App\Entity\Reservation;
 use App\Entity\ReservationAction;
 use App\Entity\ReservationNote;
 use App\Entity\User;
+use App\Enum\ActionDelivery;
 use App\Enum\ActionStatus;
 use App\Enum\ActionType;
 use App\Enum\Channel;
@@ -127,7 +128,9 @@ final class ReservationTimelineControllerTest extends WebTestCase
         self::assertResponseRedirects('/reservation/' . $r->getId());
 
         $repo = static::getContainer()->get(ReservationActionRepository::class);
-        self::assertSame(ActionStatus::DONE, $repo->find($action->getId())->getStatus());
+        $stored = $repo->find($action->getId());
+        self::assertSame(ActionStatus::DONE, $stored->getStatus());
+        self::assertSame(ActionDelivery::EMAIL, $stored->getDelivery());
 
         $sent = $this->em->getRepository(GuestMessage::class)->findOneBy(['reservation' => $r]);
         self::assertNotNull($sent);
@@ -218,6 +221,25 @@ final class ReservationTimelineControllerTest extends WebTestCase
         self::assertStringContainsString('Klíče budou ve schránce.', $data['text']);
         self::assertStringNotContainsString('<', $data['text']);
         self::assertSame(ActionType::CUSTOM_MESSAGE->label(), $data['label']);
+    }
+
+    public function testManualDoneRecordsDeliveryOutsideApp(): void
+    {
+        $r = $this->reservation();
+        $r->setGuestContact(new GuestContact('host@example.com'));
+        $action = new ReservationAction($r, ActionType::PRE_ARRIVAL_MESSAGE, new \DateTimeImmutable('+1 day'));
+        $this->em->persist($action);
+        $this->em->flush();
+
+        $crawler = $this->client->request('GET', '/reservation/' . $r->getId());
+        $this->client->submit($crawler->filter('form[action$="/action/' . $action->getId() . '/done"]')->form());
+
+        $stored = static::getContainer()->get(ReservationActionRepository::class)->find($action->getId());
+        self::assertSame(ActionDelivery::MANUAL, $stored->getDelivery());
+
+        // Osa pak u té zprávy ukazuje chat, i když host e-mail má.
+        $crawler = $this->client->request('GET', '/reservation/' . $r->getId());
+        self::assertContains('💬', $this->timelineIcons($crawler));
     }
 
     public function testChatMessageIsMarkedByIconAndCannotBeRescheduled(): void
