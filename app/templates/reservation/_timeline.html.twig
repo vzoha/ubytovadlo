@@ -41,7 +41,16 @@
                             {% if item.isOpenAction %}
                                 <div class="d-flex gap-1 mt-1 flex-wrap align-items-center">
                                     {% if item.action.type.sendsGuestMessage %}
-                                        {% if reservation.guestContact.email %}
+                                        {% if item.byChat %}
+                                            {# Bez e-mailu vede komunikace přes chat portálu — text se zkopíruje a vloží tam. #}
+                                            {% if quick_messages is not empty %}
+                                                <button class="btn btn-outline-primary btn-sm py-0" type="button"
+                                                        data-bs-toggle="modal" data-bs-target="#chatMessage"
+                                                        data-message-url="{{ path('reservation_action_preview', {id: item.action.id}) }}"
+                                                        data-done-url="{{ path('reservation_action_done', {id: item.action.id}) }}"
+                                                        data-done-token="{{ csrf_token('action-edit-' ~ item.action.id) }}">Zpráva do chatu</button>
+                                            {% endif %}
+                                        {% elseif reservation.guestContact.email %}
                                             <button class="btn btn-outline-secondary btn-sm py-0" type="button"
                                                     data-bs-toggle="modal" data-bs-target="#modalMessagePreview"
                                                     data-preview-url="{{ path('reservation_action_preview', {id: item.action.id}) }}">Náhled</button>
@@ -49,21 +58,20 @@
                                                 <input type="hidden" name="_token" value="{{ csrf_token('action-edit-' ~ item.action.id) }}">
                                                 <button class="btn btn-outline-primary btn-sm py-0">Odeslat</button>
                                             </form>
-                                        {% elseif reservation.channel.isOta and quick_messages is not empty %}
-                                            {# Bez e-mailu vede komunikace přes chat portálu — text se zkopíruje a vloží tam. #}
-                                            <button class="btn btn-outline-primary btn-sm py-0" type="button"
-                                                    data-bs-toggle="modal" data-bs-target="#chatMessage">Zpráva do chatu</button>
                                         {% endif %}
                                     {% endif %}
                                     <form method="post" action="{{ path('reservation_action_done', {id: item.action.id}) }}" class="d-inline">
                                         <input type="hidden" name="_token" value="{{ csrf_token('action-edit-' ~ item.action.id) }}">
                                         <button class="btn btn-outline-success btn-sm py-0">Hotovo</button>
                                     </form>
-                                    <form method="post" action="{{ path('reservation_action_reschedule', {id: item.action.id}) }}" class="d-inline d-flex gap-1">
-                                        <input type="hidden" name="_token" value="{{ csrf_token('action-edit-' ~ item.action.id) }}">
-                                        <input type="datetime-local" name="scheduled_for" class="form-control form-control-sm py-0" value="{{ item.at|date('Y-m-d\\TH:i') }}" style="width:12rem">
-                                        <button class="btn btn-outline-secondary btn-sm py-0">Odložit</button>
-                                    </form>
+                                    {% if item.action.type.isReminder %}
+                                        {# Termín se posouvá jen u hlídaných termínů; zprávu buď pošleš, nebo zrušíš. #}
+                                        <form method="post" action="{{ path('reservation_action_reschedule', {id: item.action.id}) }}" class="d-inline d-flex gap-1">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('action-edit-' ~ item.action.id) }}">
+                                            <input type="datetime-local" name="scheduled_for" class="form-control form-control-sm py-0" value="{{ item.at|date('Y-m-d\\TH:i') }}" style="width:12rem">
+                                            <button class="btn btn-outline-secondary btn-sm py-0">Odložit</button>
+                                        </form>
+                                    {% endif %}
                                     <form method="post" action="{{ path('reservation_action_cancel', {id: item.action.id}) }}" class="d-inline" onsubmit="return confirm('Zrušit tuto akci?');">
                                         <input type="hidden" name="_token" value="{{ csrf_token('action-edit-' ~ item.action.id) }}">
                                         <button class="btn btn-outline-danger btn-sm py-0">Zrušit</button>

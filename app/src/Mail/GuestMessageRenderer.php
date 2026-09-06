@@ -57,7 +57,8 @@ final class GuestMessageRenderer
 
         $html = $this->layout->render($subject, $bodyMd, $footerMd, $logoSrc);
 
-        $text = trim($bodyMd . ($footerMd !== '' ? "\n\n—\n" . $footerMd : ''));
+        $plainBody = $this->layout->bodyToText($bodyMd);
+        $text = trim($plainBody . ($footerMd !== '' ? "\n\n—\n" . $this->layout->bodyToText($footerMd) : ''));
 
         return new RenderedMessage($subject, $html, $text);
     }

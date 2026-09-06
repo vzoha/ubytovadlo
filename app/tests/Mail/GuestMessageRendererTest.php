@@ -68,6 +68,34 @@ final class GuestMessageRendererTest extends KernelTestCase
         self::assertStringContainsString('bgcolor="#0ea5e9"', $rendered->html);
     }
 
+    public function testPlainTextPartDropsMarkdownMarkup(): void
+    {
+        $template = new MessageTemplate(
+            MessageKind::CUSTOM,
+            'Předmět',
+            "## Pokyny\n\n**Příjezd:** od 15:00\n\n[Mapa](https://example.com/mapa)\n\n[[button:Check-in|https://example.com/checkin]]",
+        );
+
+        $rendered = $this->renderer->renderTemplate($template, $this->sampleFactory->create());
+
+        self::assertStringContainsString('Pokyny', $rendered->text);
+        self::assertStringContainsString('Příjezd: od 15:00', $rendered->text);
+        self::assertStringContainsString('Mapa: https://example.com/mapa', $rendered->text);
+        self::assertStringContainsString('Check-in: https://example.com/checkin', $rendered->text);
+        self::assertStringNotContainsString('**', $rendered->text);
+        self::assertStringNotContainsString('##', $rendered->text);
+        self::assertStringNotContainsString('[[', $rendered->text);
+    }
+
+    public function testPlainTextKeepsBulletList(): void
+    {
+        $template = new MessageTemplate(MessageKind::CUSTOM, 'Předmět', "Vezměte s sebou:\n\n- ručník\n- dobrou náladu");
+
+        $rendered = $this->renderer->renderTemplate($template, $this->sampleFactory->create());
+
+        self::assertStringContainsString("- ručník\n- dobrou náladu", $rendered->text);
+    }
+
     public function testCtaButtonEscapesLabelAndUrl(): void
     {
         $template = new MessageTemplate(

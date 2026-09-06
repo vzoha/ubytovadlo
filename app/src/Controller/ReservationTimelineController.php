@@ -120,6 +120,13 @@ class ReservationTimelineController extends AbstractController
     {
         $this->assertCsrf($request, 'action-edit-' . $action->getId());
 
+        // Posouvá se hlídaný termín; zpráva hostovi se odesílá, nebo ruší.
+        if (!$action->getType()->isReminder()) {
+            $this->addFlash('warning', 'Zprávu hostovi nelze odložit.');
+
+            return $this->redirectToRoute('reservation_detail', ['id' => $action->getReservation()->getId()]);
+        }
+
         // Prázdný vstup znamená „teď" (`new \DateTimeImmutable('')`), tak to drž.
         $whenRaw = trim((string) $request->request->get('scheduled_for', ''));
         $when = $whenRaw !== '' ? $this->parseDateOrNull($whenRaw) : new \DateTimeImmutable();

@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace App\Timeline;
 
 use App\Entity\Reservation;
+use App\Mail\GuestMessageDelivery;
 use App\Mail\MessageLocales;
 use App\Repository\InvoiceRepository;
 use App\Repository\ReservationActionRepository;
@@ -27,6 +28,7 @@ class ReservationTimelineBuilder
         private readonly ReservationNoteRepository $notes,
         private readonly ReservationActionRepository $actions,
         private readonly InvoiceRepository $invoices,
+        private readonly GuestMessageDelivery $delivery,
     ) {
     }
 
@@ -41,8 +43,9 @@ class ReservationTimelineBuilder
             $items[] = TimelineItem::fromNote($note);
         }
 
+        $byChat = $this->delivery->byChat($reservation);
         foreach ($this->actions->findForReservation($reservation) as $action) {
-            $items[] = TimelineItem::fromAction($action);
+            $items[] = TimelineItem::fromAction($action, $byChat);
         }
 
         usort($items, static function (TimelineItem $a, TimelineItem $b): int {

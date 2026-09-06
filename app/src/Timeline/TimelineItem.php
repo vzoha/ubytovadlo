@@ -23,6 +23,9 @@ use App\Enum\ActionStatus;
  */
 final readonly class TimelineItem
 {
+    /** Menší odchylka od plánu je běžný posun cronu — ta se na ose nepřipomíná. */
+    private const int PLAN_DRIFT_SECONDS = 3600;
+
     /**
      * @param 'event'|'note'|'action' $kind
      */
@@ -34,8 +37,8 @@ final readonly class TimelineItem
         public ?string $body = null,
         public ?string $meta = null,
         public ?ReservationAction $action = null,
-        public ?ActionStatus $status = null,
         public bool $dateOnly = false,
+        public bool $byChat = false,
     ) {
     }
 
@@ -61,23 +64,60 @@ final readonly class TimelineItem
         );
     }
 
-    public static function fromAction(ReservationAction $action): self
+    /**
+     * @param bool $byChat zpráva k hostovi vede chatem portálu, ne e-mailem
+     */
+    public static function fromAction(ReservationAction $action, bool $byChat = false): self
     {
+        // Uzavřená akce patří na osu časem, kdy se opravdu stala (ruční potvrzení
+        // přijde často až po termínu); otevřená stojí na svém termínu.
+        $at = $action->getExecutedAt() ?? $action->getScheduledFor();
+        $byChat = $byChat && $action->getType()->sendsGuestMessage();
+
         return new self(
-            $action->getScheduledFor(),
+            $at,
             'action',
-            $action->getType()->icon(),
+            self::actionIcon($action, $byChat),
             $action->getType()->label(),
             $action->getLabel() !== $action->getType()->label() ? $action->getLabel() : null,
-            $action->getOrigin()->label(),
+            self::actionMeta($action, $at),
             $action,
-            $action->getStatus(),
+            byChat: $byChat,
         );
+    }
+
+    /** Zpráva psaná do chatu portálu se od e-mailu pozná už na ose. */
+    private static function actionIcon(ReservationAction $action, bool $byChat): string
+    {
+        if ($byChat && $action->getType()->isGuestMessage()) {
+            return '💬';
+        }
+
+        return $action->getType()->icon();
+    }
+
+    /** Původ akce, a rozešel-li se výsledek s plánem, i původní termín. */
+    private static function actionMeta(ReservationAction $action, \DateTimeImmutable $at): string
+    {
+        $meta = $action->getOrigin()->label();
+        $planned = $action->getScheduledFor();
+
+        if (abs($at->getTimestamp() - $planned->getTimestamp()) >= self::PLAN_DRIFT_SECONDS) {
+            $meta .= ' · plánováno ' . $planned->format('d. m. Y H:i');
+        }
+
+        return $meta;
+    }
+
+    /** Stav akce; u události ani poznámky žádný není. */
+    public function getStatus(): ?ActionStatus
+    {
+        return $this->action?->getStatus();
     }
 
     /** Akce, která je stále otevřená (PLANNED) → v UI nabídnout odložit/zrušit/spustit. */
     public function isOpenAction(): bool
     {
-        return $this->kind === 'action' && $this->status === ActionStatus::PLANNED;
+        return $this->getStatus() === ActionStatus::PLANNED;
     }
 }

@@ -52,16 +52,27 @@ final class EmailLayoutRenderer
     }
 
     /**
-     * Tělo pro textovou (text/plain) část e-mailu: CTA tokeny `[[button:Popisek|url]]`
-     * převede na čitelné „Popisek: url" (v prostém textu tlačítko nedává smysl).
+     * Tělo pro čtení bez formátování — textová část e-mailu i text vkládaný
+     * do chatu portálu. CTA tokeny `[[button:Popisek|url]]` a odkazy převede
+     * na čitelné „Popisek: url", značky Markdownu odstraní.
+     *
+     * @var array<string, string> vzor → náhrada
      */
+    private const array PLAIN_TEXT_RULES = [
+        '/\[\[button:\s*([^|\]]+?)\s*\|\s*([^\]]+?)\s*\]\]/u' => '$1: $2',
+        '/\[([^\]]+)\]\(\s*([^)\s]+)[^)]*\)/u' => '$1: $2',
+        '/^\s{0,3}#{1,6}\s*/mu' => '',
+        '/(\*\*|__)(.+?)\1/su' => '$2',
+        '/(?<!\*)\*([^*\n]+)\*(?!\*)/u' => '$1',
+    ];
+
     public function bodyToText(string $markdown): string
     {
-        return preg_replace(
-            '/\[\[button:\s*([^|\]]+?)\s*\|\s*([^\]]+?)\s*\]\]/u',
-            '$1: $2',
-            $markdown,
-        ) ?? $markdown;
+        foreach (self::PLAIN_TEXT_RULES as $pattern => $replacement) {
+            $markdown = preg_replace($pattern, $replacement, $markdown) ?? $markdown;
+        }
+
+        return $markdown;
     }
 
     /**

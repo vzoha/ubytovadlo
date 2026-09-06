@@ -69,6 +69,15 @@ enum ActionType: string
         };
     }
 
+    /**
+     * Hlídaný termín ubytovatelky, ne zpráva hostovi. Takovou akci má smysl
+     * posunout na jindy — dokud je otevřená, hlásí se na ose i na přehledu.
+     */
+    public function isReminder(): bool
+    {
+        return !$this->isGuestMessage();
+    }
+
     /** Akce, kterou lze z osy ručně odeslat hostovi e-mailem (má svou šablonu). */
     public function sendsGuestMessage(): bool
     {

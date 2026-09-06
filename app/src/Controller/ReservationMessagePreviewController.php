@@ -21,8 +21,9 @@ use Symfony\Component\Routing\Attribute\Route;
 
 /**
  * Náhled zprávy, kterou naplánovaná akce odešle hostovi — s daty té rezervace,
- * stejnou cestou jako reálné odeslání. Vrací JSON pro modal na časové ose:
- * příjemce, předmět a HTML těla (do iframe, ať styly e-mailu nesahají na appku).
+ * stejnou cestou jako reálné odeslání. Vrací JSON pro modaly na časové ose:
+ * příjemce, předmět a HTML těla (do iframe, ať styly e-mailu nesahají na appku)
+ * a textovou podobu pro vložení do chatu portálu.
  */
 class ReservationMessagePreviewController extends AbstractController
 {
@@ -46,6 +47,8 @@ class ReservationMessagePreviewController extends AbstractController
             'to' => (string) $action->getReservation()->getGuestContact()->getEmail(),
             'subject' => $rendered->subject,
             'html' => $rendered->html,
+            'text' => $rendered->text,
+            'label' => $action->getType()->label(),
         ]);
     }
 }

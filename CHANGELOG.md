@@ -171,6 +171,27 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Změněno
 
+- **Zpráva do chatu portálu vychází z akce na časové ose.** Rezervace z portálu,
+  u které host nesdílí e-mail, se s hostem domlouvá chatem: akce s takovou zprávou
+  nese na ose ikonu 💬 (e-mailová ✉️) a okno *Zpráva do chatu* je otevřené na textu
+  té akce — s možností přepnout na kteroukoli rychlou zprávu. Tlačítko *Zkopírovat
+  a označit hotové* text zkopíruje a akci na ose rovnou uzavře. Na přehledu
+  čekajících zpráv drží rozlišení štítek *chat*.
+
+- **Textová podoba zprávy je bez značek Markdownu.** Text vkládaný do chatu
+  i textová část e-mailu mají nadpisy, tučné pasáže a odkazy převedené na čitelný
+  prostý text (`Popisek: adresa`), odrážky zůstávají.
+
+- **Odložit se nabízí u hlídaných termínů.** Připomínku doplatku, vystavení
+  faktury, hlášení na Ubyport i vlastní připomínku jde posunout na jindy, aby
+  se do té doby nehlásily. U zprávy hostovi zůstává *Odeslat* (nebo *Zpráva do
+  chatu*), *Hotovo* a *Zrušit*.
+
+- **Uzavřená akce stojí na časové ose v čase, kdy se stala.** Zpráva potvrzená
+  ručně (třeba po odeslání v chatu portálu) sedí na ose tam, kdy jsi ji potvrdil,
+  ne v naplánovaném termínu. Liší-li se výsledek od plánu o víc než hodinu, je
+  u akce vidět i původní termín. Otevřená akce zůstává na svém termínu.
+
 - **Po přihlášení na nenastavené instanci otevře správce průvodce nastavením.**
   Nabízí se, dokud zbývá co nastavit a dokud ho správce tlačítkem *Hotovo*
   neuzavře; pak se spouští z karty na přehledu. Uklízečka ani provozní správce

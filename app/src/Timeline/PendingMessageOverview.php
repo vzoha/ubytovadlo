@@ -14,6 +14,7 @@ namespace App\Timeline;
 use App\Entity\Reservation;
 use App\Entity\ReservationAction;
 use App\Enum\ActionType;
+use App\Mail\GuestMessageDelivery;
 use App\Repository\ReservationActionRepository;
 
 /**
@@ -25,6 +26,7 @@ final class PendingMessageOverview
 {
     public function __construct(
         private readonly ReservationActionRepository $actions,
+        private readonly GuestMessageDelivery $delivery,
     ) {
     }
 
@@ -50,7 +52,7 @@ final class PendingMessageOverview
                 'reservation' => $reservation,
                 'action' => $action,
                 // Bez e-mailu zbývá chat portálu — karta to říká rovnou.
-                'byChat' => $reservation->getGuestContact()->getEmail() === null,
+                'byChat' => $this->delivery->byChat($reservation),
                 'overdue' => $action->getScheduledFor() < $today,
             ];
         }

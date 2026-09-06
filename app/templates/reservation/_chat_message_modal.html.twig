@@ -25,11 +25,78 @@
                 {% else %}
                     <span></span>
                 {% endif %}
-                <span class="d-flex gap-2">
+                <span class="d-flex flex-wrap gap-2 justify-content-end">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Zavřít</button>
                     <button type="button" class="btn btn-primary" data-copy="#chat-message-text">Zkopírovat</button>
+                    {# Zpráva z časové osy se po vložení do chatu rovnou uzavře. #}
+                    <form method="post" data-chat-done hidden>
+                        <input type="hidden" name="_token" value="">
+                        <button type="button" class="btn btn-outline-success" data-chat-copy-done>Zkopírovat a označit hotové</button>
+                    </form>
                 </span>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+    (function () {
+        const modal = document.getElementById('chatMessage');
+        const select = modal.querySelector('#chat-message-template');
+        const text = modal.querySelector('#chat-message-text');
+        const doneForm = modal.querySelector('[data-chat-done]');
+        const doneButton = modal.querySelector('[data-chat-copy-done]');
+        const quick = JSON.parse(select.dataset.chatTemplates);
+        const ACTION = 'action';
+        let actionText = '';
+
+        function fill() {
+            text.value = select.value === ACTION ? actionText : quick[select.value].text;
+        }
+
+        function dropActionOption() {
+            const option = select.querySelector('option[value="' + ACTION + '"]');
+            if (option) option.remove();
+        }
+
+        select.addEventListener('change', fill);
+
+        modal.addEventListener('show.bs.modal', async function (event) {
+            const source = event.relatedTarget ? event.relatedTarget.dataset : {};
+            dropActionOption();
+            doneForm.hidden = true;
+
+            if (!source.doneUrl) {
+                select.selectedIndex = 0;
+                fill();
+                return;
+            }
+
+            doneForm.action = source.doneUrl;
+            doneForm.querySelector('input[name="_token"]').value = source.doneToken;
+            doneForm.hidden = false;
+            select.selectedIndex = 0;
+            fill();
+
+            try {
+                const res = await fetch(source.messageUrl);
+                if (!res.ok) throw new Error(res.status);
+                const data = await res.json();
+                actionText = data.text;
+                select.prepend(new Option(data.label, ACTION, true, true));
+                fill();
+            } catch (e) {
+                // Text akce se nenačetl — zůstávají rychlé zprávy.
+            }
+        });
+
+        doneButton.addEventListener('click', function () {
+            navigator.clipboard.writeText(text.value).then(function () {
+                doneForm.submit();
+            }).catch(function () {
+                // Schránka není k dispozici — text zůstane vybraný ke zkopírování ručně.
+                text.select();
+            });
+        });
+    })();
+</script>

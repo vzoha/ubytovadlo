@@ -31,6 +31,7 @@ use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 final class ReservationTimelineControllerTest extends WebTestCase
@@ -195,7 +196,98 @@ final class ReservationTimelineControllerTest extends WebTestCase
         $crawler = $this->client->request('GET', '/reservation/' . $r->getId());
 
         self::assertCount(0, $crawler->filter('form[action$="/send"]'), 'Bez e-mailu se zpráva odeslat nedá');
-        self::assertGreaterThan(0, $crawler->filter('button[data-bs-target="#chatMessage"]')->count());
+        $chatButton = $crawler->filter('.timeline button[data-bs-target="#chatMessage"]');
+        self::assertCount(1, $chatButton);
+        // Modal si podle akce natáhne její text a umí ji rovnou uzavřít.
+        self::assertStringEndsWith('/nahled', (string) $chatButton->attr('data-message-url'));
+        self::assertStringEndsWith('/done', (string) $chatButton->attr('data-done-url'));
+        self::assertNotSame('', (string) $chatButton->attr('data-done-token'));
+    }
+
+    public function testPreviewCarriesPlainTextForChat(): void
+    {
+        $r = $this->reservation();
+        $action = new ReservationAction($r, ActionType::CUSTOM_MESSAGE, new \DateTimeImmutable('+1 day'));
+        $action->setPayload(['text' => 'Klíče budou ve schránce.']);
+        $this->em->persist($action);
+        $this->em->flush();
+
+        $this->client->request('GET', '/reservation/action/' . $action->getId() . '/nahled');
+
+        $data = json_decode((string) $this->client->getResponse()->getContent(), true);
+        self::assertStringContainsString('Klíče budou ve schránce.', $data['text']);
+        self::assertStringNotContainsString('<', $data['text']);
+        self::assertSame(ActionType::CUSTOM_MESSAGE->label(), $data['label']);
+    }
+
+    public function testChatMessageIsMarkedByIconAndCannotBeRescheduled(): void
+    {
+        $this->em->persist(new QuickMessage('Uvítání', 'Dobrý den.'));
+        $r = new Reservation(Channel::AIRBNB, new \DateTimeImmutable('+5 days'));
+        $r->setCheckOut(new \DateTimeImmutable('+7 days'));
+        $r->setStatus(ReservationStatus::CONFIRMED);
+        $r->setGuestName('Chatový Host');
+        $this->em->persist($r);
+        $message = new ReservationAction($r, ActionType::PRE_ARRIVAL_MESSAGE, new \DateTimeImmutable('+1 day'));
+        $reminder = new ReservationAction($r, ActionType::CUSTOM_REMINDER, new \DateTimeImmutable('+2 days'));
+        $this->em->persist($message);
+        $this->em->persist($reminder);
+        $this->em->flush();
+
+        $crawler = $this->client->request('GET', '/reservation/' . $r->getId());
+
+        self::assertContains('💬', $this->timelineIcons($crawler));
+        self::assertCount(0, $crawler->filter('form[action$="/action/' . $message->getId() . '/reschedule"]'));
+        self::assertCount(1, $crawler->filter('form[action$="/action/' . $reminder->getId() . '/reschedule"]'));
+    }
+
+    public function testEmailMessageKeepsEnvelopeIconAndOffersNoReschedule(): void
+    {
+        $r = $this->reservation();
+        $r->setGuestContact(new GuestContact('host@example.com'));
+        $action = new ReservationAction($r, ActionType::PRE_ARRIVAL_MESSAGE, new \DateTimeImmutable('+1 day'));
+        $this->em->persist($action);
+        $this->em->flush();
+
+        $crawler = $this->client->request('GET', '/reservation/' . $r->getId());
+
+        $icons = $this->timelineIcons($crawler);
+        self::assertContains('✉️', $icons);
+        self::assertNotContains('💬', $icons);
+        self::assertCount(0, $crawler->filter('form[action$="/action/' . $action->getId() . '/reschedule"]'));
+    }
+
+    public function testReschedulingGuestMessageIsRefused(): void
+    {
+        $r = $this->reservation();
+        $when = new \DateTimeImmutable('+1 day');
+        $action = new ReservationAction($r, ActionType::PRE_ARRIVAL_MESSAGE, $when);
+        $this->em->persist($action);
+        $this->em->flush();
+
+        // Token akce drží i formulář zrušení — osa jiný pro odložení zprávy nenabízí.
+        $crawler = $this->client->request('GET', '/reservation/' . $r->getId());
+        $token = $crawler->filter('form[action$="/action/' . $action->getId() . '/cancel"] input[name="_token"]')->attr('value');
+
+        $this->client->request('POST', '/reservation/action/' . $action->getId() . '/reschedule', [
+            '_token' => $token,
+            'scheduled_for' => (new \DateTimeImmutable('+9 days'))->format('Y-m-d\\TH:i'),
+        ]);
+
+        self::assertResponseRedirects('/reservation/' . $r->getId());
+
+        $repo = static::getContainer()->get(ReservationActionRepository::class);
+        $stored = $repo->find($action->getId());
+        self::assertSame($when->format('Y-m-d H:i'), $stored->getScheduledFor()->format('Y-m-d H:i'));
+        self::assertSame(ActionStatus::PLANNED, $stored->getStatus());
+    }
+
+    /**
+     * @return list<string> ikony položek časové osy
+     */
+    private function timelineIcons(Crawler $crawler): array
+    {
+        return $crawler->filter('.timeline .fs-5')->each(static fn (Crawler $node): string => trim($node->text()));
     }
 
     private function reservation(): Reservation
