@@ -27,8 +27,8 @@
         .email-body blockquote { margin:0 0 16px; padding:2px 16px; border-left:3px solid {{ theme.accent }}; color:#52525b; }
         .email-body hr { border:0; border-top:1px solid #e4e4e7; margin:24px 0; }
         .email-body code { background:#f4f4f5; padding:1px 5px; border-radius:4px; font-size:13px; }
-        .email-footer { font-size:13px; line-height:1.6; color:rgba(255,255,255,0.82); }
-        .email-footer p { margin:0 0 6px; }
+        .email-footer { font-size:13px; line-height:1.45; color:rgba(255,255,255,0.82); }
+        .email-footer p { margin:0 0 3px; }
         .email-footer p:last-child { margin-bottom:0; }
         .email-footer a { color:#ffffff; text-decoration:underline; }
     </style>
@@ -55,7 +55,7 @@
                     </tr>
                     <tr>
                         <td align="center" style="background-color:{{ theme.primary }}; padding:26px 32px;">
-                            <div style="color:#ffffff; font-size:15px; font-weight:700; margin-bottom:{{ footer_html ? '12px' : '0' }};">{{ sender_name }}</div>
+                            <div style="color:#ffffff; font-size:15px; font-weight:700; margin-bottom:{{ footer_html ? '9px' : '0' }};">{{ sender_name }}</div>
                             {% if footer_html %}
                                 <div class="email-footer">{{ footer_html|raw }}</div>
                             {% endif %}

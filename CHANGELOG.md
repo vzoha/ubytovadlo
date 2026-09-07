@@ -13,6 +13,11 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
   jak dorazí hostovi.
   Renderuje se stejnou cestou jako reálné odeslání.
 
+### Změněno
+
+- **Patička e-mailu drží řádky u sebe.** Kontakty a odkazy pod názvem ubytování mají
+  užší řádkování i mezery mezi odstavci, takže patička působí jako jeden blok.
+
 ### Opraveno
 
 - **Výplata z portálu na časové ose ukazuje jen datum.** Nese datum bez času, takže se
