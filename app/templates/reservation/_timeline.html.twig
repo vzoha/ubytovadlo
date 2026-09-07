@@ -60,7 +60,7 @@
                                         {% elseif reservation.guestContact.hasEmail %}
                                             <button class="btn btn-outline-secondary btn-sm py-0" type="button"
                                                     data-bs-toggle="modal" data-bs-target="#modalMessagePreview"
-                                                    data-preview-url="{{ path('reservation_action_preview', {id: item.action.id}) }}">Náhled</button>
+                                                    data-preview-url="{{ path('reservation_action_preview', {id: item.action.id}) }}">Náhled e-mailu</button>
                                             <form method="post" action="{{ path('reservation_action_send', {id: item.action.id}) }}" class="d-inline" onsubmit="return confirm('Odeslat zprávu hostovi teď?');">
                                                 <input type="hidden" name="_token" value="{{ csrf_token('action-edit-' ~ item.action.id) }}">
                                                 <button class="btn btn-outline-primary btn-sm py-0">Odeslat</button>
@@ -168,7 +168,7 @@
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 class="modal-title h6 mb-0" id="modalMessagePreviewLabel">Náhled zprávy</h2>
+                <h2 class="modal-title h6 mb-0" id="modalMessagePreviewLabel">Náhled e-mailu</h2>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zavřít"></button>
             </div>
             <div class="modal-body">
@@ -180,7 +180,7 @@
                     <dt class="col-3 col-sm-2 fw-normal text-muted d-none" data-preview-attachment-label>Příloha</dt>
                     <dd class="col-9 col-sm-10 mb-0 d-none" data-preview-attachment></dd>
                 </dl>
-                <iframe data-preview-frame title="Náhled zprávy hostovi" style="width:100%; height:60vh; border:1px solid #dee2e6; border-radius:6px; background:#fff;"></iframe>
+                <iframe data-preview-frame title="Náhled e-mailu hostovi" style="width:100%; height:60vh; border:1px solid #dee2e6; border-radius:6px; background:#fff;"></iframe>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Zavřít</button>

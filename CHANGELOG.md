@@ -8,8 +8,9 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Přidáno
 
-- **Náhled e-mailu s fakturou.** U vystavené faktury je vedle odeslání tlačítko *Náhled* —
-  ukáže adresu příjemce, předmět, přiložený doklad a celý e-mail tak, jak dorazí hostovi.
+- **Náhled e-mailu s fakturou.** U vystavené faktury je vedle odeslání tlačítko
+  *Náhled e-mailu* — ukáže adresu příjemce, předmět, přiložený doklad a celý e-mail tak,
+  jak dorazí hostovi.
   Renderuje se stejnou cestou jako reálné odeslání.
 
 ### Opraveno
