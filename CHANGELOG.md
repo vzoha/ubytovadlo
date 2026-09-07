@@ -4,6 +4,19 @@ Všechny podstatné změny v tomto projektu se zaznamenávají sem.
 Formát vychází z [Keep a Changelog](https://keepachangelog.com/cs/1.1.0/),
 verzování dle [SemVer](https://semver.org/lang/cs/).
 
+## [Unreleased]
+
+### Přidáno
+
+- **Náhled e-mailu s fakturou.** U vystavené faktury je vedle odeslání tlačítko *Náhled* —
+  ukáže adresu příjemce, předmět, přiložený doklad a celý e-mail tak, jak dorazí hostovi.
+  Renderuje se stejnou cestou jako reálné odeslání.
+
+### Opraveno
+
+- **Výplata z portálu na časové ose ukazuje jen datum.** Nese datum bez času, takže se
+  u ní netiskne půlnoc.
+
 ## [0.12.0] — 2026-09-07
 
 ### Přidáno

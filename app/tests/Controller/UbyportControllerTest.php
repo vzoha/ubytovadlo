@@ -14,6 +14,7 @@ namespace App\Tests\Controller;
 use App\Entity\AccommodationProfile;
 use App\Entity\Embeddable\PropertyAddress;
 use App\Entity\GuestDocument;
+use App\Entity\Invoice;
 use App\Entity\Reservation;
 use App\Entity\User;
 use App\Enum\Channel;
@@ -38,6 +39,8 @@ final class UbyportControllerTest extends WebTestCase
         $this->em = $em;
 
         $this->em->createQuery('DELETE FROM ' . GuestDocument::class . ' g')->execute();
+        // Faktura drží rezervaci cizím klíčem (ON DELETE RESTRICT) — musí jít první.
+        $this->em->createQuery('DELETE FROM ' . Invoice::class . ' i')->execute();
         $this->em->createQuery('DELETE FROM ' . Reservation::class . ' r')->execute();
         $this->em->createQuery('DELETE FROM ' . AccommodationProfile::class . ' p')->execute();
         $this->em->createQuery('DELETE FROM ' . User::class . ' u')->execute();

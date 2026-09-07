@@ -120,7 +120,8 @@ class ReservationTimelineBuilder
         }
 
         if ($reservation->getPayoutSentAt() !== null) {
-            $items[] = TimelineItem::event($reservation->getPayoutSentAt(), '💸', 'OTA odeslala výplatu');
+            // Výplata nese jen datum — čas 00:00 by na ose tvrdil, co nevíme.
+            $items[] = TimelineItem::event($reservation->getPayoutSentAt(), '💸', 'OTA odeslala výplatu', dateOnly: true);
         }
 
         return $items;

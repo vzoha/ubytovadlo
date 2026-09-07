@@ -23,6 +23,7 @@ use App\Enum\ActionDelivery;
 use App\Enum\ActionStatus;
 use App\Enum\ActionType;
 use App\Enum\Channel;
+use App\Enum\InvoiceType;
 use App\Enum\MessageKind;
 use App\Enum\ReservationStatus;
 use App\Mail\MailSettingsProvider;
@@ -310,6 +311,37 @@ final class ReservationTimelineControllerTest extends WebTestCase
     private function timelineIcons(Crawler $crawler): array
     {
         return $crawler->filter('.timeline .fs-5')->each(static fn (Crawler $node): string => trim($node->text()));
+    }
+
+    /**
+     * Náhled e-mailu s fakturou musí ukázat totéž, co odejde — adresu, předmět
+     * z šablony i přílohu s dokladem.
+     */
+    public function testInvoiceEmailPreviewShowsRecipientSubjectAndAttachment(): void
+    {
+        $r = $this->reservation();
+        $r->setGuestContact(new GuestContact('host@example.com'));
+        $invoice = new Invoice(
+            '2026123',
+            2026,
+            123,
+            InvoiceType::FULL,
+            $r,
+            new \DateTimeImmutable('today'),
+            new \DateTimeImmutable('+2 days'),
+        );
+        $invoice->setTotalAmount('4500.00');
+        $this->em->persist($invoice);
+        $this->em->flush();
+
+        $this->client->request('GET', '/invoice/' . $invoice->getId() . '/nahled-mailu');
+
+        self::assertResponseIsSuccessful();
+        $data = json_decode((string) $this->client->getResponse()->getContent(), true);
+        self::assertSame('host@example.com', $data['to']);
+        self::assertStringContainsString('2026123', (string) $data['subject']);
+        self::assertSame('2026123.pdf', $data['attachment']);
+        self::assertStringContainsString('2026123', (string) $data['html']);
     }
 
     private function reservation(): Reservation

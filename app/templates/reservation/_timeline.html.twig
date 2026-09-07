@@ -177,6 +177,8 @@
                     <dd class="col-9 col-sm-10 mb-1" data-preview-to></dd>
                     <dt class="col-3 col-sm-2 fw-normal text-muted">Předmět</dt>
                     <dd class="col-9 col-sm-10 mb-0" data-preview-subject></dd>
+                    <dt class="col-3 col-sm-2 fw-normal text-muted d-none" data-preview-attachment-label>Příloha</dt>
+                    <dd class="col-9 col-sm-10 mb-0 d-none" data-preview-attachment></dd>
                 </dl>
                 <iframe data-preview-frame title="Náhled zprávy hostovi" style="width:100%; height:60vh; border:1px solid #dee2e6; border-radius:6px; background:#fff;"></iframe>
             </div>
@@ -193,12 +195,22 @@
         const frame = modal.querySelector('[data-preview-frame]');
         const to = modal.querySelector('[data-preview-to]');
         const subject = modal.querySelector('[data-preview-subject]');
+        const attachment = modal.querySelector('[data-preview-attachment]');
+        const attachmentLabel = modal.querySelector('[data-preview-attachment-label]');
+
+        // Přílohu (fakturu) ukazuje jen náhled, který ji má — u zpráv bez přílohy řádek zmizí.
+        function showAttachment(name) {
+            attachment.textContent = name || '';
+            attachment.classList.toggle('d-none', !name);
+            attachmentLabel.classList.toggle('d-none', !name);
+        }
 
         modal.addEventListener('show.bs.modal', async function (event) {
             const url = event.relatedTarget ? event.relatedTarget.dataset.previewUrl : null;
             frame.srcdoc = '';
             to.textContent = '…';
             subject.textContent = '…';
+            showAttachment(null);
             if (!url) return;
 
             try {
@@ -207,6 +219,7 @@
                 const data = await res.json();
                 to.textContent = data.to || 'Host nemá e-mail — zpráva se neodešle.';
                 subject.textContent = data.subject;
+                showAttachment(data.attachment);
                 frame.srcdoc = data.html;
             } catch (e) {
                 to.textContent = '';
