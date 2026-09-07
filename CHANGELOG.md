@@ -175,8 +175,8 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
   stojí, jestli *odejde sama*, *čeká na odeslání*, jde *do chatu portálu*, nebo je *vypnutá* —
   u vypnuté rovnou i důvod a kde se to mění. Stejný údaj nese karta *Zprávy k odeslání*
   na přehledu. Rozhoduje o něm stejný kód, který zprávy odesílá, takže osa slibuje totéž,
-  co pak cron udělá. Pod akcí je vidět, kdo ji naplánoval: *založeno plánovačem*, nebo
-  *založeno ručně*.
+  co pak cron udělá. Ručně přidaná akce nese poznámku *založeno ručně*; u naplánovaných
+  se nic neopakuje.
 
 ### Změněno
 

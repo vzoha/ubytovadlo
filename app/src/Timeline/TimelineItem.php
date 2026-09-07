@@ -14,6 +14,7 @@ namespace App\Timeline;
 use App\Entity\ReservationAction;
 use App\Entity\ReservationNote;
 use App\Enum\ActionDelivery;
+use App\Enum\ActionOrigin;
 use App\Enum\ActionStatus;
 use App\Enum\MessageOutlook;
 
@@ -110,17 +111,24 @@ final readonly class TimelineItem
         return $chat ? '💬' : $action->getType()->icon();
     }
 
-    /** Původ akce, a rozešel-li se výsledek s plánem, i původní termín. */
-    private static function actionMeta(ReservationAction $action, \DateTimeImmutable $at): string
+    /**
+     * Doplňky k akci v pevném pořadí: původ (jen u ručně přidané — plánovač je
+     * běžný stav, který nemá cenu opakovat u každé akce) a původní termín, pokud
+     * se výsledek rozešel s plánem.
+     */
+    private static function actionMeta(ReservationAction $action, \DateTimeImmutable $at): ?string
     {
-        $meta = $action->getOrigin()->label();
-        $planned = $action->getScheduledFor();
-
-        if (abs($at->getTimestamp() - $planned->getTimestamp()) >= self::PLAN_DRIFT_SECONDS) {
-            $meta .= ' · plánováno ' . $planned->format('d. m. Y H:i');
+        $parts = [];
+        if ($action->getOrigin() === ActionOrigin::MANUAL) {
+            $parts[] = $action->getOrigin()->label();
         }
 
-        return $meta;
+        $planned = $action->getScheduledFor();
+        if (abs($at->getTimestamp() - $planned->getTimestamp()) >= self::PLAN_DRIFT_SECONDS) {
+            $parts[] = 'plánováno ' . $planned->format('d. m. Y H:i');
+        }
+
+        return $parts === [] ? null : implode(' · ', $parts);
     }
 
     /** Stav akce; u události ani poznámky žádný není. */
