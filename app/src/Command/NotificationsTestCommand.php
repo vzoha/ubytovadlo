@@ -46,7 +46,7 @@ final class NotificationsTestCommand extends Command
         $to = $input->getOption('to');
         $recipient = is_string($to) && trim($to) !== '' ? trim($to) : $this->settings->recipient();
         if ($recipient === null) {
-            $io->error('Není nastavena adresa příjemce — vyplň ji v /nastaveni/notifikace nebo předej --to.');
+            $io->error('Není nastavena adresa příjemce — vyplňte ji v /nastaveni/notifikace nebo předejte --to.');
 
             return Command::FAILURE;
         }

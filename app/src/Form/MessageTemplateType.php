@@ -152,7 +152,7 @@ class MessageTemplateType extends AbstractType
 
         $sendAt = trim((string) $form->get('sendAt')->getData());
         if ($sendAt === '') {
-            $form->get('sendAt')->addError(new FormError('Zadej hodinu odeslání.'));
+            $form->get('sendAt')->addError(new FormError('Zadejte hodinu odeslání.'));
 
             return;
         }

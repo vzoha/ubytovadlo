@@ -169,7 +169,20 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
   vyúčtoval. Karta *Ekonomika* to označuje štítkem a zisk na noc u zrušeného
   pobytu neukazuje.
 
+### Přidáno
+
+- **Časová osa říká, co se s naplánovanou zprávou stane.** U každé čekající zprávy hostovi
+  stojí, jestli *odejde sama*, *čeká na odeslání*, jde *do chatu portálu*, nebo je *vypnutá* —
+  u vypnuté rovnou i důvod a kde se to mění. Stejný údaj nese karta *Zprávy k odeslání*
+  na přehledu. Rozhoduje o něm stejný kód, který zprávy odesílá, takže osa slibuje totéž,
+  co pak cron udělá. Pod akcí je vidět, kdo ji naplánoval: *založeno plánovačem*, nebo
+  *založeno ručně*.
+
 ### Změněno
+
+- **Aplikace vyká.** Nápovědy, dialogy, chybové hlášky i výstup příkazů oslovují ubytovatele
+  jednotně vykáním; tlačítka a stavy zůstávají neosobní (*Uložit*, *Čeká na odeslání*).
+  Pravidlo drží [`docs/design-system.md`](docs/design-system.md).
 
 - **Faktura nese den uskutečnění plnění.** U pobytu je to jeho konec, u zálohy den
   přijetí platby; doklad ho tiskne, když se liší od data vystavení, a v úpravě faktury

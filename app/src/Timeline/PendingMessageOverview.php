@@ -14,7 +14,7 @@ namespace App\Timeline;
 use App\Entity\Reservation;
 use App\Entity\ReservationAction;
 use App\Enum\ActionType;
-use App\Mail\GuestMessageDelivery;
+use App\Enum\MessageOutlook;
 use App\Repository\ReservationActionRepository;
 
 /**
@@ -26,7 +26,7 @@ final class PendingMessageOverview
 {
     public function __construct(
         private readonly ReservationActionRepository $actions,
-        private readonly GuestMessageDelivery $delivery,
+        private readonly GuestMessageOutlookResolver $outlook,
     ) {
     }
 
@@ -35,7 +35,7 @@ final class PendingMessageOverview
      *   reservation: Reservation,
      *   action: ReservationAction,
      *   overdue: bool,
-     *   byChat: bool
+     *   outlook: MessageOutlook|null
      * }>
      */
     public function due(\DateTimeImmutable $today): array
@@ -51,8 +51,8 @@ final class PendingMessageOverview
             $rows[] = [
                 'reservation' => $reservation,
                 'action' => $action,
-                // Bez e-mailu zbývá chat portálu — karta to říká rovnou.
-                'byChat' => $this->delivery->byChat($reservation),
+                // Karta rovnou říká, jestli zpráva odejde sama, nebo čeká na ubytovatele.
+                'outlook' => $this->outlook->forAction($action),
                 'overdue' => $action->getScheduledFor() < $today,
             ];
         }

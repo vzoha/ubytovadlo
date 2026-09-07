@@ -121,7 +121,7 @@ final class ConfigImportEnvCommand extends Command
             }
         }
         if ($hasCredEnv && !$this->cipher->isReady()) {
-            $io->warning('APP_CREDENTIALS_KEY není nastaven — přístupové údaje (IMAP/MotoPress) se nepřenesly. Doplň klíč a spusť znovu.');
+            $io->warning('APP_CREDENTIALS_KEY není nastaven — přístupové údaje (IMAP/MotoPress) se nepřenesly. Doplňte klíč a spusťte znovu.');
         } elseif ($hasCredEnv) {
             foreach (self::CREDENTIAL_MAP as $envName => $key) {
                 $value = $this->env($envName);
@@ -138,7 +138,7 @@ final class ConfigImportEnvCommand extends Command
 
         $io->success(sprintf('%s Přeneseno %d, přeskočeno %d.', $dryRun ? '[DRY RUN]' : 'Hotovo.', $imported, $skipped));
         if ($imported > 0 && !$dryRun) {
-            $io->note('Přenesené proměnné teď můžeš z .env.local smazat — čtou se z databáze.');
+            $io->note('Přenesené proměnné teď můžete z .env.local smazat — čtou se z databáze.');
         }
 
         return Command::SUCCESS;

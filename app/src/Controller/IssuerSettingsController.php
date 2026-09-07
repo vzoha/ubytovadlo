@@ -88,7 +88,7 @@ class IssuerSettingsController extends AbstractController
             // Fixní i procento potřebují kladné číslo; procento navíc ≤ 100.
             if ($mode !== DepositMode::NONE) {
                 if ($value === '' || !is_numeric($value) || (float) $value <= 0) {
-                    $depositForm->get('value')->addError(new FormError('Zadej kladné číslo (Kč u fixní, % u procenta).'));
+                    $depositForm->get('value')->addError(new FormError('Zadejte kladné číslo (Kč u fixní, % u procenta).'));
                 } elseif ($mode === DepositMode::PERCENT && (float) $value > 100) {
                     $depositForm->get('value')->addError(new FormError('Procento nemůže být víc než 100.'));
                 }

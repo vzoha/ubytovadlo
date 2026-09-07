@@ -42,19 +42,19 @@
                 <div class="card-body small">
                     <h2 class="h6">Jak stáhnout PDF</h2>
                     <ol class="ps-3 mb-2">
-                        <li>Otevři rezervaci na Airbnb:
+                        <li>Otevřete rezervaci na Airbnb:
                             {% if airbnbStayCode %}
                                 <a href="https://www.airbnb.cz/hosting/stay/{{ airbnbStayCode }}" target="_blank" rel="noopener">airbnb.cz/hosting/stay/{{ airbnbStayCode }}</a>
                             {% else %}
                                 <code>airbnb.cz/hosting/stay/&lt;kód&gt;</code>
                             {% endif %}
                         </li>
-                        <li>Dole najdi <strong>cenu</strong> a rozklikni ji.</li>
-                        <li>Otevři <strong>fakturu s PDF</strong>.</li>
-                        <li><strong>Vytisknout → uložit jako PDF</strong> a sem nahraj.</li>
+                        <li>Dole najdete <strong>cenu</strong> — rozklikněte ji.</li>
+                        <li>Otevřete <strong>fakturu s PDF</strong>.</li>
+                        <li><strong>Vytisknout → uložit jako PDF</strong> a soubor nahrajte sem.</li>
                     </ol>
-                    <p class="mb-2">Z dokladu pro DPH potřebuješ <strong>Servisní poplatek hostitele</strong> (host service fee, 3 % z platby po slevách).{% if not airbnbStayCode %} Zaokrouhlovat nemusíš, plněním je každý jednotlivý poplatek a my si to sečteme.{% endif %}</p>
-                    <p class="mb-0 text-muted">Tip: pokud je rezervace v cizí měně, převeď ji v dokladu na CZK svým ČNB kurzem ke dni výplaty.</p>
+                    <p class="mb-2">Z dokladu pro DPH potřebujete <strong>Servisní poplatek hostitele</strong> (host service fee, 3 % z platby po slevách).{% if not airbnbStayCode %} Zaokrouhlovat není potřeba, plněním je každý jednotlivý poplatek a součet udělá aplikace.{% endif %}</p>
+                    <p class="mb-0 text-muted">Tip: pokud je rezervace v cizí měně, převeďte ji v dokladu na CZK kurzem ČNB ke dni výplaty.</p>
                 </div>
             </div>
         </div>

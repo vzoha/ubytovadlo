@@ -85,7 +85,7 @@
                 <span class="badge bg-light text-danger">{{ occupancyConflicts|length }}</span>
             </div>
             <div class="card-body pb-1">
-                <p class="small text-muted">Tyhle termíny jsou obsazené dvěma rezervacemi zároveň — zkontroluj, jestli nejde o dvojí prodej.</p>
+                <p class="small text-muted">Tyhle termíny jsou obsazené dvěma rezervacemi zároveň — zkontrolujte, jestli nejde o dvojí prodej.</p>
                 <ul class="list-group list-group-flush">
                     {% for c in occupancyConflicts %}
                         <li class="list-group-item px-0">
@@ -179,9 +179,10 @@
                                             <div>
                                                 <strong>{{ row.action.type.label }}</strong>
                                                 {% if row.overdue %}<span class="badge text-bg-danger ms-1">po termínu</span>{% endif %}
-                                                {% if row.byChat %}<span class="badge text-bg-secondary ms-1">chat {{ r.channel.label }}</span>{% endif %}
+
                                             </div>
                                             <div class="small text-muted">
+                                                {% if row.outlook %}<span title="{{ row.outlook.hint }}">{{ row.outlook.label }}</span> · {% endif %}
                                                 {{ row.action.scheduledFor|date('d. m. Y H:i') }}
                                                 {% if r.guestName %} · {{ r.guestName }}{% endif %}
                                                 · pobyt {{ r.checkIn|date('d. m.') }}{% if r.checkOut %}–{{ r.checkOut|date('d. m.') }}{% endif %}

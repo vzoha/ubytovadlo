@@ -66,3 +66,18 @@ Prázdná tabulka ukazuje jen hlášku, ne hlavičku sloupců nad ničím. Řád
 
 - Aktivní sloveso podle toho, co se stane: `Uložit`, ne `Odeslat`; název akce drž stejný v celém toku.
 - Popisy piš k aktuálnímu stavu, ne ke změně oproti minulosti (viz `CLAUDE.md`).
+
+### Oslovení
+
+Aplikaci čte ubytovatel, kterého neznáme — texty proto **vykají**, stejně jako to dělají české
+nástroje pro drobné podnikatele (Fakturoid, iDoklad, Shoptet). Přátelský tón nese krátká věta
+a obyčejné slovo, ne tykání.
+
+1. **Výchozí je neosobní tvar.** Tlačítko je infinitiv (`Uložit`, `Vystavit fakturu`), stav je
+   holý fakt (`Čeká na odeslání`, `Bez splatnosti`). Většina řetězců tak oslovení vůbec neřeší.
+2. **Kde se oslovení nevyhneš, vykej** — nápověda pod polem, potvrzovací dialog, chybová hláška,
+   prázdný stav: „Doplňte cenu rezervace, aby šlo vystavit zálohu."
+3. **Hostovi se vyká vždy** — check-in, e-maily i zprávy do chatu.
+4. **Aplikace o sobě nemluví v první osobě.** Místo „nepodařilo se nám vystavit fakturu" piš
+   „Fakturu se nepodařilo vystavit."
+5. Stejné pravidlo platí pro **výstup CLI commandů** — čte ho tentýž člověk.

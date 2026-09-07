@@ -60,7 +60,7 @@ class UserController extends AbstractController
         $role = UserRole::tryFrom((string) $request->request->get('role', ''));
 
         if ($email === '' || $role === null) {
-            $this->addFlash('danger', 'Vyplň e-mail i roli.');
+            $this->addFlash('danger', 'Vyplňte e-mail i roli.');
 
             return $this->redirectToRoute('user_index');
         }
@@ -99,7 +99,7 @@ class UserController extends AbstractController
             return $this->redirectToRoute('user_index');
         }
         if ($this->isSelf($user) && ($role !== UserRole::ADMIN || !$active)) {
-            $this->addFlash('danger', 'Vlastní admin práva ani aktivní stav si odebrat nemůžeš.');
+            $this->addFlash('danger', 'Vlastní admin práva ani aktivní stav si nemůžete odebrat.');
 
             return $this->redirectToRoute('user_index');
         }

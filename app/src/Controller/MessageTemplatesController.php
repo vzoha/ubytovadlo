@@ -128,7 +128,7 @@ class MessageTemplatesController extends AbstractController
         if (!$this->isCsrfTokenValid('message_template_test', (string) $request->request->get('_token'))) {
             $this->addFlash('danger', 'Neplatný bezpečnostní token, zkus to znovu.');
         } elseif ($recipient === '') {
-            $this->addFlash('danger', 'Zadej e-mail pro testovací odeslání.');
+            $this->addFlash('danger', 'Zadejte e-mail pro testovací odeslání.');
         } else {
             try {
                 $this->sender->sendTest(

@@ -21,8 +21,8 @@ enum ActionOrigin: string
     public function label(): string
     {
         return match ($this) {
-            self::AUTO => 'automaticky',
-            self::MANUAL => 'ručně',
+            self::AUTO => 'založeno plánovačem',
+            self::MANUAL => 'založeno ručně',
         };
     }
 }

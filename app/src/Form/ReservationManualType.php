@@ -58,7 +58,7 @@ class ReservationManualType extends ReservationDetailsType
                 'constraints' => [
                     new Assert\Callback(static function (?string $value, ExecutionContextInterface $context): void {
                         if ($value !== null && trim($value) !== '' && Money::parse($value) === null) {
-                            $context->buildViolation('Cenu zadej číslem, například 8500 nebo 8 500,50.')->addViolation();
+                            $context->buildViolation('Cenu zadejte číslem, například 8500 nebo 8 500,50.')->addViolation();
                         }
                     }),
                 ],

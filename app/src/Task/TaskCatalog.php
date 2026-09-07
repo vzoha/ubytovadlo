@@ -432,7 +432,7 @@ final class TaskCatalog
                 $f,
                 3,
                 TaskIntervalUnit::MONTH,
-                'Termín a četnost stanoví obecně závazná vyhláška obce — uprav podle své obce.',
+                'Termín a četnost stanoví obecně závazná vyhláška obce — upravte podle své obce.',
                 null
             ),
             new CatalogEntry(

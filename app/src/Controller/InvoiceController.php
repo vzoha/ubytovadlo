@@ -61,7 +61,7 @@ class InvoiceController extends AbstractController
 
         $deposit = $this->invoiceRepo->findFirstByReservationAndType($reservation, InvoiceType::DEPOSIT);
         if ($deposit === null) {
-            $this->addFlash('warning', 'Nejprve vystav zálohovou fakturu.');
+            $this->addFlash('warning', 'Nejprve vystavte zálohovou fakturu.');
 
             return $this->redirectToRoute('reservation_detail', ['id' => $reservation->getId()]);
         }

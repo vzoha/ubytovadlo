@@ -203,7 +203,8 @@ final class DashboardControllerTest extends WebTestCase
 
         self::assertStringContainsString('Zpráva před příjezdem', $card->text());
         self::assertStringContainsString('po termínu', $card->text());
-        self::assertStringContainsString('chat Airbnb', $card->text());
+        // Airbnb vede zprávy do chatu portálu — karta říká, že je to na ubytovateli.
+        self::assertStringContainsString('do chatu portálu', $card->text());
     }
 
     public function testPendingMessagesCardIsEmptyWithoutDueMessages(): void

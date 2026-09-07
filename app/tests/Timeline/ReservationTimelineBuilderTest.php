@@ -116,10 +116,10 @@ final class ReservationTimelineBuilderTest extends KernelTestCase
 
         $items = $this->actionsByType($this->builder->build($r));
 
-        self::assertTrue($items[ActionType::PRE_ARRIVAL_MESSAGE->value]->byChat);
+        self::assertTrue($items[ActionType::PRE_ARRIVAL_MESSAGE->value]->outlook?->isChat());
         self::assertSame('💬', $items[ActionType::PRE_ARRIVAL_MESSAGE->value]->icon);
         // Připomínka není zpráva hostovi — ikonu ani chování nemění.
-        self::assertFalse($items[ActionType::CUSTOM_REMINDER->value]->byChat);
+        self::assertNull($items[ActionType::CUSTOM_REMINDER->value]->outlook);
         self::assertSame(ActionType::CUSTOM_REMINDER->icon(), $items[ActionType::CUSTOM_REMINDER->value]->icon);
     }
 
@@ -171,7 +171,7 @@ final class ReservationTimelineBuilderTest extends KernelTestCase
         $items = $this->actionsByType($this->builder->build($r));
         $item = $items[ActionType::PRE_ARRIVAL_MESSAGE->value];
 
-        self::assertFalse($item->byChat);
+        self::assertFalse($item->outlook?->isChat());
         self::assertSame(ActionType::PRE_ARRIVAL_MESSAGE->icon(), $item->icon);
     }
 
@@ -187,7 +187,7 @@ final class ReservationTimelineBuilderTest extends KernelTestCase
 
         $items = $this->actionsByType($this->builder->build($r));
 
-        self::assertTrue($items[ActionType::PRE_ARRIVAL_MESSAGE->value]->byChat);
+        self::assertTrue($items[ActionType::PRE_ARRIVAL_MESSAGE->value]->outlook?->isChat());
     }
 
     public function testAirbnbSetToMailUsesGuestEmail(): void
@@ -204,7 +204,7 @@ final class ReservationTimelineBuilderTest extends KernelTestCase
 
         $items = $this->actionsByType($this->builder->build($r));
 
-        self::assertFalse($items[ActionType::PRE_ARRIVAL_MESSAGE->value]->byChat);
+        self::assertFalse($items[ActionType::PRE_ARRIVAL_MESSAGE->value]->outlook?->isChat());
     }
 
     public function testAirbnbSetToMailFallsBackToChatWithoutEmail(): void
@@ -220,7 +220,7 @@ final class ReservationTimelineBuilderTest extends KernelTestCase
 
         $items = $this->actionsByType($this->builder->build($r));
 
-        self::assertTrue($items[ActionType::PRE_ARRIVAL_MESSAGE->value]->byChat);
+        self::assertTrue($items[ActionType::PRE_ARRIVAL_MESSAGE->value]->outlook?->isChat());
     }
 
     public function testOpenActionSitsAtItsDeadlineWithoutPlanNote(): void

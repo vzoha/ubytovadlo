@@ -94,7 +94,7 @@ class ReservationTimelineController extends AbstractController
 
         $text = trim((string) $request->request->get('text', ''));
         if ($text === '') {
-            $this->addFlash('warning', 'Vyplň text připomínky.');
+            $this->addFlash('warning', 'Vyplňte text připomínky.');
 
             return $this->redirectToRoute('reservation_detail', ['id' => $reservation->getId()]);
         }

@@ -197,7 +197,7 @@ final class OwnerNotificationRenderer
         $body = sprintf(
             "Přijala jsi první provizi z OTA (Booking/Airbnb) — přeshraniční přijatou službu z EU. Tím ses stala **identifikovanou osobou** podle §6h zákona o DPH.\n\n"
             . "Je potřeba **podat přihlášku k registraci** u finančního úřadu do **15 dnů**%s. Registrace neznamená, že se stáváš plátcem DPH — hostům dál fakturuješ bez DPH; jen z přijatých provizí odvádíš 21 %% DPH reverse charge.\n\n"
-            . "Po registraci si v nastavení nastav daňový profil „identifikovaná osoba\".\n\n%s",
+            . "Po registraci si v nastavení nastavte daňový profil „identifikovaná osoba\".\n\n%s",
             $deadlineNote,
             sprintf('[[button:Nastavit daňový profil|%s]]', $this->url('issuer_settings_edit')),
         );

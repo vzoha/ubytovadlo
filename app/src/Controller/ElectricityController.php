@@ -56,7 +56,7 @@ class ElectricityController extends AbstractController
         $note = trim((string) $request->request->get('note', '')) ?: null;
 
         if ($dateRaw === '' || $vt === '' || $nt === '') {
-            $this->addFlash('warning', 'Vyplň datum, VT i NT.');
+            $this->addFlash('warning', 'Vyplňte datum, VT i NT.');
 
             return $this->redirectToRoute('electricity_index');
         }
@@ -69,7 +69,7 @@ class ElectricityController extends AbstractController
         }
 
         if ($this->readings->findOnDate($date) !== null) {
-            $this->addFlash('warning', 'Pro tento den už odečet existuje. Smaž ho a založ nový.');
+            $this->addFlash('warning', 'Pro tento den už odečet existuje. Smažte ho a založte nový.');
 
             return $this->redirectToRoute('electricity_index');
         }

@@ -55,7 +55,7 @@ class ReservationPaymentController extends AbstractController
 
         $amount = $this->parseAmountOrNull($request->request->getString('amount'));
         if ($amount === null || (float) $amount <= 0) {
-            $this->addFlash('warning', 'Zadej částku výplaty.');
+            $this->addFlash('warning', 'Zadejte částku výplaty.');
 
             return $this->redirectToRoute('reservation_detail', ['id' => $reservation->getId()]);
         }
@@ -75,14 +75,14 @@ class ReservationPaymentController extends AbstractController
         // Ruční platba hosta je web/přímý koncept — u OTA platí host platformě
         // a reálné peníze řeší „Reálná výplata".
         if ($reservation->getChannel()->isOta()) {
-            $this->addFlash('warning', 'U OTA rezervací zadej reálnou výplatu, ne platbu hosta.');
+            $this->addFlash('warning', 'U OTA rezervací zadejte reálnou výplatu, ne platbu hosta.');
 
             return $this->redirectToRoute('reservation_detail', ['id' => $reservation->getId()]);
         }
 
         $amount = $this->parseAmountOrNull($request->request->getString('amount'));
         if ($amount === null || (float) $amount <= 0) {
-            $this->addFlash('warning', 'Zadej částku platby.');
+            $this->addFlash('warning', 'Zadejte částku platby.');
 
             return $this->redirectToRoute('reservation_detail', ['id' => $reservation->getId()]);
         }

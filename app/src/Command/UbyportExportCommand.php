@@ -59,7 +59,7 @@ class UbyportExportCommand extends Command
 
         $profile = $this->profiles->getSingleton();
         if ($profile === null) {
-            $io->error('Není vyplněný AccommodationProfile (IDUB + adresa). Doplň v admin UI.');
+            $io->error('Není vyplněný AccommodationProfile (IDUB + adresa). Doplňte ho v nastavení aplikace.');
 
             return Command::FAILURE;
         }

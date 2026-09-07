@@ -100,7 +100,7 @@ final class ReservationNewControllerTest extends WebTestCase
         $this->client->submit($form);
 
         self::assertResponseIsSuccessful();
-        self::assertStringContainsString('Cenu zadej číslem', (string) $this->client->getResponse()->getContent());
+        self::assertStringContainsString('Cenu zadejte číslem', (string) $this->client->getResponse()->getContent());
         self::assertNull($this->em->getRepository(Reservation::class)->findOneBy(['guestName' => 'Chybná Cena']));
     }
 

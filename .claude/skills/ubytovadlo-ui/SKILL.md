@@ -42,6 +42,7 @@ Preferuj **nativní HTML5** před vlastní JS komponentou: `type="number"` (má 
 
 ## Copy
 
+- **Oslovení:** výchozí je neosobní tvar (tlačítko infinitiv, stav jako fakt). Kde se oslovení nevyhneš — nápověda, dialog, chyba, prázdný stav — **vykej**; hostovi vykej vždy. Aplikace o sobě nemluví v první osobě. Platí i pro výstup CLI.
 - Aktivní sloveso podle toho, co se stane: `Uložit`, ne `Odeslat`. Název akce drž stejný v celém toku.
 - Popisy, nápovědy i changelog piš **k aktuálnímu stavu, ne ke změně oproti minulosti**. Žádné „místo X", „už není potřeba", „nově", „nahrazuje" — uživatel vidí jen současný stav.
 - Konzistenci drž **napříč stránkami**, ne po jedné. Než přidáš nový vzor, najdi, jak to řeší existující stránka.

@@ -85,7 +85,7 @@ class TaskController extends AbstractController
         $this->assertCsrf($request, 'task-new');
 
         if (!$this->hydrator->isValid($request)) {
-            $this->addFlash('danger', 'Zadej název a kategorii termínu.');
+            $this->addFlash('danger', 'Zadejte název a kategorii termínu.');
 
             return $this->redirectToRoute('task_index');
         }
@@ -119,7 +119,7 @@ class TaskController extends AbstractController
         $this->addFlash(
             $added > 0 ? 'success' : 'info',
             $added > 0
-                ? sprintf('Přidáno %d termínů. Doplň u nich datum příštího termínu.', $added)
+                ? sprintf('Přidáno %d termínů. Doplňte u nich datum příštího termínu.', $added)
                 : 'Nic nepřibylo — vybrané termíny už hlídáš.',
         );
 
@@ -142,7 +142,7 @@ class TaskController extends AbstractController
         $this->assertCsrf($request, 'task-edit-' . $task->getId());
 
         if (!$this->hydrator->isValid($request)) {
-            $this->addFlash('danger', 'Zadej název a kategorii termínu.');
+            $this->addFlash('danger', 'Zadejte název a kategorii termínu.');
 
             return $this->redirectToRoute('task_show', ['id' => $task->getId()]);
         }

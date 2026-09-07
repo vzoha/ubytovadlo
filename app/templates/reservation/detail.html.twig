@@ -54,9 +54,9 @@
                     Termín drží blok z kalendáře — jméno i kontakt dohledej v {{ reservation.channel.label }} extranetu.
                 {% elseif reservation.guestAddress.isEmpty %}
                     {% if reservation.channel.value == 'airbnb' %}
-                        Adresu Airbnb neposkytuje — vyžádej si ji odkazem na online check-in, nebo ji zadej ručně.
+                        Adresu Airbnb neposkytuje — vyžádejte si ji odkazem na online check-in, nebo ji zadejte ručně.
                     {% elseif reservation.channel.value == 'booking' %}
-                        Adresu najdeš v detailu rezervace v Booking extranetu.
+                        Adresu najdete v detailu rezervace v Booking extranetu.
                     {% endif %}
                 {% endif %}
             </span>
@@ -353,7 +353,7 @@
                     {% elseif reservation.checkinCompletedAt %}
                         <p class="text-muted small mb-2">
                             {% if register_czech_guests %}
-                                Check-in je uzavřený bez záznamů v evidenční knize — doklady hostů doplň na místě.
+                                Check-in je uzavřený bez záznamů v evidenční knize — doklady hostů doplňte na místě.
                             {% else %}
                                 Host uvedl, že jsou všichni Češi. Evidenční kniha vede jen cizince, proto je prázdná.
                             {% endif %}
@@ -652,7 +652,7 @@
                                 <button class="btn btn-sm btn-primary">Vystavit zálohu ({{ deposit_amount|number_format(0, ',', ' ') }} Kč)</button>
                             </form>
                         {% else %}
-                            <p class="text-muted small mb-0">Doplň cenu rezervace, aby šlo vystavit zálohu.</p>
+                            <p class="text-muted small mb-0">Doplňte cenu rezervace, aby šlo vystavit zálohu.</p>
                         {% endif %}
                     {% endif %}
                     {% if has_deposit and not has_final %}
@@ -671,7 +671,7 @@
                         </form>
                     {% endif %}
                 {% else %}
-                    <p class="text-muted small mb-0">Nastav fakturační režim a tlačítka pro vystavení faktury se objeví.</p>
+                    <p class="text-muted small mb-0">Nastavte fakturační režim a tlačítka pro vystavení faktury se objeví.</p>
                 {% endif %}
             </div>
         </div>

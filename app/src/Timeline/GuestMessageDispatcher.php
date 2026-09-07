@@ -17,6 +17,7 @@ use App\Enum\ActionDelivery;
 use App\Enum\GuestMessageStatus;
 use App\Enum\GuestMessaging;
 use App\Enum\MessageKind;
+use App\Enum\MessageOutlook;
 use App\Enum\OwnerNotificationType;
 use App\Enum\SendMode;
 use App\Mail\ActionMessageResolver;
@@ -37,6 +38,7 @@ class GuestMessageDispatcher
         private readonly GuestMessageSender $sender,
         private readonly GuestMessageDelivery $delivery,
         private readonly MessageTemplateProvider $templates,
+        private readonly GuestMessageOutlookResolver $outlook,
         private readonly ActionMessageResolver $messages,
         private readonly OwnerNotifier $notifier,
     ) {
@@ -50,31 +52,24 @@ class GuestMessageDispatcher
     public function dispatchDue(ReservationAction $action): bool
     {
         $kind = MessageKind::fromActionType($action->getType());
-        if ($kind === null) {
+        $outlook = $this->outlook->forAction($action);
+        if ($kind === null || $outlook === null) {
             return false;
         }
 
-        // Custom je ruční, pošle se vždy. Ostatní ctí režim: vypnutá se přeskočí,
-        // ruční zůstane na ose k odeslání tlačítkem (cron ji sám neodešle).
-        if ($kind !== MessageKind::CUSTOM) {
-            $mode = $this->templates->for($kind)->getMode();
-            if ($mode === SendMode::OFF) {
-                $action->markSkipped('Zpráva je vypnutá — neodesláno.');
+        // Co osa slibuje, to se stane: vypnutá zpráva se zavře bez odeslání,
+        // čekající na ubytovatele zůstane otevřená k odeslání tlačítkem.
+        if ($outlook === MessageOutlook::TEMPLATE_OFF) {
+            $action->markSkipped('Zpráva je vypnutá — neodesláno.');
 
-                return true;
-            }
-            if ($mode === SendMode::DRAFT) {
-                return false;
-            }
+            return true;
         }
-
-        $route = $this->delivery->route($action->getReservation());
-        if ($route === GuestMessaging::NONE) {
+        if ($outlook === MessageOutlook::CHANNEL_SILENT) {
             $action->markSkipped('Kanál hostům zprávy neposílá.');
 
             return true;
         }
-        if ($route === GuestMessaging::CHAT) {
+        if ($outlook->needsOwner()) {
             return false;
         }
 

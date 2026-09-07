@@ -15,6 +15,7 @@ use App\Entity\ReservationAction;
 use App\Entity\ReservationNote;
 use App\Enum\ActionDelivery;
 use App\Enum\ActionStatus;
+use App\Enum\MessageOutlook;
 
 /**
  * Jedna položka na časové ose rezervace. Sjednocuje tři přírody:
@@ -39,7 +40,8 @@ final readonly class TimelineItem
         public ?string $meta = null,
         public ?ReservationAction $action = null,
         public bool $dateOnly = false,
-        public bool $byChat = false,
+        /** Co se se zprávou stane, až nadejde čas — jen u otevřené zprávy hostovi. */
+        public ?MessageOutlook $outlook = null,
     ) {
     }
 
@@ -66,9 +68,10 @@ final readonly class TimelineItem
     }
 
     /**
-     * @param bool $byChat zpráva k hostovi vede chatem portálu, ne e-mailem
+     * @param bool                $byChat  zpráva k hostovi vede chatem portálu, ne e-mailem
+     * @param MessageOutlook|null $outlook jak zpráva dopadne; null u akce, která zprávu neposílá
      */
-    public static function fromAction(ReservationAction $action, bool $byChat = false): self
+    public static function fromAction(ReservationAction $action, bool $byChat = false, ?MessageOutlook $outlook = null): self
     {
         // Uzavřená akce patří na osu časem, kdy se opravdu stala (ruční potvrzení
         // přijde často až po termínu); otevřená stojí na svém termínu.
@@ -83,7 +86,7 @@ final readonly class TimelineItem
             $action->getLabel() !== $action->getType()->label() ? $action->getLabel() : null,
             self::actionMeta($action, $at),
             $action,
-            byChat: $byChat,
+            outlook: $outlook,
         );
     }
 

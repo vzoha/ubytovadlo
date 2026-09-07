@@ -269,7 +269,7 @@ class ReservationController extends AbstractController
         $this->em->flush();
         // Cena a provize z extranetu určují odhad výplaty na účet.
         $this->incomeUpserter->recompute($reservation);
-        $this->addFlash('success', 'Údaje naimportovány. Zkontroluj a klikni Uložit.');
+        $this->addFlash('success', 'Údaje naimportovány. Zkontrolujte je a uložte.');
 
         return $this->redirectToRoute('reservation_details', ['id' => $reservation->getId()]);
     }

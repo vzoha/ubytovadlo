@@ -38,7 +38,7 @@ class NumberingSettingsType extends AbstractType
                 'label' => 'Formát čísla faktury',
                 'constraints' => [new NotBlank()],
                 'help' => 'Proměnné: {RRRR} rok (nebo {RR}), {NNN} pořadí (počet N = počet cifer). '
-                    . 'Můžeš přidat pevný text a oddělovače. Např. {RRRR}{NNN} → ' . $year . '012, '
+                    . 'Lze přidat pevný text a oddělovače. Např. {RRRR}{NNN} → ' . $year . '012, '
                     . 'FA-{RRRR}-{NNN} → FA-' . $year . '-012.',
             ])
             ->add('nextNumber', IntegerType::class, [

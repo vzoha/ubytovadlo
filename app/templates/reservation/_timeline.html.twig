@@ -36,12 +36,19 @@
                                 <span class="text-muted small text-nowrap ms-2">{{ item.at|date(item.dateOnly ? 'd. m. Y' : 'd. m. Y H:i') }}</span>
                             </div>
                             {% if item.body %}<div class="small">{{ item.body|nl2br }}</div>{% endif %}
-                            {% if item.meta %}<div class="text-muted small">{{ item.meta }}</div>{% endif %}
+                            {# Zastavené odesílání je překvapivý stav — rovnou řekni proč a kde se mění. #}
+                            {% if item.outlook and item.outlook.isBlocked %}<div class="text-muted small">{{ item.outlook.hint }}</div>{% endif %}
+                            {% if item.meta or item.outlook %}
+                                <div class="text-muted small">
+                                    {%- if item.outlook and not item.outlook.isBlocked %}<span title="{{ item.outlook.hint }}">{{ item.outlook.label }}</span>{% if item.meta %} · {% endif %}{% endif -%}
+                                    {{- item.meta -}}
+                                </div>
+                            {% endif %}
 
                             {% if item.isOpenAction %}
                                 <div class="d-flex gap-1 mt-1 flex-wrap align-items-center">
                                     {% if item.action.type.sendsGuestMessage %}
-                                        {% if item.byChat %}
+                                        {% if item.outlook and item.outlook.isChat %}
                                             {# Bez e-mailu vede komunikace přes chat portálu — text se zkopíruje a vloží tam. #}
                                             {% if quick_messages is not empty %}
                                                 <button class="btn btn-outline-primary btn-sm py-0" type="button"

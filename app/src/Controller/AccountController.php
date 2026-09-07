@@ -290,7 +290,7 @@ class AccountController extends AbstractController
         $name = trim((string) $request->request->get('name'));
         $type = AccountType::tryFrom((string) $request->request->get('type', ''));
         if ($name === '' || $type === null) {
-            $this->addFlash('danger', 'Zadej název a typ účtu.');
+            $this->addFlash('danger', 'Zadejte název a typ účtu.');
 
             return $this->redirectToRoute('account_index');
         }
@@ -362,7 +362,7 @@ class AccountController extends AbstractController
             $name = trim((string) $request->request->get('name'));
             $type = AccountType::tryFrom((string) $request->request->get('type', ''));
             if ($name === '' || $type === null) {
-                $this->addFlash('danger', 'Zadej název a typ účtu.');
+                $this->addFlash('danger', 'Zadejte název a typ účtu.');
 
                 return $this->redirectToRoute('account_edit', ['id' => $account->getId()]);
             }
@@ -413,7 +413,7 @@ class AccountController extends AbstractController
         foreach ($accounts as $account) {
             if ($occurredOn < $account->getOpeningDate()) {
                 $this->addFlash('warning', sprintf(
-                    'Datum je před založením účtu „%s" (%s) — pohyb se do jeho stavu nezapočítá. Uprav datum pohybu nebo počáteční datum účtu.',
+                    'Datum je před založením účtu „%s" (%s) — pohyb se do jeho stavu nezapočítá. Upravte datum pohybu nebo počáteční datum účtu.',
                     $account->getName(),
                     $account->getOpeningDate()->format('j. n. Y'),
                 ));

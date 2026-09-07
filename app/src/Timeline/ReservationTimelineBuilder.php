@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace App\Timeline;
 
 use App\Entity\Reservation;
+use App\Enum\ActionStatus;
 use App\Mail\GuestMessageDelivery;
 use App\Mail\MessageLocales;
 use App\Repository\InvoiceRepository;
@@ -29,6 +30,7 @@ class ReservationTimelineBuilder
         private readonly ReservationActionRepository $actions,
         private readonly InvoiceRepository $invoices,
         private readonly GuestMessageDelivery $delivery,
+        private readonly GuestMessageOutlookResolver $outlook,
     ) {
     }
 
@@ -45,7 +47,10 @@ class ReservationTimelineBuilder
 
         $byChat = $this->delivery->byChat($reservation);
         foreach ($this->actions->findForReservation($reservation) as $action) {
-            $items[] = TimelineItem::fromAction($action, $byChat);
+            // Jak zpráva dopadne, má smysl u akce, která teprve čeká — uzavřená
+            // už svůj výsledek nese.
+            $outlook = $action->getStatus() === ActionStatus::PLANNED ? $this->outlook->forAction($action) : null;
+            $items[] = TimelineItem::fromAction($action, $byChat, $outlook);
         }
 
         usort($items, static function (TimelineItem $a, TimelineItem $b): int {

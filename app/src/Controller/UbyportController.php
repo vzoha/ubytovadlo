@@ -86,7 +86,7 @@ class UbyportController extends AbstractController
 
         $profile = $this->profiles->getSingleton();
         if ($profile === null) {
-            $this->addFlash('danger', 'Nejdřív vyplň profil ubytování (IDUB + adresa) v Nastavení.');
+            $this->addFlash('danger', 'Nejdřív vyplňte profil ubytování (IDUB + adresa) v Nastavení.');
 
             return $this->redirectToRoute('ubyport_index');
         }
@@ -99,7 +99,7 @@ class UbyportController extends AbstractController
         }
         foreach ($foreigners as $g) {
             if ($g->getNationalityCode() === null || $g->getDocumentNumber() === null) {
-                $this->addFlash('warning', 'U některého cizince chybí občanství nebo číslo dokladu — doplň je v check-inu.');
+                $this->addFlash('warning', 'U některého cizince chybí občanství nebo číslo dokladu — doplňte je v check-inu.');
 
                 return $this->redirectToRoute('ubyport_index');
             }
@@ -130,7 +130,7 @@ class UbyportController extends AbstractController
 
         $file = $request->files->get('receipt');
         if (!$file instanceof UploadedFile) {
-            $this->addFlash('danger', 'Vyber PDF doručenky.');
+            $this->addFlash('danger', 'Vyberte PDF doručenky.');
 
             return $this->redirectToRoute('ubyport_index');
         }
@@ -168,7 +168,7 @@ class UbyportController extends AbstractController
             $this->addFlash('success', sprintf('Nahlášeno — %d přijatých, vše sedí.', $data->accepted));
         } else {
             $this->addFlash('warning', sprintf(
-                'Doručenka uložena, ale zkontroluj: přijato %d, nepřijato %d, ignorováno %d (na rezervaci %d cizinců).',
+                'Doručenka uložena, ale zkontrolujte ji: přijato %d, nepřijato %d, ignorováno %d (na rezervaci %d cizinců).',
                 $data->accepted,
                 $data->rejected,
                 $data->ignored,
