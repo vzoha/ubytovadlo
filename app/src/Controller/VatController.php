@@ -105,7 +105,7 @@ class VatController extends AbstractController
     public function csv(int $year, int $month): StreamedResponse
     {
         $summary = $this->calculator->summarize($year, $month);
-        $hostInvoices = $this->hostInvoices->findIssuedInMonth($year, $month);
+        $hostInvoices = $this->hostInvoices->findByDuzpMonth($year, $month);
 
         $response = new StreamedResponse(function () use ($summary, $hostInvoices): void {
             $out = fopen('php://output', 'wb');
@@ -121,7 +121,7 @@ class VatController extends AbstractController
                 fputcsv($out, [
                     'Výstup — faktura hostovi',
                     $inv->getNumber(),
-                    $inv->getIssuedAt()->format('Y-m-d'),
+                    $inv->getDuzp()?->format('Y-m-d') ?? '',
                     $inv->getCustomerName(),
                     $inv->getVatBaseTotal(),
                     $inv->getVatAmountTotal(),

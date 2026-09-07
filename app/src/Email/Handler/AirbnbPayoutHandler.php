@@ -20,19 +20,17 @@ use App\Entity\Reservation;
 use App\Enum\Channel;
 use App\Enum\ConnectorType;
 use App\Formatting\Money;
-use App\Repository\InvoiceRepository;
 use App\Repository\ReservationRepository;
 
 /**
  * Airbnb notifikace o výplatě → napáruje reálnou částku a datum odeslání na
- * rezervaci podle potvrzujícího kódu a nastaví datum úhrady faktury hostovi.
+ * rezervaci podle potvrzujícího kódu a přepočítá reálný příjem.
  */
 final class AirbnbPayoutHandler implements EmailHandler
 {
     public function __construct(
         private readonly AirbnbPayoutParser $parser,
         private readonly ReservationRepository $reservations,
-        private readonly InvoiceRepository $invoices,
         private readonly IncomeUpserter $incomeUpserter,
     ) {
     }
@@ -60,8 +58,8 @@ final class AirbnbPayoutHandler implements EmailHandler
 
     /**
      * Napáruje reálnou Airbnb výplatu na rezervaci podle potvrzujícího kódu.
-     * Uloží částku a datum odeslání a — pokud už existuje faktura hostovi —
-     * nastaví na ní datum úhrady na den odeslání výplaty (reálný příjem peněz).
+     * Uloží částku a datum odeslání; faktury se to netýká — ta je doklad o platbě
+     * hosta portálu, výplata je samostatný pohyb peněz.
      * Vrací null, pokud rezervace zatím v DB není (potvrzovací e-mail nedorazil).
      */
     private function apply(AirbnbPayoutData $data): ?Reservation
@@ -75,14 +73,6 @@ final class AirbnbPayoutHandler implements EmailHandler
         $reservation->setPayoutSentAt($data->payoutSentAt);
         if ($data->payoutReference !== null) {
             $reservation->setPayoutReference($data->payoutReference);
-        }
-
-        // Datum úhrady na faktuře = den, kdy Airbnb peníze odeslal. Nastavujeme
-        // jen na dosud neuhrazené faktury, ruční označení nepřepisujeme.
-        foreach ($this->invoices->findForReservation($reservation) as $invoice) {
-            if (!$invoice->isPaid()) {
-                $invoice->setPaidAt($data->payoutSentAt);
-            }
         }
 
         // Výplata (net po provizi) je reálný příjem na účet — přepočítej ReservationIncome.

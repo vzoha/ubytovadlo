@@ -43,8 +43,8 @@ Nikdy nepiš chování jednoho profilu natvrdo — čti profil přes `TaxProfile
 1. **Web — klasika** (soukromý host): záloha → **zálohová faktura**, zbytek při příjezdu (QR nebo hotově). Výši a splatnost zálohy drží `App\Invoice\DepositConfig` (fixní částka / procento z ceny / žádná záloha); jestli se záloha u dané rezervace vůbec bere, rozhoduje `appliesTo()`. **Konečná faktura** s odpočtem zálohy se posílá spolu se zálohovou během pobytu.
 2. **Web — FKSP** (zaměstnanecký fond): bez zálohy, jedna faktura na celou částku, ale **až po obdržení fakturačních údajů firmy** (stav `needs_billing_details`).
 3. **Web — admin/známí**: rezervaci založil provozovatel z WP adminu. Bez zálohy, jedna faktura během pobytu.
-4. **Airbnb**: údaje hosta se sbírají osobně na startu pobytu. Faktura v CZK na celou částku, e-mailem pokud host chce.
-5. **Booking**: adresa z extranetu, cena v EUR → faktura v CZK **kurzem ČNB ke dni vystavení** (`api.cnb.cz/cnbapi/exrates/daily`). Vystavuje se během pobytu.
+4. **Airbnb**: údaje hosta se sbírají osobně na startu pobytu. Faktura v CZK na celou částku, e-mailem pokud host chce. Platbu vybírá portál při rezervaci, takže doklad vzniká uhrazený ke dni vystavení, bez splatnosti a bez QR (`PaymentMethod::PREPAID_INTERMEDIARY`); výplata od Airbnb je samostatný pohyb peněz na rezervaci.
+5. **Booking**: adresa z extranetu, cena v EUR → faktura v CZK **kurzem ČNB ke dni vystavení** (`api.cnb.cz/cnbapi/exrates/daily`). Vystavuje se během pobytu. Platbu od hosta vybírá portál a posílá výplatu, doklad je tedy stejný případ jako u Airbnb; provizi Booking fakturuje měsíčně zvlášť.
 
 Faktura musí unést: vlastní číselnou řadu, variabilní symbol, QR Platbu (SPAYD), původní měnu + kurz + datum kurzu, odkaz na zálohu, poznámku o identifikované osobě, DIČ.
 

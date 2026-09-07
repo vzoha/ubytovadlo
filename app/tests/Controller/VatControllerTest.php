@@ -13,10 +13,12 @@ namespace App\Tests\Controller;
 
 use App\Entity\BookingMonthlyInvoice;
 use App\Entity\Embeddable\VatReverseCharge;
+use App\Entity\Invoice;
 use App\Entity\Reservation;
 use App\Entity\Setting;
 use App\Entity\User;
 use App\Enum\Channel;
+use App\Enum\InvoiceType;
 use App\Enum\ReservationStatus;
 use App\Invoice\TaxProfileConfig;
 use App\Repository\SettingRepository;
@@ -42,6 +44,7 @@ final class VatControllerTest extends WebTestCase
 
         // Clean DB then seed one Booking reservation + matching invoice.
         $this->em->createQuery('DELETE FROM ' . BookingMonthlyInvoice::class . ' i')->execute();
+        $this->em->createQuery('DELETE FROM ' . Invoice::class . ' i')->execute();
         $this->em->createQuery('DELETE FROM ' . Reservation::class . ' r')->execute();
         $this->em->createQuery('DELETE FROM ' . User::class . ' u')->execute();
         // Daňový profil (setting) ovlivňuje /dph — každý test startuje jako identifikovaná osoba.
@@ -86,6 +89,24 @@ final class VatControllerTest extends WebTestCase
         $this->client->loginUser(static::getContainer()->get(UserRepository::class)->findOneBy(['email' => 'vat-test@example.com']));
     }
 
+    /**
+     * Doklad se řadí do období podle DUZP. Faktura vystavená v dubnu za pobyt
+     * končící v květnu patří do květnového přiznání, ne do dubnového.
+     */
+    public function testOutputVatFollowsDuzpNotIssueDate(): void
+    {
+        static::getContainer()->get(SettingRepository::class)->set(TaxProfileConfig::KEY, 'vat_payer', 'test');
+        $this->seedGuestInvoiceWithOutputVat();
+
+        $this->client->request('GET', '/dph/2026-05');
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString('1 200,00', (string) $this->client->getResponse()->getContent());
+
+        $this->client->request('GET', '/dph/2026-04');
+        self::assertResponseIsSuccessful();
+        self::assertStringNotContainsString('1 200,00', (string) $this->client->getResponse()->getContent());
+    }
+
     public function testListShowsAprilMonth(): void
     {
         $this->client->request('GET', '/dph');
@@ -127,6 +148,35 @@ final class VatControllerTest extends WebTestCase
         $this->client->request('GET', '/dph/2026-04/podklad.csv');
         self::assertResponseIsSuccessful();
         self::assertStringContainsString('text/csv', (string) $this->client->getResponse()->headers->get('Content-Type'));
+    }
+
+    /** Faktura hostovi s výstupní DPH: vystavená 28. 4., pobyt končí 2. 5. */
+    private function seedGuestInvoiceWithOutputVat(): void
+    {
+        $reservation = new Reservation(Channel::WEB, new \DateTimeImmutable('2026-04-27'));
+        $reservation->setCheckOut(new \DateTimeImmutable('2026-05-02'));
+        $reservation->setStatus(ReservationStatus::CONFIRMED);
+        $reservation->setGuestName('Host Doplatek');
+        $reservation->setPriceTotal('11200.00');
+        $reservation->setPriceCurrency('CZK');
+        $this->em->persist($reservation);
+
+        $invoice = new Invoice(
+            '2026099',
+            2026,
+            99,
+            InvoiceType::FULL,
+            $reservation,
+            new \DateTimeImmutable('2026-04-28'),
+            new \DateTimeImmutable('2026-04-30'),
+        );
+        $invoice->setDuzp(new \DateTimeImmutable('2026-05-02'));
+        $invoice->setTotalAmount('11200.00');
+        $invoice->setVatBaseTotal('10000.00');
+        $invoice->setVatAmountTotal('1200.00');
+        $this->em->persist($invoice);
+
+        $this->em->flush();
     }
 
     public function testNonPayerSeesModuleNotUsedNotice(): void

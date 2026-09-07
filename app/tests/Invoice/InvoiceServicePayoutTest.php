@@ -16,6 +16,7 @@ use App\Entity\Embeddable\Address;
 use App\Entity\Reservation;
 use App\Enum\BillingMode;
 use App\Enum\Channel;
+use App\Enum\PaymentMethod;
 use App\Enum\ReservationStatus;
 use App\Invoice\DepositConfig;
 use App\Invoice\InvoiceNumber;
@@ -73,33 +74,57 @@ final class InvoiceServicePayoutTest extends TestCase
         );
     }
 
-    public function testAirbnbInvoiceIsPaidWhenPayoutAlreadyKnown(): void
-    {
-        $reservation = $this->airbnbReservation();
-        $reservation->setPayoutSentAt(new \DateTimeImmutable('2026-05-29'));
-
-        $invoice = $this->service->issueFull($reservation, new \DateTimeImmutable('2026-05-29'));
-
-        self::assertTrue($invoice->isPaid());
-        self::assertSame('2026-05-29', $invoice->getPaidAt()?->format('Y-m-d'));
-    }
-
-    public function testAirbnbInvoiceStaysUnpaidWithoutPayout(): void
+    /**
+     * Host platí portálu při rezervaci, tedy dřív než doklad vznikne — faktura
+     * je uhrazená dnem vystavení a splatnost na ní nemá co dělat.
+     */
+    public function testOtaInvoiceIsIssuedSettledAndWithoutDueDate(): void
     {
         $invoice = $this->service->issueFull($this->airbnbReservation(), new \DateTimeImmutable('2026-05-29'));
 
-        self::assertFalse($invoice->isPaid());
-        self::assertNull($invoice->getPaidAt());
+        self::assertSame(PaymentMethod::PREPAID_INTERMEDIARY, $invoice->getPaymentMethod());
+        self::assertTrue($invoice->isPaid());
+        self::assertSame('2026-05-29', $invoice->getPaidAt()?->format('Y-m-d'));
+        self::assertNull($invoice->getDueAt());
+        self::assertNull($invoice->getBankAccount());
+    }
+
+    /** Výplata od portálu je pohyb peněz na rezervaci, do dokladu nevstupuje. */
+    public function testPayoutDateDoesNotBecomeInvoicePaymentDate(): void
+    {
+        $reservation = $this->airbnbReservation();
+        $reservation->setPayoutSentAt(new \DateTimeImmutable('2026-06-02'));
+
+        $invoice = $this->service->issueFull($reservation, new \DateTimeImmutable('2026-05-29'));
+
+        self::assertSame('2026-05-29', $invoice->getPaidAt()?->format('Y-m-d'));
+    }
+
+    /** Booking vybírá platbu stejně jako Airbnb — doklad vzniká uhrazený. */
+    public function testBookingInvoiceIsIssuedSettled(): void
+    {
+        $reservation = $this->otaReservation(Channel::BOOKING, BillingMode::BOOKING_COM);
+
+        $invoice = $this->service->issueFull($reservation, new \DateTimeImmutable('2026-05-29'));
+
+        self::assertSame(PaymentMethod::PREPAID_INTERMEDIARY, $invoice->getPaymentMethod());
+        self::assertTrue($invoice->isPaid());
+        self::assertNull($invoice->getDueAt());
     }
 
     private function airbnbReservation(): Reservation
     {
-        $r = new Reservation(Channel::AIRBNB, new \DateTimeImmutable('2026-05-28'));
+        return $this->otaReservation(Channel::AIRBNB, BillingMode::AIRBNB);
+    }
+
+    private function otaReservation(Channel $channel, BillingMode $mode): Reservation
+    {
+        $r = new Reservation($channel, new \DateTimeImmutable('2026-05-28'));
         $r->setCheckOut(new \DateTimeImmutable('2026-05-30'));
         $r->setGuestName('Eva Marková');
         $r->setGuestAddress(new Address('Nějaká 1', 'Praha', '11000'));
         $r->setStatus(ReservationStatus::CONFIRMED);
-        $r->setBillingMode(BillingMode::AIRBNB);
+        $r->setBillingMode($mode);
         $r->setPriceTotal('3298.00');
         $r->setPriceCurrency('CZK');
 

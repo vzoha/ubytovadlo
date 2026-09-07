@@ -76,7 +76,7 @@
     {% if invoice.isPaid %}
     <tr>
         <td></td>
-        <td colspan="2" class="paid-text">Neplaťte, uhrazeno {{ invoice.paidAt|date('j.n.Y') }}</td>
+        <td colspan="2" class="paid-text">{% if invoice.paymentMethod.settledOnIssue %}Neplaťte, uhrazeno předem přes zprostředkovatele {{ invoice.paidAt|date('j.n.Y') }}{% else %}Neplaťte, uhrazeno {{ invoice.paidAt|date('j.n.Y') }}{% endif %}</td>
     </tr>
     {% endif %}
 </table>

@@ -7,23 +7,30 @@
 </div>
 
 <div class="mb-3">
-    <label class="form-label">Datum splatnosti</label>
-    <input type="date" name="due_at" class="form-control" required
-           value="{{ invoice.dueAt|date('Y-m-d') }}">
+    <label class="form-label">Způsob platby</label>
+    <select name="payment_method" class="form-select">
+        {% for method in payment_methods() %}
+            <option value="{{ method.value }}" {{ invoice.paymentMethod == method ? 'selected' }}>{{ method.label }}</option>
+        {% endfor %}
+    </select>
+    <div class="form-text">
+        Hotovost odstraní z faktury číslo účtu i QR kód a zaokrouhlí částku na celé koruny.
+        Platba přes zprostředkovatele znamená, že host zaplatil portálu — doklad je bez účtu, QR kódu i splatnosti.
+    </div>
 </div>
 
 <div class="mb-3">
-    <label class="form-label">Způsob platby</label>
-    <select name="payment_method" class="form-select">
-        {% set methods = ['převodem', 'hotově'] %}
-        {% if invoice.paymentMethod not in methods %}
-            <option value="{{ invoice.paymentMethod }}" selected>{{ invoice.paymentMethod }}</option>
-        {% endif %}
-        {% for method in methods %}
-            <option value="{{ method }}" {{ invoice.paymentMethod == method ? 'selected' }}>{{ method }}</option>
-        {% endfor %}
-    </select>
-    <div class="form-text">Hotovost odstraní z faktury číslo účtu i QR kód a zaokrouhlí částku na celé koruny.</div>
+    <label class="form-label">Datum splatnosti</label>
+    <input type="date" name="due_at" class="form-control"
+           value="{{ invoice.dueAt ? invoice.dueAt|date('Y-m-d') : '' }}">
+    <div class="form-text">Povinné u platby převodem i hotově. U platby přes zprostředkovatele zůstane prázdné.</div>
+</div>
+
+<div class="mb-3">
+    <label class="form-label">Datum uskutečnění plnění</label>
+    <input type="date" name="duzp" class="form-control"
+           value="{{ invoice.duzp ? invoice.duzp|date('Y-m-d') : '' }}">
+    <div class="form-text">Den, kterým je služba poskytnutá — u pobytu jeho konec, u zálohy den přijetí platby. Určuje zdaňovací období u plátce DPH.</div>
 </div>
 
 <div class="mb-3">

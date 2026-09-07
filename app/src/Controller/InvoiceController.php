@@ -17,6 +17,7 @@ use App\Entity\Reservation;
 use App\Enum\GuestMessageStatus;
 use App\Enum\InvoiceType;
 use App\Enum\MessageKind;
+use App\Enum\PaymentMethod;
 use App\Invoice\InvoiceService;
 use App\Mail\GuestMessageSender;
 use App\Repository\InvoiceRepository;
@@ -125,19 +126,18 @@ class InvoiceController extends AbstractController
             $dueAt = $this->parseDate((string) $request->request->get('due_at'));
             $paidAtRaw = trim((string) $request->request->get('paid_at'));
             $paidAt = $paidAtRaw === '' ? null : $this->parseDate($paidAtRaw);
-            $paymentMethod = trim((string) $request->request->get('payment_method', $invoice->getPaymentMethod()));
+            $duzpRaw = trim((string) $request->request->get('duzp'));
+            $duzp = $duzpRaw === '' ? null : $this->parseDate($duzpRaw);
+            $paymentMethod = PaymentMethod::tryFrom(trim((string) $request->request->get('payment_method', '')))
+                ?? $invoice->getPaymentMethod();
 
             $errors = [];
-            $allowedMethods = array_unique([InvoiceService::PAYMENT_BANK, InvoiceService::PAYMENT_CASH, $invoice->getPaymentMethod()]);
-            if (!in_array($paymentMethod, $allowedMethods, true)) {
-                $errors[] = 'Neplatný způsob platby.';
-            }
             if ($issuedAt === null) {
                 $errors[] = 'Datum vystavení je povinné.';
             } elseif ((int) $issuedAt->format('Y') !== $invoice->getSeriesYear()) {
                 $errors[] = sprintf('Datum vystavení musí být v roce %d (číselná řada faktury).', $invoice->getSeriesYear());
             }
-            if ($dueAt === null) {
+            if ($dueAt === null && $paymentMethod->hasDueDate()) {
                 $errors[] = 'Datum splatnosti je povinné.';
             }
             if ($issuedAt !== null && $dueAt !== null && $dueAt < $issuedAt) {
@@ -148,7 +148,7 @@ class InvoiceController extends AbstractController
             }
 
             if ($errors === []) {
-                $this->invoices->updateIssued($invoice, $issuedAt, $dueAt, $paidAt, $paymentMethod);
+                $this->invoices->updateIssued($invoice, $issuedAt, $dueAt, $paidAt, $paymentMethod, $duzp);
 
                 $this->addFlash('success', sprintf('Faktura %s upravena.', $invoice->getNumber()));
 

@@ -196,20 +196,22 @@ class InvoiceRepository extends ServiceEntityRepository
     }
 
     /**
-     * Součet výstupní DPH z faktur hostům vystavených v daném měsíci (plátce DPH).
-     * Bere jen faktury se snímkem DPH (vat_amount_total not null) — ty jsou vždy v CZK.
+     * Součet výstupní DPH z faktur hostům s DUZP v daném měsíci (plátce DPH).
+     * Zdaňovací období určuje den uskutečnění plnění, ne den vystavení dokladu.
+     * Bere jen faktury se snímkem DPH (vat_amount_total not null) — ty jsou vždy v CZK
+     * a DUZP mají vždy vyplněné.
      *
      * @return array{base: string, vat: string} součty v CZK, scale 2
      */
-    public function sumOutputVatByIssuedMonth(int $year, int $month): array
+    public function sumOutputVatByDuzpMonth(int $year, int $month): array
     {
         [$from, $to] = self::monthRange($year, $month);
 
         $row = $this->createQueryBuilder('i')
             ->select('SUM(i.vatBaseTotal) AS base', 'SUM(i.vatAmountTotal) AS vat')
             ->andWhere('i.vatAmountTotal IS NOT NULL')
-            ->andWhere('i.issuedAt >= :from')
-            ->andWhere('i.issuedAt < :to')
+            ->andWhere('i.duzp >= :from')
+            ->andWhere('i.duzp < :to')
             ->setParameter('from', $from)
             ->setParameter('to', $to)
             ->getQuery()
@@ -222,7 +224,7 @@ class InvoiceRepository extends ServiceEntityRepository
     }
 
     /**
-     * Měsíce (klíč „Y-m"), ve kterých byla vystavena aspoň jedna faktura s výstupní DPH.
+     * Měsíce (klíč „Y-m") podle DUZP, ve kterých je aspoň jedna faktura s výstupní DPH.
      * Podklad pro seznam DPH období u plátce (faktury bez OTA provize).
      *
      * @return list<string>
@@ -230,7 +232,7 @@ class InvoiceRepository extends ServiceEntityRepository
     public function findMonthsWithOutputVat(): array
     {
         $rows = $this->createQueryBuilder('i')
-            ->select('DISTINCT SUBSTRING(i.issuedAt, 1, 7) AS ym')
+            ->select('DISTINCT SUBSTRING(i.duzp, 1, 7) AS ym')
             ->andWhere('i.vatAmountTotal IS NOT NULL')
             ->getQuery()
             ->getScalarResult();
@@ -239,20 +241,21 @@ class InvoiceRepository extends ServiceEntityRepository
     }
 
     /**
-     * Faktury hostům vystavené v daném měsíci (podklad DPH — výstupní doklady).
+     * Faktury hostům s DUZP v daném měsíci (podklad DPH — výstupní doklady).
+     * Doklad bez DUZP se nezdaňuje (nezaplacená záloha), do podkladu nepatří.
      *
      * @return Invoice[]
      */
-    public function findIssuedInMonth(int $year, int $month): array
+    public function findByDuzpMonth(int $year, int $month): array
     {
         [$from, $to] = self::monthRange($year, $month);
 
         return $this->createQueryBuilder('i')
-            ->andWhere('i.issuedAt >= :from')
-            ->andWhere('i.issuedAt < :to')
+            ->andWhere('i.duzp >= :from')
+            ->andWhere('i.duzp < :to')
             ->setParameter('from', $from)
             ->setParameter('to', $to)
-            ->orderBy('i.issuedAt', 'ASC')
+            ->orderBy('i.duzp', 'ASC')
             ->addOrderBy('i.seriesSequence', 'ASC')
             ->getQuery()
             ->getResult();

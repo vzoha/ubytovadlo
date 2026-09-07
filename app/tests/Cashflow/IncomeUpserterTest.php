@@ -23,6 +23,7 @@ use App\Enum\AccountType;
 use App\Enum\Channel;
 use App\Enum\IncomeSource;
 use App\Enum\InvoiceType;
+use App\Enum\PaymentMethod;
 use App\Enum\ReceiptOrigin;
 use App\Enum\ReservationStatus;
 use App\Repository\AccountRepository;
@@ -169,7 +170,7 @@ final class IncomeUpserterTest extends KernelTestCase
     {
         $r = $this->persistReservation(Channel::WEB);
         $invoice = $this->persistInvoice($r, InvoiceType::FULL, '2000.00', paid: true);
-        $invoice->setPaymentMethod('hotově');
+        $invoice->setPaymentMethod(PaymentMethod::CASH);
         $this->em->flush();
 
         $this->upserter->recompute($r);

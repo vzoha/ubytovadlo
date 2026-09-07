@@ -609,8 +609,10 @@
                                 <td class="inv-status">
                                     {% if inv.isPaid %}
                                         <span class="badge text-bg-success">Zaplaceno {{ inv.paidAt|date('d. m. Y') }}</span>
-                                    {% else %}
+                                    {% elseif inv.paymentMethod.hasDueDate %}
                                         <span class="badge text-bg-warning">Splatnost {{ inv.dueAt|date('d. m. Y') }}</span>
+                                    {% else %}
+                                        <span class="badge text-bg-secondary">Platí portál</span>
                                     {% endif %}
                                 </td>
                                 <td class="inv-actions text-end">

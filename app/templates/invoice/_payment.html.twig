@@ -9,20 +9,25 @@
                 </td>
                 <td class="nw">
                     <span class="pay-val pay-strong">{{ invoice.displayVariableSymbol }}</span><br>
-                    <span class="pay-val">{{ invoice.paymentMethod }}</span>
+                    <span class="pay-val">{{ invoice.paymentMethod.label }}</span>
                     {% if invoice.bankAccount %}<br><span class="pay-val pay-strong">{{ invoice.bankAccount }}</span>{% endif %}
                 </td>
             </tr></table>
         </td>
         <td class="pay-right">
             <table class="pay-inner pay-inner-right"><tr>
+                {% set show_duzp = invoice.duzp and invoice.duzp != invoice.issuedAt %}
+                {# Plátci doklad ukazuje daňový termín, ostatním prostý den poskytnutí služby. #}
+                {% set duzp_label = (invoice.taxProfileSnapshot ?? issuer.taxProfile).chargesOutputVat ? 'DUZP' : 'Datum plnění' %}
                 <td class="nw pay-keys-right">
-                    <span class="pay-key">Datum vystavení</span><br>
-                    <span class="pay-key pay-strong">Datum splatnosti</span>
+                    <span class="pay-key">Datum vystavení</span>
+                    {% if show_duzp %}<br><span class="pay-key">{{ duzp_label }}</span>{% endif %}
+                    {% if invoice.paymentMethod.hasDueDate %}<br><span class="pay-key pay-strong">Datum splatnosti</span>{% endif %}
                 </td>
                 <td class="nw pay-vals-right">
-                    <span class="pay-val">{{ invoice.issuedAt|date('j.n.Y') }}</span><br>
-                    <span class="pay-val pay-strong">{{ invoice.dueAt|date('j.n.Y') }}</span>
+                    <span class="pay-val">{{ invoice.issuedAt|date('j.n.Y') }}</span>
+                    {% if show_duzp %}<br><span class="pay-val">{{ invoice.duzp|date('j.n.Y') }}</span>{% endif %}
+                    {% if invoice.paymentMethod.hasDueDate %}<br><span class="pay-val pay-strong">{{ invoice.dueAt|date('j.n.Y') }}</span>{% endif %}
                 </td>
                 <td class="pay-qr">
                     {% if invoice.qrPayload %}

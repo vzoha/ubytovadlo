@@ -17,6 +17,7 @@ use App\Entity\InvoiceLine;
 use App\Entity\Reservation;
 use App\Enum\BillingMode;
 use App\Enum\InvoiceType;
+use App\Enum\PaymentMethod;
 use App\Formatting\CountryNames;
 use App\Formatting\Money;
 use App\Repository\InvoiceRepository;
@@ -36,10 +37,6 @@ use Symfony\Component\Clock\ClockInterface;
  */
 class InvoiceService
 {
-    public const PAYMENT_BANK = 'převodem';
-    public const PAYMENT_CASH = 'hotově';
-    public const PAYMENT_INTERMEDIARY = 'převodem – zprostředkovatel';
-
     private const DUE_DAYS_DEFAULT = 2;
     private const DUE_DAYS_FKSP = 30;
 
@@ -105,6 +102,7 @@ class InvoiceService
         $issuedAt ??= $this->today();
 
         $invoice = $this->buildInvoice($reservation, InvoiceType::FINAL, $issuedAt, $issuedAt->modify('+' . self::DUE_DAYS_DEFAULT . ' days'));
+        $invoice->setDuzp($this->stayDuzp($reservation, $issuedAt));
         $invoice->setParentInvoice($deposit);
 
         $rate = $this->accommodationVatRate();
@@ -135,22 +133,22 @@ class InvoiceService
         }
         $issuedAt ??= $this->today();
 
-        $dueDays = $reservation->getBillingMode() === BillingMode::FKSP ? self::DUE_DAYS_FKSP : self::DUE_DAYS_DEFAULT;
-        $invoice = $this->buildInvoice($reservation, InvoiceType::FULL, $issuedAt, $issuedAt->modify('+' . $dueDays . ' days'));
+        $method = $this->isOtaIntermediated($reservation) ? PaymentMethod::PREPAID_INTERMEDIARY : PaymentMethod::BANK_TRANSFER;
+        $dueAt = $method->hasDueDate() ? $issuedAt->modify('+' . $this->dueDays($reservation) . ' days') : null;
+
+        $invoice = $this->buildInvoice($reservation, InvoiceType::FULL, $issuedAt, $dueAt);
+        $invoice->setDuzp($this->stayDuzp($reservation, $issuedAt));
         $totalCzk = $this->resolveTotalCzk($reservation, $invoice, $issuedAt);
         $invoice->setTotalAmount($totalCzk);
         $invoice->addLine(new InvoiceLine('Ubytovací služby', $totalCzk, vatRate: $this->accommodationVatRate()));
 
-        if ($this->isOtaIntermediated($reservation)) {
-            $invoice->setPaymentMethod(self::PAYMENT_INTERMEDIARY);
+        if ($method->settledOnIssue()) {
+            // Host zaplatil portálu při rezervaci, tedy dřív, než doklad vznikl —
+            // vystavujeme ho uhrazený a bez splatnosti. Výplata od portálu je
+            // samostatná událost na rezervaci, do dokladu nepatří.
+            $invoice->setPaymentMethod($method);
             $invoice->setBankAccount(null);
-
-            // U Airbnb host platí zprostředkovateli předem; reálné peníze nám
-            // dorazí výplatou. Pokud payout e-mail už dorazil (payoutSentAt),
-            // vystavujeme fakturu rovnou jako uhrazenou ke dni odeslání výplaty.
-            if ($reservation->getPayoutSentAt() !== null) {
-                $invoice->setPaidAt($reservation->getPayoutSentAt());
-            }
+            $invoice->setPaidAt($issuedAt);
         } else {
             $this->fillBankPayment($invoice);
         }
@@ -160,9 +158,29 @@ class InvoiceService
         return $invoice;
     }
 
+    /**
+     * Den uskutečnění plnění u dokladu za pobyt — ubytovací služba je poskytnutá
+     * jeho koncem. Bez známého odjezdu zbývá den vystavení.
+     */
+    private function stayDuzp(Reservation $reservation, \DateTimeImmutable $issuedAt): \DateTimeImmutable
+    {
+        return $reservation->getCheckOut()?->setTime(0, 0) ?? $issuedAt;
+    }
+
+    /** Splatnost dle toku: zaměstnanecký fond potřebuje delší lhůtu než soukromý host. */
+    private function dueDays(Reservation $reservation): int
+    {
+        return $reservation->getBillingMode() === BillingMode::FKSP ? self::DUE_DAYS_FKSP : self::DUE_DAYS_DEFAULT;
+    }
+
     public function markPaid(Invoice $invoice, ?\DateTimeImmutable $paidAt = null): void
     {
         $invoice->setPaidAt($paidAt ?? $this->today());
+        if ($invoice->getDuzp() === null) {
+            // Záloha se zdaňuje dnem přijetí platby — DUZP i snímek DPH vznikají až teď.
+            $invoice->setDuzp($invoice->getPaidAt());
+            $this->applyVatSnapshot($invoice);
+        }
         $path = $this->pdfRenderer->renderToFile($invoice);
         $invoice->setPdfPath($path);
         $this->em->flush();
@@ -186,7 +204,7 @@ class InvoiceService
         Reservation $reservation,
         InvoiceType $type,
         \DateTimeImmutable $issuedAt,
-        \DateTimeImmutable $dueAt,
+        ?\DateTimeImmutable $dueAt,
     ): Invoice {
         $number = $this->allocator->allocate($issuedAt);
         $display = $this->numberFormat->format($number->year, $number->sequence);
@@ -207,9 +225,16 @@ class InvoiceService
         return $this->issuerProvider->current()->taxProfile->chargesOutputVat() ? VatRates::ACCOMMODATION : null;
     }
 
-    /** Uloží na fakturu součet základu a výstupní DPH z řádků (snímek pro historii i DPH přehled). */
+    /**
+     * Uloží na fakturu součet základu a výstupní DPH z řádků (snímek pro historii
+     * i DPH přehled). Bez DUZP se daň nepřiznává — typicky nezaplacená záloha.
+     */
     private function applyVatSnapshot(Invoice $invoice): void
     {
+        if ($invoice->getDuzp() === null) {
+            return;
+        }
+
         $recap = InvoiceVatRecap::fromInvoice($invoice);
         if ($recap->hasVat()) {
             $invoice->setVatBaseTotal($recap->baseTotal);
@@ -260,13 +285,16 @@ class InvoiceService
     public function updateIssued(
         Invoice $invoice,
         \DateTimeImmutable $issuedAt,
-        \DateTimeImmutable $dueAt,
+        ?\DateTimeImmutable $dueAt,
         ?\DateTimeImmutable $paidAt,
-        string $paymentMethod,
+        PaymentMethod $paymentMethod,
+        ?\DateTimeImmutable $duzp,
     ): void {
         $invoice->setIssuedAt($issuedAt);
-        $invoice->setDueAt($dueAt);
+        $invoice->setDueAt($paymentMethod->hasDueDate() ? $dueAt : null);
         $invoice->setPaidAt($paidAt);
+        $invoice->setDuzp($duzp);
+        $this->applyVatSnapshot($invoice);
 
         if ($paymentMethod !== $invoice->getPaymentMethod()) {
             $this->changePaymentMethod($invoice, $paymentMethod);
@@ -285,13 +313,14 @@ class InvoiceService
      * Přepne způsob platby vystavené faktury (typicky doplatek hrazený hotově na místě).
      * Hotovost odstraní z faktury číslo účtu i QR a zaokrouhlí částku na celé koruny
      * ({@see CashRounding}); převod účet i QR doplní zpět a vrátí částku na haléře.
+     * Platba předem přes portál nechává doklad bez účtu, QR i splatnosti.
      */
-    public function changePaymentMethod(Invoice $invoice, string $method): void
+    public function changePaymentMethod(Invoice $invoice, PaymentMethod $method): void
     {
         match ($method) {
-            self::PAYMENT_CASH => $this->switchToCash($invoice),
-            self::PAYMENT_BANK => $this->switchToBank($invoice),
-            default => throw new \InvalidArgumentException(sprintf('Neznámý způsob platby "%s".', $method)),
+            PaymentMethod::CASH => $this->switchToCash($invoice),
+            PaymentMethod::BANK_TRANSFER => $this->switchToBank($invoice),
+            PaymentMethod::PREPAID_INTERMEDIARY => $this->switchToPrepaid($invoice),
         };
     }
 
@@ -299,7 +328,7 @@ class InvoiceService
     {
         CashRounding::applyTo($invoice);
         $invoice
-            ->setPaymentMethod(self::PAYMENT_CASH)
+            ->setPaymentMethod(PaymentMethod::CASH)
             ->setBankAccount(null)
             ->setQrPayload(null);
     }
@@ -311,19 +340,19 @@ class InvoiceService
         $this->fillBankPayment($invoice);
     }
 
-    /**
-     * Platí host hotově? Rozhoduje o tom, na který účet příjem sedne
-     * ({@see IncomeUpserter}), proto se ptáme tady — u zdroje
-     * hodnoty — a ne porovnáním textu na volajícím.
-     */
-    public static function isCashPayment(?string $method): bool
+    private function switchToPrepaid(Invoice $invoice): void
     {
-        return $method !== null && mb_strtolower(trim($method)) === mb_strtolower(self::PAYMENT_CASH);
+        CashRounding::stripFrom($invoice);
+        $invoice
+            ->setPaymentMethod(PaymentMethod::PREPAID_INTERMEDIARY)
+            ->setBankAccount(null)
+            ->setQrPayload(null)
+            ->setDueAt(null);
     }
 
     private function fillBankPayment(Invoice $invoice): void
     {
-        $invoice->setPaymentMethod(self::PAYMENT_BANK);
+        $invoice->setPaymentMethod(PaymentMethod::BANK_TRANSFER);
         $invoice->setBankAccount($this->issuerProvider->current()->bankAccount);
         $this->refreshBankQr($invoice);
     }

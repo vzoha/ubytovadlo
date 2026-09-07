@@ -92,7 +92,7 @@ final class EmailDispatcherTest extends TestCase
         $notifier = $this->makeOwnerNotifier();
         $handlers = [
             new AirbnbReservationHandler($airbnb, $this->reservations, $notifier, $this->createMock(IncomeUpserter::class), $this->em),
-            new AirbnbPayoutHandler(new AirbnbPayoutParser(), $this->reservations, $this->invoices, $this->createMock(IncomeUpserter::class)),
+            new AirbnbPayoutHandler(new AirbnbPayoutParser(), $this->reservations, $this->createMock(IncomeUpserter::class)),
             new BookingTriggerHandler(new BookingTriggerParser(), $this->reservations, $notifier, $this->createMock(SettingRepository::class), $this->em),
             new BookingInvoiceHandler($bookingInvoiceImporter),
             new CsPaymentHandler(new CsPaymentParser(), $this->paymentProcessor),
@@ -238,7 +238,7 @@ final class EmailDispatcherTest extends TestCase
         self::assertSame(ReservationStatus::NEEDS_DETAILS, $existing->getStatus());
     }
 
-    public function testAppliesAirbnbPayoutToReservationAndInvoice(): void
+    public function testAppliesAirbnbPayoutToReservation(): void
     {
         $this->emailLogs->method('findByMessageId')->willReturn(null);
 
@@ -246,12 +246,8 @@ final class EmailDispatcherTest extends TestCase
         $reservation->setExternalId('HMMNOP56QR');
         $this->reservations->method('findByExternalId')->willReturn($reservation);
 
-        $invoice = $this->createMock(\App\Entity\Invoice::class);
-        $invoice->method('isPaid')->willReturn(false);
-        $invoice->expects(self::once())
-            ->method('setPaidAt')
-            ->with(self::callback(static fn (\DateTimeImmutable $d) => $d->format('Y-m-d') === '2026-05-27'));
-        $this->invoices->method('findForReservation')->willReturn([$invoice]);
+        // Výplata je pohyb peněz od portálu — na doklad hostovi nesahá.
+        $this->invoices->expects(self::never())->method('findForReservation');
 
         $email = $this->reader->fromFile(__DIR__ . '/../Fixtures/Airbnb/poslali-jsme-ti-vyplatu-eva-markova-2500.eml');
         $log = $this->dispatcher->dispatch($email);

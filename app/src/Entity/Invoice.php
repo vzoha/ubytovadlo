@@ -13,6 +13,7 @@ namespace App\Entity;
 
 use App\Entity\Embeddable\BillingIdentity;
 use App\Enum\InvoiceType;
+use App\Enum\PaymentMethod;
 use App\Enum\PdfSource;
 use App\Enum\TaxProfile;
 use App\Formatting\Money;
@@ -113,14 +114,22 @@ class Invoice
     #[ORM\Column(type: Types::DATE_IMMUTABLE)]
     private \DateTimeImmutable $issuedAt;
 
-    #[ORM\Column(type: Types::DATE_IMMUTABLE)]
-    private \DateTimeImmutable $dueAt;
+    /** Splatnost. null u faktury uhrazené předem přes zprostředkovatele — dluh nevznikl. */
+    #[ORM\Column(type: Types::DATE_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $dueAt = null;
+
+    /**
+     * Den uskutečnění plnění — u pobytu jeho konec, u zálohy den přijetí platby.
+     * Rozhoduje o zdaňovacím období výstupní DPH. Záloha ho do zaplacení nemá.
+     */
+    #[ORM\Column(type: Types::DATE_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $duzp = null;
 
     #[ORM\Column(type: Types::DATE_IMMUTABLE, nullable: true)]
     private ?\DateTimeImmutable $paidAt = null;
 
-    #[ORM\Column(length: 32)]
-    private string $paymentMethod = 'převodem';
+    #[ORM\Column(length: 32, enumType: PaymentMethod::class)]
+    private PaymentMethod $paymentMethod = PaymentMethod::BANK_TRANSFER;
 
     #[ORM\Column(length: 32, nullable: true)]
     private ?string $bankAccount = null;
@@ -158,7 +167,7 @@ class Invoice
         InvoiceType $type,
         Reservation $reservation,
         \DateTimeImmutable $issuedAt,
-        \DateTimeImmutable $dueAt,
+        ?\DateTimeImmutable $dueAt,
     ) {
         $this->number = $number;
         $this->seriesYear = $seriesYear;
@@ -418,14 +427,26 @@ class Invoice
         return $this;
     }
 
-    public function getDueAt(): \DateTimeImmutable
+    public function getDueAt(): ?\DateTimeImmutable
     {
         return $this->dueAt;
     }
 
-    public function setDueAt(\DateTimeImmutable $dueAt): self
+    public function setDueAt(?\DateTimeImmutable $dueAt): self
     {
         $this->dueAt = $dueAt;
+
+        return $this;
+    }
+
+    public function getDuzp(): ?\DateTimeImmutable
+    {
+        return $this->duzp;
+    }
+
+    public function setDuzp(?\DateTimeImmutable $duzp): self
+    {
+        $this->duzp = $duzp;
 
         return $this;
     }
@@ -447,12 +468,12 @@ class Invoice
         return $this->paidAt !== null;
     }
 
-    public function getPaymentMethod(): string
+    public function getPaymentMethod(): PaymentMethod
     {
         return $this->paymentMethod;
     }
 
-    public function setPaymentMethod(string $method): self
+    public function setPaymentMethod(PaymentMethod $method): self
     {
         $this->paymentMethod = $method;
 

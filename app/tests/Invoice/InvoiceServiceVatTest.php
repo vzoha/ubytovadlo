@@ -15,6 +15,7 @@ use App\Cashflow\IncomeUpserter;
 use App\Entity\Reservation;
 use App\Enum\BillingMode;
 use App\Enum\Channel;
+use App\Enum\DepositMode;
 use App\Enum\ReservationStatus;
 use App\Enum\TaxProfile;
 use App\Invoice\DepositConfig;
@@ -63,6 +64,38 @@ final class InvoiceServiceVatTest extends TestCase
         self::assertNull($invoice->getLines()->first()->getVatRate());
     }
 
+    /**
+     * Zdaňovací období určuje den uskutečnění plnění — u pobytu jeho konec.
+     * Faktura vystavená během pobytu tak spadá do měsíce odjezdu, ne vystavení.
+     */
+    public function testDuzpOfStayInvoiceIsEndOfStay(): void
+    {
+        $reservation = $this->webReservation('11200.00');
+        $reservation->setCheckOut(new \DateTimeImmutable('2026-06-02'));
+
+        $invoice = $this->service('vat_payer')->issueFull($reservation, new \DateTimeImmutable('2026-05-29'));
+
+        self::assertSame('2026-06-02', $invoice->getDuzp()?->format('Y-m-d'));
+    }
+
+    /**
+     * Záloha se zdaňuje dnem přijetí platby. Do zaplacení nemá DUZP, a tedy ani
+     * snímek DPH — nezaplacená záloha do přiznání nepatří.
+     */
+    public function testDepositGetsDuzpAndVatSnapshotOnPayment(): void
+    {
+        $service = $this->service('vat_payer');
+        $deposit = $service->issueDeposit($this->depositReservation(), new \DateTimeImmutable('2026-05-20'));
+
+        self::assertNull($deposit->getDuzp());
+        self::assertNull($deposit->getVatAmountTotal());
+
+        $service->markPaid($deposit, new \DateTimeImmutable('2026-05-23'));
+
+        self::assertSame('2026-05-23', $deposit->getDuzp()?->format('Y-m-d'));
+        self::assertSame('321.43', $deposit->getVatAmountTotal());
+    }
+
     private function service(string $taxProfile): InvoiceService
     {
         $em = $this->createMock(EntityManagerInterface::class);
@@ -79,7 +112,12 @@ final class InvoiceServiceVatTest extends TestCase
 
         $settings = $this->createMock(SettingRepository::class);
         $settings->method('getString')->willReturnCallback(
-            static fn (string $key): ?string => $key === TaxProfileConfig::KEY ? $taxProfile : null,
+            static fn (string $key): ?string => match ($key) {
+                TaxProfileConfig::KEY => $taxProfile,
+                DepositConfig::KEY_MODE => DepositMode::FIXED->value,
+                DepositConfig::KEY_VALUE => '3000',
+                default => null,
+            },
         );
 
         return new InvoiceService(
@@ -96,6 +134,14 @@ final class InvoiceServiceVatTest extends TestCase
             $this->createMock(EventDispatcherInterface::class),
             new Clock(),
         );
+    }
+
+    private function depositReservation(): Reservation
+    {
+        $r = $this->webReservation('11200.00');
+        $r->setBillingMode(BillingMode::STANDARD_WITH_DEPOSIT);
+
+        return $r;
     }
 
     private function webReservation(string $priceTotal): Reservation

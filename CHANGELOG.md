@@ -171,6 +171,19 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Změněno
 
+- **Faktura nese den uskutečnění plnění.** U pobytu je to jeho konec, u zálohy den
+  přijetí platby; doklad ho tiskne, když se liší od data vystavení, a v úpravě faktury
+  jde přepsat. Plátci DPH podle něj spadá doklad do zdaňovacího období — faktura
+  vystavená v září za pobyt končící v říjnu patří do říjnového přiznání. Nezaplacená
+  záloha den plnění nemá, takže do přiznání nevstupuje.
+
+- **Faktura za pobyt z portálu je doklad o platbě přijaté předem.** Airbnb i Booking
+  vybírají platbu od hosta při rezervaci, takže faktura vzniká uhrazená ke dni
+  vystavení, bez splatnosti, čísla účtu i QR kódu. Výplata od portálu je samostatný pohyb peněz u rezervace — do
+  faktury nevstupuje a hlídají ji *Očekávané výplaty* v Účtech. Způsob platby je
+  u faktury volba *převodem* / *hotově* / *převodem – zprostředkovatel* a jde
+  u konkrétního dokladu přepnout; splatnost se vyplňuje u prvních dvou.
+
 - **Počty hostů z vlastního webu drží krok s rezervací.** Synchronizace z MotoPressu
   přenáší počet dospělých a dětí i u rezervací, které už v Ubytovadle jsou — když host
   počty na webu upraví, evidence se srovná. Ručně upravený rozpad na dospělé a děti

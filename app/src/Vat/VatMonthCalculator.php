@@ -47,7 +47,7 @@ final class VatMonthCalculator
             };
         }
 
-        $output = $this->invoices->sumOutputVatByIssuedMonth($year, $month);
+        $output = $this->invoices->sumOutputVatByDuzpMonth($year, $month);
 
         return new VatMonthSummary(
             year: $year,

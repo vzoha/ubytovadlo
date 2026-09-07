@@ -17,6 +17,7 @@ use App\Entity\InvoiceLine;
 use App\Entity\Reservation;
 use App\Enum\BillingMode;
 use App\Enum\Channel;
+use App\Enum\PaymentMethod;
 use App\Enum\ReservationStatus;
 use App\Invoice\CashRounding;
 use App\Invoice\DepositConfig;
@@ -93,13 +94,13 @@ final class InvoiceServicePaymentMethodTest extends TestCase
     public function testSwitchToCashClearsBankAccountAndQr(): void
     {
         $invoice = $this->service->issueFull($this->webReservation(), new \DateTimeImmutable('2026-05-29'));
-        self::assertSame(InvoiceService::PAYMENT_BANK, $invoice->getPaymentMethod());
+        self::assertSame(PaymentMethod::BANK_TRANSFER, $invoice->getPaymentMethod());
         self::assertNotNull($invoice->getBankAccount());
         self::assertNotNull($invoice->getQrPayload());
 
-        $this->service->changePaymentMethod($invoice, InvoiceService::PAYMENT_CASH);
+        $this->service->changePaymentMethod($invoice, PaymentMethod::CASH);
 
-        self::assertSame(InvoiceService::PAYMENT_CASH, $invoice->getPaymentMethod());
+        self::assertSame(PaymentMethod::CASH, $invoice->getPaymentMethod());
         self::assertNull($invoice->getBankAccount());
         self::assertNull($invoice->getQrPayload());
     }
@@ -107,11 +108,11 @@ final class InvoiceServicePaymentMethodTest extends TestCase
     public function testSwitchBackToBankRestoresBankAccountAndQr(): void
     {
         $invoice = $this->service->issueFull($this->webReservation(), new \DateTimeImmutable('2026-05-29'));
-        $this->service->changePaymentMethod($invoice, InvoiceService::PAYMENT_CASH);
+        $this->service->changePaymentMethod($invoice, PaymentMethod::CASH);
 
-        $this->service->changePaymentMethod($invoice, InvoiceService::PAYMENT_BANK);
+        $this->service->changePaymentMethod($invoice, PaymentMethod::BANK_TRANSFER);
 
-        self::assertSame(InvoiceService::PAYMENT_BANK, $invoice->getPaymentMethod());
+        self::assertSame(PaymentMethod::BANK_TRANSFER, $invoice->getPaymentMethod());
         self::assertSame('123/0300', $invoice->getBankAccount());
         self::assertNotNull($invoice->getQrPayload());
     }
@@ -132,10 +133,11 @@ final class InvoiceServicePaymentMethodTest extends TestCase
             new \DateTimeImmutable('2026-05-29'),
             new \DateTimeImmutable('2026-05-31'),
             new \DateTimeImmutable('2026-05-30'),
-            InvoiceService::PAYMENT_CASH,
+            PaymentMethod::CASH,
+            new \DateTimeImmutable('2026-05-30'),
         );
 
-        self::assertSame(InvoiceService::PAYMENT_CASH, $invoice->getPaymentMethod());
+        self::assertSame(PaymentMethod::CASH, $invoice->getPaymentMethod());
         self::assertNull($invoice->getBankAccount());
         self::assertSame('2026-05-30', $invoice->getPaidAt()?->format('Y-m-d'));
     }
@@ -151,7 +153,7 @@ final class InvoiceServicePaymentMethodTest extends TestCase
         $invoice = $this->service->issueFull($reservation, new \DateTimeImmutable('2026-05-29'));
         self::assertSame('3500.40', $invoice->getTotalAmount());
 
-        $this->service->changePaymentMethod($invoice, InvoiceService::PAYMENT_CASH);
+        $this->service->changePaymentMethod($invoice, PaymentMethod::CASH);
 
         self::assertSame('3500.00', $invoice->getTotalAmount());
         $rounding = $this->roundingLine($invoice);
@@ -165,10 +167,10 @@ final class InvoiceServicePaymentMethodTest extends TestCase
         $reservation = $this->webReservation();
         $reservation->setPriceTotal('3500.60');
         $invoice = $this->service->issueFull($reservation, new \DateTimeImmutable('2026-05-29'));
-        $this->service->changePaymentMethod($invoice, InvoiceService::PAYMENT_CASH);
+        $this->service->changePaymentMethod($invoice, PaymentMethod::CASH);
         self::assertSame('3501.00', $invoice->getTotalAmount());
 
-        $this->service->changePaymentMethod($invoice, InvoiceService::PAYMENT_BANK);
+        $this->service->changePaymentMethod($invoice, PaymentMethod::BANK_TRANSFER);
 
         self::assertSame('3500.60', $invoice->getTotalAmount());
         self::assertNull($this->roundingLine($invoice));
@@ -178,7 +180,7 @@ final class InvoiceServicePaymentMethodTest extends TestCase
     {
         $invoice = $this->service->issueFull($this->webReservation(), new \DateTimeImmutable('2026-05-29'));
 
-        $this->service->changePaymentMethod($invoice, InvoiceService::PAYMENT_CASH);
+        $this->service->changePaymentMethod($invoice, PaymentMethod::CASH);
 
         self::assertSame('3500.00', $invoice->getTotalAmount());
         self::assertNull($this->roundingLine($invoice));
@@ -194,8 +196,8 @@ final class InvoiceServicePaymentMethodTest extends TestCase
         $reservation->setPriceTotal('3500.40');
         $invoice = $this->service->issueFull($reservation, new \DateTimeImmutable('2026-05-29'));
 
-        $this->service->changePaymentMethod($invoice, InvoiceService::PAYMENT_CASH);
-        $this->service->changePaymentMethod($invoice, InvoiceService::PAYMENT_CASH);
+        $this->service->changePaymentMethod($invoice, PaymentMethod::CASH);
+        $this->service->changePaymentMethod($invoice, PaymentMethod::CASH);
 
         self::assertSame('3500.00', $invoice->getTotalAmount());
         self::assertCount(2, $invoice->getLines());
@@ -212,14 +214,6 @@ final class InvoiceServicePaymentMethodTest extends TestCase
         return null;
     }
 
-    public function testUnknownMethodIsRejected(): void
-    {
-        $invoice = $this->service->issueFull($this->webReservation(), new \DateTimeImmutable('2026-05-29'));
-
-        $this->expectException(\InvalidArgumentException::class);
-        $this->service->changePaymentMethod($invoice, 'kreditka');
-    }
-
     private function webReservation(): Reservation
     {
         $r = new Reservation(Channel::WEB, new \DateTimeImmutable('2026-05-28'));
@@ -234,15 +228,18 @@ final class InvoiceServicePaymentMethodTest extends TestCase
     }
 
     /**
-     * Zařazení příjmu na hotovostní účet se řídí touhle metodou — porovnává
-     * proti konstantě, aby přeformulování textu neposlalo peníze na jiný účet.
+     * Přepnutí na platbu přes zprostředkovatele je doklad bez dluhu — zmizí
+     * účet, QR i splatnost.
      */
-    public function testIsCashPayment(): void
+    public function testSwitchToPrepaidClearsBankDetailsAndDueDate(): void
     {
-        self::assertTrue(InvoiceService::isCashPayment(InvoiceService::PAYMENT_CASH));
-        self::assertTrue(InvoiceService::isCashPayment(' Hotově '));
-        self::assertFalse(InvoiceService::isCashPayment(InvoiceService::PAYMENT_BANK));
-        self::assertFalse(InvoiceService::isCashPayment(InvoiceService::PAYMENT_INTERMEDIARY));
-        self::assertFalse(InvoiceService::isCashPayment(null));
+        $invoice = $this->service->issueFull($this->webReservation(), new \DateTimeImmutable('2026-05-29'));
+
+        $this->service->changePaymentMethod($invoice, PaymentMethod::PREPAID_INTERMEDIARY);
+
+        self::assertSame(PaymentMethod::PREPAID_INTERMEDIARY, $invoice->getPaymentMethod());
+        self::assertNull($invoice->getBankAccount());
+        self::assertNull($invoice->getQrPayload());
+        self::assertNull($invoice->getDueAt());
     }
 }

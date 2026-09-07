@@ -19,9 +19,9 @@ use App\Entity\ReservationReceipt;
 use App\Enum\AccountType;
 use App\Enum\IncomeSource;
 use App\Enum\InvoiceType;
+use App\Enum\PaymentMethod;
 use App\Enum\ReceiptOrigin;
 use App\Enum\ReservationStatus;
-use App\Invoice\InvoiceService;
 use App\Repository\AccountRepository;
 use App\Repository\InvoiceRepository;
 use App\Repository\PaymentRepository;
@@ -344,7 +344,7 @@ class IncomeUpserter
 
     private function accountForInvoice(Invoice $invoice): ?Account
     {
-        return InvoiceService::isCashPayment($invoice->getPaymentMethod())
+        return $invoice->getPaymentMethod() === PaymentMethod::CASH
             ? $this->accounts->findDefaultByType(AccountType::CASH)
             : $this->bankAccount();
     }

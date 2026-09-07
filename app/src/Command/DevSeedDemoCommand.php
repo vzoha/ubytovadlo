@@ -516,7 +516,7 @@ class DevSeedDemoCommand extends Command
 
                 case 'full':
                     $invoice = $this->invoices->issueFull($r, $issuedAt);
-                    // Airbnb se přes payoutSentAt označí jako uhrazená sama.
+                    // Faktura z portálu vzniká rovnou uhrazená — host zaplatil předem.
                     if (($s['paid'] ?? true) && $invoice->getPaidAt() === null) {
                         $this->invoices->markPaid($invoice, $issuedAt->modify('+2 days'));
                     }
