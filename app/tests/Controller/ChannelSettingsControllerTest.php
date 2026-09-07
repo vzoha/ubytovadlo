@@ -145,6 +145,22 @@ final class ChannelSettingsControllerTest extends WebTestCase
         self::assertSame('1234567', static::getContainer()->get(SettingRepository::class)->getString('booking.hotel_id'));
     }
 
+    public function testRemovedChannelGoesBackToTheOfferedOnes(): void
+    {
+        $this->enable(ConnectorType::BOOKING);
+
+        $crawler = $this->client->request('GET', '/nastaveni/kanaly');
+        $this->client->submit($crawler->filter('form[action="/nastaveni/kanaly/booking/odebrat"]')->form());
+
+        self::assertResponseRedirects('/nastaveni/kanaly');
+        $crawler = $this->client->followRedirect();
+
+        $cards = $crawler->filter('.card-header .fw-semibold')->each(static fn ($node): string => $node->text());
+        self::assertNotContains('Booking.com', $cards);
+        self::assertCount(1, $crawler->filter('.dropdown-menu form[action="/nastaveni/kanaly/booking/pridat"]'));
+        self::assertNull(static::getContainer()->get(ConnectorRepository::class)->findOneBy(['type' => ConnectorType::BOOKING]));
+    }
+
     public function testGuestMessagingSitsAtItsChannel(): void
     {
         $this->enable(ConnectorType::MOTOPRESS);

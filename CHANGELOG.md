@@ -184,6 +184,11 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
   a označit hotové* text zkopíruje a akci na ose rovnou uzavře. Na přehledu
   čekajících zpráv drží rozlišení štítek *chat*.
 
+- **Napojení jde ze seznamu odebrat.** Karta kanálu má dole *Odebrat napojení* —
+  smaže jeho stav, adresu feedu i tajnou adresu webhooku a kanál se vrátí mezi
+  nabízená napojení. Přístupy zůstávají v Připojení (schránku sdílí víc napojení)
+  a rezervace, které z kanálu dorazily, se nemažou.
+
 - **Cesta ke hostovi se nastavuje u prodejního kanálu.** Každá karta v Nastavení →
   Kanály nese volbu *E-mailem · Do chatu · Neposílat*; přímé rezervace mají v seznamu
   vlastní kartu, protože se zadávají ručně a napojení nemají. Portály s chatem

@@ -49,6 +49,22 @@ class ConnectorManager
         $this->em->flush();
     }
 
+    /**
+     * Odebere napojení ze seznamu — smaže jeho stav, feed i webhookový token.
+     * Přístupy zůstávají v Připojení (IMAP schránku sdílí víc napojení) a
+     * rezervace, které z kanálu dorazily, se nemažou.
+     */
+    public function forget(ConnectorType $type): void
+    {
+        $connector = $this->connectors->findOneBy(['type' => $type]);
+        if ($connector === null) {
+            return;
+        }
+
+        $this->em->remove($connector);
+        $this->em->flush();
+    }
+
     /** Zaznamená výsledek běhu konektoru a uloží. */
     public function recordRun(ConnectorType $type, ConnectorStatus $status, ?string $error = null): void
     {

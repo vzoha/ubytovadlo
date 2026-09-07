@@ -91,6 +91,20 @@ class ChannelSettingsController extends AbstractController
         return $this->redirectToRoute('channel_settings_index');
     }
 
+    #[Route('/nastaveni/kanaly/{type}/odebrat', name: 'channel_settings_remove', methods: ['POST'])]
+    public function remove(string $type, Request $request): Response
+    {
+        if (!$this->isCsrfTokenValid('connector', (string) $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+
+        $connector = ConnectorType::tryFrom($type) ?? throw $this->createNotFoundException();
+        $this->connectors->forget($connector);
+        $this->addFlash('success', sprintf('Napojení „%s" odebráno. Rezervace, které z něj dorazily, zůstávají.', $connector->label()));
+
+        return $this->redirectToRoute('channel_settings_index');
+    }
+
     #[Route('/nastaveni/kanaly/booking', name: 'channel_settings_booking_save', methods: ['POST'])]
     public function saveBooking(Request $request): Response
     {
