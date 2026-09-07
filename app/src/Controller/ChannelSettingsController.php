@@ -17,6 +17,7 @@ use App\Connector\ConnectorHealth;
 use App\Connector\ConnectorManager;
 use App\Credential\CredentialFormWriter;
 use App\Credential\CredentialProvider;
+use App\Enum\Channel;
 use App\Enum\ConnectorType;
 use App\Form\BookingChannelType;
 use App\Form\MotoPressChannelType;
@@ -58,9 +59,10 @@ class ChannelSettingsController extends AbstractController
     {
         $state = $this->provider->formState();
         $health = $this->connectors->health();
+        $active = array_values(array_filter($health, self::isInUse(...)));
 
         return $this->render('channels/index.html.twig', [
-            'active' => array_values(array_filter($health, self::isInUse(...))),
+            'active' => $active,
             'available' => array_values(array_filter($health, static fn (ConnectorHealth $c): bool => !self::isInUse($c))),
             'secretsSet' => $state['secretsSet'],
             'cipherReady' => $this->credentialWriter->isReady(),
@@ -71,6 +73,7 @@ class ChannelSettingsController extends AbstractController
                 'token' => $this->connectors->getOrCreateWebhookToken(ConnectorType::MOTOPRESS),
             ]),
             'guestMessaging' => $this->channelMessaging->overview(),
+            'directMessaging' => $this->channelMessaging->overview()[Channel::DIRECT->value],
         ]);
     }
 

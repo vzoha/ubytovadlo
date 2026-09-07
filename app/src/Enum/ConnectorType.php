@@ -70,6 +70,18 @@ enum ConnectorType: string
         };
     }
 
+    /**
+     * Prodejní kanál, do kterého tohle napojení zakládá rezervace. Null u banky,
+     * která přináší platby, ne rezervace.
+     */
+    public function salesChannel(): ?Channel
+    {
+        return match ($this) {
+            self::MOTOPRESS => Channel::WEB,
+            default => $this->icalChannel(),
+        };
+    }
+
     /** Umí konektor importovat obsazenost z iCal feedu? */
     public function supportsIcalImport(): bool
     {

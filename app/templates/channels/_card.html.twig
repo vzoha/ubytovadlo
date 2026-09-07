@@ -45,6 +45,23 @@
             {% endif %}
         </p>
 
+        {% set messaging = c.type.salesChannel ? guestMessaging[c.type.salesChannel.value] : null %}
+        {% if messaging %}
+            <form method="post" action="{{ path('channel_settings_messaging_save') }}" class="mb-3">
+                <input type="hidden" name="_token" value="{{ csrf_token('connector') }}">
+                <label class="form-label small text-muted mb-1" for="messaging-{{ messaging.channel.value }}">Zprávy hostům</label>
+                <div class="input-group input-group-sm">
+                    <select class="form-select" name="messaging[{{ messaging.channel.value }}]" id="messaging-{{ messaging.channel.value }}">
+                        {% for option in messaging.options %}
+                            <option value="{{ option.value }}" {{ option == messaging.selected ? 'selected' : '' }}>{{ option.label }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="btn btn-outline-primary">Uložit</button>
+                </div>
+                <div class="form-text small">{{ messaging.hint ?? messaging.selected.description }}</div>
+            </form>
+        {% endif %}
+
         {% if c.supportsIcalImport %}
             <form method="post" action="{{ path('connector_feed', { type: c.type.value }) }}" class="mb-3">
                 <input type="hidden" name="_token" value="{{ csrf_token('connector') }}">
@@ -146,8 +163,7 @@
         {% if c.type.value == 'airbnb' %}
             <p class="text-muted small mb-0">
                 Airbnb žádné přístupy nepotřebuje — rezervace chodí e-mailem do automatizační
-                schránky. E-mail hosta Airbnb neposkytuje, proto se hostům píše přes chat;
-                text k vložení nabídne tlačítko <strong>Zpráva do chatu</strong> na rezervaci.
+                schránky. Text pro chat nabídne tlačítko <strong>Zpráva do chatu</strong> na rezervaci.
             </p>
         {% endif %}
     </div>

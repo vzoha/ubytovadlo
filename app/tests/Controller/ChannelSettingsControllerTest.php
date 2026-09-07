@@ -106,7 +106,8 @@ final class ChannelSettingsControllerTest extends WebTestCase
         $crawler = $this->client->request('GET', '/nastaveni/kanaly');
         self::assertResponseIsSuccessful();
 
-        self::assertCount(0, $crawler->filter('.card-header .fw-semibold'), 'Bez zapnutého kanálu se žádná karta nevypisuje');
+        $cards = $crawler->filter('.card-header .fw-semibold')->each(static fn ($node): string => $node->text());
+        self::assertSame(['Přímá'], $cards, 'Bez napojení zbývá jen kanál přímých rezervací');
         self::assertCount(
             \count(ConnectorType::cases()),
             $crawler->filter('.dropdown-menu form'),
@@ -144,19 +145,28 @@ final class ChannelSettingsControllerTest extends WebTestCase
         self::assertSame('1234567', static::getContainer()->get(SettingRepository::class)->getString('booking.hotel_id'));
     }
 
-    public function testGuestMessagingIsSavedPerChannel(): void
+    public function testGuestMessagingSitsAtItsChannel(): void
     {
+        $this->enable(ConnectorType::MOTOPRESS);
+        $this->enable(ConnectorType::AIRBNB);
+
         $crawler = $this->client->request('GET', '/nastaveni/kanaly');
 
         // Web nemá chat portálu, takže se nabízí jen pošta a nic.
         $webOptions = $crawler->filter('#messaging-web option')->each(static fn ($o): string => (string) $o->attr('value'));
         self::assertSame(['email', 'none'], $webOptions);
         self::assertContains('chat', $crawler->filter('#messaging-airbnb option')->each(static fn ($o): string => (string) $o->attr('value')));
+        // Přímé rezervace stojí mezi kanály, i když pod nimi žádné napojení není.
+        self::assertCount(1, $crawler->filter('#messaging-direct'));
+        // Nepoužívaný portál se nikam neplete.
+        self::assertCount(0, $crawler->filter('#messaging-cs_chalupy'));
 
-        $this->client->submit($crawler->filter('form[action="/nastaveni/kanaly/zpravy"]')->form([
-            'messaging[airbnb]' => 'email',
-            'messaging[booking]' => 'chat',
-        ]));
+        // Volba stojí u svého kanálu — v kartě napojení, jinak v bloku pod nimi.
+        $token = (string) $crawler->filter('form[action="/nastaveni/kanaly/zpravy"] input[name="_token"]')->first()->attr('value');
+        $this->client->request('POST', '/nastaveni/kanaly/zpravy', [
+            '_token' => $token,
+            'messaging' => ['airbnb' => 'email', 'booking' => 'chat'],
+        ]);
 
         self::assertResponseRedirects('/nastaveni/kanaly');
 
@@ -165,6 +175,7 @@ final class ChannelSettingsControllerTest extends WebTestCase
         self::assertSame(GuestMessaging::CHAT, $messaging->for(Channel::BOOKING));
         // Kanál, na který formulář nesáhl, zůstává na své výchozí volbě.
         self::assertSame(GuestMessaging::NONE, $messaging->for(Channel::ECHALUPY));
+        self::assertSame(GuestMessaging::EMAIL, $messaging->for(Channel::DIRECT));
     }
 
     public function testMotoPressCardSavesServiceMapping(): void

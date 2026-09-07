@@ -178,9 +178,10 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
   a označit hotové* text zkopíruje a akci na ose rovnou uzavře. Na přehledu
   čekajících zpráv drží rozlišení štítek *chat*.
 
-- **Cesta ke hostovi se nastavuje u prodejního kanálu.** Nastavení → Kanály má
-  volbu *E-mailem · Do chatu · Neposílat* pro každý kanál. Portály s chatem
-  (Booking.com, Airbnb) nabízejí všechny tři, ostatní kanály poštu nebo nic.
+- **Cesta ke hostovi se nastavuje u prodejního kanálu.** Každá karta v Nastavení →
+  Kanály nese volbu *E-mailem · Do chatu · Neposílat*; přímé rezervace mají v seznamu
+  vlastní kartu, protože se zadávají ručně a napojení nemají. Portály s chatem
+  (Booking.com, Airbnb) nabízejí všechny tři volby, ostatní kanály poštu nebo nic.
   *E-mailem* posílá zprávy samo; u portálu s chatem drží komunikaci chat, dokud
   adresu hosta neznáme. *Do chatu* nechá zprávu čekat na ose i tehdy, když e-mail
   známe. *Neposílat* zprávy hostům z toho kanálu vůbec nezakládá — výchozí volba

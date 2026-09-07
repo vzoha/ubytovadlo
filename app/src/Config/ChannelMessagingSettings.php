@@ -61,15 +61,16 @@ final class ChannelMessagingSettings
     }
 
     /**
-     * Podklad pro nastavení: každý kanál se svou volbou, nabídkou a poznámkou.
+     * Podklad pro nastavení: každý kanál se svou volbou, nabídkou a poznámkou,
+     * pod svou hodnotou — kartu napojení zajímá právě jeho kanál.
      *
-     * @return list<array{channel: Channel, selected: GuestMessaging, options: list<GuestMessaging>, hint: string|null}>
+     * @return array<string, array{channel: Channel, selected: GuestMessaging, options: list<GuestMessaging>, hint: string|null}>
      */
     public function overview(): array
     {
         $rows = [];
         foreach (Channel::cases() as $channel) {
-            $rows[] = [
+            $rows[$channel->value] = [
                 'channel' => $channel,
                 'selected' => $this->for($channel),
                 'options' => $channel->messagingOptions(),
