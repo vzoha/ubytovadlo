@@ -607,7 +607,9 @@
                                 <td class="inv-amount text-end text-nowrap">{{ inv.totalAmount|money(inv.currency) }}</td>
                                 <td class="inv-issued text-nowrap">{{ inv.issuedAt|date('d. m. Y') }}</td>
                                 <td class="inv-status">
-                                    {% if inv.isPaid %}
+                                    {% if inv.isPaid and inv.paymentMethod.settledOnIssue %}
+                                        <span class="badge text-bg-success">Zaplaceno předem</span>
+                                    {% elseif inv.isPaid %}
                                         <span class="badge text-bg-success">Zaplaceno {{ inv.paidAt|date('d. m. Y') }}</span>
                                     {% elseif inv.paymentMethod.hasDueDate %}
                                         <span class="badge text-bg-warning">Splatnost {{ inv.dueAt|date('d. m. Y') }}</span>

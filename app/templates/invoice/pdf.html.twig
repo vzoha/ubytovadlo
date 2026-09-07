@@ -76,7 +76,8 @@
     {% if invoice.isPaid %}
     <tr>
         <td></td>
-        <td colspan="2" class="paid-text">{% if invoice.paymentMethod.settledOnIssue %}Neplaťte, uhrazeno předem přes zprostředkovatele {{ invoice.paidAt|date('j.n.Y') }}{% else %}Neplaťte, uhrazeno {{ invoice.paidAt|date('j.n.Y') }}{% endif %}</td>
+        {# U platby přijaté předem se datum netiskne — den, kdy host zaplatil portálu, neznáme. #}
+        <td colspan="2" class="paid-text">{% if invoice.paymentMethod.settledOnIssue %}Neplaťte, uhrazeno předem {{ invoice|payment_label }}{% else %}Neplaťte, uhrazeno {{ invoice.paidAt|date('j.n.Y') }}{% endif %}</td>
     </tr>
     {% endif %}
 </table>

@@ -181,8 +181,10 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
   vybírají platbu od hosta při rezervaci, takže faktura vzniká uhrazená ke dni
   vystavení, bez splatnosti, čísla účtu i QR kódu. Výplata od portálu je samostatný pohyb peněz u rezervace — do
   faktury nevstupuje a hlídají ji *Očekávané výplaty* v Účtech. Způsob platby je
-  u faktury volba *převodem* / *hotově* / *kartou online* / *převodem – zprostředkovatel*
+  u faktury volba *převodem* / *hotově* / *kartou online* / *přes zprostředkovatele*
   a jde u konkrétního dokladu přepnout; splatnost se nevyplňuje jen u poslední z nich.
+  Doklad za pobyt z portálu pojmenuje portál (*přes portál Airbnb*) a u úhrady netiskne
+  datum — den, kdy host portálu zaplatil, ubytovatel nezná.
 
 - **Počty hostů z vlastního webu drží krok s rezervací.** Synchronizace z MotoPressu
   přenáší počet dospělých a dětí i u rezervací, které už v Ubytovadle jsou — když host

@@ -35,7 +35,7 @@ enum PaymentMethod: string
             self::BANK_TRANSFER => 'převodem',
             self::CASH => 'hotově',
             self::CARD_ONLINE => 'kartou online',
-            self::PREPAID_INTERMEDIARY => 'převodem – zprostředkovatel',
+            self::PREPAID_INTERMEDIARY => 'přes zprostředkovatele',
         };
     }
 

@@ -9,7 +9,7 @@
                 </td>
                 <td class="nw">
                     <span class="pay-val pay-strong">{{ invoice.displayVariableSymbol }}</span><br>
-                    <span class="pay-val">{{ invoice.paymentMethod.label }}</span>
+                    <span class="pay-val">{{ invoice|payment_label }}</span>
                     {% if invoice.bankAccount %}<br><span class="pay-val pay-strong">{{ invoice.bankAccount }}</span>{% endif %}
                 </td>
             </tr></table>
