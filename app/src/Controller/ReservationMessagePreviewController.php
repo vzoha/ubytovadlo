@@ -44,7 +44,7 @@ class ReservationMessagePreviewController extends AbstractController
         }
 
         return new JsonResponse([
-            'to' => (string) $action->getReservation()->getGuestContact()->getEmail(),
+            'to' => (string) $action->getReservation()->getGuestContact()->getDeliveryEmail(),
             'subject' => $rendered->subject,
             'html' => $rendered->html,
             'text' => $rendered->text,

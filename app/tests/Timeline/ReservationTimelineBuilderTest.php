@@ -11,13 +11,16 @@ declare(strict_types=1);
 
 namespace App\Tests\Timeline;
 
+use App\Config\ChannelMessagingSettings;
 use App\Entity\Embeddable\GuestContact;
 use App\Entity\Reservation;
 use App\Entity\ReservationAction;
 use App\Entity\ReservationNote;
+use App\Entity\Setting;
 use App\Enum\ActionDelivery;
 use App\Enum\ActionType;
 use App\Enum\Channel;
+use App\Enum\GuestMessaging;
 use App\Enum\NoteType;
 use App\Timeline\ReservationTimelineBuilder;
 use App\Timeline\TimelineItem;
@@ -39,6 +42,7 @@ final class ReservationTimelineBuilderTest extends KernelTestCase
         $this->em->createQuery('DELETE FROM ' . ReservationAction::class . ' a')->execute();
         $this->em->createQuery('DELETE FROM ' . ReservationNote::class . ' n')->execute();
         $this->em->createQuery('DELETE FROM ' . Reservation::class . ' r')->execute();
+        $this->em->createQuery('DELETE FROM ' . Setting::class . ' s')->execute();
     }
 
     public function testMergesAndSortsChronologically(): void
@@ -154,9 +158,10 @@ final class ReservationTimelineBuilderTest extends KernelTestCase
         self::assertSame(ActionType::PRE_ARRIVAL_MESSAGE->icon(), $items[ActionType::PRE_ARRIVAL_MESSAGE->value]->icon);
     }
 
-    public function testMessageToGuestWithEmailStaysMail(): void
+    public function testMessageToBookingGuestWithEmailGoesByMail(): void
     {
-        $r = new Reservation(Channel::AIRBNB, new \DateTimeImmutable('+5 days'));
+        // Booking jede ve výchozím stavu poštou — adresu má, takže zpráva odejde sama.
+        $r = new Reservation(Channel::BOOKING, new \DateTimeImmutable('+5 days'));
         $r->setGuestName('Test');
         $r->setGuestContact(new GuestContact('host@example.com'));
         $this->em->persist($r);
@@ -168,6 +173,54 @@ final class ReservationTimelineBuilderTest extends KernelTestCase
 
         self::assertFalse($item->byChat);
         self::assertSame(ActionType::PRE_ARRIVAL_MESSAGE->icon(), $item->icon);
+    }
+
+    public function testAirbnbKeepsChatEvenWhenEmailIsKnown(): void
+    {
+        // Airbnb má ve výchozím stavu chat — vlastní adresa hosta na tom nic nemění.
+        $r = new Reservation(Channel::AIRBNB, new \DateTimeImmutable('+5 days'));
+        $r->setGuestName('Test');
+        $r->setGuestContact(new GuestContact('host@example.com'));
+        $this->em->persist($r);
+        $this->em->persist(new ReservationAction($r, ActionType::PRE_ARRIVAL_MESSAGE, new \DateTimeImmutable('+3 days')));
+        $this->em->flush();
+
+        $items = $this->actionsByType($this->builder->build($r));
+
+        self::assertTrue($items[ActionType::PRE_ARRIVAL_MESSAGE->value]->byChat);
+    }
+
+    public function testAirbnbSetToMailUsesGuestEmail(): void
+    {
+        static::getContainer()->get(ChannelMessagingSettings::class)->set(Channel::AIRBNB, GuestMessaging::EMAIL);
+        $this->em->flush();
+
+        $r = new Reservation(Channel::AIRBNB, new \DateTimeImmutable('+5 days'));
+        $r->setGuestName('Test');
+        $r->setGuestContact(new GuestContact('host@example.com'));
+        $this->em->persist($r);
+        $this->em->persist(new ReservationAction($r, ActionType::PRE_ARRIVAL_MESSAGE, new \DateTimeImmutable('+3 days')));
+        $this->em->flush();
+
+        $items = $this->actionsByType($this->builder->build($r));
+
+        self::assertFalse($items[ActionType::PRE_ARRIVAL_MESSAGE->value]->byChat);
+    }
+
+    public function testAirbnbSetToMailFallsBackToChatWithoutEmail(): void
+    {
+        static::getContainer()->get(ChannelMessagingSettings::class)->set(Channel::AIRBNB, GuestMessaging::EMAIL);
+        $this->em->flush();
+
+        $r = new Reservation(Channel::AIRBNB, new \DateTimeImmutable('+5 days'));
+        $r->setGuestName('Test');
+        $this->em->persist($r);
+        $this->em->persist(new ReservationAction($r, ActionType::PRE_ARRIVAL_MESSAGE, new \DateTimeImmutable('+3 days')));
+        $this->em->flush();
+
+        $items = $this->actionsByType($this->builder->build($r));
+
+        self::assertTrue($items[ActionType::PRE_ARRIVAL_MESSAGE->value]->byChat);
     }
 
     public function testOpenActionSitsAtItsDeadlineWithoutPlanNote(): void

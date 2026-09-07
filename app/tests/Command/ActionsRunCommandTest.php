@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Command;
 
+use App\Config\ChannelMessagingSettings;
 use App\Entity\Embeddable\GuestContact;
 use App\Entity\GuestMessage;
 use App\Entity\Invoice;
@@ -18,9 +19,11 @@ use App\Entity\InvoiceLine;
 use App\Entity\MessageTemplate;
 use App\Entity\Reservation;
 use App\Entity\ReservationAction;
+use App\Entity\Setting;
 use App\Enum\ActionStatus;
 use App\Enum\ActionType;
 use App\Enum\Channel;
+use App\Enum\GuestMessaging;
 use App\Enum\InvoiceType;
 use App\Enum\MessageKind;
 use App\Enum\SendMode;
@@ -49,6 +52,7 @@ final class ActionsRunCommandTest extends KernelTestCase
         $this->em->createQuery('DELETE FROM ' . InvoiceLine::class . ' l')->execute();
         $this->em->createQuery('DELETE FROM ' . Invoice::class . ' i')->execute();
         $this->em->createQuery('DELETE FROM ' . Reservation::class . ' r')->execute();
+        $this->em->createQuery('DELETE FROM ' . Setting::class . ' s')->execute();
 
         // Odchozí adresa odesílatele — bez ní nemá zpráva hostovi platné From.
         $container->get(SettingRepository::class)->set(MailSettingsProvider::SENDER_EMAIL, 'odesilatel@example.cz');
@@ -100,6 +104,48 @@ final class ActionsRunCommandTest extends KernelTestCase
         $sent = $this->em->getRepository(GuestMessage::class)->findOneBy(['reservation' => $r]);
         self::assertNotNull($sent);
         self::assertSame('future@example.com', $sent->getToEmail());
+    }
+
+    public function testChatChannelKeepsMessageWaitingInsteadOfSending(): void
+    {
+        // Airbnb jede ve výchozím stavu chatem — cron zprávu neodešle, čeká na ose.
+        $this->enableTemplate(MessageKind::PRE_ARRIVAL);
+
+        $r = new Reservation(Channel::AIRBNB, new \DateTimeImmutable('+5 days'));
+        $r->setCheckOut(new \DateTimeImmutable('+7 days'));
+        $r->setGuestName('Chat Host');
+        $r->setGuestContact(new GuestContact('chat@example.com'));
+        $this->em->persist($r);
+        $msg = new ReservationAction($r, ActionType::PRE_ARRIVAL_MESSAGE, new \DateTimeImmutable('-1 hour'));
+        $this->em->persist($msg);
+        $this->em->flush();
+
+        $this->tester->execute([]);
+
+        $this->em->refresh($msg);
+        self::assertSame(ActionStatus::PLANNED, $msg->getStatus());
+        self::assertNull($this->em->getRepository(GuestMessage::class)->findOneBy(['reservation' => $r]));
+    }
+
+    public function testChannelWithoutGuestMessagesSkipsDueMessage(): void
+    {
+        $this->enableTemplate(MessageKind::PRE_ARRIVAL);
+        static::getContainer()->get(ChannelMessagingSettings::class)->set(Channel::WEB, GuestMessaging::NONE);
+
+        $r = new Reservation(Channel::WEB, new \DateTimeImmutable('+5 days'));
+        $r->setCheckOut(new \DateTimeImmutable('+7 days'));
+        $r->setGuestName('Silent Host');
+        $r->setGuestContact(new GuestContact('silent@example.com'));
+        $this->em->persist($r);
+        $msg = new ReservationAction($r, ActionType::PRE_ARRIVAL_MESSAGE, new \DateTimeImmutable('-1 hour'));
+        $this->em->persist($msg);
+        $this->em->flush();
+
+        $this->tester->execute([]);
+
+        $this->em->refresh($msg);
+        self::assertSame(ActionStatus::SKIPPED, $msg->getStatus());
+        self::assertNull($this->em->getRepository(GuestMessage::class)->findOneBy(['reservation' => $r]));
     }
 
     public function testGuestMessageInWindowWithoutEmailSkipped(): void

@@ -50,7 +50,7 @@
                                                         data-done-url="{{ path('reservation_action_done', {id: item.action.id}) }}"
                                                         data-done-token="{{ csrf_token('action-edit-' ~ item.action.id) }}">Zpráva do chatu</button>
                                             {% endif %}
-                                        {% elseif reservation.guestContact.email %}
+                                        {% elseif reservation.guestContact.hasEmail %}
                                             <button class="btn btn-outline-secondary btn-sm py-0" type="button"
                                                     data-bs-toggle="modal" data-bs-target="#modalMessagePreview"
                                                     data-preview-url="{{ path('reservation_action_preview', {id: item.action.id}) }}">Náhled</button>

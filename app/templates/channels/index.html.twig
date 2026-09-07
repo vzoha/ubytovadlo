@@ -69,6 +69,33 @@
         {% endfor %}
     {% endif %}
 
+    <div class="border rounded p-3 mt-4">
+        <h3 class="h6 mb-1">Zprávy hostům</h3>
+        <p class="text-muted small mb-3">
+            Kudy z každého kanálu vedou zprávy hostům. Co poslat a kdy, drží
+            <a href="{{ path('message_templates_index') }}" class="text-decoration-none">nastavení zpráv</a>.
+        </p>
+        <form method="post" action="{{ path('channel_settings_messaging_save') }}">
+            <input type="hidden" name="_token" value="{{ csrf_token('connector') }}">
+            <div class="row g-3">
+                {% for row in guestMessaging %}
+                    <div class="col-md-6">
+                        <label class="form-label small mb-1" for="messaging-{{ row.channel.value }}">{{ row.channel.label }}</label>
+                        <select class="form-select form-select-sm" name="messaging[{{ row.channel.value }}]" id="messaging-{{ row.channel.value }}">
+                            {% for option in row.options %}
+                                <option value="{{ option.value }}" {{ option == row.selected ? 'selected' : '' }}>{{ option.label }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text small">{{ row.hint ?? row.selected.description }}</div>
+                    </div>
+                {% endfor %}
+            </div>
+            <div class="mt-3">
+                <button class="btn btn-sm btn-primary">Uložit</button>
+            </div>
+        </form>
+    </div>
+
     <div class="border rounded p-3 mt-4 bg-body-tertiary">
         <label class="form-label fw-semibold mb-1" for="ical-feed-url">Náš kalendář → do portálů</label>
         <p class="text-muted small mb-2">

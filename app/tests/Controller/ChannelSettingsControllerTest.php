@@ -11,10 +11,13 @@ declare(strict_types=1);
 
 namespace App\Tests\Controller;
 
+use App\Config\ChannelMessagingSettings;
 use App\Entity\Connector;
 use App\Entity\Setting;
 use App\Entity\User;
+use App\Enum\Channel;
 use App\Enum\ConnectorType;
+use App\Enum\GuestMessaging;
 use App\MotoPress\MotoPressSettings;
 use App\Repository\ConnectorRepository;
 use App\Repository\SettingRepository;
@@ -139,6 +142,29 @@ final class ChannelSettingsControllerTest extends WebTestCase
 
         self::assertResponseRedirects('/nastaveni/kanaly');
         self::assertSame('1234567', static::getContainer()->get(SettingRepository::class)->getString('booking.hotel_id'));
+    }
+
+    public function testGuestMessagingIsSavedPerChannel(): void
+    {
+        $crawler = $this->client->request('GET', '/nastaveni/kanaly');
+
+        // Web nemá chat portálu, takže se nabízí jen pošta a nic.
+        $webOptions = $crawler->filter('#messaging-web option')->each(static fn ($o): string => (string) $o->attr('value'));
+        self::assertSame(['email', 'none'], $webOptions);
+        self::assertContains('chat', $crawler->filter('#messaging-airbnb option')->each(static fn ($o): string => (string) $o->attr('value')));
+
+        $this->client->submit($crawler->filter('form[action="/nastaveni/kanaly/zpravy"]')->form([
+            'messaging[airbnb]' => 'email',
+            'messaging[booking]' => 'chat',
+        ]));
+
+        self::assertResponseRedirects('/nastaveni/kanaly');
+
+        $messaging = static::getContainer()->get(ChannelMessagingSettings::class);
+        self::assertSame(GuestMessaging::EMAIL, $messaging->for(Channel::AIRBNB));
+        self::assertSame(GuestMessaging::CHAT, $messaging->for(Channel::BOOKING));
+        // Kanál, na který formulář nesáhl, zůstává na své výchozí volbě.
+        self::assertSame(GuestMessaging::NONE, $messaging->for(Channel::ECHALUPY));
     }
 
     public function testMotoPressCardSavesServiceMapping(): void

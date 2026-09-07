@@ -34,6 +34,44 @@ final class GuestContactTest extends TestCase
         self::assertTrue($contact->isEmpty());
     }
 
+    public function testPortalAddressLandsInItsOwnField(): void
+    {
+        $contact = new GuestContact('knovotny.100001@guest.booking.com');
+
+        self::assertNull($contact->getEmail());
+        self::assertSame('knovotny.100001@guest.booking.com', $contact->getPortalEmail());
+        self::assertSame('knovotny.100001@guest.booking.com', $contact->getDeliveryEmail());
+        self::assertTrue($contact->hasEmail());
+        self::assertTrue($contact->deliversToPortal());
+    }
+
+    public function testGuestOwnAddressBeatsPortalOne(): void
+    {
+        $contact = (new GuestContact('host.123@guest.airbnb.com'))->withEmail('host@example.com');
+
+        self::assertSame('host@example.com', $contact->getEmail());
+        self::assertSame('host.123@guest.airbnb.com', $contact->getPortalEmail());
+        self::assertSame('host@example.com', $contact->getDeliveryEmail());
+        self::assertFalse($contact->deliversToPortal());
+    }
+
+    public function testPhoneChangeKeepsBothAddresses(): void
+    {
+        $contact = (new GuestContact('host@example.com', null, 'host.123@guest.booking.com'))->withPhone('+420 777 111 222');
+
+        self::assertSame('host@example.com', $contact->getEmail());
+        self::assertSame('host.123@guest.booking.com', $contact->getPortalEmail());
+    }
+
+    public function testOrdinaryAddressStaysGuestOwn(): void
+    {
+        $contact = new GuestContact('host@booking.com.example.cz');
+
+        self::assertSame('host@booking.com.example.cz', $contact->getEmail());
+        self::assertNull($contact->getPortalEmail());
+        self::assertFalse($contact->deliversToPortal());
+    }
+
     public function testEmailIsTrimmed(): void
     {
         self::assertSame('host@example.com', (new GuestContact(' host@example.com '))->getEmail());

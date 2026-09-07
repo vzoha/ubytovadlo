@@ -178,6 +178,21 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
   a označit hotové* text zkopíruje a akci na ose rovnou uzavře. Na přehledu
   čekajících zpráv drží rozlišení štítek *chat*.
 
+- **Cesta ke hostovi se nastavuje u prodejního kanálu.** Nastavení → Kanály má
+  volbu *E-mailem · Do chatu · Neposílat* pro každý kanál. Portály s chatem
+  (Booking.com, Airbnb) nabízejí všechny tři, ostatní kanály poštu nebo nic.
+  *E-mailem* posílá zprávy samo; u portálu s chatem drží komunikaci chat, dokud
+  adresu hosta neznáme. *Do chatu* nechá zprávu čekat na ose i tehdy, když e-mail
+  známe. *Neposílat* zprávy hostům z toho kanálu vůbec nezakládá — výchozí volba
+  pro eChalupy a CS chalupy, odkud chodí jen obsazenost. Airbnb začíná na chatu,
+  ostatní kanály na poště.
+
+- **Adresa portálu se drží zvlášť od adresy hosta.** `@guest.booking.com`
+  a podobné adresy patří schránce portálu: na detailu rezervace je u nich štítek
+  a poznámka, že zpráva skončí v chatu jeho aplikace a přílohu nemusí propustit.
+  Odeslání faktury na takovou adresu se na to zeptá. Jakmile host sdílí vlastní
+  adresu, používá se přednostně ona.
+
 - **Uzavřená zpráva na ose ukazuje, jak dopadla.** Zpráva odeslaná poštou nese
   ✉️, zpráva označená jako hotová ručně 💬 — vyřídila se mimo aplikaci, typicky
   v chatu portálu. U dosud uzavřených akcí zůstává ikona podle kontaktu na hosta.

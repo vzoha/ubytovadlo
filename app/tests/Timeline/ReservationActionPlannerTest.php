@@ -11,13 +11,16 @@ declare(strict_types=1);
 
 namespace App\Tests\Timeline;
 
+use App\Config\ChannelMessagingSettings;
 use App\Entity\Embeddable\Address;
 use App\Entity\MessageTemplate;
 use App\Entity\Reservation;
 use App\Entity\ReservationAction;
+use App\Entity\Setting;
 use App\Enum\ActionType;
 use App\Enum\BillingMode;
 use App\Enum\Channel;
+use App\Enum\GuestMessaging;
 use App\Enum\MessageKind;
 use App\Enum\ReservationStatus;
 use App\Enum\SendMode;
@@ -47,6 +50,23 @@ final class ReservationActionPlannerTest extends KernelTestCase
         // Bez override šablon platí výchozí režimy (plánované zprávy = návrh) —
         // jiný test mohl zanechat řádek, který by planneru zprávu odebral.
         $this->em->createQuery('DELETE FROM ' . MessageTemplate::class . ' t')->execute();
+        $this->em->createQuery('DELETE FROM ' . Setting::class . ' s')->execute();
+    }
+
+    public function testChannelWithoutGuestMessagesPlansOnlyOwnerReminders(): void
+    {
+        static::getContainer()->get(ChannelMessagingSettings::class)->set(Channel::BOOKING, GuestMessaging::NONE);
+        $this->em->flush();
+
+        $r = $this->confirmed(BillingMode::BOOKING_COM, 'DE', Channel::BOOKING);
+        $this->planner->planFor($r);
+        $this->em->flush();
+
+        foreach ([ActionType::PRE_ARRIVAL_MESSAGE, ActionType::PRE_DEPARTURE_MESSAGE, ActionType::POST_STAY_MESSAGE] as $type) {
+            self::assertFalse($this->actions->hasOfType($r, $type), $type->value . ' se nemá zakládat');
+        }
+        // Hlášení cizince je povinnost ubytovatele, ne zpráva hostovi.
+        self::assertTrue($this->actions->hasOfType($r, ActionType::UBYPORT_EXPORT));
     }
 
     public function testPlansDepositFlowAndIsIdempotent(): void
@@ -165,9 +185,9 @@ final class ReservationActionPlannerTest extends KernelTestCase
         $this->em->flush();
     }
 
-    private function confirmed(BillingMode $mode, string $country): Reservation
+    private function confirmed(BillingMode $mode, string $country, Channel $channel = Channel::WEB): Reservation
     {
-        $r = new Reservation(Channel::WEB, new \DateTimeImmutable('+10 days'));
+        $r = new Reservation($channel, new \DateTimeImmutable('+10 days'));
         $r->setCheckOut(new \DateTimeImmutable('+12 days'));
         $r->setStatus(ReservationStatus::CONFIRMED);
         $r->setBillingMode($mode);

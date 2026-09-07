@@ -11,32 +11,24 @@ declare(strict_types=1);
 
 namespace App\Timeline;
 
-use App\Entity\MessageTemplate;
 use App\Entity\Reservation;
 use App\Entity\ReservationAction;
-use App\Enum\ActionDelivery;
 use App\Enum\ActionType;
-use App\Enum\GuestMessageStatus;
 use App\Enum\InvoiceType;
-use App\Enum\MessageKind;
 use App\Enum\OwnerNotificationType;
 use App\Enum\PaymentStatus;
-use App\Enum\SendMode;
 use App\Invoice\BalanceCalculator;
 use App\Invoice\PaymentStatusResolver;
-use App\Mail\ActionMessageResolver;
-use App\Mail\GuestMessageSender;
-use App\Mail\MessageTemplateProvider;
 use App\Notification\OwnerNotifier;
 use App\Repository\InvoiceRepository;
 
 /**
  * Vyhodnotí naplánovanou akci, které nadešel čas:
- *  - Zprávy hostům (pre-arrival / post-stay / custom) se odešlou e-mailem, pokud
- *    je akce v okně platnosti, šablona zapnutá a host má e-mail. Mimo okno se
- *    označí SKIPPED, ať se prošlá zpráva nepošle zpětně.
- *  - Připomínka doplatku se self-resolvuje, když je doplatek uhrazen; jinak (a
- *    je-li šablona zapnutá a host má e-mail) pošle hostovi jednu připomínku.
+ *  - Zprávy hostům (pre-arrival / post-stay / custom) předá GuestMessageDispatcher,
+ *    dokud jsou v okně platnosti. Mimo okno se označí SKIPPED, ať se prošlá zpráva
+ *    nepošle zpětně.
+ *  - Připomínka doplatku se self-resolvuje, když je doplatek uhrazen; jinak jde
+ *    hostovi jedna připomínka.
  *  - Ostatní připomínky (doplatková faktura, Ubyport) se self-resolvují podle
  *    stavu rezervace, CUSTOM_REMINDER řeší majitelka ručně.
  */
@@ -45,11 +37,9 @@ class ReservationActionExecutor
     public function __construct(
         private readonly InvoiceRepository $invoices,
         private readonly BalanceCalculator $balance,
-        private readonly GuestMessageSender $sender,
-        private readonly MessageTemplateProvider $templates,
+        private readonly GuestMessageDispatcher $guestMessages,
         private readonly OwnerNotifier $notifier,
         private readonly PaymentStatusResolver $paymentStatus,
-        private readonly ActionMessageResolver $messages,
     ) {
     }
 
@@ -141,77 +131,32 @@ class ReservationActionExecutor
             return true;
         }
 
-        $kind = MessageKind::fromActionType($action->getType());
-        if ($kind === null) {
-            return false;
-        }
-
-        // Custom je ruční, pošle se vždy. Ostatní ctí režim: vypnutá se přeskočí,
-        // ruční zůstane na ose k odeslání tlačítkem (cron ji sám neodešle).
-        if ($kind !== MessageKind::CUSTOM) {
-            $mode = $this->templates->for($kind)->getMode();
-            if ($mode === SendMode::OFF) {
-                $action->markSkipped('Zpráva je vypnutá — neodesláno.');
-
-                return true;
-            }
-            if ($mode === SendMode::DRAFT) {
-                return false;
-            }
-        }
-
-        if (!$this->sender->canSend($action->getReservation())) {
-            $action->markSkipped('Host nemá e-mail — zpráva neodeslána.');
-
-            return true;
-        }
-
-        return $this->dispatch($action, $kind, $this->messages->template($action, $kind));
+        return $this->guestMessages->dispatchDue($action);
     }
 
     /**
      * Ruční odeslání zprávy z časové osy (tlačítko u návrhu) — přeskočí režim
-     * i okno platnosti, odešle rovnou. Respektuje jen chybějící e-mail hosta.
+     * i okno platnosti, odešle rovnou.
      *
      * @return bool true, pokud akce změnila stav (a je třeba flush)
      */
     public function sendNow(ReservationAction $action): bool
     {
-        $kind = MessageKind::fromActionType($action->getType());
-        if ($kind === null) {
-            return false;
-        }
-
-        if (!$this->sender->canSend($action->getReservation())) {
-            $action->markSkipped('Host nemá e-mail — zpráva neodeslána.');
-
-            return true;
-        }
-
-        return $this->dispatch($action, $kind, $this->messages->template($action, $kind));
+        return $this->guestMessages->sendNow($action);
     }
 
     /**
-     * Připomínka doplatku: uhrazeno → hotovo; jinak jedna připomínka hostovi
-     * (jen je-li šablona zapnutá a host má e-mail, jinak zůstane k ručnímu řešení).
+     * Připomínka doplatku: uhrazeno → hotovo; jinak jedna připomínka hostovi.
      */
     private function handleBalanceReminder(ReservationAction $action): bool
     {
-        $reservation = $action->getReservation();
-        if ($this->balanceSettled($reservation)) {
+        if ($this->balanceSettled($action->getReservation())) {
             $action->markDone('Doplatek uhrazen.');
 
             return true;
         }
 
-        // Připomínku pošle sám jen v režimu AUTO; ruční/vypnuto nechá akci
-        // otevřenou k ručnímu vyřízení.
-        if ($this->templates->for(MessageKind::BALANCE_REMINDER)->getMode() !== SendMode::AUTO
-            || !$this->sender->canSend($reservation)) {
-            return false;
-        }
-
-        return $this->dispatch($action, MessageKind::BALANCE_REMINDER, null);
+        return $this->guestMessages->remindAboutBalance($action);
     }
 
     /**
@@ -237,27 +182,6 @@ class ReservationActionExecutor
             return false;
         }
         $action->setPayload($payload + ['owner_notified' => true]);
-
-        return true;
-    }
-
-    /**
-     * Odešle zprávu a podle výsledku označí akci DONE/FAILED. Při selhání navíc
-     * upozorní ubytovatele (akce zůstane FAILED, takže se notifikace nespamuje).
-     */
-    private function dispatch(ReservationAction $action, MessageKind $kind, ?MessageTemplate $override): bool
-    {
-        $message = $this->sender->send($action->getReservation(), $kind, [], [], $override);
-
-        if ($message->getStatus() === GuestMessageStatus::SENT) {
-            $action->markDone(sprintf('Zpráva odeslána hostovi (%s).', $message->getToEmail()), ActionDelivery::EMAIL);
-        } else {
-            $action->markFailed('Odeslání selhalo: ' . (string) $message->getError());
-            $this->notifier->notify(OwnerNotificationType::GUEST_MESSAGE_FAILED, $action->getReservation(), [
-                'kind' => $kind->label(),
-                'error' => (string) $message->getError(),
-            ]);
-        }
 
         return true;
     }

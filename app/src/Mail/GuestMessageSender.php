@@ -55,7 +55,7 @@ class GuestMessageSender
      */
     public function send(Reservation $reservation, MessageKind $kind, array $context = [], array $attachmentPaths = [], ?MessageTemplate $override = null): GuestMessage
     {
-        $to = (string) $reservation->getGuestContact()->getEmail();
+        $to = (string) $reservation->getGuestContact()->getDeliveryEmail();
         if ($to === '') {
             throw new \InvalidArgumentException('Rezervace nemá e-mail hosta — nelze odeslat zprávu.');
         }

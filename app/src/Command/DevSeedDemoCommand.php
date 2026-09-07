@@ -636,6 +636,7 @@ class DevSeedDemoCommand extends Command
             [
                 'channel' => Channel::BOOKING, 'billing' => \App\Enum\BillingMode::BOOKING_COM,
                 'ext' => '7000000201', 'in' => '2026-02-06', 'out' => '2026-02-09', 'name' => 'Klaus Müller',
+                'email' => 'kmuller.700201@guest.booking.com',
                 'street' => 'Hauptstraße 5', 'city' => 'Passau', 'zip' => '94032', 'country' => 'DE',
                 'adults' => 2, 'price' => '210.00', 'currency' => 'EUR', 'acq' => 'Booking.com',
                 'checkinLocale' => 'de',
@@ -684,6 +685,7 @@ class DevSeedDemoCommand extends Command
             [
                 'channel' => Channel::BOOKING, 'billing' => \App\Enum\BillingMode::BOOKING_COM,
                 'ext' => '7000000202', 'in' => '2026-03-20', 'out' => '2026-03-23', 'name' => 'Anke de Vries',
+                'email' => 'advries.700202@guest.booking.com',
                 'street' => 'Keizersgracht 12', 'city' => 'Amsterdam', 'zip' => '1015', 'country' => 'NL',
                 'adults' => 2, 'price' => '225.00', 'currency' => 'EUR', 'acq' => 'Booking.com',
                 'vtKwh' => 29, 'ntKwh' => 19, 'clean' => [CleaningType::CLEANER_LAUNDRY, 800, 800], 'inv' => 'full',

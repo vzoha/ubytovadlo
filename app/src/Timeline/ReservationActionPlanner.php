@@ -19,6 +19,7 @@ use App\Enum\MessageKind;
 use App\Enum\ReservationStatus;
 use App\Enum\SendMode;
 use App\Invoice\DepositConfig;
+use App\Mail\GuestMessageDelivery;
 use App\Mail\MessageScheduleResolver;
 use App\Mail\MessageTemplateProvider;
 use App\Repository\ReservationActionRepository;
@@ -41,6 +42,7 @@ class ReservationActionPlanner
         private readonly DepositConfig $depositConfig,
         private readonly MessageTemplateProvider $templates,
         private readonly MessageScheduleResolver $schedule,
+        private readonly GuestMessageDelivery $delivery,
         private readonly ClockInterface $clock,
     ) {
     }
@@ -99,6 +101,11 @@ class ReservationActionPlanner
     {
         $kind = MessageKind::fromActionType($type);
         if ($kind === null) {
+            return 0;
+        }
+
+        // Kanál, který hostům nepíše, nemá proč zprávy plánovat.
+        if (!$this->delivery->plansMessages($reservation)) {
             return 0;
         }
 

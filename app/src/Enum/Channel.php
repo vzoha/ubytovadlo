@@ -48,4 +48,44 @@ enum Channel: string
             default => false,
         };
     }
+
+    /** Portál má chat s hostem, takže zpráva má kudy jít i bez e-mailu. */
+    public function hasGuestChat(): bool
+    {
+        return $this->isOta();
+    }
+
+    /** Výchozí cesta ke hostovi: chat tam, kde e-mail nemíváme; jinde pošta. */
+    public function defaultMessaging(): GuestMessaging
+    {
+        return match ($this) {
+            self::AIRBNB => GuestMessaging::CHAT,
+            // Feed obsazenosti nenese ani jméno hosta, natož kontakt.
+            self::ECHALUPY, self::CS_CHALUPY => GuestMessaging::NONE,
+            default => GuestMessaging::EMAIL,
+        };
+    }
+
+    /** Co o cestě ke hostovi platí zrovna u tohohle kanálu. */
+    public function messagingHint(): ?string
+    {
+        return match ($this) {
+            self::BOOKING => 'Adresa portálu doručí zprávu do chatu v aplikaci Booking.com, dokud host nesdílí vlastní.',
+            self::AIRBNB => 'Airbnb adresu hosta nesdílí — dokud ji nedoplníte, vede komunikace chatem.',
+            self::ECHALUPY, self::CS_CHALUPY => 'Z feedu obsazenosti kontakt na hosta nechodí, doplňuje se ručně.',
+            default => null,
+        };
+    }
+
+    /**
+     * Volby, které dávají u kanálu smysl — bez chatu portálu zbývá pošta, nebo nic.
+     *
+     * @return list<GuestMessaging>
+     */
+    public function messagingOptions(): array
+    {
+        return $this->hasGuestChat()
+            ? [GuestMessaging::EMAIL, GuestMessaging::CHAT, GuestMessaging::NONE]
+            : [GuestMessaging::EMAIL, GuestMessaging::NONE];
+    }
 }

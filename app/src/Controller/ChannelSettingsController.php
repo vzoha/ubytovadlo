@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Booking\BookingHotelId;
+use App\Config\ChannelMessagingSettings;
 use App\Connector\ConnectorHealth;
 use App\Connector\ConnectorManager;
 use App\Credential\CredentialFormWriter;
@@ -46,6 +47,7 @@ class ChannelSettingsController extends AbstractController
         private readonly MotoPressSettings $motopress,
         private readonly ExtranetLink $extranetLink,
         private readonly SettingRepository $settings,
+        private readonly ChannelMessagingSettings $channelMessaging,
         private readonly IcalFeedToken $icalFeedToken,
         private readonly EntityManagerInterface $em,
     ) {
@@ -68,6 +70,7 @@ class ChannelSettingsController extends AbstractController
             'motopressWebhookUrl' => $this->absolute('motopress_webhook', [
                 'token' => $this->connectors->getOrCreateWebhookToken(ConnectorType::MOTOPRESS),
             ]),
+            'guestMessaging' => $this->channelMessaging->overview(),
         ]);
     }
 
@@ -158,7 +161,25 @@ class ChannelSettingsController extends AbstractController
         ]);
     }
 
-    /** @param array<string, string> $params */
+    #[Route('/nastaveni/kanaly/zpravy', name: 'channel_settings_messaging_save', methods: ['POST'])]
+    public function saveGuestMessaging(Request $request): Response
+    {
+        if (!$this->isCsrfTokenValid('connector', (string) $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+
+        /** @var array<string, string> $choices */
+        $choices = $request->request->all('messaging');
+        $this->channelMessaging->saveChoices($choices);
+        $this->em->flush();
+        $this->addFlash('success', 'Zprávy hostům uloženy.');
+
+        return $this->redirectToRoute('channel_settings_index');
+    }
+
+    /**
+     * @param array<string, string> $params
+     */
     private function absolute(string $route, array $params): string
     {
         return $this->generateUrl($route, $params, UrlGeneratorInterface::ABSOLUTE_URL);

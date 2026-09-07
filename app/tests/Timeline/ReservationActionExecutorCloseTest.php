@@ -20,12 +20,10 @@ use App\Enum\Channel;
 use App\Invoice\BalanceCalculator;
 use App\Invoice\BalanceResult;
 use App\Invoice\PaymentStatusResolver;
-use App\Mail\ActionMessageResolver;
-use App\Mail\GuestMessageSender;
-use App\Mail\MessageTemplateProvider;
 use App\Notification\OwnerNotifier;
 use App\Repository\InvoiceRepository;
 use App\Repository\ReservationReceiptRepository;
+use App\Timeline\GuestMessageDispatcher;
 use App\Timeline\ReservationActionExecutor;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -40,24 +38,21 @@ final class ReservationActionExecutorCloseTest extends TestCase
 {
     private InvoiceRepository&MockObject $invoices;
     private BalanceCalculator&MockObject $balance;
-    private GuestMessageSender&MockObject $sender;
+    private GuestMessageDispatcher&MockObject $guestMessages;
     private ReservationActionExecutor $executor;
 
     protected function setUp(): void
     {
         $this->invoices = $this->createMock(InvoiceRepository::class);
         $this->balance = $this->createMock(BalanceCalculator::class);
-        $this->sender = $this->createMock(GuestMessageSender::class);
-
+        $this->guestMessages = $this->createMock(GuestMessageDispatcher::class);
         $this->executor = new ReservationActionExecutor(
             $this->invoices,
             $this->balance,
-            $this->sender,
-            $this->createMock(MessageTemplateProvider::class),
+            $this->guestMessages,
             $this->createMock(OwnerNotifier::class),
             // closeIfSatisfied stav platby neřeší; final službu stačí reálná instance.
             new PaymentStatusResolver($this->invoices, $this->createMock(ReservationReceiptRepository::class)),
-            $this->createMock(ActionMessageResolver::class),
         );
     }
 
@@ -92,7 +87,7 @@ final class ReservationActionExecutorCloseTest extends TestCase
     {
         $this->balance->method('forReservation')->willReturn(new BalanceResult(1000.0, 400.0, 600.0));
         // Klíčový rozdíl proti execute(): nezaplacený doplatek se NEpřipomíná.
-        $this->sender->expects(self::never())->method('canSend');
+        $this->guestMessages->expects(self::never())->method('remindAboutBalance');
         $action = $this->action(ActionType::BALANCE_REMINDER);
 
         self::assertFalse($this->executor->closeIfSatisfied($action));
