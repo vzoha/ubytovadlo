@@ -313,13 +313,15 @@ class InvoiceService
      * Přepne způsob platby vystavené faktury (typicky doplatek hrazený hotově na místě).
      * Hotovost odstraní z faktury číslo účtu i QR a zaokrouhlí částku na celé koruny
      * ({@see CashRounding}); převod účet i QR doplní zpět a vrátí částku na haléře.
-     * Platba předem přes portál nechává doklad bez účtu, QR i splatnosti.
+     * Karta i platba předem přes portál nechávají doklad bez účtu a QR, platba předem
+     * navíc bez splatnosti.
      */
     public function changePaymentMethod(Invoice $invoice, PaymentMethod $method): void
     {
         match ($method) {
             PaymentMethod::CASH => $this->switchToCash($invoice),
             PaymentMethod::BANK_TRANSFER => $this->switchToBank($invoice),
+            PaymentMethod::CARD_ONLINE => $this->switchToCardOnline($invoice),
             PaymentMethod::PREPAID_INTERMEDIARY => $this->switchToPrepaid($invoice),
         };
     }
@@ -338,6 +340,15 @@ class InvoiceService
         // Zaokrouhlení pryč dřív než QR — do platebního příkazu patří přesná částka.
         CashRounding::stripFrom($invoice);
         $this->fillBankPayment($invoice);
+    }
+
+    private function switchToCardOnline(Invoice $invoice): void
+    {
+        CashRounding::stripFrom($invoice);
+        $invoice
+            ->setPaymentMethod(PaymentMethod::CARD_ONLINE)
+            ->setBankAccount(null)
+            ->setQrPayload(null);
     }
 
     private function switchToPrepaid(Invoice $invoice): void

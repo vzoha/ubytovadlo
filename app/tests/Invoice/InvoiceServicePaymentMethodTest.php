@@ -227,6 +227,19 @@ final class InvoiceServicePaymentMethodTest extends TestCase
         return $r;
     }
 
+    /** Platbu kartou vyřídila brána — doklad zůstane se splatností, ale bez účtu a QR. */
+    public function testSwitchToCardOnlineClearsBankDetailsAndKeepsDueDate(): void
+    {
+        $invoice = $this->service->issueFull($this->webReservation(), new \DateTimeImmutable('2026-05-29'));
+
+        $this->service->changePaymentMethod($invoice, PaymentMethod::CARD_ONLINE);
+
+        self::assertSame(PaymentMethod::CARD_ONLINE, $invoice->getPaymentMethod());
+        self::assertNull($invoice->getBankAccount());
+        self::assertNull($invoice->getQrPayload());
+        self::assertSame('2026-05-31', $invoice->getDueAt()?->format('Y-m-d'));
+    }
+
     /**
      * Přepnutí na platbu přes zprostředkovatele je doklad bez dluhu — zmizí
      * účet, QR i splatnost.

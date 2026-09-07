@@ -23,6 +23,8 @@ enum PaymentMethod: string
 {
     case BANK_TRANSFER = 'bank_transfer';
     case CASH = 'cash';
+    /** Host zaplatil kartou přes platební bránu — peníze dorazí na účet, doklad nepotřebuje QR. */
+    case CARD_ONLINE = 'card_online';
     /** Host zaplatil portálu předem (Airbnb, Booking); ubytovateli dorazí výplata. */
     case PREPAID_INTERMEDIARY = 'prepaid_intermediary';
 
@@ -32,6 +34,7 @@ enum PaymentMethod: string
         return match ($this) {
             self::BANK_TRANSFER => 'převodem',
             self::CASH => 'hotově',
+            self::CARD_ONLINE => 'kartou online',
             self::PREPAID_INTERMEDIARY => 'převodem – zprostředkovatel',
         };
     }

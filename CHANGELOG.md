@@ -181,8 +181,8 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
   vybírají platbu od hosta při rezervaci, takže faktura vzniká uhrazená ke dni
   vystavení, bez splatnosti, čísla účtu i QR kódu. Výplata od portálu je samostatný pohyb peněz u rezervace — do
   faktury nevstupuje a hlídají ji *Očekávané výplaty* v Účtech. Způsob platby je
-  u faktury volba *převodem* / *hotově* / *převodem – zprostředkovatel* a jde
-  u konkrétního dokladu přepnout; splatnost se vyplňuje u prvních dvou.
+  u faktury volba *převodem* / *hotově* / *kartou online* / *převodem – zprostředkovatel*
+  a jde u konkrétního dokladu přepnout; splatnost se nevyplňuje jen u poslední z nich.
 
 - **Počty hostů z vlastního webu drží krok s rezervací.** Synchronizace z MotoPressu
   přenáší počet dospělých a dětí i u rezervací, které už v Ubytovadle jsou — když host
