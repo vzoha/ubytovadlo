@@ -124,15 +124,12 @@ class MotoPressBookingMapper
 
         $accommodations = is_array($data['reserved_accommodations'] ?? null) ? $data['reserved_accommodations'] : [];
         [$adults, $children] = $this->sumGuests($accommodations);
-        // MotoPress neumí rozlišit děti od dospělých — pokud majitelka split opravila ručně,
-        // další sync ho nepřepíše. U existující rezervace počty nedotahujeme (drží je Ubytovadlo).
-        if ($isNew && !$reservation->isGuestsSplitManually()) {
-            if ($adults > 0) {
-                $reservation->setGuestsAdult($adults);
-            }
-            if ($children > 0) {
-                $reservation->setGuestsChild($children);
-            }
+        // Počty z MotoPressu platí i při aktualizaci rezervace. Výjimkou je ručně upravený
+        // rozpad na dospělé a děti — ten drží Ubytovadlo a sync ho nepřepíše.
+        // Nulový počet dospělých znamená, že MotoPress počty neposlal; pak zůstávají beze změny.
+        if ($adults > 0 && !$reservation->isGuestsSplitManually()) {
+            $reservation->setGuestsAdult($adults);
+            $reservation->setGuestsChild($children);
         }
 
         if (isset($data['total_price']) && $this->fill($isNew, $reservation->getPriceTotal())) {

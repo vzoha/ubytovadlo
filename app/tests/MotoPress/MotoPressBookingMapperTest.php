@@ -262,6 +262,60 @@ final class MotoPressBookingMapperTest extends TestCase
         self::assertSame(ReservationStatus::CANCELLED, $reservation->getStatus());
     }
 
+    public function testExistingReservationUpdatesGuestCounts(): void
+    {
+        $mapper = new MotoPressBookingMapper([925]);
+        $reservation = new Reservation(Channel::WEB, new \DateTimeImmutable('2026-08-01'));
+        $reservation->setGuestsAdult(2)->setGuestsChild(2);
+
+        $mapper->applyWebBooking($reservation, [
+            'status' => 'confirmed',
+            'check_in_date' => '2026-08-01',
+            'reserved_accommodations' => [
+                ['accommodation' => 369, 'adults' => 3, 'children' => 0],
+            ],
+        ], isNew: false);
+
+        self::assertSame(3, $reservation->getGuestsAdult());
+        self::assertSame(0, $reservation->getGuestsChild());
+    }
+
+    public function testManualGuestSplitSurvivesSync(): void
+    {
+        $mapper = new MotoPressBookingMapper([925]);
+        $reservation = new Reservation(Channel::WEB, new \DateTimeImmutable('2026-08-01'));
+        $reservation->setGuestsAdult(2)->setGuestsChild(2)->setGuestsSplitManually(true);
+
+        $mapper->applyWebBooking($reservation, [
+            'status' => 'confirmed',
+            'check_in_date' => '2026-08-01',
+            'reserved_accommodations' => [
+                ['accommodation' => 369, 'adults' => 4, 'children' => 0],
+            ],
+        ], isNew: false);
+
+        self::assertSame(2, $reservation->getGuestsAdult());
+        self::assertSame(2, $reservation->getGuestsChild());
+    }
+
+    public function testMissingGuestCountsLeaveReservationUntouched(): void
+    {
+        $mapper = new MotoPressBookingMapper([925]);
+        $reservation = new Reservation(Channel::WEB, new \DateTimeImmutable('2026-08-01'));
+        $reservation->setGuestsAdult(2)->setGuestsChild(1);
+
+        $mapper->applyWebBooking($reservation, [
+            'status' => 'confirmed',
+            'check_in_date' => '2026-08-01',
+            'reserved_accommodations' => [
+                ['accommodation' => 369],
+            ],
+        ], isNew: false);
+
+        self::assertSame(2, $reservation->getGuestsAdult());
+        self::assertSame(1, $reservation->getGuestsChild());
+    }
+
     /**
      * @return array<string, mixed>
      */

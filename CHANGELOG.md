@@ -171,6 +171,12 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Změněno
 
+- **Počty hostů z vlastního webu drží krok s rezervací.** Synchronizace z MotoPressu
+  přenáší počet dospělých a dětí i u rezervací, které už v Ubytovadle jsou — když host
+  počty na webu upraví, evidence se srovná. Ručně upravený rozpad na dospělé a děti
+  má přednost a synchronizace ho nepřepíše. Rezervace, u kterých web počty neposílá,
+  zůstávají beze změny.
+
 - **Zpráva do chatu portálu vychází z akce na časové ose.** Rezervace z portálu,
   u které host nesdílí e-mail, se s hostem domlouvá chatem: akce s takovou zprávou
   nese na ose ikonu 💬 (e-mailová ✉️) a okno *Zpráva do chatu* je otevřené na textu
