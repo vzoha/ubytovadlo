@@ -33,6 +33,10 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
   variabilní symbol, splatnost a QR kód z faktury. Rozsah pobytu píší pomlčkou a všechny
   končí nabídkou odpovědi.
 
+- **Vzory rychlých zpráv.** Uvítání nese délku pobytu, pokyny k příjezdu zbývající doplatek
+  a místo na popis cesty a parkování, poděkování místo na odkaz na hodnocení. Rozsah pobytu
+  píší pomlčkou a všechny končí nabídkou ozvat se.
+
 - **Řádek, na kterém zůstanou jen prázdné proměnné, se do zprávy nedostane.** Text tak
   nenese holý popisek („Splatnost:“) u faktury bez splatnosti.
 

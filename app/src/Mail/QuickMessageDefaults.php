@@ -33,11 +33,11 @@ final class QuickMessageDefaults
             'body' => <<<'TXT'
                 Dobrý den,
 
-                moc děkujeme za Vaši rezervaci. Termín {{ check_in }} — {{ check_out }} pro Vás držíme.
+                moc děkujeme za vaši rezervaci. Termín {{ check_in }} – {{ check_out }} ({{ nights_word }}) pro vás držíme.
 
-                Pár dní před příjezdem se ozveme s podrobnostmi k cestě a předání klíčů. Kdybyste cokoli potřebovali dřív, stačí napsat.
+                Pár dní před příjezdem se ozveme s podrobnostmi k cestě a předání klíčů.
 
-                Budeme se na Vás těšit.
+                Budeme se na vás těšit. Kdybyste cokoli potřebovali dřív, stačí napsat.
                 TXT,
         ],
         [
@@ -45,13 +45,13 @@ final class QuickMessageDefaults
             'body' => <<<'TXT'
                 Dobrý den,
 
-                Váš pobyt {{ check_in }} — {{ check_out }} se blíží, a tak Vás poprosíme o vyplnění online check-inu. Zabere pár minut a při příjezdu se pak nebudeme zdržovat papírováním:
+                váš pobyt {{ check_in }} – {{ check_out }} se blíží, a tak vás poprosíme o vyplnění online check-inu. Zabere pár minut a při příjezdu se pak nebudeme zdržovat papírováním:
 
                 {{ checkin_url }}
 
                 Ptáme se v něm na fakturační údaje a na údaje ubytovaných — evidenci hostů nám ukládá zákon.
 
-                Budeme se na Vás těšit.
+                Budeme se na vás těšit. Kdybyste cokoli potřebovali, stačí napsat.
                 TXT,
         ],
         [
@@ -59,16 +59,20 @@ final class QuickMessageDefaults
             'body' => <<<'TXT'
                 Dobrý den,
 
-                Váš pobyt se blíží, a tak Vám posíláme podrobnosti k příjezdu.
+                váš pobyt se blíží, a tak vám posíláme podrobnosti k příjezdu.
 
                 Adresa: {{ accommodation_address }}
                 Příjezd {{ check_in }} od {{ check_in_time }}, odjezd {{ check_out }} do {{ check_out_time }}.
 
+                [Sem napište, jak se k nám dostat a kde zaparkovat.]
+
                 Po příjezdu se prosím ozvěte, domluvíme se na předání klíčů.
+
+                K úhradě zbývá {{ balance_due }}.
 
                 Pokud jste ještě nevyplnili online check-in, moc nám pomůže, když to stihnete před příjezdem: {{ checkin_url }}
 
-                V kolik hodin Vás máme očekávat?
+                V kolik hodin vás máme očekávat?
                 TXT,
         ],
         [
@@ -78,9 +82,11 @@ final class QuickMessageDefaults
 
                 moc děkujeme za návštěvu — doufáme, že jste si pobyt užili a odjížděli spokojení.
 
-                Kdyby Vám cokoli chybělo nebo Vás něco napadlo, budeme rádi za zpětnou vazbu. A pokud se Vám u nás líbilo, potěší nás i hodnocení.
+                Kdyby vám cokoli chybělo nebo vás něco napadlo, budeme rádi za zpětnou vazbu. A pokud se vám u nás líbilo, potěší nás i hodnocení.
 
-                Budeme se těšit na shledanou.
+                [Sem vložte odkaz na hodnocení.]
+
+                Budeme se těšit na shledanou. Kdybyste cokoli potřebovali, stačí napsat.
                 TXT,
         ],
     ];

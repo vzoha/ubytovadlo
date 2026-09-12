@@ -238,9 +238,9 @@ class DevSeedDemoCommand extends Command
     private function seedQuickMessages(SymfonyStyle $io): void
     {
         $messages = [
-            ['Uvítání', 'Dobrý den {{ guest_first_name_vocative }}, těšíme se na Vás {{ check_in }}. V případě dotazů jsme Vám k dispozici.'],
+            ['Uvítání', 'Dobrý den {{ guest_first_name_vocative }}, těšíme se na vás {{ check_in }}. Kdybyste cokoli potřebovali, stačí napsat.'],
             ['Online check-in', 'Dobrý den {{ guest_first_name_vocative }}, před příjezdem prosím vyplňte online check-in: {{ checkin_url }}'],
-            ['Poděkování', 'Dobrý den {{ guest_first_name_vocative }}, děkujeme za návštěvu a budeme se těšit příště. Budeme rádi za Vaši recenzi.'],
+            ['Poděkování', 'Dobrý den {{ guest_first_name_vocative }}, děkujeme za návštěvu a budeme se těšit příště. Budeme rádi za vaši recenzi.'],
         ];
         foreach ($messages as $i => [$label, $body]) {
             $message = new QuickMessage($label, $body);
