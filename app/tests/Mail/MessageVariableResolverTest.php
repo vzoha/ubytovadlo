@@ -37,7 +37,7 @@ final class MessageVariableResolverTest extends TestCase
             $reservation,
         );
 
-        self::assertSame('Ahoj Jan, příjezd 13. 4. 2026, 3 nocí. {{ neznama }}', $out);
+        self::assertSame("Ahoj Jan, příjezd 13.\u{00a0}4.\u{00a0}2026, 3 nocí. {{ neznama }}", $out);
     }
 
     public function testFirstNameVocativeDeclinesGreeting(): void
@@ -87,7 +87,7 @@ final class MessageVariableResolverTest extends TestCase
 
         self::assertStringContainsString('VS 1760', $out);
         self::assertStringContainsString('účet 1861547133/0800', $out);
-        self::assertStringContainsString('do 20. 7. 2026', $out);
+        self::assertStringContainsString("do 20.\u{00a0}7.\u{00a0}2026", $out);
         self::assertStringContainsString('1', $out); // částka
         self::assertStringContainsString('Kč', $out);
     }
@@ -96,7 +96,28 @@ final class MessageVariableResolverTest extends TestCase
     {
         $resolver = $this->resolver(null, null);
 
-        self::assertSame('QR: ', $resolver->render('QR: {{ deposit_qr }}', $this->reservation()));
+        self::assertSame('', $resolver->renderBody('QR: {{ deposit_qr }}', $this->reservation()));
+    }
+
+    /** Řádek, na kterém zůstaly jen prázdné proměnné, se do zprávy nedostane. */
+    public function testDropsLineWithOnlyEmptyVariables(): void
+    {
+        $resolver = $this->resolver(null, null);
+
+        $out = $resolver->renderBody(
+            "Dobrý den,\n\nSplatnost: {{ deposit_due }}\nNocí: {{ nights }}\n\nDěkujeme.",
+            $this->reservation(),
+        );
+
+        self::assertSame("Dobrý den,\n\nNocí: 3\n\nDěkujeme.", $out);
+    }
+
+    /** Řádek s aspoň jednou vyplněnou proměnnou zůstává celý. */
+    public function testKeepsLineWithAtLeastOneFilledVariable(): void
+    {
+        $resolver = $this->resolver(null, null);
+
+        self::assertSame('3 nocí, záloha ', $resolver->renderBody('{{ nights }} nocí, záloha {{ deposit_amount }}', $this->reservation()));
     }
 
     public function testDepositQrRendersMarkdownImageForPersistedReservation(): void
@@ -140,6 +161,29 @@ final class MessageVariableResolverTest extends TestCase
         $out = $this->resolver(null, profile: $profile)->render('{{ accommodation_address }}', $this->reservation());
 
         self::assertSame('Horova 12/3, Žabovřesky, 616 00 Brno', $out);
+    }
+
+    /** Paleta v UI nabízí každou proměnnou právě jednou. */
+    public function testGroupsCoverEveryVariableExactlyOnce(): void
+    {
+        $names = [];
+        foreach (MessageVariableResolver::groupedVariables() as $group => $variables) {
+            self::assertNotEmpty($variables, sprintf('Sekce %s je prázdná.', $group));
+            $names = array_merge($names, array_keys($variables));
+        }
+
+        self::assertSame($names, array_unique($names));
+        self::assertSame(array_keys(MessageVariableResolver::variables()), $names);
+    }
+
+    /** Prostý text (chat portálu, SMS) obrázky neunese. */
+    public function testPlainTextGroupsDropImageVariables(): void
+    {
+        $names = array_merge(...array_map('array_keys', array_values(MessageVariableResolver::plainTextGroupedVariables())));
+
+        self::assertNotContains('deposit_qr', $names);
+        self::assertNotContains('invoice_qr', $names);
+        self::assertContains('invoice_total', $names);
     }
 
     private function resolver(?BalanceResult $balance, ?DepositPayment $deposit = null, ?AccommodationProfile $profile = null): MessageVariableResolver

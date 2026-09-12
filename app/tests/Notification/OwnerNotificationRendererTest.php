@@ -53,7 +53,7 @@ final class OwnerNotificationRendererTest extends KernelTestCase
         ));
 
         self::assertStringContainsString('Přišla platba', $content->subject);
-        self::assertStringContainsString('1 000,00 Kč', $content->bodyMarkdown);
+        self::assertStringContainsString("1\u{00a0}000,00\u{00a0}Kč", $content->bodyMarkdown);
     }
 
     public function testTaskDueContentNamesDeadlineAndReference(): void

@@ -52,8 +52,8 @@ final class GuestMessageRenderer
         $settings = $this->mailSettings->current();
 
         $subject = $this->variables->render($template->getSubject(), $reservation, $context);
-        $bodyMd = $this->variables->render($template->getBodyMarkdown(), $reservation, $context);
-        $footerMd = $this->variables->render($settings->footer, $reservation, $context);
+        $bodyMd = $this->variables->renderBody($template->getBodyMarkdown(), $reservation, $context);
+        $footerMd = $this->variables->renderBody($settings->footer, $reservation, $context);
 
         $html = $this->layout->render($subject, $bodyMd, $footerMd, $logoSrc);
 
@@ -71,7 +71,7 @@ final class GuestMessageRenderer
      */
     public function renderFooterPreview(string $footerMarkdown, Reservation $reservation, array $context = []): string
     {
-        $md = $this->variables->render($footerMarkdown, $reservation, $context);
+        $md = $this->variables->renderBody($footerMarkdown, $reservation, $context);
 
         return $md === '' ? '' : $this->layout->toHtml($md);
     }

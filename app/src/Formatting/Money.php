@@ -70,11 +70,13 @@ final class Money
 
     /**
      * Zobrazení částky v českém formátu (1 234,50) se symbolem měny pro UI a e-maily.
+     * Tisícové skupiny i symbol drží pohromadě nezlomitelná mezera, ať se částka
+     * nerozpadne přes dva řádky.
      */
     public static function format(float|int|string|null $amount, ?string $currency = 'CZK', int $decimals = 2): string
     {
-        $formatted = number_format((float) ($amount ?? 0), $decimals, ',', ' ');
+        $formatted = number_format((float) ($amount ?? 0), $decimals, ',', "\u{00a0}");
 
-        return trim($formatted . ' ' . self::symbol($currency));
+        return trim($formatted . "\u{00a0}" . self::symbol($currency));
     }
 }

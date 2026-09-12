@@ -26,7 +26,12 @@ use Symfony\Component\Routing\Attribute\Route;
 class MailSettingsController extends AbstractController
 {
     /** Ukázkové hodnoty proměnných mimo rezervaci (jen pro náhled). */
-    private const SAMPLE_CONTEXT = ['invoice_number' => '2026012'];
+    private const SAMPLE_CONTEXT = [
+        'invoice_number' => '2026012',
+        'invoice_total' => "4\u{00a0}200,00 Kč",
+        'invoice_payment_status' => "k úhradě do 20.\u{00a0}9.\u{00a0}2026",
+        'invoice_due' => "20.\u{00a0}9.\u{00a0}2026",
+    ];
 
     public function __construct(
         private readonly MailSettingsProvider $mailSettings,

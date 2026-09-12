@@ -34,7 +34,7 @@ final class GuestMessageTexts
     {
         $texts = [];
         foreach ($this->messages->findOrdered() as $message) {
-            $text = trim($this->variables->render($message->getBody(), $reservation));
+            $text = trim($this->variables->renderBody($message->getBody(), $reservation));
             if ($text === '') {
                 continue;
             }

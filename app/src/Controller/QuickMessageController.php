@@ -43,7 +43,7 @@ class QuickMessageController extends AbstractController
         return $this->render('quick_message/index.html.twig', [
             'messages' => $this->messages->findOrdered(),
             'newForm' => $newForm->createView(),
-            'variables' => MessageVariableResolver::plainTextVariables(),
+            'variables' => MessageVariableResolver::plainTextGroupedVariables(),
             'templates' => QuickMessageDefaults::templates(),
         ]);
     }
@@ -67,7 +67,7 @@ class QuickMessageController extends AbstractController
         return $this->render('quick_message/form.html.twig', [
             'form' => $form->createView(),
             'message' => $message,
-            'variables' => MessageVariableResolver::plainTextVariables(),
+            'variables' => MessageVariableResolver::plainTextGroupedVariables(),
             'templates' => QuickMessageDefaults::templates(),
         ]);
     }
@@ -88,7 +88,7 @@ class QuickMessageController extends AbstractController
         return $this->render('quick_message/form.html.twig', [
             'form' => $form->createView(),
             'message' => $message,
-            'variables' => MessageVariableResolver::plainTextVariables(),
+            'variables' => MessageVariableResolver::plainTextGroupedVariables(),
         ]);
     }
 

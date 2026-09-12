@@ -81,8 +81,8 @@ final class MoneyTest extends TestCase
 
     public function testFormat(): void
     {
-        self::assertSame('1 234,50 Kč', Money::format(1234.5));
-        self::assertSame('1 234,50 €', Money::format('1234.50', 'EUR'));
-        self::assertSame('0 Kč', Money::format(null, 'CZK', 0));
+        self::assertSame("1\u{00a0}234,50\u{00a0}Kč", Money::format(1234.5));
+        self::assertSame("1\u{00a0}234,50\u{00a0}€", Money::format('1234.50', 'EUR'));
+        self::assertSame("0\u{00a0}Kč", Money::format(null, 'CZK', 0));
     }
 }

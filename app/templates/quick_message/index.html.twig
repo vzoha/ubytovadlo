@@ -69,12 +69,7 @@
                             {{ form_errors(newForm.body) }}
                         </div>
                         <div class="mb-0">
-                            <div class="small text-muted mb-1">Proměnné (kliknutím je vložíte do textu):</div>
-                            {% for name, desc in variables %}
-                                <button type="button" class="btn btn-sm btn-outline-secondary mb-1 js-var" title="{{ desc }}">
-                                    {{ '{{ ' ~ name ~ ' }}' }}
-                                </button>
-                            {% endfor %}
+                            {{ include('_partials/variable_palette.html.twig', {groups: variables}) }}
                         </div>
                     </div>
                     <div class="modal-footer">

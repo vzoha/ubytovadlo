@@ -1,0 +1,22 @@
+{#
+  Paleta proměnných pod editorem zprávy. Proměnné jsou rozdělené do sekcí
+  (Host, Pobyt, Faktura, …); sekce se rozbaluje kliknutím na název, první
+  je otevřená. Kliknutí na tlačítko vloží proměnnou do textu — obsluhu má
+  javascript stránky nad `.js-var`.
+
+  Použití:
+    {{ include('_partials/variable_palette.html.twig', {groups: variables, target: 'do textu'}) }}
+#}
+<div class="small text-muted mb-2">Proměnné (kliknutím je vložíte {{ target|default('do textu') }}):</div>
+{% for group, items in groups %}
+    <details class="mb-2" {{ loop.first ? 'open' : '' }}>
+        <summary class="small fw-semibold">{{ group }} <span class="text-muted fw-normal">({{ items|length }})</span></summary>
+        <div class="mt-2">
+            {% for name, desc in items %}
+                <button type="button" class="btn btn-sm btn-outline-secondary mb-1 js-var" data-var="{{ name }}" title="{{ desc }}">
+                    {{ '{{ ' ~ name ~ ' }}' }}
+                </button>
+            {% endfor %}
+        </div>
+    </details>
+{% endfor %}

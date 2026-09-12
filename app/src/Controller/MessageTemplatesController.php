@@ -34,9 +34,14 @@ class MessageTemplatesController extends AbstractController
     private const SAMPLE_CONTEXT = [
         'invoice_number' => '2026012',
         'deposit_amount' => "1\u{00a0}000\u{00a0}Kč",
-        'deposit_due' => '20. 7. 2026',
+        'deposit_due' => "20.\u{00a0}7.\u{00a0}2026",
         'bank_account' => '1861547133/0800',
         'variable_symbol' => '1760',
+        'invoice_total' => "4\u{00a0}200,00 Kč",
+        'invoice_payment_status' => "k úhradě do 20.\u{00a0}9.\u{00a0}2026",
+        'invoice_due' => "20.\u{00a0}9.\u{00a0}2026",
+        'invoice_bank_account' => '1861547133/0800',
+        'invoice_variable_symbol' => '2026012',
     ];
 
     public function __construct(
@@ -90,7 +95,7 @@ class MessageTemplatesController extends AbstractController
         return $this->render('message_templates/edit.html.twig', [
             'kind' => $messageKind,
             'form' => $form->createView(),
-            'variables' => MessageVariableResolver::variables(),
+            'variables' => MessageVariableResolver::groupedVariables(),
             'testRecipient' => $this->getUser()?->getUserIdentifier() ?? '',
             'locale' => $locale,
             'locales' => MessageLocales::ALL,

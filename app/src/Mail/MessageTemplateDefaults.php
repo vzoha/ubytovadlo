@@ -151,9 +151,15 @@ final class MessageTemplateDefaults
             'body' => <<<'MD'
                 Dobrý den, {{ guest_first_name_vocative }},
 
-                v příloze zasíláme fakturu č. {{ invoice_number }} za pobyt ({{ check_in }} — {{ check_out }}).
+                v příloze posíláme fakturu č. {{ invoice_number }} za pobyt {{ check_in }} – {{ check_out }}.
 
-                Děkujeme a přejeme příjemný den.
+                **{{ invoice_total }}** — {{ invoice_payment_status }}
+
+                {{ invoice_qr }}
+
+                Kdyby na faktuře něco nesedělo, stačí odepsat na tenhle e-mail.
+
+                Přejeme příjemný den.
                 MD,
         ],
         'custom' => [
@@ -273,9 +279,15 @@ final class MessageTemplateDefaults
                 'body' => <<<'MD'
                     Dear {{ guest_first_name }},
 
-                    please find attached invoice no. {{ invoice_number }} for your stay ({{ check_in }} — {{ check_out }}).
+                    please find attached invoice no. {{ invoice_number }} for your stay {{ check_in }} – {{ check_out }}.
 
-                    Thank you and have a pleasant day.
+                    **{{ invoice_total }}** — {{ invoice_payment_status }}
+
+                    {{ invoice_qr }}
+
+                    If anything on the invoice looks wrong, just reply to this e-mail.
+
+                    Have a pleasant day.
                     MD,
             ],
             'custom' => [

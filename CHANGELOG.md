@@ -8,12 +8,27 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Přidáno
 
+- **Proměnné faktury v e-mailu hostovi.** Šablona *Faktura e-mailem* umí vypsat částku,
+  stav úhrady, splatnost, číslo účtu, variabilní symbol a QR kód platby.
+  Stav úhrady je hotová věta („uhrazeno 7. 9. 2026“ / „k úhradě do 20. 9. 2026“)
+  v jazyce hosta, QR kód nese uhrazená faktura prázdný — šablona se tak obejde
+  bez podmínek.
+
+- **Paleta proměnných v rozbalovacích sekcích.** Pod editorem šablony i rychlé zprávy
+  jsou proměnné rozdělené na Host, Pobyt, Ubytování, Online check-in, Zálohu a Fakturu.
+
 - **Náhled e-mailu s fakturou.** U vystavené faktury je vedle odeslání tlačítko
   *Náhled e-mailu* — ukáže adresu příjemce, předmět, přiložený doklad a celý e-mail tak,
   jak dorazí hostovi.
   Renderuje se stejnou cestou jako reálné odeslání.
 
 ### Změněno
+
+- **Řádek, na kterém zůstanou jen prázdné proměnné, se do zprávy nedostane.** Text tak
+  nenese holý popisek („Splatnost:“) u faktury bez splatnosti.
+
+- **Částky a data ve zprávách drží pohromadě.** Tisícové skupiny, symbol měny i části
+  data spojuje nezlomitelná mezera, takže se nerozpadnou přes dva řádky.
 
 - **Patička e-mailu drží řádky u sebe.** Kontakty a odkazy pod názvem ubytování mají
   užší řádkování i mezery mezi odstavci, takže patička působí jako jeden blok.

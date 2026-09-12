@@ -17,6 +17,7 @@ use App\Entity\ReservationAction;
 use App\Enum\MessageKind;
 use App\Mail\ActionMessageResolver;
 use App\Mail\GuestMessageRenderer;
+use App\Mail\InvoiceMessageContext;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -34,6 +35,7 @@ class ReservationMessagePreviewController extends AbstractController
         private readonly ActionMessageResolver $messages,
         private readonly GuestMessageRenderer $renderer,
         private readonly LogoStorage $logo,
+        private readonly InvoiceMessageContext $invoiceContext,
     ) {
     }
 
@@ -67,7 +69,7 @@ class ReservationMessagePreviewController extends AbstractController
         $rendered = $this->renderer->render(
             MessageKind::INVOICE,
             $reservation,
-            ['invoice_number' => $invoice->getNumber()],
+            $this->invoiceContext->forInvoice($invoice),
             $this->logo->absoluteUrl($request->getSchemeAndHttpHost()),
         );
 

@@ -20,6 +20,7 @@ use App\Enum\MessageKind;
 use App\Enum\PaymentMethod;
 use App\Invoice\InvoiceService;
 use App\Mail\GuestMessageSender;
+use App\Mail\InvoiceMessageContext;
 use App\Repository\InvoiceRepository;
 use App\Storage\PdfStorage;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -38,6 +39,7 @@ class InvoiceController extends AbstractController
         private readonly InvoiceRepository $invoiceRepo,
         private readonly PdfStorage $pdfStorage,
         private readonly GuestMessageSender $sender,
+        private readonly InvoiceMessageContext $invoiceContext,
     ) {
     }
 
@@ -201,7 +203,7 @@ class InvoiceController extends AbstractController
         $message = $this->sender->send(
             $reservation,
             MessageKind::INVOICE,
-            ['invoice_number' => $invoice->getNumber()],
+            $this->invoiceContext->forInvoice($invoice),
             [$path],
         );
 
