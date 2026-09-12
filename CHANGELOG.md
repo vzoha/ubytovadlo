@@ -30,7 +30,8 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 - **Výchozí texty zpráv hostům.** Žádost o zálohu nese celkovou cenu a větu o tom, do kdy
   termín platí; potvrzení a zpráva před příjezdem adresu ubytování a místo na pokyny k cestě
   a klíčům; zpráva před odjezdem místo na pravidla předání; připomínka doplatku číslo účtu,
-  variabilní symbol, splatnost a QR kód z faktury. Rozsah pobytu píší pomlčkou.
+  variabilní symbol, splatnost a QR kód z faktury. Rozsah pobytu píší pomlčkou a všechny
+  končí nabídkou odpovědi.
 
 - **Řádek, na kterém zůstanou jen prázdné proměnné, se do zprávy nedostane.** Text tak
   nenese holý popisek („Splatnost:“) u faktury bez splatnosti.

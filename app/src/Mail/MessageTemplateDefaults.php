@@ -171,9 +171,7 @@ final class MessageTemplateDefaults
 
                 {{ invoice_qr }}
 
-                Kdyby na faktuře něco nesedělo, stačí odepsat na tenhle e-mail.
-
-                Přejeme příjemný den.
+                Kdyby na faktuře něco nesedělo, stačí odepsat.
                 MD,
         ],
         'custom' => [
@@ -313,9 +311,7 @@ final class MessageTemplateDefaults
 
                     {{ invoice_qr }}
 
-                    If anything on the invoice looks wrong, just reply to this e-mail.
-
-                    Have a pleasant day.
+                    If anything on the invoice looks wrong, just reply.
                     MD,
             ],
             'custom' => [
