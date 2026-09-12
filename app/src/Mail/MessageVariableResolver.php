@@ -48,6 +48,7 @@ final class MessageVariableResolver
             'check_out' => 'Datum odjezdu',
             'check_out_time' => 'Čas odjezdu',
             'nights' => 'Počet nocí',
+            'nights_word' => 'Počet nocí se skloněným slovem („3 noci“)',
             'guests_total' => 'Počet hostů celkem',
             'guests_adult' => 'Počet dospělých',
             'guests_child' => 'Počet dětí',
@@ -91,6 +92,8 @@ final class MessageVariableResolver
         private readonly UrlGeneratorInterface $urlGenerator,
         private readonly GuestVocative $vocative,
         private readonly DepositPaymentBuilder $deposits,
+        private readonly GuestLocaleResolver $guestLocale,
+        private readonly InvoiceMessageContext $invoiceContext,
     ) {
     }
 
@@ -216,6 +219,8 @@ final class MessageVariableResolver
         $balance = $this->balance->forReservation($reservation);
         $deposit = $this->deposits->forReservation($reservation);
         $checkOut = $reservation->getCheckOut();
+        $nights = $this->nights($reservation);
+        $locale = $this->guestLocale->forReservation($reservation);
 
         $values = [
             'guest_name' => $reservation->getGuestName() ?? '',
@@ -227,7 +232,8 @@ final class MessageVariableResolver
             'check_in_time' => $this->time($reservation->getCheckInTime(), self::DEFAULT_CHECK_IN_TIME),
             'check_out' => $checkOut !== null ? GuestDate::format($checkOut) : '',
             'check_out_time' => $this->time($reservation->getCheckOutTime(), self::DEFAULT_CHECK_OUT_TIME),
-            'nights' => (string) $this->nights($reservation),
+            'nights' => (string) $nights,
+            'nights_word' => $this->nightsWord($nights, $locale),
             'guests_total' => (string) $reservation->getGuestsTotal(),
             'guests_adult' => (string) $reservation->getGuestsAdult(),
             'guests_child' => (string) $reservation->getGuestsChild(),
@@ -248,6 +254,7 @@ final class MessageVariableResolver
             'invoice_bank_account' => '',
             'invoice_variable_symbol' => '',
             'invoice_qr' => '',
+            ...$this->invoiceContext->forReservation($reservation),
             'deposit_amount' => $deposit !== null ? $this->depositAmount($deposit->amount) : '',
             'deposit_due' => $deposit !== null ? GuestDate::format($deposit->dueDate) : '',
             'bank_account' => $deposit !== null ? $deposit->bankAccount : '',
@@ -277,6 +284,25 @@ final class MessageVariableResolver
     private function nameTokens(?string $name): array
     {
         return array_values(array_filter(explode(' ', trim((string) $name)), static fn (string $t): bool => $t !== ''));
+    }
+
+    /**
+     * Počet nocí se slovem ve správném tvaru — čeština má tři („1 noc“,
+     * „3 noci“, „5 nocí“), angličtina dva.
+     */
+    private function nightsWord(int $nights, string $locale): string
+    {
+        if ($locale !== MessageLocales::BASE) {
+            return $nights . "\u{00a0}" . ($nights === 1 ? 'night' : 'nights');
+        }
+
+        $word = match (true) {
+            $nights === 1 => 'noc',
+            $nights >= 2 && $nights <= 4 => 'noci',
+            default => 'nocí',
+        };
+
+        return $nights . "\u{00a0}" . $word;
     }
 
     private function time(?\DateTimeImmutable $time, string $fallback): string

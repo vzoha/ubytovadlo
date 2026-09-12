@@ -19,9 +19,12 @@ use App\Invoice\BalanceCalculator;
 use App\Invoice\BalanceResult;
 use App\Invoice\DepositPayment;
 use App\Invoice\DepositPaymentBuilder;
+use App\Mail\GuestLocaleResolver;
 use App\Mail\GuestVocative;
+use App\Mail\InvoiceMessageContext;
 use App\Mail\MessageVariableResolver;
 use App\Repository\AccommodationProfileRepository;
+use App\Repository\InvoiceRepository;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
@@ -163,6 +166,25 @@ final class MessageVariableResolverTest extends TestCase
         self::assertSame('Horova 12/3, Žabovřesky, 616 00 Brno', $out);
     }
 
+    /** Čeština má tři tvary slova noc, text je musí trefit. */
+    public function testNightsWordUsesCzechPlural(): void
+    {
+        $resolver = $this->resolver(null, null);
+
+        self::assertSame("3\u{00a0}noci", $resolver->render('{{ nights_word }}', $this->reservation()));
+        self::assertSame("1\u{00a0}noc", $resolver->render('{{ nights_word }}', $this->reservation(1)));
+        self::assertSame("5\u{00a0}nocí", $resolver->render('{{ nights_word }}', $this->reservation(5)));
+    }
+
+    public function testNightsWordFollowsGuestLanguage(): void
+    {
+        $resolver = $this->resolver(null, null);
+        $reservation = $this->reservation();
+        $reservation->setGuestAddress($reservation->getGuestAddress()->withCountry('DE'));
+
+        self::assertSame("3\u{00a0}nights", $resolver->render('{{ nights_word }}', $reservation));
+    }
+
     /** Paleta v UI nabízí každou proměnnou právě jednou. */
     public function testGroupsCoverEveryVariableExactlyOnce(): void
     {
@@ -200,13 +222,23 @@ final class MessageVariableResolverTest extends TestCase
         $deposits = $this->createStub(DepositPaymentBuilder::class);
         $deposits->method('forReservation')->willReturn($deposit);
 
-        return new MessageVariableResolver($profiles, $calc, $url, new GuestVocative(), $deposits);
+        $invoiceContext = new InvoiceMessageContext($url, new GuestLocaleResolver(), $this->createStub(InvoiceRepository::class));
+
+        return new MessageVariableResolver(
+            $profiles,
+            $calc,
+            $url,
+            new GuestVocative(),
+            $deposits,
+            new GuestLocaleResolver(),
+            $invoiceContext,
+        );
     }
 
-    private function reservation(): Reservation
+    private function reservation(int $nights = 3): Reservation
     {
         $r = new Reservation(Channel::WEB, new \DateTimeImmutable('2026-04-13'));
-        $r->setCheckOut(new \DateTimeImmutable('2026-04-16'));
+        $r->setCheckOut((new \DateTimeImmutable('2026-04-13'))->modify(sprintf('+%d days', $nights)));
         $r->setGuestName('Jan Novák');
         $r->setPriceTotal('6000');
         $r->setExternalId('1760');

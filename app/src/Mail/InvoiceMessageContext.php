@@ -12,8 +12,11 @@ declare(strict_types=1);
 namespace App\Mail;
 
 use App\Entity\Invoice;
+use App\Entity\Reservation;
+use App\Enum\InvoiceType;
 use App\Formatting\GuestDate;
 use App\Formatting\Money;
+use App\Repository\InvoiceRepository;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 /**
@@ -33,10 +36,37 @@ final class InvoiceMessageContext
         'en' => ['paid' => 'paid on %s', 'due' => 'due by %s', 'unpaid' => 'due'],
     ];
 
+    /** Faktura, o které host mluví, když se řekne „vaše faktura" — pořadí hledání. */
+    private const RESERVATION_INVOICE_TYPES = [InvoiceType::FINAL, InvoiceType::FULL];
+
     public function __construct(
         private readonly UrlGeneratorInterface $urlGenerator,
         private readonly GuestLocaleResolver $guestLocale,
+        private readonly InvoiceRepository $invoices,
     ) {
+    }
+
+    /**
+     * Faktura rezervace pro zprávy, které ji nevezou v příloze (připomínka
+     * doplatku). Rezervace bez faktury i neuložená rezervace (náhled) vrací
+     * prázdno — proměnné `invoice_*` pak zůstanou prázdné.
+     *
+     * @return array<string, string> proměnná => hodnota
+     */
+    public function forReservation(Reservation $reservation): array
+    {
+        if ($reservation->getId() === null) {
+            return [];
+        }
+
+        foreach (self::RESERVATION_INVOICE_TYPES as $type) {
+            $invoice = $this->invoices->findFirstByReservationAndType($reservation, $type);
+            if ($invoice !== null) {
+                return $this->forInvoice($invoice);
+            }
+        }
+
+        return [];
     }
 
     /** @return array<string, string> proměnná => hodnota */

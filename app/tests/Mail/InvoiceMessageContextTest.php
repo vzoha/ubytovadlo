@@ -17,6 +17,7 @@ use App\Enum\Channel;
 use App\Enum\InvoiceType;
 use App\Mail\GuestLocaleResolver;
 use App\Mail\InvoiceMessageContext;
+use App\Repository\InvoiceRepository;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
@@ -81,12 +82,49 @@ final class InvoiceMessageContextTest extends TestCase
         self::assertSame('', $this->context()->forInvoice($invoice)['invoice_qr']);
     }
 
-    private function context(): InvoiceMessageContext
+    /** Zpráva bez přílohy (připomínka doplatku) si fakturu najde podle rezervace. */
+    public function testForReservationFindsFinalInvoice(): void
+    {
+        $invoice = $this->invoice();
+        $invoice->setBankAccount('1861547133/0800');
+        $repo = $this->createStub(InvoiceRepository::class);
+        $repo->method('findFirstByReservationAndType')->willReturn($invoice);
+
+        $values = $this->context($repo)->forReservation($this->persisted($invoice->getReservation()));
+
+        self::assertSame('2026012', $values['invoice_number']);
+        self::assertSame('1861547133/0800', $values['invoice_bank_account']);
+    }
+
+    public function testForReservationWithoutInvoiceIsEmpty(): void
+    {
+        $repo = $this->createStub(InvoiceRepository::class);
+        $repo->method('findFirstByReservationAndType')->willReturn(null);
+
+        self::assertSame([], $this->context($repo)->forReservation($this->persisted($this->invoice()->getReservation())));
+    }
+
+    /** Neuložená rezervace (náhled) se v databázi nehledá. */
+    public function testForUnsavedReservationIsEmpty(): void
+    {
+        self::assertSame([], $this->context()->forReservation($this->invoice()->getReservation()));
+    }
+
+    /** Doctrine identitu rezervace čte přes ID — v testu ho doplníme reflexí. */
+    private function persisted(Reservation $reservation): Reservation
+    {
+        $id = new \ReflectionProperty(Reservation::class, 'id');
+        $id->setValue($reservation, 42);
+
+        return $reservation;
+    }
+
+    private function context(?InvoiceRepository $invoices = null): InvoiceMessageContext
     {
         $url = $this->createStub(UrlGeneratorInterface::class);
         $url->method('generate')->willReturn('https://app.example.com/qr/faktura/token/1.png');
 
-        return new InvoiceMessageContext($url, new GuestLocaleResolver());
+        return new InvoiceMessageContext($url, new GuestLocaleResolver(), $invoices ?? $this->createStub(InvoiceRepository::class));
     }
 
     private function invoice(): Invoice

@@ -14,6 +14,7 @@ namespace App\Tests\Mail;
 use App\Enum\MessageKind;
 use App\Mail\MessageLocales;
 use App\Mail\MessageTemplateDefaults;
+use App\Mail\MessageVariableResolver;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
@@ -56,6 +57,39 @@ final class MessageTemplateDefaultsTest extends TestCase
         self::assertNotSame('', trim($template->getSubject()));
         self::assertNotSame('', trim($template->getBodyMarkdown()));
         self::assertSame($locale, $template->getLocale());
+    }
+
+    /**
+     * Překlep v názvu proměnné by hostovi dorazil jako syrové {{ ... }} —
+     * výchozí texty smí sahat jen po proměnné, které paleta zná.
+     */
+    #[DataProvider('translations')]
+    public function testTranslationUsesKnownVariablesOnly(MessageKind $kind, string $locale): void
+    {
+        $template = MessageTemplateDefaults::forLocale($kind, $locale);
+        self::assertNotNull($template);
+
+        self::assertSame([], $this->unknownVariables($template->getSubject() . "\n" . $template->getBodyMarkdown()));
+    }
+
+    #[DataProvider('kinds')]
+    public function testBaseTextUsesKnownVariablesOnly(MessageKind $kind): void
+    {
+        $template = MessageTemplateDefaults::for($kind);
+
+        self::assertSame([], $this->unknownVariables($template->getSubject() . "\n" . $template->getBodyMarkdown()));
+    }
+
+    /** @return list<string> */
+    private function unknownVariables(string $text): array
+    {
+        preg_match_all('/\{\{\s*([a-z_]+)\s*\}\}/', $text, $matches);
+        $known = MessageVariableResolver::variables();
+
+        return array_values(array_unique(array_filter(
+            $matches[1],
+            static fn (string $name): bool => !isset($known[$name]),
+        )));
     }
 
     /** @return iterable<string, array{MessageKind}> */

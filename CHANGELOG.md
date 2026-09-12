@@ -14,6 +14,9 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
   v jazyce hosta, QR kód nese uhrazená faktura prázdný — šablona se tak obejde
   bez podmínek.
 
+- **Počet nocí se skloněným slovem.** Proměnná `{{ nights_word }}` vypíše „1 noc“, „3 noci“
+  i „5 nocí“ a v anglické zprávě „3 nights“.
+
 - **Paleta proměnných v rozbalovacích sekcích.** Pod editorem šablony i rychlé zprávy
   jsou proměnné rozdělené na Host, Pobyt, Ubytování, Online check-in, Zálohu a Fakturu.
 
@@ -23,6 +26,11 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
   Renderuje se stejnou cestou jako reálné odeslání.
 
 ### Změněno
+
+- **Výchozí texty zpráv hostům.** Žádost o zálohu nese celkovou cenu a větu o tom, do kdy
+  termín platí; potvrzení a zpráva před příjezdem adresu ubytování a místo na pokyny k cestě
+  a klíčům; zpráva před odjezdem místo na pravidla předání; připomínka doplatku číslo účtu,
+  variabilní symbol, splatnost a QR kód z faktury. Rozsah pobytu píší pomlčkou.
 
 - **Řádek, na kterém zůstanou jen prázdné proměnné, se do zprávy nedostane.** Text tak
   nenese holý popisek („Splatnost:“) u faktury bez splatnosti.

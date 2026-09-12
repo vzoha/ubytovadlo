@@ -32,7 +32,7 @@ final class MessageTemplateDefaults
      */
     private const DEFAULTS = [
         'reservation_request' => [
-            'subject' => 'Rezervace {{ variable_symbol }} — zbývá zaplatit zálohu · {{ accommodation_name }}',
+            'subject' => 'Rezervace {{ check_in }} – {{ check_out }} — záloha k úhradě · {{ accommodation_name }}',
             'mode' => SendMode::DRAFT,
             'anchor' => TimingAnchor::CREATED,
             'offsetDays' => 0,
@@ -40,19 +40,19 @@ final class MessageTemplateDefaults
             'body' => <<<'MD'
                 Dobrý den, {{ guest_first_name_vocative }},
 
-                děkujeme za vaši rezervaci. Termín pobytu **{{ check_in }} — {{ check_out }}** pro vás držíme.
+                děkujeme za vaši rezervaci. Termín **{{ check_in }} – {{ check_out }}** ({{ nights_word }}) pro vás držíme do splatnosti zálohy; poté se uvolní dalším zájemcům.
 
-                Rezervaci potvrdíme po přijetí zálohy **{{ deposit_amount }}** (odečte se z celkové ceny):
+                Celková cena pobytu je **{{ price_total }}**. Rezervaci potvrdíme po přijetí zálohy **{{ deposit_amount }}**, která se z ceny odečte:
 
                 - **Číslo účtu:** {{ bank_account }}
                 - **Variabilní symbol:** {{ variable_symbol }}
                 - **Splatnost:** {{ deposit_due }}
 
-                Platbu můžete pohodlně naskenovat z QR kódu:
+                Platbu můžete naskenovat z QR kódu:
 
                 {{ deposit_qr }}
 
-                Jakmile záloha dorazí, pošleme vám potvrzení. Děkujeme!
+                Jakmile záloha dorazí, pošleme vám potvrzení. Kdybyste cokoli potřebovali, stačí odepsat.
                 MD,
         ],
         'reservation_confirmed' => [
@@ -65,11 +65,12 @@ final class MessageTemplateDefaults
 
                 - **Příjezd:** {{ check_in }} od {{ check_in_time }}
                 - **Odjezd:** {{ check_out }} do {{ check_out_time }}
-                - **Počet nocí:** {{ nights }}
+                - **Délka pobytu:** {{ nights_word }}
+                - **Adresa:** {{ accommodation_address }}
 
-                Pár dní před příjezdem vám pošleme podrobné pokyny k cestě a předání klíčů.
+                Tři dny před příjezdem vám pošleme pokyny k cestě a předání klíčů.
 
-                V případě dotazů jsme vám k dispozici.
+                Kdybyste cokoli potřebovali, stačí odepsat.
                 MD,
         ],
         'pre_arrival' => [
@@ -85,14 +86,19 @@ final class MessageTemplateDefaults
 
                 - **Příjezd:** {{ check_in }} od {{ check_in_time }}
                 - **Odjezd:** {{ check_out }} do {{ check_out_time }}
-                - **Počet nocí:** {{ nights }}
+                - **Délka pobytu:** {{ nights_word }}
                 - **Počet hostů:** {{ guests_total }}
+                - **Adresa:** {{ accommodation_address }}
 
-                Pokud jste tak ještě neučinili, vyplňte prosím online check-in:
+                *Sem napište, jak se k vám dostat, kde zaparkovat a jak proběhne předání klíčů.*
+
+                K úhradě zbývá **{{ balance_due }}**.
+
+                Pokud jste ho ještě nevyplnili, prosíme o online check-in:
 
                 [[button:Dokončit online check-in|{{ checkin_url }}]]
 
-                V případě dotazů jsme vám k dispozici. Přejeme šťastnou cestu!
+                Přejeme šťastnou cestu. Kdybyste cokoli potřebovali, stačí odepsat.
                 MD,
         ],
         'pre_departure' => [
@@ -107,10 +113,10 @@ final class MessageTemplateDefaults
                 zítra se s vámi rozloučíme. Ať odjezd proběhne hladce, posíláme pár drobností:
 
                 - **Odjezd:** {{ check_out }} do {{ check_out_time }}
-                - Klíče nechte prosím na místě, kde jste je našli.
-                - Nádobí umyté, odpadky do popelnice před domem.
 
-                Kdybyste cokoli potřebovali, ozvěte se. Děkujeme, že jste u nás byli!
+                *Sem napište, kam nechat klíče a v jakém stavu ubytování předat.*
+
+                Děkujeme, že jste u nás byli. Kdybyste cokoli potřebovali, stačí odepsat.
                 MD,
         ],
         'post_stay' => [
@@ -122,11 +128,13 @@ final class MessageTemplateDefaults
             'body' => <<<'MD'
                 Dobrý den, {{ guest_first_name_vocative }},
 
-                děkujeme, že jste u nás strávili {{ nights }} nocí. Doufáme, že se vám pobyt líbil.
+                děkujeme, že jste u nás strávili {{ nights_word }}. Doufáme, že se vám pobyt líbil.
 
                 Budeme rádi za vaši zpětnou vazbu nebo recenzi — pomůže nám i dalším hostům.
 
-                Budeme se těšit na vaši další návštěvu!
+                *Sem vložte odkaz na recenzi.*
+
+                Budeme se těšit na vaši další návštěvu. Kdybyste cokoli potřebovali, stačí odepsat.
                 MD,
         ],
         'balance_reminder' => [
@@ -140,9 +148,15 @@ final class MessageTemplateDefaults
 
                 dovolujeme si připomenout doplatek za váš pobyt ve výši **{{ balance_due }}**.
 
-                Doplatek lze uhradit převodem dle faktury, nebo v hotovosti při příjezdu ({{ check_in }}).
+                - **Číslo účtu:** {{ invoice_bank_account }}
+                - **Variabilní symbol:** {{ invoice_variable_symbol }}
+                - **Splatnost:** {{ invoice_due }}
 
-                Děkujeme!
+                {{ invoice_qr }}
+
+                Zaplatit můžete také v hotovosti při příjezdu ({{ check_in }}).
+
+                Děkujeme. Kdybyste cokoli potřebovali, stačí odepsat.
                 MD,
         ],
         'invoice' => [
@@ -182,13 +196,13 @@ final class MessageTemplateDefaults
     private const TRANSLATIONS = [
         'en' => [
             'reservation_request' => [
-                'subject' => 'Booking {{ variable_symbol }} — deposit outstanding · {{ accommodation_name }}',
+                'subject' => 'Booking {{ check_in }} – {{ check_out }} — deposit due · {{ accommodation_name }}',
                 'body' => <<<'MD'
                     Dear {{ guest_first_name }},
 
-                    thank you for your booking. We are holding **{{ check_in }} — {{ check_out }}** for you.
+                    thank you for your booking. We are holding **{{ check_in }} – {{ check_out }}** ({{ nights_word }}) until the deposit is due; after that the dates open up again.
 
-                    We will confirm the booking once we receive the deposit of **{{ deposit_amount }}** (deducted from the total price):
+                    The total price of the stay is **{{ price_total }}**. We will confirm the booking once we receive the deposit of **{{ deposit_amount }}**, which is deducted from the price:
 
                     - **Account number:** {{ bank_account }}
                     - **Payment reference:** {{ variable_symbol }}
@@ -198,7 +212,7 @@ final class MessageTemplateDefaults
 
                     {{ deposit_qr }}
 
-                    We will send you a confirmation as soon as the deposit arrives. Thank you!
+                    We will send you a confirmation as soon as the deposit arrives. If you need anything, just reply.
                     MD,
             ],
             'reservation_confirmed' => [
@@ -210,11 +224,12 @@ final class MessageTemplateDefaults
 
                     - **Arrival:** {{ check_in }} from {{ check_in_time }}
                     - **Departure:** {{ check_out }} until {{ check_out_time }}
-                    - **Nights:** {{ nights }}
+                    - **Length of stay:** {{ nights_word }}
+                    - **Address:** {{ accommodation_address }}
 
-                    A few days before arrival we will send you directions and details about the keys.
+                    Three days before arrival we will send you directions and details about the keys.
 
-                    Should you have any questions, we are here for you.
+                    If you need anything, just reply.
                     MD,
             ],
             'pre_arrival' => [
@@ -226,14 +241,19 @@ final class MessageTemplateDefaults
 
                     - **Arrival:** {{ check_in }} from {{ check_in_time }}
                     - **Departure:** {{ check_out }} until {{ check_out_time }}
-                    - **Nights:** {{ nights }}
+                    - **Length of stay:** {{ nights_word }}
                     - **Guests:** {{ guests_total }}
+                    - **Address:** {{ accommodation_address }}
 
-                    If you have not done so yet, please complete the online check-in:
+                    *Write here how to reach you, where to park and how the keys are handed over.*
+
+                    The outstanding balance is **{{ balance_due }}**.
+
+                    If you have not completed the online check-in yet, please do:
 
                     [[button:Complete online check-in|{{ checkin_url }}]]
 
-                    Should you have any questions, we are here for you. Have a safe trip!
+                    Have a safe trip. If you need anything, just reply.
                     MD,
             ],
             'pre_departure' => [
@@ -244,10 +264,10 @@ final class MessageTemplateDefaults
                     we will be saying goodbye tomorrow. A few notes so your departure goes smoothly:
 
                     - **Departure:** {{ check_out }} until {{ check_out_time }}
-                    - Please leave the keys where you found them.
-                    - Dishes washed, rubbish in the bin in front of the house.
 
-                    If you need anything, just let us know. Thank you for staying with us!
+                    *Write here where to leave the keys and in what state to hand the place over.*
+
+                    Thank you for staying with us. If you need anything, just reply.
                     MD,
             ],
             'post_stay' => [
@@ -255,11 +275,13 @@ final class MessageTemplateDefaults
                 'body' => <<<'MD'
                     Dear {{ guest_first_name }},
 
-                    thank you for spending {{ nights }} nights with us. We hope you enjoyed your stay.
+                    thank you for spending {{ nights_word }} with us. We hope you enjoyed your stay.
 
                     We would appreciate your feedback or a review — it helps us and future guests alike.
 
-                    We hope to welcome you again!
+                    *Put a link to your review page here.*
+
+                    We hope to welcome you again. If you need anything, just reply.
                     MD,
             ],
             'balance_reminder' => [
@@ -269,9 +291,15 @@ final class MessageTemplateDefaults
 
                     this is a reminder of the outstanding balance for your stay: **{{ balance_due }}**.
 
-                    You can pay it by bank transfer according to the invoice, or in cash on arrival ({{ check_in }}).
+                    - **Account number:** {{ invoice_bank_account }}
+                    - **Payment reference:** {{ invoice_variable_symbol }}
+                    - **Due date:** {{ invoice_due }}
 
-                    Thank you!
+                    {{ invoice_qr }}
+
+                    You can also pay in cash on arrival ({{ check_in }}).
+
+                    Thank you. If you need anything, just reply.
                     MD,
             ],
             'invoice' => [
