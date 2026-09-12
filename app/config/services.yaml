@@ -37,13 +37,16 @@ services:
         factory: ['@App\MotoPress\MotoPressSettings', 'createMapper']
 
     # Markdown → HTML pro těla e-mailů hostům. html_input: escape, ať se z
-    # uživatelského textu nedá vložit syrové HTML.
+    # uživatelského textu nedá vložit syrové HTML. soft_break: <br> drží
+    # zalomení řádků tak, jak je autor napsal v editoru šablony.
     League\CommonMark\ConverterInterface:
         class: League\CommonMark\CommonMarkConverter
         arguments:
             $config:
                 html_input: escape
                 allow_unsafe_links: false
+                renderer:
+                    soft_break: "<br>\n"
 
     # Sdílený hosting má ve web SAPI v disable_functions curl_multi_exec →
     # Symfony CurlHttpClient tam spadne ("Call to undefined function

@@ -20,6 +20,9 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Opraveno
 
+- **E-mail drží zalomení řádků.** Tělo zprávy i patička se zobrazí s řádky tak, jak je
+  napsané v editoru šablony.
+
 - **Výplata z portálu na časové ose ukazuje jen datum.** Nese datum bez času, takže se
   u ní netiskne půlnoc.
 
