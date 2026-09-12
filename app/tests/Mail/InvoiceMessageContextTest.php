@@ -15,6 +15,7 @@ use App\Entity\Invoice;
 use App\Entity\Reservation;
 use App\Enum\Channel;
 use App\Enum\InvoiceType;
+use App\Enum\PaymentMethod;
 use App\Mail\GuestLocaleResolver;
 use App\Mail\InvoiceMessageContext;
 use App\Repository\InvoiceRepository;
@@ -82,6 +83,29 @@ final class InvoiceMessageContextTest extends TestCase
         self::assertSame('', $this->context()->forInvoice($invoice)['invoice_qr']);
     }
 
+    /** Doklad placený portálem nese jméno portálu — datum úhrady je jen den vystavení. */
+    public function testPortalInvoiceNamesThePortalInsteadOfDate(): void
+    {
+        $invoice = $this->invoice(Channel::AIRBNB);
+        $invoice->setPaymentMethod(PaymentMethod::PREPAID_INTERMEDIARY);
+        $invoice->setPaidAt(new \DateTimeImmutable('2026-09-13'));
+
+        $values = $this->context()->forInvoice($invoice);
+
+        self::assertSame('uhrazeno přes portál Airbnb', $values['invoice_payment_status']);
+    }
+
+    public function testPortalInvoiceInEnglish(): void
+    {
+        $invoice = $this->invoice(Channel::AIRBNB);
+        $reservation = $invoice->getReservation();
+        $reservation->setGuestAddress($reservation->getGuestAddress()->withCountry('DE'));
+        $invoice->setPaymentMethod(PaymentMethod::PREPAID_INTERMEDIARY);
+        $invoice->setPaidAt(new \DateTimeImmutable('2026-09-13'));
+
+        self::assertSame('paid via Airbnb', $this->context()->forInvoice($invoice)['invoice_payment_status']);
+    }
+
     /** Zpráva bez přílohy (připomínka doplatku) si fakturu najde podle rezervace. */
     public function testForReservationFindsFinalInvoice(): void
     {
@@ -127,9 +151,9 @@ final class InvoiceMessageContextTest extends TestCase
         return new InvoiceMessageContext($url, new GuestLocaleResolver(), $invoices ?? $this->createStub(InvoiceRepository::class));
     }
 
-    private function invoice(): Invoice
+    private function invoice(Channel $channel = Channel::WEB): Invoice
     {
-        $reservation = new Reservation(Channel::WEB, new \DateTimeImmutable('2026-09-19'));
+        $reservation = new Reservation($channel, new \DateTimeImmutable('2026-09-19'));
         $reservation->setCheckOut(new \DateTimeImmutable('2026-09-22'));
         $reservation->setGuestName('Jan Novák');
 

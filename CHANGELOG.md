@@ -10,9 +10,9 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 - **Proměnné faktury v e-mailu hostovi.** Šablona *Faktura e-mailem* umí vypsat částku,
   stav úhrady, splatnost, číslo účtu, variabilní symbol a QR kód platby.
-  Stav úhrady je hotová věta („uhrazeno 7. 9. 2026“ / „k úhradě do 20. 9. 2026“)
-  v jazyce hosta, QR kód nese uhrazená faktura prázdný — šablona se tak obejde
-  bez podmínek.
+  Stav úhrady je hotová věta v jazyce hosta („uhrazeno 7. 9. 2026“, „k úhradě do 20. 9. 2026“,
+  u dokladu placeného portálem „uhrazeno přes portál Airbnb“), QR kód nese uhrazená faktura
+  prázdný — šablona se tak obejde bez podmínek.
 
 - **Počet nocí se skloněným slovem.** Proměnná `{{ nights_word }}` vypíše „1 noc“, „3 noci“
   i „5 nocí“ a v anglické zprávě „3 nights“.

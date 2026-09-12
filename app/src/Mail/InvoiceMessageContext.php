@@ -30,10 +30,20 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
  */
 final class InvoiceMessageContext
 {
-    /** @var array<string, array{paid: string, due: string, unpaid: string}> */
+    /** @var array<string, array{paid: string, portal: string, due: string, unpaid: string}> */
     private const PAYMENT_STATUS = [
-        'cs' => ['paid' => 'uhrazeno %s', 'due' => 'k úhradě do %s', 'unpaid' => 'k úhradě'],
-        'en' => ['paid' => 'paid on %s', 'due' => 'due by %s', 'unpaid' => 'due'],
+        'cs' => [
+            'paid' => 'uhrazeno %s',
+            'portal' => 'uhrazeno přes portál %s',
+            'due' => 'k úhradě do %s',
+            'unpaid' => 'k úhradě',
+        ],
+        'en' => [
+            'paid' => 'paid on %s',
+            'portal' => 'paid via %s',
+            'due' => 'due by %s',
+            'unpaid' => 'due',
+        ],
     ];
 
     /** Faktura, o které host mluví, když se řekne „vaše faktura" — pořadí hledání. */
@@ -79,7 +89,7 @@ final class InvoiceMessageContext
         return [
             'invoice_number' => $invoice->getNumber(),
             'invoice_total' => Money::format($invoice->getTotalAmount(), $invoice->getCurrency()),
-            'invoice_payment_status' => $this->paymentStatus($locale, $paidAt, $dueAt),
+            'invoice_payment_status' => $this->paymentStatus($invoice, $locale, $paidAt, $dueAt),
             'invoice_due' => $paidAt === null && $dueAt !== null ? GuestDate::format($dueAt, $locale) : '',
             'invoice_bank_account' => $invoice->getBankAccount() ?? '',
             'invoice_variable_symbol' => $invoice->getDisplayVariableSymbol(),
@@ -87,9 +97,19 @@ final class InvoiceMessageContext
         ];
     }
 
-    private function paymentStatus(string $locale, ?\DateTimeImmutable $paidAt, ?\DateTimeImmutable $dueAt): string
+    /**
+     * Stav úhrady slovy. Doklad placený portálem vznikl už uhrazený, takže jeho
+     * datum úhrady je den vystavení — host ale platil portálu při rezervaci,
+     * klidně o měsíce dřív. Proto u něj stojí jméno portálu místo data.
+     */
+    private function paymentStatus(Invoice $invoice, string $locale, ?\DateTimeImmutable $paidAt, ?\DateTimeImmutable $dueAt): string
     {
         $texts = self::PAYMENT_STATUS[$locale] ?? self::PAYMENT_STATUS[MessageLocales::BASE];
+        $channel = $invoice->getReservation()->getChannel();
+
+        if ($invoice->getPaymentMethod()->settledOnIssue() && $channel->isOta()) {
+            return sprintf($texts['portal'], $channel->label());
+        }
 
         if ($paidAt !== null) {
             return sprintf($texts['paid'], GuestDate::format($paidAt, $locale));
