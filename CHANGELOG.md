@@ -8,6 +8,10 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Přidáno
 
+- **Podpis rychlých zpráv.** Nastavení rychlých zpráv drží rozloučení, které se připojí
+  na konec každé zprávy do SMS, WhatsAppu i chatu portálu; smí obsahovat proměnné.
+  Nenastavená instance podepisuje názvem ubytování, prázdné pole znamená zprávy bez podpisu.
+
 - **Proměnné faktury v e-mailu hostovi.** Šablona *Faktura e-mailem* umí vypsat částku,
   stav úhrady, splatnost, číslo účtu, variabilní symbol a QR kód platby.
   Stav úhrady je hotová věta v jazyce hosta („uhrazeno 7. 9. 2026“, „k úhradě do 20. 9. 2026“,
@@ -34,8 +38,9 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
   končí nabídkou odpovědi.
 
 - **Vzory rychlých zpráv.** Uvítání nese délku pobytu, pokyny k příjezdu zbývající doplatek
-  a místo na popis cesty a parkování, poděkování místo na odkaz na hodnocení. Rozsah pobytu
-  píší pomlčkou a všechny končí nabídkou ozvat se.
+  a místo na popis cesty a parkování, *Před odjezdem* čas odjezdu, místo na pravidla předání
+  a dotaz na hodinu odjezdu, poděkování místo na odkaz na hodnocení. Rozsah pobytu píší
+  pomlčkou a rozloučení nechávají na podpisu.
 
 - **Řádek, na kterém zůstanou jen prázdné proměnné, se do zprávy nedostane.** Text tak
   nenese holý popisek („Splatnost:“) u faktury bez splatnosti.

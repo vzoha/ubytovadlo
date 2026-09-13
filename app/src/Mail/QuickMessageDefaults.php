@@ -37,7 +37,7 @@ final class QuickMessageDefaults
 
                 Pár dní před příjezdem se ozveme s podrobnostmi k cestě a předání klíčů.
 
-                Budeme se na vás těšit. Kdybyste cokoli potřebovali dřív, stačí napsat.
+                Budeme se na vás těšit.
                 TXT,
         ],
         [
@@ -51,7 +51,7 @@ final class QuickMessageDefaults
 
                 Ptáme se v něm na fakturační údaje a na údaje ubytovaných — evidenci hostů nám ukládá zákon.
 
-                Budeme se na vás těšit. Kdybyste cokoli potřebovali, stačí napsat.
+                Děkujeme a budeme se na vás těšit.
                 TXT,
         ],
         [
@@ -76,6 +76,18 @@ final class QuickMessageDefaults
                 TXT,
         ],
         [
+            'label' => 'Před odjezdem',
+            'body' => <<<'TXT'
+                Dobrý den,
+
+                pobyt se vám pomalu chýlí ke konci — odjezd máte {{ check_out }} do {{ check_out_time }}.
+
+                [Sem napište, kam nechat klíče a v jakém stavu ubytování předat.]
+
+                Dejte prosím vědět, kolem kolika hodin plánujete vyrazit.
+                TXT,
+        ],
+        [
             'label' => 'Poděkování po pobytu',
             'body' => <<<'TXT'
                 Dobrý den,
@@ -86,7 +98,7 @@ final class QuickMessageDefaults
 
                 [Sem vložte odkaz na hodnocení.]
 
-                Budeme se těšit na shledanou. Kdybyste cokoli potřebovali, stačí napsat.
+                Budeme se těšit na shledanou.
                 TXT,
         ],
     ];

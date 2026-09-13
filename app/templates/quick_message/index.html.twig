@@ -51,6 +51,18 @@
         </div>
     {% endif %}
 
+    <h3 class="h6 mt-4 mb-2">Podpis</h3>
+    <p class="text-muted small">
+        Rozloučení na konci každé rychlé zprávy — v textech zpráv už ho psát nemusíte.
+        Prázdné pole znamená zprávy bez podpisu.
+    </p>
+    <form method="post" action="{{ path('quick_message_signature') }}">
+        <input type="hidden" name="_token" value="{{ csrf_token('quick-message-signature') }}">
+        <label class="form-label" for="quick-message-signature">Text podpisu</label>
+        <textarea class="form-control mb-2" id="quick-message-signature" name="signature" rows="3">{{ signature }}</textarea>
+        <button type="submit" class="btn btn-sm btn-primary">Uložit podpis</button>
+    </form>
+
     <div class="modal fade" id="modalNewQuickMessage" tabindex="-1" aria-labelledby="modalNewQuickMessageLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">

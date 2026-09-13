@@ -16,6 +16,7 @@ use App\Entity\QuickMessage;
 use App\Form\QuickMessageType;
 use App\Mail\MessageVariableResolver;
 use App\Mail\QuickMessageDefaults;
+use App\Mail\QuickMessageSignature;
 use App\Repository\QuickMessageRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -30,6 +31,7 @@ class QuickMessageController extends AbstractController
     public function __construct(
         private readonly QuickMessageRepository $messages,
         private readonly EntityManagerInterface $em,
+        private readonly QuickMessageSignature $signature,
     ) {
     }
 
@@ -45,7 +47,19 @@ class QuickMessageController extends AbstractController
             'newForm' => $newForm->createView(),
             'variables' => MessageVariableResolver::plainTextGroupedVariables(),
             'templates' => QuickMessageDefaults::templates(),
+            'signature' => $this->signature->current(),
         ]);
+    }
+
+    #[Route('/nastaveni/rychle-zpravy/podpis', name: 'quick_message_signature', methods: ['POST'])]
+    public function saveSignature(Request $request): Response
+    {
+        $this->assertCsrf($request, 'quick-message-signature');
+
+        $this->signature->save((string) $request->request->get('signature'));
+        $this->addFlash('success', 'Podpis uložen.');
+
+        return $this->redirectToRoute('quick_message_index');
     }
 
     #[Route('/nastaveni/rychle-zpravy/nova', name: 'quick_message_new', methods: ['GET', 'POST'])]

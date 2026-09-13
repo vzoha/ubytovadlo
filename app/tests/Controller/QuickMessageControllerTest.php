@@ -12,9 +12,12 @@ declare(strict_types=1);
 namespace App\Tests\Controller;
 
 use App\Entity\QuickMessage;
+use App\Entity\Setting;
 use App\Entity\User;
 use App\Enum\UserRole;
+use App\Mail\QuickMessageDefaults;
 use App\Mail\QuickMessageSeeder;
+use App\Mail\QuickMessageSignature;
 use App\Repository\QuickMessageRepository;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -38,6 +41,9 @@ final class QuickMessageControllerTest extends WebTestCase
         $this->messages = $container->get(QuickMessageRepository::class);
 
         $this->em->createQuery('DELETE FROM ' . QuickMessage::class . ' q')->execute();
+        $this->em->createQuery('DELETE FROM ' . Setting::class . ' s WHERE s.key = :key')
+            ->setParameter('key', QuickMessageSignature::KEY)
+            ->execute();
         $this->em->createQuery('DELETE FROM ' . User::class . ' u')->execute();
 
         $hasher = $container->get(UserPasswordHasherInterface::class);
@@ -142,11 +148,29 @@ final class QuickMessageControllerTest extends WebTestCase
         self::assertCount(0, $crawler->filter('form[action$="/rychle-zpravy/vychozi"]'));
     }
 
+    public function testSignatureIsPrefilledAndSaved(): void
+    {
+        $crawler = $this->client->request('GET', '/nastaveni/rychle-zpravy');
+        $form = $crawler->selectButton('Uložit podpis')->form();
+        self::assertSame(QuickMessageSignature::DEFAULT_SIGNATURE, $form['signature']->getValue());
+
+        $form['signature'] = "Anna\n+420 111 222 333";
+        $this->client->submit($form);
+
+        self::assertResponseRedirects('/nastaveni/rychle-zpravy');
+        self::assertSame(
+            "Anna\n+420 111 222 333",
+            static::getContainer()->get(QuickMessageSignature::class)->current(),
+        );
+    }
+
     public function testSeederFillsOnlyAnEmptyList(): void
     {
         $seeder = static::getContainer()->get(QuickMessageSeeder::class);
-        self::assertSame(4, $seeder->seedIfEmpty());
+        $expected = \count(QuickMessageDefaults::templates());
+
+        self::assertSame($expected, $seeder->seedIfEmpty());
         self::assertSame(0, $seeder->seedIfEmpty());
-        self::assertCount(4, $this->messages->findOrdered());
+        self::assertCount($expected, $this->messages->findOrdered());
     }
 }
