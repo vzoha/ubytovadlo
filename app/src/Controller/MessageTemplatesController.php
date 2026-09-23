@@ -15,7 +15,6 @@ use App\Config\LogoStorage;
 use App\Entity\MessageTemplate;
 use App\Enum\MessageKind;
 use App\Form\MessageTemplateType;
-use App\Mail\CustomerMessageContext;
 use App\Mail\GuestMessageRenderer;
 use App\Mail\GuestMessageSender;
 use App\Mail\MessageLocales;
@@ -43,9 +42,6 @@ class MessageTemplatesController extends AbstractController
         'invoice_due' => "20.\u{00a0}9.\u{00a0}2026",
         'invoice_bank_account' => '1861547133/0800',
         'invoice_variable_symbol' => '2026012',
-        // Ukázkový host je vracející se, ať náhled ukáže i přivítání.
-        'stay_number' => '2',
-        'returning_greeting' => CustomerMessageContext::GREETING[MessageLocales::BASE],
     ];
 
     public function __construct(

@@ -30,11 +30,6 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
   se ukáže poznámka k hostovi. Karta hosta má tlačítko *+ Nová rezervace*. Rezervace
   vytvořená z předvyplnění patří tomuž hostovi i bez kontaktu, dokud se nezmění jméno.
 
-- **Proměnné o vracejícím se hostovi v šablonách zpráv.** `{{ stay_number }}` vypíše,
-  kolikátý pobyt host má, `{{ returning_greeting }}` přivítání v jazyce hosta („Jsme rádi,
-  že se k nám zase vracíte.“). U prvního pobytu je přivítání prázdné a řádek, na kterém
-  stojí samo, ze zprávy vypadne.
-
 - **Podpis rychlých zpráv.** Nastavení rychlých zpráv drží rozloučení, které se připojí
   na konec každé zprávy do SMS, WhatsAppu i chatu portálu; smí obsahovat proměnné.
   Nenastavená instance podepisuje názvem ubytování, prázdné pole znamená zprávy bez podpisu.
