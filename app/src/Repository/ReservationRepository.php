@@ -463,19 +463,35 @@ class ReservationRepository extends ServiceEntityRepository
     }
 
     /**
-     * Rezervace bez zákazníka, které mají e-mail nebo telefon — kandidáti na
-     * spárování. Telefon mimo E.164 se nepáruje (`CustomerKey`), takže se sem
-     * sám bez e-mailu nedostane.
+     * Rezervace bez zákazníka, u kterých je koho poznat — mají jméno, e-mail nebo
+     * telefon. Bloky z kalendáře bez údajů sem nepatří. Telefon mimo E.164 se
+     * nepáruje (`CustomerKey`), takže se sem sám bez dalšího údaje nedostane.
      *
      * @return Reservation[]
      */
-    public function findUnlinkedWithContact(): array
+    public function findWithoutCustomer(): array
     {
         return $this->createQueryBuilder('r')
             ->andWhere('r.customer IS NULL')
-            ->andWhere("r.guestContact.email IS NOT NULL OR r.guestContact.phone LIKE '+%'")
+            ->andWhere("r.guestContact.email IS NOT NULL OR r.guestContact.phone LIKE '+%' OR TRIM(COALESCE(r.guestName, '')) != ''")
             ->orderBy('r.checkIn', 'ASC')
             ->addOrderBy('r.id', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Všechny rezervace zákazníka včetně zrušených, od nejnovější.
+     *
+     * @return Reservation[]
+     */
+    public function findAllOfCustomer(Customer $customer): array
+    {
+        return $this->createQueryBuilder('r')
+            ->andWhere('r.customer = :customer')
+            ->setParameter('customer', $customer)
+            ->orderBy('r.checkIn', 'DESC')
+            ->addOrderBy('r.id', 'DESC')
             ->getQuery()
             ->getResult();
     }

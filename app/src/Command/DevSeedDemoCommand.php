@@ -15,6 +15,7 @@ use App\Booking\BookingHotelId;
 use App\Cashflow\IncomeUpserter;
 use App\Entity\Account;
 use App\Entity\BalanceStatement;
+use App\Entity\Customer;
 use App\Entity\ElectricityTariff;
 use App\Entity\Embeddable\Address;
 use App\Entity\Embeddable\BillingIdentity;
@@ -112,6 +113,7 @@ class DevSeedDemoCommand extends Command
         $this->seedQuickMessages($io);
         $this->seedTasks($io);
         $reservations = $this->seedReservations($io);
+        $this->seedCustomerNotes($io);
         $this->seedReservationIncomes($reservations, $io);
         $this->seedVatPeriods($io);
 
@@ -127,7 +129,7 @@ class DevSeedDemoCommand extends Command
             'reservation_receipt', 'balance_statement', 'ledger_entry', 'account',
             'invoice_line', 'invoice', 'cleaning', 'guest_document', 'airbnb_statement',
             'booking_monthly_invoice', 'vat_period', 'electricity_reading', 'electricity_tariff',
-            'payment', 'email_log', 'reservation', 'customer', 'app_user', 'setting', 'accommodation_profile',
+            'payment', 'email_log', 'reservation', 'customer_distinct_pair', 'customer', 'app_user', 'setting', 'accommodation_profile',
             'quick_message', 'task_completion', 'recurring_task',
         ];
         $this->connection->executeStatement('SET FOREIGN_KEY_CHECKS = 0');
@@ -235,6 +237,15 @@ class DevSeedDemoCommand extends Command
     }
 
     /** Demo rychlé zprávy pro SMS/WhatsApp (neutrální texty s proměnnými). */
+    /** Zákazníky zakládá párování samo; demo jen doplní poznámku vracejícímu se hostovi. */
+    private function seedCustomerNotes(SymfonyStyle $io): void
+    {
+        $customer = $this->em->getRepository(Customer::class)->findOneBy(['email' => 'jan.novak@email.cz']);
+        $customer?->setNote('Jezdí s dětmi, ocení postýlku a místo na kočárek.');
+        $this->em->flush();
+        $io->writeln('  Poznámka k vracejícímu se hostovi vytvořena.');
+    }
+
     private function seedQuickMessages(SymfonyStyle $io): void
     {
         $messages = [
@@ -799,8 +810,9 @@ class DevSeedDemoCommand extends Command
             ],
             [
                 'channel' => Channel::AIRBNB, 'billing' => \App\Enum\BillingMode::AIRBNB,
-                'ext' => 'HMAB116CDE', 'in' => '2026-07-03', 'out' => '2026-07-06', 'name' => 'Simona Králová',
-                'region' => 'Pardubice', 'adults' => 2, 'infants' => 1, 'price' => '4800.00', 'acq' => 'Airbnb',
+                // Stejná hostka jako lednový Airbnb pobyt — bez kontaktu, nabídne se ke sloučení.
+                'ext' => 'HMAB116CDE', 'in' => '2026-07-03', 'out' => '2026-07-06', 'name' => 'Markéta Dvořáková',
+                'region' => 'Praha', 'adults' => 2, 'infants' => 1, 'price' => '4800.00', 'acq' => 'Airbnb',
                 'cot' => true, 'leadDays' => 35, 'clean' => [CleaningType::CLEANER, 700, 700], 'inv' => 'none',
             ],
             [

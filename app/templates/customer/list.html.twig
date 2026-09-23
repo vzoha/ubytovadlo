@@ -1,0 +1,58 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Hosté{% endblock %}
+
+{% block body %}
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <h1 class="h3 mb-0">Hosté</h1>
+        <form method="get" action="{{ path('customer_list') }}" class="d-flex gap-2" role="search">
+            <input type="search" name="q" value="{{ search }}" class="form-control form-control-sm" placeholder="Jméno, e-mail, telefon" aria-label="Hledat hosta">
+            <button type="submit" class="btn btn-sm btn-outline-secondary">Hledat</button>
+        </form>
+    </div>
+
+    {% if suggestions is not empty %}
+        <div class="card mb-3">
+            <div class="card-header">Možná stejný host <span class="small text-muted">({{ suggestions|length }})</span></div>
+            <ul class="list-group list-group-flush">
+                {% for s in suggestions %}
+                    {% include 'customer/_suggestion.html.twig' with {s: s, return: path('customer_list')} %}
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle mb-0 table-stack">
+                <thead>
+                    <tr><th>Host</th><th>Kontakt</th><th class="text-end">Pobytů</th><th>Poslední příjezd</th><th></th></tr>
+                </thead>
+                <tbody>
+                {% for row in rows %}
+                    {% set c = row.customer %}
+                    {% set phone = c.phone|phone %}
+                    <tr>
+                        <td data-label="Host">
+                            {{ c.displayName ?? ('Host #' ~ c.id) }}
+                            {% if row.stays > 1 %}<span class="badge text-bg-info">vrací se</span>{% endif %}
+                            {% if c.note %}<div class="text-muted small text-truncate" style="max-width: 20rem">{{ c.note }}</div>{% endif %}
+                        </td>
+                        <td data-label="Kontakt" class="small text-break">
+                            {{ c.email ?? '' }}{% if c.email and c.phone %}<br>{% endif %}{{ phone ? phone.national : (c.phone ?? '') }}
+                            {% if not c.email and not c.phone %}<span class="text-muted">—</span>{% endif %}
+                        </td>
+                        <td data-label="Pobytů" class="text-end">{{ row.stays }}</td>
+                        <td data-label="Poslední příjezd" class="text-nowrap">{{ row.lastCheckIn|date('d. m. Y') }}</td>
+                        <td class="text-end"><a href="{{ path('customer_detail', {id: c.id}) }}" class="text-decoration-none small text-nowrap">Detail →</a></td>
+                    </tr>
+                {% else %}
+                    <tr class="table-empty"><td colspan="5" class="text-muted">
+                        {% if search %}Žádný host neodpovídá hledání „{{ search }}“.{% else %}Zatím žádní hosté. Přibývají sami s rezervacemi.{% endif %}
+                    </td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

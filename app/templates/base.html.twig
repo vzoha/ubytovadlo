@@ -67,6 +67,7 @@
                     {% if is_granted('ROLE_USER') %}
                         <li class="nav-item"><a class="nav-link" href="{{ path('dashboard') }}">Přehled</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ path('reservation_list') }}">Rezervace</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ path('customer_list') }}">Hosté</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ path('calendar_index') }}">Kalendář</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ path('economics_overview') }}">Ekonomika</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ path('account_index') }}">Účty</a></li>

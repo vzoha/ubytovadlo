@@ -136,29 +136,39 @@ final class CustomerLinkingTest extends KernelTestCase
         self::assertSame('+420776123456', $second->getCustomer()?->getPhone());
     }
 
-    public function testNameAloneDoesNotCreateCustomer(): void
+    public function testNameAloneGetsOwnCustomerWithoutMatching(): void
     {
-        $a = $this->reservation('2026-06-01');
-        $b = $this->reservation('2026-08-01', 'abc@guest.booking.com', 'nevím');
+        $a = $this->reservation('2025-06-01');
+        $b = $this->reservation('2026-06-01', 'abc@guest.booking.com', 'nevím');
         $this->save($a, $b);
 
-        self::assertNull($a->getCustomer());
-        self::assertNull($b->getCustomer());
+        self::assertNotNull($a->getCustomer());
+        self::assertNotNull($b->getCustomer());
+        self::assertNotSame($a->getCustomer(), $b->getCustomer(), 'samotné jméno nespojuje');
+        self::assertNull($b->getCustomer()->getEmail());
+    }
+
+    public function testCalendarBlockWithoutNameGetsNoCustomer(): void
+    {
+        $block = $this->reservation('2026-06-01', name: '  ');
+        $this->save($block);
+
+        self::assertNull($block->getCustomer());
         self::assertSame(0, $this->customerCount());
     }
 
-    public function testContactAddedLaterLinksOnUpdate(): void
+    public function testContactAddedLaterFillsCustomer(): void
     {
         $r = $this->reservation('2026-06-01');
         $this->save($r);
-        self::assertNull($r->getCustomer());
+        $customerId = $r->getCustomer()?->getId();
 
         $r->setGuestContact(new GuestContact('jana@example.com'));
         $this->em->flush();
         $this->em->clear();
 
-        $reloaded = $this->em->find(Reservation::class, $r->getId());
-        self::assertNotNull($reloaded?->getCustomer());
+        $customer = $this->em->find(Customer::class, $customerId);
+        self::assertSame('jana@example.com', $customer?->getEmail());
     }
 
     public function testCommandLinksExistingReservationsIdempotently(): void
@@ -174,10 +184,10 @@ final class CustomerLinkingTest extends KernelTestCase
         $tester = new CommandTester((new Application(self::$kernel))->find('app:customers:link'));
         $tester->execute([]);
         $tester->assertCommandIsSuccessful();
-        self::assertStringContainsString('spárováno=2', $tester->getDisplay());
+        self::assertStringContainsString('spárováno=3', $tester->getDisplay());
 
         $linked = (int) $this->em->getConnection()->fetchOne('SELECT COUNT(DISTINCT customer_id) FROM reservation WHERE customer_id IS NOT NULL');
-        self::assertSame(1, $linked);
+        self::assertSame(2, $linked, 'Jana e-mailem dohromady, host bez kontaktu zvlášť');
 
         $tester->execute([]);
         self::assertStringContainsString('kandidátů=0', $tester->getDisplay());

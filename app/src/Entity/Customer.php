@@ -42,6 +42,10 @@ class Customer
     #[ORM\Column(length: 64, nullable: true)]
     private ?string $phone = null;
 
+    /** Co si o hostovi pamatovat příště — pes, postýlka, oblíbený pokoj. */
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $note = null;
+
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeImmutable $createdAt;
 
@@ -50,7 +54,7 @@ class Customer
 
     public function __construct(?string $displayName, CustomerKey $key)
     {
-        $this->displayName = $displayName;
+        $this->displayName = self::normalize($displayName);
         $this->createdAt = new \DateTimeImmutable();
         $this->updatedAt = $this->createdAt;
         $this->absorb($key);
@@ -66,6 +70,14 @@ class Customer
         return $this->displayName;
     }
 
+    public function setDisplayName(?string $displayName): self
+    {
+        $this->displayName = self::normalize($displayName);
+        $this->touch();
+
+        return $this;
+    }
+
     public function getEmail(): ?string
     {
         return $this->email;
@@ -74,6 +86,33 @@ class Customer
     public function getPhone(): ?string
     {
         return $this->phone;
+    }
+
+    public function getNote(): ?string
+    {
+        return $this->note;
+    }
+
+    public function setNote(?string $note): self
+    {
+        $this->note = self::normalize($note);
+        $this->touch();
+
+        return $this;
+    }
+
+    /**
+     * Převezme údaje sloučeného zákazníka: chybějící jméno a kontakt doplní,
+     * poznámky spojí. Vlastní vyplněné údaje nechává.
+     */
+    public function mergeFrom(self $other): void
+    {
+        $this->displayName ??= $other->displayName;
+        $this->email ??= $other->email;
+        $this->phone ??= $other->phone;
+        $notes = array_filter([$this->note, $other->note], static fn (?string $n): bool => $n !== null);
+        $this->note = $notes === [] ? null : implode("\n\n", array_unique($notes));
+        $this->touch();
     }
 
     /**
@@ -94,7 +133,7 @@ class Customer
             $changed = true;
         }
         if ($changed) {
-            $this->updatedAt = new \DateTimeImmutable();
+            $this->touch();
         }
 
         return $changed;
@@ -108,5 +147,17 @@ class Customer
     public function getUpdatedAt(): \DateTimeImmutable
     {
         return $this->updatedAt;
+    }
+
+    private function touch(): void
+    {
+        $this->updatedAt = new \DateTimeImmutable();
+    }
+
+    private static function normalize(?string $value): ?string
+    {
+        $trimmed = trim((string) $value);
+
+        return $trimmed === '' ? null : $trimmed;
     }
 }

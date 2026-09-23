@@ -149,6 +149,11 @@
                             <dd class="col-7 col-sm-8">{{ reservation.guestBilling.ico ?? '—' }} / {{ reservation.guestBilling.dic ?? '—' }}</dd>
                         {% endif %}
 
+                        {% if reservation.customer and reservation.customer.note %}
+                            <dt class="col-5 col-sm-4">Poznámka k hostovi</dt>
+                            <dd class="col-7 col-sm-8">{{ reservation.customer.note|nl2br }}</dd>
+                        {% endif %}
+
                         {% if customer_stays and customer_stays.returning %}
                             <dt class="col-5 col-sm-4">Další pobyty</dt>
                             <dd class="col-7 col-sm-8">
@@ -161,6 +166,11 @@
                                     {% endfor %}
                                 </ul>
                             </dd>
+                        {% endif %}
+
+                        {% if reservation.customer %}
+                            <dt class="col-5 col-sm-4">Karta hosta</dt>
+                            <dd class="col-7 col-sm-8"><a href="{{ path('customer_detail', {id: reservation.customer.id}) }}" class="text-decoration-none">Pobyty a poznámka →</a></dd>
                         {% endif %}
 
                         {% if reservation.guestRegion %}

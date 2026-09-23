@@ -8,13 +8,21 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Přidáno
 
-- **Vracející se hosté.** Každá rezervace s e-mailem nebo telefonem hosta patří zákazníkovi,
+- **Vracející se hosté.** Každá rezervace se jménem nebo kontaktem hosta patří zákazníkovi,
   který drží jeho pobyty pohromadě bez ohledu na kanál. Páruje se podle vlastního e-mailu
   hosta, potom podle telefonu; adresa portálu ani neověřitelné číslo se nepočítají a shoda
   kontaktu platí jen u jména se společným slovem (Novák / Nováková), takže sdílený e-mail
-  (třeba ubytovatele zadaný za známé) nespojí cizí lidi. Detail rezervace ukazuje štítek
-  *Vracející se host · 2. pobyt* a odkazy na další pobyty. Cron `actions-plan` páruje i rezervace, kterým kontakt přibyl
-  později (`app:customers:link`).
+  (třeba ubytovatele zadaný za známé) nespojí cizí lidi. Host bez kontaktu (Airbnb) má
+  vlastního zákazníka a kontakt z check-inu si doplní. Detail rezervace ukazuje štítek
+  *Vracející se host · 2. pobyt*, další pobyty, poznámku k hostovi a odkaz na kartu hosta.
+  Cron `actions-plan` přiřazuje zákazníka i dříve uloženým rezervacím (`app:customers:link`).
+
+- **Hosté** (`/hoste`). Seznam hostů s počtem pobytů, posledním příjezdem a hledáním podle
+  jména, e-mailu či telefonu. Karta hosta drží kontakt, poznámku (ukáže se u každého jeho
+  pobytu) a všechny pobyty. Hosty jde sloučit do jednoho a pobyt, který k hostovi nepatří,
+  oddělit do samostatného. Nad seznamem jsou návrhy *Možná stejný host* — stejné jméno,
+  nebo sdílený e-mail či telefon u jmen, která k sobě sedí — s volbou *Sloučit* nebo
+  *Různí lidé*; odmítnutý návrh se už neukáže.
 
 - **Podpis rychlých zpráv.** Nastavení rychlých zpráv drží rozloučení, které se připojí
   na konec každé zprávy do SMS, WhatsAppu i chatu portálu; smí obsahovat proměnné.

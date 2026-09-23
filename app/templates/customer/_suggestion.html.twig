@@ -1,0 +1,25 @@
+{# Jeden návrh ke sloučení: `s` = DuplicateSuggestion, `return` = kam se vrátit po „Různí lidé". #}
+{% macro contact(c) %}
+    <a href="{{ path('customer_detail', {id: c.id}) }}" class="text-decoration-none">{{ c.displayName ?? ('Host #' ~ c.id) }}</a>
+    {% if c.email or c.phone %}<span class="text-muted small text-break">· {{ c.email ?? (c.phone|phone ? (c.phone|phone).national : c.phone) }}</span>{% endif %}
+{% endmacro %}
+<li class="list-group-item d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <div>
+        {{ _self.contact(s.keep) }} <span class="text-muted">a</span> {{ _self.contact(s.merge) }}
+        <span class="badge text-bg-light">{{ s.reason.label }}</span>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+        <form method="post" action="{{ path('customer_merge', {id: s.keep.id}) }}"
+              onsubmit="return confirm('Sloučit oba hosty do jednoho? Pobyty přejdou pod {{ (s.keep.displayName ?? ('Host #' ~ s.keep.id))|e('js') }}.');">
+            <input type="hidden" name="_token" value="{{ csrf_token('customer-merge-' ~ s.keep.id) }}">
+            <input type="hidden" name="merge_id" value="{{ s.merge.id }}">
+            <button type="submit" class="btn btn-sm btn-outline-primary">Sloučit</button>
+        </form>
+        <form method="post" action="{{ path('customer_distinct', {id: s.keep.id}) }}">
+            <input type="hidden" name="_token" value="{{ csrf_token('customer-distinct-' ~ s.keep.id) }}">
+            <input type="hidden" name="other_id" value="{{ s.merge.id }}">
+            {% if return is defined and return %}<input type="hidden" name="return" value="{{ return }}">{% endif %}
+            <button type="submit" class="btn btn-sm btn-outline-secondary">Různí lidé</button>
+        </form>
+    </div>
+</li>

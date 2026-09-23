@@ -1,0 +1,145 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ customer.displayName ?? ('Host #' ~ customer.id) }}{% endblock %}
+
+{% block body %}
+    {% set phone = customer.phone|phone %}
+    <a href="{{ path('customer_list') }}" class="text-decoration-none small">← Hosté</a>
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+        <h1 class="h3 mb-0 mt-1">{{ customer.displayName ?? ('Host #' ~ customer.id) }}</h1>
+        <div class="d-flex flex-wrap gap-2 mt-1">
+            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editCustomer">✎ Upravit</button>
+            {% if others is not empty %}
+                <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#mergeCustomer">Sloučit s jiným hostem</button>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-lg-5">
+            <div class="card">
+                <div class="card-header">Host</div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-5 col-sm-4">E-mail</dt>
+                        <dd class="col-7 col-sm-8 text-break">{% if customer.email %}<a href="mailto:{{ customer.email }}">{{ customer.email }}</a>{% else %}—{% endif %}</dd>
+
+                        <dt class="col-5 col-sm-4">Telefon</dt>
+                        <dd class="col-7 col-sm-8">{% if phone %}<a href="tel:{{ phone.e164 }}">{{ phone.national }}</a>{% else %}{{ customer.phone ?? '—' }}{% endif %}</dd>
+
+                        <dt class="col-5 col-sm-4">Poznámka</dt>
+                        <dd class="col-7 col-sm-8">{{ customer.note ? customer.note|nl2br : '—' }}</dd>
+
+                        <dt class="col-5 col-sm-4">V evidenci od</dt>
+                        <dd class="col-7 col-sm-8 text-muted">{{ customer.createdAt|date('d. m. Y') }}</dd>
+                    </dl>
+                    <div class="text-muted small mt-2">Kontakt se doplňuje z rezervací. Údaje na jednotlivých pobytech zůstávají, jak byly.</div>
+                </div>
+            </div>
+
+            {% if suggestions is not empty %}
+                <div class="card mt-3">
+                    <div class="card-header">Možná stejný host</div>
+                    <ul class="list-group list-group-flush">
+                        {% for s in suggestions %}
+                            {% include 'customer/_suggestion.html.twig' with {s: s} %}
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="col-lg-7">
+            <div class="card">
+                <div class="card-header">Pobyty <span class="small text-muted">({{ stays|length }})</span></div>
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0 table-stack">
+                        <thead>
+                            <tr><th>Termín</th><th>Kanál</th><th>Stav</th><th></th></tr>
+                        </thead>
+                        <tbody>
+                        {% for stay in stays %}
+                            <tr>
+                                <td data-label="Termín" class="text-nowrap">
+                                    <a href="{{ path('reservation_detail', {id: stay.id}) }}" class="text-decoration-none">{{ stay.checkIn|date('d. m. Y') }}{% if stay.checkOut %} – {{ stay.checkOut|date('d. m. Y') }}{% endif %}</a>
+                                    {% if stay.guestName and stay.guestName != customer.displayName %}<div class="text-muted small">{{ stay.guestName }}</div>{% endif %}
+                                </td>
+                                <td data-label="Kanál">{{ stay.channel.label }}</td>
+                                <td data-label="Stav">{{ stay.status.label }}</td>
+                                <td class="text-end">
+                                    {% if stays|length > 1 %}
+                                        <form method="post" action="{{ path('customer_detach', {id: stay.id}) }}"
+                                              onsubmit="return confirm('Pobyt nepatří tomuto hostovi? Oddělí se do samostatného hosta.');">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('customer-detach-' ~ stay.id) }}">
+                                            <button type="submit" class="btn btn-sm btn-outline-secondary">Oddělit</button>
+                                        </form>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="editCustomer" tabindex="-1" aria-labelledby="editCustomerLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title h6 mb-0" id="editCustomerLabel">Upravit hosta</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zavřít"></button>
+                </div>
+                <form method="post" action="{{ path('customer_edit', {id: customer.id}) }}">
+                    <div class="modal-body">
+                        <input type="hidden" name="_token" value="{{ csrf_token('customer-edit-' ~ customer.id) }}">
+                        <div class="mb-2">
+                            <label for="customerName" class="form-label small mb-0">Jméno</label>
+                            <input id="customerName" name="display_name" value="{{ customer.displayName }}" class="form-control form-control-sm">
+                        </div>
+                        <div class="mb-2">
+                            <label for="customerNote" class="form-label small mb-0">Poznámka</label>
+                            <textarea id="customerNote" name="note" rows="4" class="form-control form-control-sm" placeholder="Jezdí se psem, chce postýlku…">{{ customer.note }}</textarea>
+                            <div class="form-text">Ukáže se u každého pobytu tohoto hosta.</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Zrušit</button>
+                        <button type="submit" class="btn btn-sm btn-primary">Uložit</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {% if others is not empty %}
+        <div class="modal fade" id="mergeCustomer" tabindex="-1" aria-labelledby="mergeCustomerLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 class="modal-title h6 mb-0" id="mergeCustomerLabel">Sloučit s jiným hostem</h2>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zavřít"></button>
+                    </div>
+                    <form method="post" action="{{ path('customer_merge', {id: customer.id}) }}">
+                        <div class="modal-body">
+                            <input type="hidden" name="_token" value="{{ csrf_token('customer-merge-' ~ customer.id) }}">
+                            <label for="mergeId" class="form-label small mb-0">Host, jehož pobyty přejdou sem</label>
+                            <select id="mergeId" name="merge_id" class="form-select form-select-sm" required>
+                                <option value="">Vyberte hosta…</option>
+                                {% for o in others|sort((a, b) => (a.displayName ?? '') <=> (b.displayName ?? '')) %}
+                                    <option value="{{ o.id }}">{{ o.displayName ?? ('Host #' ~ o.id) }}{% if o.email %} · {{ o.email }}{% endif %}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">Druhý host zmizí, jeho kontakt a poznámka se doplní sem.</div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Zrušit</button>
+                            <button type="submit" class="btn btn-sm btn-primary">Sloučit</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}

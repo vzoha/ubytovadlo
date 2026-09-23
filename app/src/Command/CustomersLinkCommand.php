@@ -21,11 +21,11 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
- * Cron (součást actions-plan) — spáruje se zákazníkem rezervace, které mají
- * kontakt, ale zákazníka ne: pobyty uložené před zavedením zákazníků a ty,
- * kterým kontakt přibyl bez další změny. Idempotentní.
+ * Cron (součást actions-plan) — přiřadí zákazníka rezervacím, které ho nemají,
+ * ač je u nich koho poznat (jméno, e-mail, telefon): typicky pobyty uložené
+ * před zavedením zákazníků. Idempotentní.
  */
-#[AsCommand(name: 'app:customers:link', description: 'Spáruje rezervace s kontaktem se zákazníky (vracející se hosté).')]
+#[AsCommand(name: 'app:customers:link', description: 'Přiřadí zákazníka rezervacím, které ho nemají (vracející se hosté).')]
 class CustomersLinkCommand extends Command
 {
     public function __construct(
@@ -39,7 +39,7 @@ class CustomersLinkCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
-        $candidates = $this->reservations->findUnlinkedWithContact();
+        $candidates = $this->reservations->findWithoutCustomer();
 
         $linked = 0;
         foreach ($candidates as $reservation) {

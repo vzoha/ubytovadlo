@@ -19,9 +19,11 @@ use Doctrine\ORM\EntityManagerInterface;
 /**
  * Přiřadí rezervaci zákazníka podle e-mailu, případně telefonu (`CustomerKey`).
  * Shoda e-mailu má přednost před shodou telefonu a obě platí, jen když k sobě
- * sedí i jména (`NameMatch`). Když se nikdo nenajde, založí nového zákazníka;
- * bez e-mailu i telefonu nechá rezervaci bez zákazníka — samotné jméno ke
- * spojení nestačí.
+ * sedí i jména (`NameMatch`). Když se nikdo nenajde, založí nového zákazníka.
+ *
+ * Rezervace jen se jménem (Airbnb) dostane vlastního zákazníka bez kontaktu —
+ * samotné jméno ke spojení nestačí, shodu nabídne `CustomerDuplicateFinder`.
+ * Kontakt, který rezervaci přibude později (check-in), si zákazník doplní.
  *
  * Hledá i mezi zákazníky, kteří čekají na uložení, takže dvě rezervace téhož
  * hosta v jednom flushi (sync, import) skončí u jednoho zákazníka.
@@ -35,26 +37,33 @@ final class CustomerLinker
     }
 
     /**
-     * @return Customer|null zákazník, kterého rezervace dostala; null, když se nepřiřazovalo
+     * @return Customer|null zákazník, kterého rezervace dostala nebo kterému přibyl
+     *                       kontakt; null, když se nic nezměnilo
      */
     public function link(Reservation $reservation): ?Customer
     {
-        if ($reservation->getCustomer() !== null) {
-            return null;
-        }
-
         $key = CustomerKey::fromContact($reservation->getGuestContact());
-        if ($key->isEmpty()) {
+        $current = $reservation->getCustomer();
+        if ($current !== null) {
+            return $current->absorb($key) ? $current : null;
+        }
+
+        // Blok z kalendáře bez jména i kontaktu — není koho poznat.
+        if ($key->isEmpty() && NameMatch::key($reservation->getGuestName()) === null) {
             return null;
         }
 
-        $customer = $this->find($key, $reservation->getGuestName());
-        $customer?->absorb($key);
-        if ($customer === null) {
-            $customer = new Customer($reservation->getGuestName(), $key);
-            $this->em->persist($customer);
-        }
+        $customer = $this->find($key, $reservation->getGuestName()) ?? $this->create($reservation, $key);
+        $customer->absorb($key);
         $reservation->setCustomer($customer);
+
+        return $customer;
+    }
+
+    private function create(Reservation $reservation, CustomerKey $key): Customer
+    {
+        $customer = new Customer($reservation->getGuestName(), $key);
+        $this->em->persist($customer);
 
         return $customer;
     }

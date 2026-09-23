@@ -41,6 +41,18 @@ final class NameMatch
         return false;
     }
 
+    /**
+     * Jméno jako porovnatelný klíč: slova bez diakritiky, seřazená — „Nováková
+     * Petra" i „petra novakova" dají totéž. Null, když ve jméně nic není.
+     */
+    public static function key(?string $name): ?string
+    {
+        $words = array_unique(self::words($name));
+        sort($words);
+
+        return $words === [] ? null : implode(' ', $words);
+    }
+
     private static function sameWord(string $x, string $y): bool
     {
         if ($x === $y) {
@@ -68,11 +80,19 @@ final class NameMatch
     private static function words(?string $name): array
     {
         $lower = mb_strtolower(trim((string) $name));
-        $ascii = \Transliterator::create('Any-Latin; Latin-ASCII')?->transliterate($lower);
+        $ascii = self::transliterator()?->transliterate($lower);
         $plain = \is_string($ascii) ? $ascii : $lower;
 
         $words = preg_split('/[^a-z0-9]+/', $plain, -1, \PREG_SPLIT_NO_EMPTY) ?: [];
 
         return array_values(array_filter($words, static fn (string $word): bool => \strlen($word) >= 2));
+    }
+
+    private static function transliterator(): ?\Transliterator
+    {
+        static $transliterator = null;
+        $transliterator ??= \Transliterator::create('Any-Latin; Latin-ASCII');
+
+        return $transliterator;
     }
 }
