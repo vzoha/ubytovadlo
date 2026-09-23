@@ -18,6 +18,7 @@ use App\Controller\Concern\ChecksCsrf;
 use App\Controller\Concern\ParsesRequestInput;
 use App\Currency\ReservationCzkPreviewResolver;
 use App\Customer\CustomerStaysProvider;
+use App\Customer\ReservationPrefill;
 use App\Entity\Reservation;
 use App\Enum\BillingMode;
 use App\Enum\Channel;
@@ -35,6 +36,7 @@ use App\Mail\ReservationConfirmation;
 use App\Profit\ReservationProfitCalculator;
 use App\Repository\AccountRepository;
 use App\Repository\CleaningRepository;
+use App\Repository\CustomerRepository;
 use App\Repository\GuestDocumentRepository;
 use App\Repository\InvoiceRepository;
 use App\Repository\ReservationReceiptRepository;
@@ -97,10 +99,15 @@ class ReservationController extends AbstractController
     }
 
     #[Route('/rezervace/nova', name: 'reservation_new', methods: ['GET', 'POST'])]
-    public function new(Request $request): Response
+    public function new(Request $request, CustomerRepository $customers, ReservationPrefill $prefill): Response
     {
         $reservation = new Reservation(Channel::DIRECT, new \DateTimeImmutable('today'));
         $reservation->setGuestAddress($reservation->getGuestAddress()->withCountry('CZ'));
+        $hostId = $request->query->getInt('host');
+        $customer = $hostId > 0 ? $customers->find($hostId) : null;
+        if ($customer !== null) {
+            $prefill->apply($reservation, $customer);
+        }
         $form = $this->createForm(ReservationManualType::class, $reservation);
         $form->handleRequest($request);
 
@@ -113,6 +120,9 @@ class ReservationController extends AbstractController
                 // Ruční zadání = autorita nad rozdělením hostů (žádný sync to nepřepíše).
                 $reservation->setGuestsSplitManually(true);
                 $reservation->setStatus(ReservationStatus::CONFIRMED);
+                if ($customer !== null) {
+                    $prefill->linkIfSameGuest($reservation, $customer);
+                }
                 $this->em->persist($reservation);
                 $this->em->flush();
                 // Plánovač dohledává existující akce podle rezervace → potřebuje její ID.
@@ -124,8 +134,13 @@ class ReservationController extends AbstractController
             }
         }
 
+        $hostSearch = $request->query->getString('najit');
+
         return $this->render('reservation/new.html.twig', [
             'form' => $form->createView(),
+            'prefill_customer' => $customer,
+            'host_search' => $hostSearch,
+            'host_matches' => trim($hostSearch) !== '' ? $customers->findForList($hostSearch, 5) : [],
         ]);
     }
 

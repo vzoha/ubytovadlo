@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Mail;
 
+use App\Customer\CustomerStaysProvider;
 use App\Entity\AccommodationProfile;
 use App\Entity\Embeddable\PropertyAddress;
 use App\Entity\Reservation;
@@ -19,12 +20,14 @@ use App\Invoice\BalanceCalculator;
 use App\Invoice\BalanceResult;
 use App\Invoice\DepositPayment;
 use App\Invoice\DepositPaymentBuilder;
+use App\Mail\CustomerMessageContext;
 use App\Mail\GuestLocaleResolver;
 use App\Mail\GuestVocative;
 use App\Mail\InvoiceMessageContext;
 use App\Mail\MessageVariableResolver;
 use App\Repository\AccommodationProfileRepository;
 use App\Repository\InvoiceRepository;
+use App\Repository\ReservationRepository;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
@@ -208,6 +211,13 @@ final class MessageVariableResolverTest extends TestCase
         self::assertContains('invoice_total', $names);
     }
 
+    public function testReturningGreetingLineDisappearsForFirstStay(): void
+    {
+        $out = $this->resolver(null)->renderBody("Dobrý den,\n{{ returning_greeting }}\nTěšíme se.", $this->reservation());
+
+        self::assertSame("Dobrý den,\nTěšíme se.", $out);
+    }
+
     private function resolver(?BalanceResult $balance, ?DepositPayment $deposit = null, ?AccommodationProfile $profile = null): MessageVariableResolver
     {
         $profiles = $this->createStub(AccommodationProfileRepository::class);
@@ -232,6 +242,7 @@ final class MessageVariableResolverTest extends TestCase
             $deposits,
             new GuestLocaleResolver(),
             $invoiceContext,
+            new CustomerMessageContext(new CustomerStaysProvider($this->createStub(ReservationRepository::class)), new GuestLocaleResolver()),
         );
     }
 

@@ -8,6 +8,7 @@
     <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
         <h1 class="h3 mb-0 mt-1">{{ customer.displayName ?? ('Host #' ~ customer.id) }}</h1>
         <div class="d-flex flex-wrap gap-2 mt-1">
+            <a href="{{ path('reservation_new', {host: customer.id}) }}" class="btn btn-sm btn-primary">+ Nová rezervace</a>
             <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editCustomer">✎ Upravit</button>
             {% if others is not empty %}
                 <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#mergeCustomer">Sloučit s jiným hostem</button>

@@ -41,6 +41,8 @@ final class MessageVariableResolver
             'guest_first_name_vocative' => 'Křestní jméno hosta v 5. pádu (oslovení)',
             'guest_last_name' => 'Příjmení hosta',
             'guest_last_name_vocative' => 'Příjmení hosta v 5. pádu (oslovení)',
+            'stay_number' => 'Kolikátý pobyt u vás host má (1, 2, 3…)',
+            'returning_greeting' => 'Přivítání vracejícího se hosta („Jsme rádi, že se k nám zase vracíte.“); u prvního pobytu prázdné',
         ],
         'Pobyt' => [
             'check_in' => 'Datum příjezdu',
@@ -94,6 +96,7 @@ final class MessageVariableResolver
         private readonly DepositPaymentBuilder $deposits,
         private readonly GuestLocaleResolver $guestLocale,
         private readonly InvoiceMessageContext $invoiceContext,
+        private readonly CustomerMessageContext $customerContext,
     ) {
     }
 
@@ -228,6 +231,7 @@ final class MessageVariableResolver
             'guest_first_name_vocative' => $this->vocative->firstName($reservation->getGuestName()),
             'guest_last_name' => $this->lastName($reservation->getGuestName()),
             'guest_last_name_vocative' => $this->vocative->lastName($reservation->getGuestName()),
+            ...$this->customerContext->forReservation($reservation),
             'check_in' => GuestDate::format($reservation->getCheckIn()),
             'check_in_time' => $this->time($reservation->getCheckInTime(), self::DEFAULT_CHECK_IN_TIME),
             'check_out' => $checkOut !== null ? GuestDate::format($checkOut) : '',

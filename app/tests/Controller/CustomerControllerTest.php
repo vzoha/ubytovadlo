@@ -12,6 +12,8 @@ declare(strict_types=1);
 namespace App\Tests\Controller;
 
 use App\Entity\Customer;
+use App\Entity\Embeddable\Address;
+use App\Entity\Embeddable\BillingIdentity;
 use App\Entity\Embeddable\GuestContact;
 use App\Entity\Reservation;
 use App\Entity\User;
@@ -172,5 +174,70 @@ final class CustomerControllerTest extends WebTestCase
 
         $this->client->request('POST', '/hoste/' . $id . '/upravit', ['display_name' => 'X', '_token' => 'bad']);
         self::assertResponseStatusCodeSame(403);
+    }
+
+    private function withAddress(Reservation $r): Reservation
+    {
+        $r->setGuestAddress(new Address('Lipová 14', 'Tábor', '39001', 'CZ'));
+        $r->setGuestBilling(new BillingIdentity('Firma s.r.o.', '12345678'));
+        $this->em->flush();
+
+        return $r;
+    }
+
+    public function testNewReservationSearchesAndPrefillsFromLastStay(): void
+    {
+        $last = $this->withAddress($this->stay('2026-06-01', 'Jan Novák', 'jan@example.com'));
+        $id = $this->customerOf($last)->getId();
+
+        $crawler = $this->client->request('GET', '/rezervace/nova?najit=novák');
+        self::assertCount(1, $crawler->filter('a[href="/rezervace/nova?host=' . $id . '"]'));
+
+        $crawler = $this->client->request('GET', '/rezervace/nova?host=' . $id);
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('.alert-info', 'Předvyplněno z posledního pobytu hosta');
+        $form = $crawler->selectButton('Přidat rezervaci')->form();
+        self::assertSame('Jan Novák', $form['reservation_manual[guestName]']->getValue());
+        self::assertSame('jan@example.com', $form['reservation_manual[guestContact][email]']->getValue());
+        self::assertSame('Lipová 14', $form['reservation_manual[guestAddress][street]']->getValue());
+        self::assertSame('12345678', $form['reservation_manual[guestBilling][ico]']->getValue());
+        self::assertSame('Návrat', $form['reservation_manual[acquisitionSource]']->getValue());
+    }
+
+    public function testPrefilledGuestWithoutContactIsLinkedToSameCustomer(): void
+    {
+        $airbnb = $this->stay('2025-06-01', 'Markéta Dvořáková', channel: Channel::AIRBNB);
+        $id = $this->customerOf($airbnb)->getId();
+
+        $crawler = $this->client->request('GET', '/rezervace/nova?host=' . $id);
+        $form = $crawler->selectButton('Přidat rezervaci')->form();
+        $form['reservation_manual[checkIn]'] = '2026-08-10';
+        $form['reservation_manual[checkOut]'] = '2026-08-14';
+        $form['reservation_manual[guestsAdult]'] = '2';
+        $form['reservation_manual[guestsChild]'] = '0';
+        $this->client->submit($form);
+        self::assertResponseRedirects();
+
+        $linked = (int) $this->em->getConnection()->fetchOne('SELECT COUNT(*) FROM reservation WHERE customer_id = ?', [$id]);
+        self::assertSame(2, $linked);
+    }
+
+    public function testPrefillWithDifferentGuestNameIsNotLinked(): void
+    {
+        $airbnb = $this->stay('2025-06-01', 'Markéta Dvořáková', channel: Channel::AIRBNB);
+        $id = $this->customerOf($airbnb)->getId();
+
+        $crawler = $this->client->request('GET', '/rezervace/nova?host=' . $id);
+        $form = $crawler->selectButton('Přidat rezervaci')->form();
+        $form['reservation_manual[guestName]'] = 'Eva Malá';
+        $form['reservation_manual[checkIn]'] = '2026-08-10';
+        $form['reservation_manual[checkOut]'] = '2026-08-14';
+        $form['reservation_manual[guestsAdult]'] = '2';
+        $form['reservation_manual[guestsChild]'] = '0';
+        $this->client->submit($form);
+        self::assertResponseRedirects();
+
+        $linked = (int) $this->em->getConnection()->fetchOne('SELECT COUNT(*) FROM reservation WHERE customer_id = ?', [$id]);
+        self::assertSame(1, $linked);
     }
 }

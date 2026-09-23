@@ -21,11 +21,11 @@ final class CustomerStaysProvider
     {
     }
 
-    /** Null, když rezervace zákazníka nemá. */
+    /** Null, když rezervace zákazníka nemá (nebo ho ještě nemá uloženého). */
     public function forReservation(Reservation $reservation): ?CustomerStays
     {
         $customer = $reservation->getCustomer();
-        if ($customer === null) {
+        if ($customer?->getId() === null) {
             return null;
         }
 

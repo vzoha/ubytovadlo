@@ -59,7 +59,7 @@ class CustomerRepository extends ServiceEntityRepository
      *
      * @return list<CustomerListRow>
      */
-    public function findForList(?string $search): array
+    public function findForList(?string $search, ?int $limit = null): array
     {
         $qb = $this->createQueryBuilder('c')
             ->select('c AS customer')
@@ -74,6 +74,10 @@ class CustomerRepository extends ServiceEntityRepository
         if ($search !== '') {
             $qb->andWhere('c.displayName LIKE :q OR c.email LIKE :q OR c.phone LIKE :q')
                 ->setParameter('q', '%' . addcslashes($search, '%_') . '%');
+        }
+
+        if ($limit !== null) {
+            $qb->setMaxResults($limit);
         }
 
         return array_map(

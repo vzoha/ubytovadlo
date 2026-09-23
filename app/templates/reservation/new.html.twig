@@ -6,6 +6,41 @@
     <h1 class="h3 mb-1">Nová rezervace</h1>
     <p class="text-muted">Přímý host — telefon, e-mail nebo osobně. Vyplňte, co víte; zbytek (adresa, faktura, zprávy) jde doplnit z detailu.</p>
 
+    {% if prefill_customer %}
+        <div class="alert alert-info d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <span>
+                Předvyplněno z posledního pobytu hosta
+                <a href="{{ path('customer_detail', {id: prefill_customer.id}) }}" class="alert-link">{{ prefill_customer.displayName ?? ('Host #' ~ prefill_customer.id) }}</a>.
+                {% if prefill_customer.note %}<br><span class="small">Poznámka: {{ prefill_customer.note }}</span>{% endif %}
+            </span>
+            <a href="{{ path('reservation_new') }}" class="text-decoration-none small">Vyplnit jiného hosta</a>
+        </div>
+    {% else %}
+        <div class="card mb-3">
+            <div class="card-body">
+                <form method="get" action="{{ path('reservation_new') }}" class="d-flex flex-wrap align-items-end gap-2" role="search">
+                    <div class="flex-grow-1">
+                        <label for="hostSearch" class="form-label small mb-0">Host tu už byl? Najděte ho a údaje se předvyplní.</label>
+                        <input id="hostSearch" type="search" name="najit" value="{{ host_search }}" class="form-control form-control-sm" placeholder="Jméno, e-mail, telefon">
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-outline-secondary">Hledat</button>
+                </form>
+                {% if host_search %}
+                    <ul class="list-unstyled mb-0 mt-2">
+                        {% for row in host_matches %}
+                            <li class="d-flex flex-wrap gap-2 align-items-baseline">
+                                <a href="{{ path('reservation_new', {host: row.customer.id}) }}" class="text-decoration-none">{{ row.customer.displayName ?? ('Host #' ~ row.customer.id) }} →</a>
+                                <span class="text-muted small">{{ row.customer.email ?? '' }} · naposledy {{ row.lastCheckIn|date('d. m. Y') }}</span>
+                            </li>
+                        {% else %}
+                            <li class="text-muted small">Žádný host neodpovídá hledání „{{ host_search }}“.</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+
     {{ form_start(form, {attr: {novalidate: 'novalidate'}}) }}
     <div class="row g-3">
         <div class="col-md-12"><h6 class="text-muted mb-0">Rezervace</h6></div>
