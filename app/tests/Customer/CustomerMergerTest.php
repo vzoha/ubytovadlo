@@ -14,6 +14,7 @@ namespace App\Tests\Customer;
 use App\Customer\CustomerDuplicateFinder;
 use App\Customer\CustomerMerger;
 use App\Entity\Customer;
+use App\Entity\CustomerDistinctPair;
 use App\Entity\Embeddable\GuestContact;
 use App\Entity\Reservation;
 use App\Enum\Channel;
@@ -123,5 +124,21 @@ final class CustomerMergerTest extends KernelTestCase
 
         self::assertSame([], $this->finder->findAll());
         self::assertSame(1, (int) $this->em->getConnection()->fetchOne('SELECT COUNT(*) FROM customer_distinct_pair'));
+    }
+
+    public function testMergeKeepsDistinctDecisionsOfMergedCustomer(): void
+    {
+        $keep = $this->stay('2025-06-01', 'Markéta Dvořáková')->getCustomer();
+        $merge = $this->stay('2026-06-01', 'Markéta Dvořáková', 'marketa@example.com')->getCustomer();
+        $other = $this->stay('2026-08-01', 'Markéta Dvořáková')->getCustomer();
+        self::assertNotNull($keep);
+        self::assertNotNull($merge);
+        self::assertNotNull($other);
+        $this->merger->markDistinct($merge, $other);
+
+        $this->merger->merge($keep, $merge);
+
+        self::assertNotNull($this->em->getRepository(CustomerDistinctPair::class)->findOneBy([]));
+        self::assertSame([], $this->finder->findAll(), 'rozhodnutí o sloučeném hostovi platí i pro ponechaného');
     }
 }

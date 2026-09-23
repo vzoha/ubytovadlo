@@ -34,6 +34,7 @@ final class CustomerMerger
 
     /**
      * Přesune pobyty `$merge` k `$keep`, doplní mu chybějící údaje a `$merge` smaže.
+     * Koho ubytovatel označil za jiného člověka než `$merge`, platí to i pro `$keep`.
      *
      * @return int počet přesunutých rezervací
      */
@@ -48,8 +49,17 @@ final class CustomerMerger
             $reservation->setCustomer($keep);
         }
         $keep->mergeFrom($merge);
+        $distinctFromMerged = [];
+        foreach ($this->distinctPairs->findInvolving($merge) as $pair) {
+            $distinctFromMerged[] = $pair->otherThan($merge);
+            $this->em->remove($pair);
+        }
         $this->em->remove($merge);
         $this->em->flush();
+
+        foreach ($distinctFromMerged as $other) {
+            $this->markDistinct($keep, $other);
+        }
 
         return \count($stays);
     }

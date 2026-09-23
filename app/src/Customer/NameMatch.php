@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace App\Customer;
 
+use App\Formatting\PersonName;
+
 /**
  * Pojistka proti sdílenému kontaktu: e-mail ubytovatele zadaný za známého,
  * cestovky nebo společná rodinná adresa se objeví u různých lidí. Dvě jména k sobě sedí, když
@@ -79,20 +81,8 @@ final class NameMatch
     /** @return string[] */
     private static function words(?string $name): array
     {
-        $lower = mb_strtolower(trim((string) $name));
-        $ascii = self::transliterator()?->transliterate($lower);
-        $plain = \is_string($ascii) ? $ascii : $lower;
-
-        $words = preg_split('/[^a-z0-9]+/', $plain, -1, \PREG_SPLIT_NO_EMPTY) ?: [];
+        $words = preg_split('/[^a-z0-9]+/', PersonName::fold((string) $name), -1, \PREG_SPLIT_NO_EMPTY) ?: [];
 
         return array_values(array_filter($words, static fn (string $word): bool => \strlen($word) >= 2));
-    }
-
-    private static function transliterator(): ?\Transliterator
-    {
-        static $transliterator = null;
-        $transliterator ??= \Transliterator::create('Any-Latin; Latin-ASCII');
-
-        return $transliterator;
     }
 }

@@ -33,7 +33,7 @@ final class CustomerDuplicateFinder
     /** @return DuplicateSuggestion[] */
     public function findAll(): array
     {
-        return $this->find($this->customers->findWithStays(), $this->distinctPairs->findPairKeys());
+        return $this->suggestAmong($this->customers->findWithStays(), $this->distinctPairs->findPairKeys());
     }
 
     /** @return DuplicateSuggestion[] návrhy, ve kterých je daný zákazník */
@@ -51,7 +51,7 @@ final class CustomerDuplicateFinder
      *
      * @return DuplicateSuggestion[]
      */
-    public function find(array $customers, array $distinct): array
+    public function suggestAmong(array $customers, array $distinct): array
     {
         usort($customers, static fn (Customer $a, Customer $b): int => (int) $a->getId() <=> (int) $b->getId());
 

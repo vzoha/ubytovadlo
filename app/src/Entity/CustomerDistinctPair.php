@@ -70,6 +70,12 @@ class CustomerDistinctPair
         return $this->second;
     }
 
+    /** Druhý zákazník z dvojice. */
+    public function otherThan(Customer $customer): Customer
+    {
+        return $this->first === $customer ? $this->second : $this->first;
+    }
+
     public function getCreatedAt(): \DateTimeImmutable
     {
         return $this->createdAt;

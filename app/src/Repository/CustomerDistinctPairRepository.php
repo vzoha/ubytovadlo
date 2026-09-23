@@ -34,6 +34,20 @@ class CustomerDistinctPairRepository extends ServiceEntityRepository
     }
 
     /**
+     * Dvojice, ve kterých je daný zákazník.
+     *
+     * @return CustomerDistinctPair[]
+     */
+    public function findInvolving(Customer $customer): array
+    {
+        return $this->createQueryBuilder('p')
+            ->andWhere('p.first = :customer OR p.second = :customer')
+            ->setParameter('customer', $customer)
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
      * Klíče "menší-id:větší-id" všech odmítnutých dvojic.
      *
      * @return array<string, true>

@@ -51,4 +51,11 @@ final class CustomerKeyTest extends TestCase
     {
         self::assertTrue(CustomerKey::fromContact(new GuestContact())->isEmpty());
     }
+
+    public function testInvalidNumberInInternationalFormIsNotAKey(): void
+    {
+        $key = CustomerKey::fromContact(new GuestContact(phone: '+999 123'));
+
+        self::assertNull($key->phone);
+    }
 }

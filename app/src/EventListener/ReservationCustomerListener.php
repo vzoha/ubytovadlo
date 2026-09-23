@@ -19,8 +19,9 @@ use Doctrine\ORM\Event\OnFlushEventArgs;
 use Doctrine\ORM\Events;
 
 /**
- * Každá uložená rezervace bez zákazníka se zkusí spárovat — ať přišla ze syncu,
- * z e-mailu, z formuláře nebo z check-inu. Jedno místo, které žádný vstup
+ * Každá uložená rezervace projde `CustomerLinker` — ať přišla ze syncu,
+ * z e-mailu, z formuláře nebo z check-inu: bez zákazníka ho dostane, se
+ * zákazníkem mu předá kontakt, který mu chybí. Jedno místo, které žádný vstup
  * nemůže obejít.
  */
 #[AsDoctrineListener(event: Events::onFlush)]

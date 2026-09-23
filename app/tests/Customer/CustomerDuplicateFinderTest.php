@@ -45,7 +45,7 @@ final class CustomerDuplicateFinderTest extends TestCase
         $first = $this->customer('Markéta Dvořáková');
         $second = $this->customer('markéta dvořáková');
 
-        $suggestions = $this->finder()->find([$second, $first], []);
+        $suggestions = $this->finder()->suggestAmong([$second, $first], []);
 
         self::assertCount(1, $suggestions);
         self::assertSame($first, $suggestions[0]->keep);
@@ -55,14 +55,14 @@ final class CustomerDuplicateFinderTest extends TestCase
 
     public function testSimilarNameAloneIsNotSuggested(): void
     {
-        $suggestions = $this->finder()->find([$this->customer('Jan Novák'), $this->customer('Petra Nováková')], []);
+        $suggestions = $this->finder()->suggestAmong([$this->customer('Jan Novák'), $this->customer('Petra Nováková')], []);
 
         self::assertSame([], $suggestions);
     }
 
     public function testSharedEmailWithCompatibleNameIsSuggested(): void
     {
-        $suggestions = $this->finder()->find([
+        $suggestions = $this->finder()->suggestAmong([
             $this->customer('Jan Novák', 'novakovi@example.com'),
             $this->customer('Petra Nováková', 'novakovi@example.com'),
         ], []);
@@ -73,7 +73,7 @@ final class CustomerDuplicateFinderTest extends TestCase
 
     public function testSharedPhoneOfDifferentPeopleIsNotSuggested(): void
     {
-        $suggestions = $this->finder()->find([
+        $suggestions = $this->finder()->suggestAmong([
             $this->customer('Jan Novák', phone: '+420776123456'),
             $this->customer('Marie Dvořáková', phone: '+420776123456'),
         ], []);
@@ -83,7 +83,7 @@ final class CustomerDuplicateFinderTest extends TestCase
 
     public function testPairMatchingOnSeveralGroundsIsSuggestedOnceByName(): void
     {
-        $suggestions = $this->finder()->find([
+        $suggestions = $this->finder()->suggestAmong([
             $this->customer('Jan Novák', 'jan@example.com', '+420776123456'),
             $this->customer('Jan Novák', 'jan@example.com', '+420776123456'),
         ], []);
@@ -97,11 +97,11 @@ final class CustomerDuplicateFinderTest extends TestCase
         $a = $this->customer('Jan Novák');
         $b = $this->customer('Jan Novák');
 
-        self::assertSame([], $this->finder()->find([$a, $b], ['1:2' => true]));
+        self::assertSame([], $this->finder()->suggestAmong([$a, $b], ['1:2' => true]));
     }
 
     public function testNamelessCustomersAreNotPairedByName(): void
     {
-        self::assertSame([], $this->finder()->find([$this->customer(null), $this->customer('  ')], []));
+        self::assertSame([], $this->finder()->suggestAmong([$this->customer(null), $this->customer('  ')], []));
     }
 }

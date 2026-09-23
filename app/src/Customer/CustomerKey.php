@@ -12,11 +12,12 @@ declare(strict_types=1);
 namespace App\Customer;
 
 use App\Entity\Embeddable\GuestContact;
+use App\ValueObject\PhoneNumber;
 
 /**
  * Údaje, podle kterých se host pozná napříč pobyty: vlastní e-mail (malými
  * písmeny) a telefon, pokud je v E.164. Adresa portálu sem nepatří — Booking
- * ji dává každé rezervaci jinou. Telefon, který nejde naparsovat, taky ne:
+ * ji dává každé rezervaci jinou. Telefon, který `PhoneNumber` nepřijme, taky ne:
  * u OTA to bývá proxy číslo a spojilo by cizí lidi.
  */
 final readonly class CustomerKey
@@ -30,11 +31,10 @@ final readonly class CustomerKey
     public static function fromContact(GuestContact $contact): self
     {
         $email = $contact->getEmail();
-        $phone = $contact->getPhone();
 
         return new self(
             $email !== null ? mb_strtolower($email) : null,
-            $phone !== null && preg_match('/^\+\d{6,15}$/', $phone) === 1 ? $phone : null,
+            PhoneNumber::tryFromString($contact->getPhone())?->e164(),
         );
     }
 

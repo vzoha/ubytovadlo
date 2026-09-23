@@ -13,6 +13,7 @@ namespace App\Checkin;
 
 use App\Entity\Reservation;
 use App\Enum\ReservationStatus;
+use App\Formatting\PersonName;
 use App\Repository\ReservationRepository;
 use Psr\Clock\ClockInterface;
 
@@ -98,17 +99,6 @@ final class CheckinLookup
     /** Jméno bez diakritiky a vícenásobných mezer, malými písmeny. */
     private static function normalizeName(string $name): string
     {
-        $lower = mb_strtolower(trim($name));
-        $ascii = self::transliterator()?->transliterate($lower);
-
-        return (string) preg_replace('/\s+/', ' ', \is_string($ascii) ? $ascii : $lower);
-    }
-
-    private static function transliterator(): ?\Transliterator
-    {
-        static $transliterator = null;
-        $transliterator ??= \Transliterator::create('Any-Latin; Latin-ASCII');
-
-        return $transliterator;
+        return (string) preg_replace('/\s+/', ' ', PersonName::fold($name));
     }
 }
