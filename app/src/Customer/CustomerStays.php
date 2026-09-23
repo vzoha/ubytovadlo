@@ -28,11 +28,6 @@ final readonly class CustomerStays
     ) {
     }
 
-    public function count(): int
-    {
-        return \count($this->stays);
-    }
-
     /** Pořadí pobytu od 1; null u zrušené rezervace. */
     public function ordinal(): ?int
     {

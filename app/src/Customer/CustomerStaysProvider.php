@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace App\Customer;
 
 use App\Entity\Reservation;
+use App\Enum\ReservationStatus;
 use App\Repository\ReservationRepository;
 
 final class CustomerStaysProvider
@@ -28,6 +29,11 @@ final class CustomerStaysProvider
             return null;
         }
 
-        return new CustomerStays($reservation, $this->reservations->findStaysOfCustomer($customer));
+        $stays = array_filter(
+            $this->reservations->findAllOfCustomer($customer),
+            static fn (Reservation $stay): bool => $stay->getStatus() !== ReservationStatus::CANCELLED,
+        );
+
+        return new CustomerStays($reservation, array_reverse(array_values($stays)));
     }
 }

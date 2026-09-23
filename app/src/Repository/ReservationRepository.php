@@ -445,24 +445,6 @@ class ReservationRepository extends ServiceEntityRepository
     }
 
     /**
-     * Pobyty zákazníka v pořadí příjezdů, bez zrušených.
-     *
-     * @return Reservation[]
-     */
-    public function findStaysOfCustomer(Customer $customer): array
-    {
-        return $this->createQueryBuilder('r')
-            ->andWhere('r.customer = :customer')
-            ->andWhere('r.status != :cancelled')
-            ->setParameter('customer', $customer)
-            ->setParameter('cancelled', ReservationStatus::CANCELLED)
-            ->orderBy('r.checkIn', 'ASC')
-            ->addOrderBy('r.id', 'ASC')
-            ->getQuery()
-            ->getResult();
-    }
-
-    /**
      * Rezervace bez zákazníka, u kterých je koho poznat — mají jméno, e-mail nebo
      * telefon. Bloky z kalendáře bez údajů sem nepatří. Telefon mimo E.164 se
      * nepáruje (`CustomerKey`), takže se sem sám bez dalšího údaje nedostane.

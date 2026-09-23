@@ -32,7 +32,6 @@ final class CustomerStaysTest extends TestCase
         $stays = new CustomerStays($second, [$first, $second, $third]);
 
         self::assertSame(2, $stays->ordinal());
-        self::assertSame(3, $stays->count());
         self::assertTrue($stays->isReturning());
         self::assertSame([$third, $first], $stays->others());
     }
