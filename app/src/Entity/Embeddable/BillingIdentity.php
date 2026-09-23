@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Entity\Embeddable;
 
+use App\Formatting\Text;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -31,9 +32,9 @@ final class BillingIdentity
 
     public function __construct(?string $companyName = null, ?string $ico = null, ?string $dic = null)
     {
-        $this->companyName = self::normalize($companyName);
-        $this->ico = self::normalize($ico);
-        $this->dic = self::normalize($dic);
+        $this->companyName = Text::nullIfBlank($companyName);
+        $this->ico = Text::nullIfBlank($ico);
+        $this->dic = Text::nullIfBlank($dic);
     }
 
     public function getCompanyName(): ?string
@@ -82,12 +83,5 @@ final class BillingIdentity
         return $this->companyName === $other->companyName
             && $this->ico === $other->ico
             && $this->dic === $other->dic;
-    }
-
-    private static function normalize(?string $value): ?string
-    {
-        $trimmed = trim((string) $value);
-
-        return $trimmed === '' ? null : $trimmed;
     }
 }

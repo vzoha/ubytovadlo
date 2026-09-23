@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace App\Entity\Embeddable;
 
 use App\Formatting\CzechZip;
+use App\Formatting\Text;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -55,13 +56,13 @@ final class PropertyAddress
         ?string $co = null,
         ?string $psc = null,
     ) {
-        $this->okres = self::normalize($okres);
-        $this->obec = self::normalize($obec);
-        $this->castObce = self::normalize($castObce);
-        $this->ulice = self::normalize($ulice);
-        $this->cp = self::normalize($cp);
-        $this->co = self::normalize($co);
-        $this->psc = self::normalize($psc);
+        $this->okres = Text::nullIfBlank($okres);
+        $this->obec = Text::nullIfBlank($obec);
+        $this->castObce = Text::nullIfBlank($castObce);
+        $this->ulice = Text::nullIfBlank($ulice);
+        $this->cp = Text::nullIfBlank($cp);
+        $this->co = Text::nullIfBlank($co);
+        $this->psc = Text::nullIfBlank($psc);
     }
 
     public static function empty(): self
@@ -123,12 +124,5 @@ final class PropertyAddress
         ]);
 
         return implode(', ', $parts);
-    }
-
-    private static function normalize(?string $value): ?string
-    {
-        $trimmed = trim((string) $value);
-
-        return $trimmed === '' ? null : $trimmed;
     }
 }

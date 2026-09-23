@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Entity\Embeddable;
 
+use App\Formatting\Text;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -34,9 +35,9 @@ final class Address
 
     public function __construct(?string $street = null, ?string $city = null, ?string $zip = null, ?string $country = null)
     {
-        $this->street = self::normalize($street);
-        $this->city = self::normalize($city);
-        $this->zip = self::normalize($zip);
+        $this->street = Text::nullIfBlank($street);
+        $this->city = Text::nullIfBlank($city);
+        $this->zip = Text::nullIfBlank($zip);
         $this->country = self::normalizeCountry($country);
     }
 
@@ -111,16 +112,9 @@ final class Address
         return implode(', ', $parts);
     }
 
-    private static function normalize(?string $value): ?string
-    {
-        $trimmed = trim((string) $value);
-
-        return $trimmed === '' ? null : $trimmed;
-    }
-
     private static function normalizeCountry(?string $value): ?string
     {
-        $normalized = self::normalize($value);
+        $normalized = Text::nullIfBlank($value);
 
         return $normalized === null ? null : strtoupper($normalized);
     }

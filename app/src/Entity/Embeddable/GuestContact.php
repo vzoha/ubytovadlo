@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Entity\Embeddable;
 
+use App\Formatting\Text;
 use App\ValueObject\PhoneNumber;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -38,8 +39,8 @@ final class GuestContact
 
     public function __construct(?string $email = null, ?string $phone = null, ?string $portalEmail = null)
     {
-        $email = self::normalize($email);
-        $portal = self::normalize($portalEmail);
+        $email = Text::nullIfBlank($email);
+        $portal = Text::nullIfBlank($portalEmail);
 
         // Adresu si roztřídíme sami, ať na to importy ani formuláře nemusí myslet.
         if ($email !== null && self::isPortalAddress($email)) {
@@ -122,17 +123,10 @@ final class GuestContact
         return in_array($domain, self::PORTAL_DOMAINS, true);
     }
 
-    private static function normalize(?string $value): ?string
-    {
-        $trimmed = trim((string) $value);
-
-        return $trimmed === '' ? null : $trimmed;
-    }
-
     private static function normalizePhone(?string $value): ?string
     {
         $phone = PhoneNumber::tryFromString($value);
 
-        return $phone !== null ? $phone->e164() : self::normalize($value);
+        return $phone !== null ? $phone->e164() : Text::nullIfBlank($value);
     }
 }

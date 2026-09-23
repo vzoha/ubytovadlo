@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use App\Customer\CustomerKey;
+use App\Formatting\Text;
 use App\Repository\CustomerRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -54,7 +55,7 @@ class Customer
 
     public function __construct(?string $displayName, CustomerKey $key)
     {
-        $this->displayName = self::normalize($displayName);
+        $this->displayName = Text::nullIfBlank($displayName);
         $this->createdAt = new \DateTimeImmutable();
         $this->updatedAt = $this->createdAt;
         $this->absorb($key);
@@ -72,7 +73,7 @@ class Customer
 
     public function setDisplayName(?string $displayName): self
     {
-        $this->displayName = self::normalize($displayName);
+        $this->displayName = Text::nullIfBlank($displayName);
         $this->touch();
 
         return $this;
@@ -95,7 +96,7 @@ class Customer
 
     public function setNote(?string $note): self
     {
-        $this->note = self::normalize($note);
+        $this->note = Text::nullIfBlank($note);
         $this->touch();
 
         return $this;
@@ -152,12 +153,5 @@ class Customer
     private function touch(): void
     {
         $this->updatedAt = new \DateTimeImmutable();
-    }
-
-    private static function normalize(?string $value): ?string
-    {
-        $trimmed = trim((string) $value);
-
-        return $trimmed === '' ? null : $trimmed;
     }
 }
