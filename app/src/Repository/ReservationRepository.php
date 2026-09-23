@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Repository;
 
+use App\Entity\Customer;
 use App\Entity\Reservation;
 use App\Enum\Channel;
 use App\Enum\ReservationStatus;
@@ -439,6 +440,42 @@ class ReservationRepository extends ServiceEntityRepository
             ->setParameter('cancelled', ReservationStatus::CANCELLED)
             ->setParameter('from', $from)
             ->orderBy('r.checkIn', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Pobyty zákazníka v pořadí příjezdů, bez zrušených.
+     *
+     * @return Reservation[]
+     */
+    public function findStaysOfCustomer(Customer $customer): array
+    {
+        return $this->createQueryBuilder('r')
+            ->andWhere('r.customer = :customer')
+            ->andWhere('r.status != :cancelled')
+            ->setParameter('customer', $customer)
+            ->setParameter('cancelled', ReservationStatus::CANCELLED)
+            ->orderBy('r.checkIn', 'ASC')
+            ->addOrderBy('r.id', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Rezervace bez zákazníka, které mají e-mail nebo telefon — kandidáti na
+     * spárování. Telefon mimo E.164 se nepáruje (`CustomerKey`), takže se sem
+     * sám bez e-mailu nedostane.
+     *
+     * @return Reservation[]
+     */
+    public function findUnlinkedWithContact(): array
+    {
+        return $this->createQueryBuilder('r')
+            ->andWhere('r.customer IS NULL')
+            ->andWhere("r.guestContact.email IS NOT NULL OR r.guestContact.phone LIKE '+%'")
+            ->orderBy('r.checkIn', 'ASC')
+            ->addOrderBy('r.id', 'ASC')
             ->getQuery()
             ->getResult();
     }

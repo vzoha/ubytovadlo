@@ -251,7 +251,8 @@ stornuje; bez vyplněné URL feedu se konektor přeskočí.
 `actions-plan` nejdřív srovná stav rezervací s kalendářem (`app:reservations:advance`
 — v den příjezdu „probíhá", den po odjezdu „dokončeno") a pak doplní automatické akce
 na časovou osu (`app:actions:plan` — pre-arrival/post-stay zprávy, doplatek, Ubyport
-u cizinců) i u rezervací potvrzených přes MotoPress sync.
+u cizinců) i u rezervací potvrzených přes MotoPress sync. Nakonec spáruje rezervace
+se zákazníky (`app:customers:link` — vracející se hosté).
 `process-due` (á 15 min) vyhodnotí akce, kterým nadešel čas (zprávy hostům,
 self-resolving připomínky, Ubyport) a hned pak rozešle **okamžité notifikace
 ubytovateli** z fronty — i ty, které během běhu vznikly (`app:actions:run` +

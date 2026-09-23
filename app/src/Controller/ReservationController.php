@@ -17,6 +17,7 @@ use App\Config\GuestRegistrationSettings;
 use App\Controller\Concern\ChecksCsrf;
 use App\Controller\Concern\ParsesRequestInput;
 use App\Currency\ReservationCzkPreviewResolver;
+use App\Customer\CustomerStaysProvider;
 use App\Entity\Reservation;
 use App\Enum\BillingMode;
 use App\Enum\Channel;
@@ -129,7 +130,7 @@ class ReservationController extends AbstractController
     }
 
     #[Route('/reservation/{id}', name: 'reservation_detail', methods: ['GET'], requirements: ['id' => '\d+'])]
-    public function detail(Reservation $reservation): Response
+    public function detail(Reservation $reservation, CustomerStaysProvider $customerStays): Response
     {
         $guests = $reservation->getGuestsTotal();
         $cleaningDefaults = [];
@@ -162,6 +163,7 @@ class ReservationController extends AbstractController
             'deposit_amount' => $this->depositConfig->computeAmount($reservation->getPriceTotal()),
             'quick_messages' => $this->guestMessageTexts->forReservation($reservation),
             'register_czech_guests' => $this->guestRegistration->registerCzechGuests(),
+            'customer_stays' => $customerStays->forReservation($reservation),
         ]);
     }
 

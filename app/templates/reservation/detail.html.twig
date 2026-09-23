@@ -11,6 +11,10 @@
                 {{ reservation.channel.label }}
                 {% if reservation.externalId %}· kód <code>{{ reservation.externalId }}</code>{% endif %}
                 {% if reservation.motopressExternalId %}· MotoPress #{{ reservation.motopressExternalId }}{% endif %}
+                {% if customer_stays and customer_stays.returning %}
+                    {% set stay_ordinal = customer_stays.ordinal %}
+                    <span class="badge text-bg-info">Vracející se host{% if stay_ordinal %} · {{ stay_ordinal }}. pobyt{% endif %}</span>
+                {% endif %}
             </div>
         </div>
         <div class="text-end">
@@ -143,6 +147,20 @@
 
                             <dt class="col-5 col-sm-4">IČO / DIČ</dt>
                             <dd class="col-7 col-sm-8">{{ reservation.guestBilling.ico ?? '—' }} / {{ reservation.guestBilling.dic ?? '—' }}</dd>
+                        {% endif %}
+
+                        {% if customer_stays and customer_stays.returning %}
+                            <dt class="col-5 col-sm-4">Další pobyty</dt>
+                            <dd class="col-7 col-sm-8">
+                                <ul class="list-unstyled mb-0">
+                                    {% for stay in customer_stays.others %}
+                                        <li>
+                                            <a href="{{ path('reservation_detail', {id: stay.id}) }}" class="text-decoration-none text-nowrap">{{ stay.checkIn|date('d. m. Y') }}{% if stay.checkOut %} – {{ stay.checkOut|date('d. m. Y') }}{% endif %}</a>
+                                            <span class="text-muted small">· {{ stay.channel.label }}</span>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </dd>
                         {% endif %}
 
                         {% if reservation.guestRegion %}

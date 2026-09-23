@@ -12,12 +12,14 @@ declare(strict_types=1);
 /*
  * Cron wrapper: srovná stav rezervací s kalendářem (probíhá / dokončeno) a doplní
  * automatické akce na časovou osu nadcházejících rezervací. Pořadí je závazné —
- * dokončenému pobytu se akce už neplánují. Oba kroky jsou idempotentní.
+ * dokončenému pobytu se akce už neplánují. Nakonec spáruje rezervace se zákazníky.
+ * Všechny kroky jsou idempotentní.
  */
 
 $run = require __DIR__ . '/_kernel.php';
 
 $advance = $run('app:reservations:advance');
 $plan = $run('app:actions:plan');
+$customers = $run('app:customers:link');
 
-exit($advance !== 0 ? $advance : $plan);
+exit(max($advance, $plan, $customers));

@@ -127,7 +127,7 @@ class DevSeedDemoCommand extends Command
             'reservation_receipt', 'balance_statement', 'ledger_entry', 'account',
             'invoice_line', 'invoice', 'cleaning', 'guest_document', 'airbnb_statement',
             'booking_monthly_invoice', 'vat_period', 'electricity_reading', 'electricity_tariff',
-            'payment', 'email_log', 'reservation', 'app_user', 'setting', 'accommodation_profile',
+            'payment', 'email_log', 'reservation', 'customer', 'app_user', 'setting', 'accommodation_profile',
             'quick_message', 'task_completion', 'recurring_task',
         ];
         $this->connection->executeStatement('SET FOREIGN_KEY_CHECKS = 0');
@@ -832,11 +832,12 @@ class DevSeedDemoCommand extends Command
                 'clean' => [CleaningType::CLEANER_LAUNDRY, 800, 800], 'leadDays' => 25, 'inv' => 'none',
             ],
             [
+                // Vracející se host — stejný e-mail jako lednový pobyt, spáruje se se zákazníkem.
                 'channel' => Channel::WEB, 'billing' => \App\Enum\BillingMode::STANDARD_WITH_DEPOSIT, 'gateway' => 'bank',
-                'ext' => '121', 'in' => 'today +18 days', 'out' => 'today +21 days', 'name' => 'Radek Šimek',
-                'email' => 'radek.simek@email.cz', 'phone' => '+420 604 707 808', 'street' => 'Zámecká 2',
-                'city' => 'Písek', 'zip' => '39701', 'adults' => 2, 'children' => 2, 'price' => '5200.00',
-                'acq' => 'doporučení', 'clean' => [CleaningType::OWNER, 700, 0], 'leadDays' => 30,
+                'ext' => '121', 'in' => 'today +18 days', 'out' => 'today +21 days', 'name' => 'Jan Novák',
+                'email' => 'jan.novak@email.cz', 'phone' => '+420 603 111 222', 'street' => 'Lipová 14',
+                'city' => 'Tábor', 'zip' => '39001', 'adults' => 2, 'children' => 2, 'price' => '5200.00',
+                'acq' => 'návrat', 'clean' => [CleaningType::OWNER, 700, 0], 'leadDays' => 30,
                 'inv' => 'deposit_only',
             ],
 

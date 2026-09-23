@@ -8,6 +8,14 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Přidáno
 
+- **Vracející se hosté.** Každá rezervace s e-mailem nebo telefonem hosta patří zákazníkovi,
+  který drží jeho pobyty pohromadě bez ohledu na kanál. Páruje se podle vlastního e-mailu
+  hosta, potom podle telefonu; adresa portálu ani neověřitelné číslo se nepočítají a shoda
+  kontaktu platí jen u jména se společným slovem (Novák / Nováková), takže sdílený e-mail
+  firmy nespojí cizí lidi. Detail rezervace ukazuje štítek *Vracející se host · 2. pobyt*
+  a odkazy na další pobyty. Cron `actions-plan` páruje i rezervace, kterým kontakt přibyl
+  později (`app:customers:link`).
+
 - **Podpis rychlých zpráv.** Nastavení rychlých zpráv drží rozloučení, které se připojí
   na konec každé zprávy do SMS, WhatsAppu i chatu portálu; smí obsahovat proměnné.
   Nenastavená instance podepisuje názvem ubytování, prázdné pole znamená zprávy bez podpisu.

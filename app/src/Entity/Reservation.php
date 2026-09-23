@@ -130,6 +130,11 @@ class Reservation
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $guestName = null;
 
+    /** Zákazník napříč pobyty; přiřazuje ho `ReservationCustomerListener`. */
+    #[ORM\ManyToOne(targetEntity: Customer::class)]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    private ?Customer $customer = null;
+
     #[ORM\Embedded(class: GuestContact::class, columnPrefix: 'guest_')]
     private GuestContact $guestContact;
 
@@ -553,6 +558,19 @@ class Reservation
     {
         $this->guestName = $guestName;
         $this->touch();
+
+        return $this;
+    }
+
+    public function getCustomer(): ?Customer
+    {
+        return $this->customer;
+    }
+
+    /** Přiřazení zákazníka je odvozené z kontaktu, `updatedAt` nemění. */
+    public function setCustomer(?Customer $customer): self
+    {
+        $this->customer = $customer;
 
         return $this;
     }
