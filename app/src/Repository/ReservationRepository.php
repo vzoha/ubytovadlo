@@ -477,4 +477,26 @@ class ReservationRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+
+    /**
+     * Rezervace více zákazníků najednou (dávkové součty pro seznam hostů).
+     *
+     * @param Customer[] $customers
+     *
+     * @return Reservation[]
+     */
+    public function findAllOfCustomers(array $customers): array
+    {
+        if ($customers === []) {
+            return [];
+        }
+
+        return $this->createQueryBuilder('r')
+            ->andWhere('r.customer IN (:customers)')
+            ->setParameter('customers', $customers)
+            ->orderBy('r.checkIn', 'DESC')
+            ->addOrderBy('r.id', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
 }

@@ -20,6 +20,12 @@ final readonly class CustomerListRow
         public Customer $customer,
         public int $stays,
         public \DateTimeImmutable $lastCheckIn,
+        public CustomerEconomics $economics,
     ) {
+    }
+
+    public function withEconomics(CustomerEconomics $economics): self
+    {
+        return new self($this->customer, $this->stays, $this->lastCheckIn, $economics);
     }
 }

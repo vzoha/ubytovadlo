@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Repository;
 
+use App\Customer\CustomerEconomics;
 use App\Customer\CustomerListRow;
 use App\Entity\Customer;
 use App\Entity\Reservation;
@@ -85,6 +86,7 @@ class CustomerRepository extends ServiceEntityRepository
                 $row['customer'],
                 (int) $row['stays'],
                 new \DateTimeImmutable((string) $row['lastCheckIn']),
+                CustomerEconomics::none(),
             ),
             $qb->getQuery()->getResult(),
         );

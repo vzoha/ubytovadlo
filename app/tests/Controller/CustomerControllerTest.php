@@ -240,4 +240,40 @@ final class CustomerControllerTest extends WebTestCase
         $linked = (int) $this->em->getConnection()->fetchOne('SELECT COUNT(*) FROM reservation WHERE customer_id = ?', [$id]);
         self::assertSame(1, $linked);
     }
+
+    private function priced(Reservation $r, string $price, ReservationStatus $status = ReservationStatus::COMPLETED): Reservation
+    {
+        $r->setPriceTotal($price);
+        $r->setStatus($status);
+        $this->em->flush();
+
+        return $r;
+    }
+
+    public function testDetailShowsEconomicsSummaryAndPerStayIncome(): void
+    {
+        $past = $this->priced($this->stay('2025-06-01', 'Jan Novák', 'jan@example.com'), '6000.00');
+        $this->priced($this->stay('2027-06-01', 'Jan Novák', 'jan@example.com'), '5000.00', ReservationStatus::CONFIRMED);
+
+        $crawler = $this->client->request('GET', '/hoste/' . $this->customerOf($past)->getId());
+        self::assertResponseIsSuccessful();
+
+        $card = $crawler->filter('.card')->reduce(static fn ($c): bool => str_contains($c->filter('.card-header')->text(''), 'Ekonomika'));
+        self::assertStringContainsString("6\u{00a0}000", $card->text(normalizeWhitespace: false));
+        self::assertStringContainsString('Nadcházející (1)', $card->text());
+        self::assertStringContainsString("5\u{00a0}000", $crawler->filter('td[data-label="Příjem"]')->text(normalizeWhitespace: false));
+    }
+
+    public function testListSortsByIncome(): void
+    {
+        $this->priced($this->stay('2026-07-01', 'Eva Malá', 'eva@example.com'), '1000.00');
+        $this->priced($this->stay('2025-06-01', 'Jan Novák', 'jan@example.com'), '9000.00');
+
+        $crawler = $this->client->request('GET', '/hoste');
+        self::assertStringContainsString('Eva Malá', $crawler->filter('tbody tr')->first()->text(), 'výchozí řazení podle posledního příjezdu');
+
+        $crawler = $this->client->request('GET', '/hoste?razeni=prijem');
+        self::assertStringContainsString('Jan Novák', $crawler->filter('tbody tr')->first()->text());
+        self::assertSelectorTextContains('.btn-group .active', 'Příjem');
+    }
 }

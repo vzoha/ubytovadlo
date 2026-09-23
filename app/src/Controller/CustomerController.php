@@ -13,6 +13,9 @@ namespace App\Controller;
 
 use App\Controller\Concern\ChecksCsrf;
 use App\Customer\CustomerDuplicateFinder;
+use App\Customer\CustomerEconomicsCalculator;
+use App\Customer\CustomerListBuilder;
+use App\Customer\CustomerListSort;
 use App\Customer\CustomerMerger;
 use App\Entity\Customer;
 use App\Entity\Reservation;
@@ -43,23 +46,31 @@ class CustomerController extends AbstractController
     }
 
     #[Route('/hoste', name: 'customer_list', methods: ['GET'])]
-    public function list(Request $request): Response
+    public function list(Request $request, CustomerListBuilder $listBuilder): Response
     {
         $search = $request->query->getString('q');
+        $sort = CustomerListSort::tryFrom($request->query->getString('razeni')) ?? CustomerListSort::LAST_CHECK_IN;
 
         return $this->render('customer/list.html.twig', [
-            'rows' => $this->customers->findForList($search),
+            'rows' => $listBuilder->build($search, $sort),
             'search' => $search,
+            'sort' => $sort,
+            'sorts' => CustomerListSort::cases(),
             'suggestions' => $search === '' ? $this->duplicates->findAll() : [],
         ]);
     }
 
     #[Route('/hoste/{id}', name: 'customer_detail', methods: ['GET'], requirements: ['id' => '\d+'])]
-    public function detail(Customer $customer): Response
+    public function detail(Customer $customer, CustomerEconomicsCalculator $economics): Response
     {
+        $stays = $this->reservations->findAllOfCustomer($customer);
+        [$summary, $profits] = $economics->forStays($stays);
+
         return $this->render('customer/detail.html.twig', [
             'customer' => $customer,
-            'stays' => $this->reservations->findAllOfCustomer($customer),
+            'stays' => $stays,
+            'economics' => $summary,
+            'profits' => $profits,
             'suggestions' => $this->duplicates->findFor($customer),
             'others' => array_filter(
                 $this->customers->findWithStays(),

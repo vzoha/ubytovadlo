@@ -6,6 +6,7 @@
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
         <h1 class="h3 mb-0">Hosté</h1>
         <form method="get" action="{{ path('customer_list') }}" class="d-flex gap-2" role="search">
+            {% if sort.value != 'prijezd' %}<input type="hidden" name="razeni" value="{{ sort.value }}">{% endif %}
             <input type="search" name="q" value="{{ search }}" class="form-control form-control-sm" placeholder="Jméno, e-mail, telefon" aria-label="Hledat hosta">
             <button type="submit" class="btn btn-sm btn-outline-secondary">Hledat</button>
         </form>
@@ -22,11 +23,20 @@
         </div>
     {% endif %}
 
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+        <span class="small text-muted">Řadit:</span>
+        <div class="btn-group" role="group" aria-label="Řazení hostů">
+            {% for option in sorts %}
+                <a href="{{ path('customer_list', {q: search ?: null, razeni: option.value}) }}" class="btn btn-sm btn-outline-secondary {{ option == sort ? 'active' }}">{{ option.label }}</a>
+            {% endfor %}
+        </div>
+    </div>
+
     <div class="card">
         <div class="table-responsive">
             <table class="table table-sm table-hover align-middle mb-0 table-stack">
                 <thead>
-                    <tr><th>Host</th><th>Kontakt</th><th class="text-end">Pobytů</th><th>Poslední příjezd</th><th></th></tr>
+                    <tr><th>Host</th><th>Kontakt</th><th class="text-end">Pobytů</th><th>Poslední příjezd</th><th class="text-end">Příjem</th><th></th></tr>
                 </thead>
                 <tbody>
                 {% for row in rows %}
@@ -44,15 +54,20 @@
                         </td>
                         <td data-label="Pobytů" class="text-end">{{ row.stays }}</td>
                         <td data-label="Poslední příjezd" class="text-nowrap">{{ row.lastCheckIn|date('d. m. Y') }}</td>
+                        <td data-label="Příjem" class="text-end text-nowrap">
+                            {{ row.economics.incomeCzk|money('CZK', 0) }}{% if row.economics.hasEstimates %} *{% endif %}
+                            {% if row.economics.upcomingStays > 0 %}<div class="text-muted small">+ {{ row.economics.upcomingIncomeCzk|money('CZK', 0) }} očekáváno</div>{% endif %}
+                        </td>
                         <td class="text-end"><a href="{{ path('customer_detail', {id: c.id}) }}" class="text-decoration-none small text-nowrap">Detail →</a></td>
                     </tr>
                 {% else %}
-                    <tr class="table-empty"><td colspan="5" class="text-muted">
+                    <tr class="table-empty"><td colspan="6" class="text-muted">
                         {% if search %}Žádný host neodpovídá hledání „{{ search }}“.{% else %}Zatím žádní hosté. Přibývají sami s rezervacemi.{% endif %}
                     </td></tr>
                 {% endfor %}
                 </tbody>
             </table>
         </div>
+        <div class="card-footer small text-muted">Příjem v Kč za uskutečněné pobyty; * = zčásti odhadem (bez faktury). Nadcházející pobyty jsou uvedené zvlášť jako očekávaný příjem.</div>
     </div>
 {% endblock %}

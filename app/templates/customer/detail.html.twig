@@ -38,6 +38,47 @@
                 </div>
             </div>
 
+            <div class="card mt-3">
+                <div class="card-header d-flex justify-content-between align-items-center gap-2 flex-wrap">
+                    <span>Ekonomika</span>
+                    <span>
+                        {% if economics.hasEstimates %}<span class="badge text-bg-warning">příjem zčásti odhadem</span>{% endif %}
+                        {% if economics.missingIncome %}<span class="badge text-bg-warning">u některého pobytu chybí cena</span>{% endif %}
+                    </span>
+                </div>
+                <div class="card-body">
+                    {% if economics.stays > 0 or economics.incomeCzk != '0.00' %}
+                        {% set per_night = economics.profitPerNightCzk %}
+                        {% set per_stay = economics.incomePerStayCzk %}
+                        <dl class="row mb-0">
+                            <dt class="col-6">Příjem</dt>
+                            <dd class="col-6 text-end text-nowrap">{{ economics.incomeCzk|money('CZK', 0) }}</dd>
+
+                            <dt class="col-6">Zisk</dt>
+                            <dd class="col-6 text-end text-nowrap {{ economics.profitCzk < 0 ? 'text-danger' : 'text-success' }}">{{ economics.profitCzk|money('CZK', 0) }}</dd>
+
+                            <dt class="col-6 text-muted">Pobytů / nocí</dt>
+                            <dd class="col-6 text-end text-muted">{{ economics.stays }} / {{ economics.nights }}</dd>
+
+                            <dt class="col-6 text-muted">Zisk / noc</dt>
+                            <dd class="col-6 text-end text-muted text-nowrap">{{ per_night is not null ? per_night|money('CZK', 0) : '—' }}</dd>
+
+                            <dt class="col-6 text-muted">Příjem / pobyt</dt>
+                            <dd class="col-6 text-end text-muted text-nowrap">{{ per_stay is not null ? per_stay|money('CZK', 0) : '—' }}</dd>
+                        </dl>
+                    {% else %}
+                        <p class="text-muted mb-0">Zatím žádný uskutečněný pobyt.</p>
+                    {% endif %}
+                    {% if economics.upcomingStays > 0 %}
+                        <div class="border-top mt-2 pt-2 d-flex justify-content-between small">
+                            <span class="text-muted">Nadcházející ({{ economics.upcomingStays }}) — očekávaný příjem</span>
+                            <span class="text-nowrap">{{ economics.upcomingIncomeCzk|money('CZK', 0) }}</span>
+                        </div>
+                    {% endif %}
+                    <div class="text-muted small mt-2">Součet ekonomiky jednotlivých pobytů: příjem v Kč, zisk po provizi, DPH, úklidu, elektřině a rekreačním poplatku. Zrušené pobyty nesou jen skutečně přijaté peníze.</div>
+                </div>
+            </div>
+
             {% if suggestions is not empty %}
                 <div class="card mt-3">
                     <div class="card-header">Možná stejný host</div>
@@ -54,9 +95,9 @@
             <div class="card">
                 <div class="card-header">Pobyty <span class="small text-muted">({{ stays|length }})</span></div>
                 <div class="table-responsive">
-                    <table class="table table-sm align-middle mb-0 table-stack">
+                    <table class="table table-sm align-middle mb-0 small table-stack">
                         <thead>
-                            <tr><th>Termín</th><th>Kanál</th><th>Stav</th><th></th></tr>
+                            <tr><th>Termín</th><th class="d-none d-xl-table-cell">Kanál</th><th>Stav</th><th class="text-end">Příjem</th><th class="text-end">Zisk</th><th></th></tr>
                         </thead>
                         <tbody>
                         {% for stay in stays %}
@@ -65,8 +106,15 @@
                                     <a href="{{ path('reservation_detail', {id: stay.id}) }}" class="text-decoration-none">{{ stay.checkIn|date('d. m. Y') }}{% if stay.checkOut %} – {{ stay.checkOut|date('d. m. Y') }}{% endif %}</a>
                                     {% if stay.guestName and stay.guestName != customer.displayName %}<div class="text-muted small">{{ stay.guestName }}</div>{% endif %}
                                 </td>
-                                <td data-label="Kanál">{{ stay.channel.label }}</td>
+                                <td data-label="Kanál" class="d-none d-xl-table-cell">{{ stay.channel.label }}</td>
                                 <td data-label="Stav">{{ stay.status.label }}</td>
+                                {% set p = profits[stay.id] %}
+                                <td data-label="Příjem" class="text-end text-nowrap">
+                                    {% if p.incomeCzk is not null %}{{ p.incomeCzk|money('CZK', 0) }}{% if p.incomeIsEstimate %} *{% endif %}{% else %}<span class="text-muted">—</span>{% endif %}
+                                </td>
+                                <td data-label="Zisk" class="text-end text-nowrap {{ p.profitCzk is not null and p.profitCzk < 0 ? 'text-danger' }}">
+                                    {{ p.profitCzk is not null ? p.profitCzk|money('CZK', 0) : '—' }}
+                                </td>
                                 <td class="text-end">
                                     {% if stays|length > 1 %}
                                         <form method="post" action="{{ path('customer_detach', {id: stay.id}) }}"

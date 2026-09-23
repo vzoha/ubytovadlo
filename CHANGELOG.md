@@ -30,6 +30,13 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
   se ukáže poznámka k hostovi. Karta hosta má tlačítko *+ Nová rezervace*. Rezervace
   vytvořená z předvyplnění patří tomuž hostovi i bez kontaktu, dokud se nezmění jméno.
 
+- **Ekonomika hostů.** Karta hosta sčítá jeho pobyty: příjem, zisk, počet pobytů a nocí,
+  zisk na noc a příjem na pobyt; nadcházející pobyty jsou zvlášť jako očekávaný příjem.
+  U každého pobytu je vidět příjem a zisk. Seznam hostů má sloupec *Příjem* a jde řadit
+  podle posledního příjezdu nebo podle příjmu. Součty vycházejí z ekonomiky rezervací
+  (příjem v Kč, zisk po provizi, DPH, úklidu, elektřině a rekreačním poplatku), zrušené
+  pobyty nesou jen skutečně přijaté peníze.
+
 - **Podpis rychlých zpráv.** Nastavení rychlých zpráv drží rozloučení, které se připojí
   na konec každé zprávy do SMS, WhatsAppu i chatu portálu; smí obsahovat proměnné.
   Nenastavená instance podepisuje názvem ubytování, prázdné pole znamená zprávy bez podpisu.
