@@ -643,10 +643,11 @@ class DevSeedDemoCommand extends Command
                 'vtKwh' => 28, 'ntKwh' => 18, 'clean' => [CleaningType::CLEANER_LAUNDRY, 800, 800], 'inv' => 'full',
             ],
             [
+                // FKSP: rezervuje zaměstnanec pod svým jménem a e-mailem, firma je jen ve fakturačních údajích.
                 'channel' => Channel::WEB, 'billing' => \App\Enum\BillingMode::FKSP, 'gateway' => 'cash',
-                'ext' => '103', 'in' => '2026-02-13', 'out' => '2026-02-15', 'name' => 'ČSOB a.s.',
+                'ext' => '103', 'in' => '2026-02-13', 'out' => '2026-02-15', 'name' => 'Lukáš Procházka',
                 'company' => 'Československá obchodní banka, a.s.', 'ico' => '00001350', 'dic' => 'CZ00001350',
-                'email' => 'fksp@csob.cz', 'street' => 'Radlická 333/150', 'city' => 'Praha', 'zip' => '15057',
+                'email' => 'lukas.prochazka@email.cz', 'street' => 'Radlická 333/150', 'city' => 'Praha', 'zip' => '15057',
                 'adults' => 4, 'price' => '3600.00', 'acq' => 'doporučení', 'vtKwh' => 22, 'ntKwh' => 14,
                 'clean' => [CleaningType::CLEANER, 700, 700], 'inv' => 'full',
             ],
@@ -741,9 +742,9 @@ class DevSeedDemoCommand extends Command
             ],
             [
                 'channel' => Channel::WEB, 'billing' => \App\Enum\BillingMode::FKSP, 'gateway' => 'cash',
-                'ext' => '110', 'in' => '2026-05-22', 'out' => '2026-05-24', 'name' => 'Škoda Auto a.s.',
+                'ext' => '110', 'in' => '2026-05-22', 'out' => '2026-05-24', 'name' => 'Alena Kolářová',
                 'company' => 'ŠKODA AUTO a.s.', 'ico' => '00177041', 'dic' => 'CZ00177041',
-                'email' => 'fksp@skoda-auto.cz', 'street' => 'tř. Václava Klementa 869', 'city' => 'Mladá Boleslav',
+                'email' => 'alena.kolarova@email.cz', 'street' => 'tř. Václava Klementa 869', 'city' => 'Mladá Boleslav',
                 'zip' => '29301', 'adults' => 4, 'price' => '3600.00', 'acq' => 'doporučení', 'vtKwh' => 24, 'ntKwh' => 15,
                 'clean' => [CleaningType::CLEANER, 700, 700], 'inv' => 'full', 'paid' => false,
             ],
@@ -804,9 +805,9 @@ class DevSeedDemoCommand extends Command
             ],
             [
                 'channel' => Channel::WEB, 'billing' => \App\Enum\BillingMode::FKSP, 'gateway' => 'cash',
-                'ext' => '117', 'in' => '2026-07-10', 'out' => '2026-07-13', 'name' => 'Magistrát města Plzně',
+                'ext' => '117', 'in' => '2026-07-10', 'out' => '2026-07-13', 'name' => 'Tomáš Havel',
                 'company' => 'Statutární město Plzeň', 'ico' => '00075370', 'dic' => 'CZ00075370',
-                'email' => 'fksp@plzen.eu', 'street' => 'náměstí Republiky 1', 'city' => 'Plzeň', 'zip' => '30100',
+                'email' => 'tomas.havel@email.cz', 'street' => 'náměstí Republiky 1', 'city' => 'Plzeň', 'zip' => '30100',
                 'adults' => 4, 'price' => '5400.00', 'acq' => 'doporučení', 'leadDays' => 40, 'inv' => 'none',
             ],
             [

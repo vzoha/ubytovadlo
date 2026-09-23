@@ -12,8 +12,8 @@ declare(strict_types=1);
 namespace App\Customer;
 
 /**
- * Pojistka proti sdílenému kontaktu: e-mail firmy (FKSP), cestovky nebo
- * ubytovatele samotného se objeví u různých lidí. Dvě jména k sobě sedí, když
+ * Pojistka proti sdílenému kontaktu: e-mail ubytovatele zadaný za známého,
+ * cestovky nebo společná rodinná adresa se objeví u různých lidí. Dvě jména k sobě sedí, když
  * mají společné slovo — bez diakritiky a s tolerancí k přechýlení (Novák /
  * Nováková, Kučera / Kučerová). Iniciály se nepočítají. Chybějící jméno
  * nerozhoduje, stačí pak shoda kontaktu.

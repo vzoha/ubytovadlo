@@ -185,11 +185,11 @@ final class CustomerLinkingTest extends KernelTestCase
 
     public function testSharedEmailOfDifferentPeopleKeepsSeparateCustomers(): void
     {
-        $novak = $this->reservation('2025-06-01', 'fksp@example.com', name: 'Jan Novák');
-        $dvorak = $this->reservation('2025-07-01', 'fksp@example.com', name: 'Marie Dvořáková');
+        $novak = $this->reservation('2025-06-01', 'sdileny@example.com', name: 'Jan Novák');
+        $dvorak = $this->reservation('2025-07-01', 'sdileny@example.com', name: 'Marie Dvořáková');
         $this->save($novak, $dvorak);
 
-        $dvorakAgain = $this->reservation('2026-07-01', 'fksp@example.com', name: 'Marie Dvořáková');
+        $dvorakAgain = $this->reservation('2026-07-01', 'sdileny@example.com', name: 'Marie Dvořáková');
         $this->save($dvorakAgain);
 
         self::assertNotSame($novak->getCustomer(), $dvorak->getCustomer());
