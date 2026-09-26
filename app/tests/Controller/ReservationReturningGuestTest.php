@@ -60,7 +60,7 @@ final class ReservationReturningGuestTest extends WebTestCase
         return $r;
     }
 
-    public function testReturningGuestShowsOrdinalAndOtherStays(): void
+    public function testReturningGuestShowsOrdinalWithoutOtherStays(): void
     {
         $first = $this->stay('2025-06-01');
         $this->stay('2025-09-01', ReservationStatus::CANCELLED);
@@ -71,7 +71,9 @@ final class ReservationReturningGuestTest extends WebTestCase
         self::assertResponseIsSuccessful();
 
         self::assertSelectorTextContains('.badge.text-bg-info', 'Vracející se host · 2. pobyt');
-        self::assertCount(1, $crawler->filter('a[href="/reservation/' . $first->getId() . '"]'));
+        // Pobyty hosta drží karta hosta, detail rezervace na ně jen odkazuje.
+        self::assertCount(0, $crawler->filter('a[href="/reservation/' . $first->getId() . '"]'));
+        self::assertStringNotContainsString('Další pobyty', $crawler->text());
     }
 
     public function testFirstTimeGuestHasNoBadge(): void

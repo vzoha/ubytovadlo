@@ -21,7 +21,7 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
   kontaktu platí jen u jména se společným slovem (Novák / Nováková), takže sdílený e-mail
   (třeba ubytovatele zadaný za známé) nespojí cizí lidi. Host bez kontaktu (Airbnb) má
   vlastního zákazníka a kontakt z check-inu si doplní. Detail rezervace ukazuje štítek
-  *Vracející se host · 2. pobyt*, další pobyty, poznámku k hostovi a odkaz na kartu hosta.
+  *Vracející se host · 2. pobyt*, poznámku k hostovi a odkaz na kartu hosta s jeho pobyty.
   Cron `actions-plan` přiřazuje zákazníka i dříve uloženým rezervacím (`app:customers:link`).
 
 - **Hosté** (`/hoste`). Seznam hostů s počtem pobytů, posledním příjezdem a hledáním podle
