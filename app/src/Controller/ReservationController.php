@@ -174,9 +174,10 @@ class ReservationController extends AbstractController
             'quick_messages' => $this->guestMessageTexts->forReservation($reservation),
             'register_czech_guests' => $this->guestRegistration->registerCzechGuests(),
             'customer_stays' => $customerStays->forReservation($reservation),
-            'stay_form' => $reservation->getChannel()->ownsStay()
+            'stay_form' => $reservation->getChannel()->ownsPrice()
                 ? $this->createForm(ReservationStayType::class, $reservation, [
                     'action' => $this->generateUrl('reservation_stay', ['id' => $reservation->getId()]),
+                    'with_dates' => $reservation->getChannel()->ownsStay(),
                 ])->createView()
                 : null,
         ]);

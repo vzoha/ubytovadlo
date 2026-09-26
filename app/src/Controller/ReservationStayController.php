@@ -24,8 +24,9 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
 /**
- * Úprava termínu a ceny u rezervace, kterou drží přímo Ubytovadlo. Ostatní
- * kanály přebírají termín ze zdroje, kde by ruční změnu přepsal další sync.
+ * Úprava termínu a ceny rezervace. Termín jde měnit jen u přímé rezervace —
+ * ostatní kanály ho přebírají ze zdroje, kde by ruční změnu přepsal další sync.
+ * Cenu drží Ubytovadlo u všech kanálů kromě OTA.
  */
 class ReservationStayController extends AbstractController
 {
@@ -40,14 +41,15 @@ class ReservationStayController extends AbstractController
     #[Route('/reservation/{id}/termin', name: 'reservation_stay', methods: ['GET', 'POST'], requirements: ['id' => '\d+'])]
     public function edit(Reservation $reservation, Request $request): Response
     {
-        if (!$reservation->getChannel()->ownsStay()) {
-            $this->addFlash('warning', sprintf('Termín rezervace z kanálu %s se mění ve zdroji.', $reservation->getChannel()->label()));
+        $channel = $reservation->getChannel();
+        if (!$channel->ownsPrice()) {
+            $this->addFlash('warning', sprintf('Termín i cenu určuje %s.', $channel->label()));
 
             return $this->redirectToRoute('reservation_detail', ['id' => $reservation->getId()]);
         }
 
         $before = $this->stayFingerprint($reservation);
-        $form = $this->createForm(ReservationStayType::class, $reservation);
+        $form = $this->createForm(ReservationStayType::class, $reservation, ['with_dates' => $channel->ownsStay()]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
@@ -55,7 +57,7 @@ class ReservationStayController extends AbstractController
             $this->actionPlanner->replan($reservation);
             $this->em->flush();
             $this->incomeUpserter->recompute($reservation);
-            $this->addFlash('success', 'Termín a cena uloženy.');
+            $this->addFlash('success', $channel->ownsStay() ? 'Termín a cena uloženy.' : 'Cena uložena.');
 
             if ($before !== $this->stayFingerprint($reservation) && $this->invoices->findForReservation($reservation) !== []) {
                 $this->addFlash('warning', 'Vystavené faktury se nezměnily — případnou opravu udělejte v sekci Fakturace.');

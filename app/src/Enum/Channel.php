@@ -58,6 +58,15 @@ enum Channel: string
         return $this === self::DIRECT;
     }
 
+    /**
+     * Cenu drží Ubytovadlo — sync ji u existující rezervace nepřepíše. U OTA
+     * ji s provizí určuje portál (extranet, e-mail).
+     */
+    public function ownsPrice(): bool
+    {
+        return !$this->isOta();
+    }
+
     /** Portál má chat s hostem, takže zpráva má kudy jít i bez e-mailu. */
     public function hasGuestChat(): bool
     {

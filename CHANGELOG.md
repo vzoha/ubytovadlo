@@ -8,12 +8,13 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Přidáno
 
-- **Úprava termínu a ceny přímé rezervace.** Detail ručně zadané rezervace má v kartě *Pobyt*
+- **Úprava termínu a ceny rezervace.** Detail ručně zadané rezervace má v kartě *Pobyt*
   tlačítko *✎ Upravit termín a cenu*. Po uložení se otevřené automatické zprávy hostům
   a úkoly (doplatková faktura, Ubyport) posunou podle nového termínu, doplní se ty, které
   nový termín umožní, a přepočítá se příjem na účtech. Ruční a už vyřízené akce zůstávají.
-  Vystavené faktury se nemění — okno i hláška po uložení na ně upozorní. Rezervace z webu
-  a portálů přebírají termín ze zdroje; detail to u nich uvádí.
+  Rezervace z webu a kalendářových kanálů přebírají termín ze zdroje a mají *✎ Upravit cenu*
+  — cenu drží Ubytovadlo a synchronizace ji nepřepíše. U Booking.com a Airbnb určuje termín
+  i cenu portál. Vystavené faktury se nemění — okno i hláška po uložení na ně upozorní.
 
 - **Vracející se hosté.** Každá rezervace se jménem nebo kontaktem hosta patří zákazníkovi,
   který drží jeho pobyty pohromadě bez ohledu na kanál. Páruje se podle vlastního e-mailu

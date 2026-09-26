@@ -4,7 +4,7 @@
 
 {% block body %}
     <a href="{{ path('reservation_detail', {id: reservation.id}) }}" class="text-decoration-none small">← {{ reservation.guestName ?? ('Rezervace #' ~ reservation.id) }}</a>
-    <h1 class="h3 mb-3 mt-1">Upravit termín a cenu</h1>
+    <h1 class="h3 mb-3 mt-1">{{ reservation.channel.ownsStay ? 'Upravit termín a cenu' : 'Upravit cenu' }}</h1>
 
     {{ form_start(form) }}
         {{ include('reservation/_stay_fields.html.twig') }}

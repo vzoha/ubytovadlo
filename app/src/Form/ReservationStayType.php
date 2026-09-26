@@ -24,8 +24,9 @@ use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 /**
- * Termín a cena rezervace, kterou drží přímo Ubytovadlo. Pole sdílí formulář
- * ruční rezervace ({@see ReservationManualType}). Cena je vždy v Kč.
+ * Termín a cena rezervace, které drží Ubytovadlo — termín jen u přímé rezervace,
+ * cenu u všech kromě OTA. Pole sdílí formulář ruční rezervace
+ * ({@see ReservationManualType}). Cena je vždy v Kč.
  *
  * @extends AbstractType<Reservation>
  */
@@ -37,13 +38,17 @@ class ReservationStayType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         foreach (self::stayFields() as $name => [$type, $fieldOptions]) {
-            $builder->add($name, $type, $fieldOptions);
+            if ($options['with_dates'] || $name === 'priceTotal') {
+                $builder->add($name, $type, $fieldOptions);
+            }
         }
     }
 
     public function configureOptions(OptionsResolver $resolver): void
     {
-        $resolver->setDefaults(['data_class' => Reservation::class]);
+        // Bez dat jen cena — termín přebírá rezervace ze zdroje.
+        $resolver->setDefaults(['data_class' => Reservation::class, 'with_dates' => true]);
+        $resolver->setAllowedTypes('with_dates', 'bool');
     }
 
     /**

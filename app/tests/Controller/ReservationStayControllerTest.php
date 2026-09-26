@@ -108,20 +108,40 @@ final class ReservationStayControllerTest extends WebTestCase
         self::assertSame($this->day('+10 days'), $this->em->find(Reservation::class, $reservation->getId())?->getCheckIn()->format('Y-m-d'));
     }
 
-    public function testChannelWithExternalSourceKeepsStay(): void
+    public function testWebReservationChangesOnlyPrice(): void
     {
         $reservation = $this->reservation(Channel::WEB);
 
         $crawler = $this->client->request('GET', '/reservation/' . $reservation->getId());
-        self::assertSelectorNotExists('#editStay');
+        self::assertSelectorTextContains('button[data-bs-target="#editStay"]', 'Upravit cenu');
+        self::assertSelectorNotExists('#editStay input[name="reservation_stay[checkIn]"]');
         self::assertStringContainsString('mění se tam', $crawler->text());
 
+        $form = $crawler->filter('#editStay')->selectButton('Uložit')->form();
+        $form['reservation_stay[priceTotal]'] = '1 800';
+        $this->client->submit($form);
+
+        self::assertResponseRedirects('/reservation/' . $reservation->getId());
+        $this->em->clear();
+        $saved = $this->em->find(Reservation::class, $reservation->getId());
+        self::assertInstanceOf(Reservation::class, $saved);
+        self::assertSame('1800.00', $saved->getPriceTotal());
+        self::assertSame($this->day('+10 days'), $saved->getCheckIn()->format('Y-m-d'));
+    }
+
+    public function testOtaReservationKeepsStayAndPrice(): void
+    {
+        $reservation = $this->reservation(Channel::BOOKING);
+
+        $this->client->request('GET', '/reservation/' . $reservation->getId());
+        self::assertSelectorNotExists('#editStay');
+
         $this->client->request('POST', '/reservation/' . $reservation->getId() . '/termin', [
-            'reservation_stay' => ['checkIn' => $this->day('+11 days')],
+            'reservation_stay' => ['priceTotal' => '1'],
         ]);
         self::assertResponseRedirects('/reservation/' . $reservation->getId());
         $this->em->clear();
-        self::assertSame($this->day('+10 days'), $this->em->find(Reservation::class, $reservation->getId())?->getCheckIn()->format('Y-m-d'));
+        self::assertSame('3600.00', $this->em->find(Reservation::class, $reservation->getId())?->getPriceTotal());
     }
 
     public function testWarnsAboutIssuedInvoiceWhenStayChanges(): void
