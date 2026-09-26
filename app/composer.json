@@ -38,7 +38,7 @@
         "symfony/yaml": "7.4.*",
         "twig/extra-bundle": "^3.24",
         "webklex/php-imap": "^6.2",
-        "zbateson/mail-mime-parser": "^4.0.1"
+        "zbateson/mail-mime-parser": "^4.0.5"
     },
     "config": {
         "allow-plugins": {

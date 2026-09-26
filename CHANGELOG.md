@@ -89,6 +89,10 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Opraveno
 
+- Knihovna pro čtení příchozí pošty (`zbateson/mail-mime-parser`) v 4.0.5 — opravy
+  CVE-2026-61815 (vložení hlavičky přes název přílohy) a CVE-2026-61816 (zahlcení
+  parseru podvrženým MIME).
+
 - **E-mail drží zalomení řádků.** Tělo zprávy i patička se zobrazí s řádky tak, jak je
   napsané v editoru šablony.
 
