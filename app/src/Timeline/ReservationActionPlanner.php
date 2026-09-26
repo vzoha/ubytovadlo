@@ -13,6 +13,7 @@ namespace App\Timeline;
 
 use App\Entity\Reservation;
 use App\Entity\ReservationAction;
+use App\Enum\ActionOrigin;
 use App\Enum\ActionType;
 use App\Enum\Channel;
 use App\Enum\MessageKind;
@@ -52,84 +53,131 @@ class ReservationActionPlanner
      */
     public function planFor(Reservation $reservation): int
     {
-        if (in_array($reservation->getStatus(), [ReservationStatus::CANCELLED, ReservationStatus::COMPLETED], true)) {
+        if (!$this->isPlannable($reservation)) {
             return 0;
         }
 
-        // Pobyt už dávno skončil — nemá smysl plánovat budoucí akce zpětně.
-        $end = $reservation->getCheckOut() ?? $reservation->getCheckIn();
-        if ($end < $this->clock->now()->setTime(0, 0)) {
-            return 0;
-        }
-
-        $checkIn = $reservation->getCheckIn();
         $added = 0;
-
-        // Žádost o zálohu — jen u web/přímých rezervací s tokem, který zálohu bere
-        // (OTA si platby řeší samy). Časování drží šablona (výchozí: hned po objednávce).
-        if (\in_array($reservation->getChannel(), [Channel::WEB, Channel::DIRECT], true)
-            && $this->depositConfig->appliesTo($reservation->getBillingMode())) {
-            $added += $this->ensureMessage($reservation, ActionType::RESERVATION_REQUEST_MESSAGE);
-        }
-
-        $added += $this->ensureMessage($reservation, ActionType::PRE_ARRIVAL_MESSAGE);
-        $added += $this->ensureMessage($reservation, ActionType::PRE_DEPARTURE_MESSAGE);
-        $added += $this->ensureMessage($reservation, ActionType::POST_STAY_MESSAGE);
-
-        // Doplatek + připomínka jen u toku se zálohou; při „bez zálohy" jde web
-        // klasika na jednu fakturu, doplatková akce nedává smysl.
-        if ($this->depositConfig->appliesTo($reservation->getBillingMode())) {
-            $added += $this->ensure($reservation, ActionType::ISSUE_FINAL_INVOICE, $this->at($checkIn, null, '10:00'));
-            $added += $this->ensureMessage($reservation, ActionType::BALANCE_REMINDER);
-        }
-
-        // Ubyport — jen u cizinců (host z jiné země než ČR), lhůta 3 dny od příjezdu.
-        $country = $reservation->getGuestAddress()->getCountry();
-        if ($country !== null && $country !== 'CZ') {
-            $added += $this->ensure($reservation, ActionType::UBYPORT_EXPORT, $this->at($checkIn, '+1 day', '09:00'));
+        foreach ($this->applicableTypes($reservation) as $type) {
+            $when = $this->whenFor($reservation, $type);
+            if ($when !== null && !$this->actions->hasOfType($reservation, $type)) {
+                $this->em->persist(new ReservationAction($reservation, $type, $when));
+                $added++;
+            }
         }
 
         return $added;
     }
 
     /**
-     * Založí zprávu hostovi podle konfigurace její šablony: vypnutá (OFF) se
-     * nezaloží, jinak se naplánuje na čas spočtený z časování. Chybí-li rezervaci
-     * potřebná kotva (např. odjezd), zprávu přeskočí.
+     * Po změně termínu posune otevřené automatické akce na čas spočtený z nových
+     * dat a doplní ty, které nový termín nově umožňuje. Ruční akce a akce, které
+     * už proběhly nebo byly zrušené, nechává být.
+     *
+     * @return int počet posunutých a nově založených akcí
      */
-    private function ensureMessage(Reservation $reservation, ActionType $type): int
+    public function replan(Reservation $reservation): int
+    {
+        if (!$this->isPlannable($reservation)) {
+            return 0;
+        }
+
+        $changed = 0;
+        foreach ($this->actions->findOpenForReservation($reservation) as $action) {
+            if ($action->getOrigin() !== ActionOrigin::AUTO) {
+                continue;
+            }
+            $when = $this->whenFor($reservation, $action->getType());
+            if ($when !== null && $when != $action->getScheduledFor()) {
+                $action->reschedule($when);
+                $changed++;
+            }
+        }
+
+        return $changed + $this->planFor($reservation);
+    }
+
+    private function isPlannable(Reservation $reservation): bool
+    {
+        if (in_array($reservation->getStatus(), [ReservationStatus::CANCELLED, ReservationStatus::COMPLETED], true)) {
+            return false;
+        }
+
+        // Pobyt už dávno skončil — nemá smysl plánovat budoucí akce zpětně.
+        $end = $reservation->getCheckOut() ?? $reservation->getCheckIn();
+
+        return $end >= $this->clock->now()->setTime(0, 0);
+    }
+
+    /**
+     * Automatické akce, které k rezervaci patří.
+     *
+     * @return list<ActionType>
+     */
+    private function applicableTypes(Reservation $reservation): array
+    {
+        $deposit = $this->depositConfig->appliesTo($reservation->getBillingMode());
+        $types = [];
+
+        // Žádost o zálohu — jen u web/přímých rezervací s tokem, který zálohu bere
+        // (OTA si platby řeší samy). Časování drží šablona (výchozí: hned po objednávce).
+        if ($deposit && \in_array($reservation->getChannel(), [Channel::WEB, Channel::DIRECT], true)) {
+            $types[] = ActionType::RESERVATION_REQUEST_MESSAGE;
+        }
+
+        $types[] = ActionType::PRE_ARRIVAL_MESSAGE;
+        $types[] = ActionType::PRE_DEPARTURE_MESSAGE;
+        $types[] = ActionType::POST_STAY_MESSAGE;
+
+        // Doplatek + připomínka jen u toku se zálohou; při „bez zálohy" jde web
+        // klasika na jednu fakturu, doplatková akce nedává smysl.
+        if ($deposit) {
+            $types[] = ActionType::ISSUE_FINAL_INVOICE;
+            $types[] = ActionType::BALANCE_REMINDER;
+        }
+
+        // Ubyport — jen u cizinců (host z jiné země než ČR), lhůta 3 dny od příjezdu.
+        $country = $reservation->getGuestAddress()->getCountry();
+        if ($country !== null && $country !== 'CZ') {
+            $types[] = ActionType::UBYPORT_EXPORT;
+        }
+
+        return $types;
+    }
+
+    /** Kdy má akce daného typu proběhnout; null = akci nezakládat ani neposouvat. */
+    private function whenFor(Reservation $reservation, ActionType $type): ?\DateTimeImmutable
+    {
+        return match ($type) {
+            ActionType::ISSUE_FINAL_INVOICE => $this->at($reservation->getCheckIn(), null, '10:00'),
+            ActionType::UBYPORT_EXPORT => $this->at($reservation->getCheckIn(), '+1 day', '09:00'),
+            default => $this->messageTime($reservation, $type),
+        };
+    }
+
+    /**
+     * Čas zprávy hostovi podle konfigurace její šablony: vypnutá (OFF) nemá čas,
+     * jinak ho určuje časování. Chybí-li rezervaci potřebná kotva (např. odjezd),
+     * vrátí null.
+     */
+    private function messageTime(Reservation $reservation, ActionType $type): ?\DateTimeImmutable
     {
         $kind = MessageKind::fromActionType($type);
         if ($kind === null) {
-            return 0;
+            return null;
         }
 
         // Kanál, který hostům nepíše, nemá proč zprávy plánovat.
         if (!$this->delivery->plansMessages($reservation)) {
-            return 0;
+            return null;
         }
 
         $template = $this->templates->for($kind);
         if ($template->getMode() === SendMode::OFF) {
-            return 0;
+            return null;
         }
 
-        $when = $this->schedule->resolve($template, $reservation);
-        if ($when === null) {
-            return 0;
-        }
-
-        return $this->ensure($reservation, $type, $when);
-    }
-
-    private function ensure(Reservation $reservation, ActionType $type, \DateTimeImmutable $when): int
-    {
-        if ($this->actions->hasOfType($reservation, $type)) {
-            return 0;
-        }
-        $this->em->persist(new ReservationAction($reservation, $type, $when));
-
-        return 1;
+        return $this->schedule->resolve($template, $reservation);
     }
 
     private function at(\DateTimeImmutable $date, ?string $modify, string $time): \DateTimeImmutable

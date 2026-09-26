@@ -49,6 +49,15 @@ enum Channel: string
         };
     }
 
+    /**
+     * Termín a cenu drží přímo Ubytovadlo — rezervaci zadala majitelka a žádný
+     * sync ji nepřepíše. Ostatní kanály přebírají termín ze zdroje.
+     */
+    public function ownsStay(): bool
+    {
+        return $this === self::DIRECT;
+    }
+
     /** Portál má chat s hostem, takže zpráva má kudy jít i bez e-mailu. */
     public function hasGuestChat(): bool
     {

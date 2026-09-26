@@ -27,6 +27,7 @@ use App\Enum\NoteType;
 use App\Enum\ReservationStatus;
 use App\Form\ReservationDetailsType;
 use App\Form\ReservationManualType;
+use App\Form\ReservationStayType;
 use App\Formatting\Money;
 use App\Invoice\BalanceCalculator;
 use App\Invoice\DepositConfig;
@@ -47,7 +48,6 @@ use App\Timeline\ReservationActionPlanner;
 use App\Timeline\ReservationTimelineBuilder;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\Form\FormError;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -112,26 +112,21 @@ class ReservationController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $checkOut = $reservation->getCheckOut();
-            if ($checkOut !== null && $checkOut <= $reservation->getCheckIn()) {
-                $form->get('checkOut')->addError(new FormError('Odjezd musí být po příjezdu.'));
-            } else {
-                $reservation->setPriceTotal(Money::parse($reservation->getPriceTotal()));
-                // Ruční zadání = autorita nad rozdělením hostů (žádný sync to nepřepíše).
-                $reservation->setGuestsSplitManually(true);
-                $reservation->setStatus(ReservationStatus::CONFIRMED);
-                if ($customer !== null) {
-                    $prefill->linkIfSameGuest($reservation, $customer);
-                }
-                $this->em->persist($reservation);
-                $this->em->flush();
-                // Plánovač dohledává existující akce podle rezervace → potřebuje její ID.
-                $this->actionPlanner->planFor($reservation);
-                $this->em->flush();
-                $this->addFlash('success', 'Rezervace přidána.');
-
-                return $this->redirectToRoute('reservation_detail', ['id' => $reservation->getId()]);
+            $reservation->setPriceTotal(Money::parse($reservation->getPriceTotal()));
+            // Ruční zadání = autorita nad rozdělením hostů (žádný sync to nepřepíše).
+            $reservation->setGuestsSplitManually(true);
+            $reservation->setStatus(ReservationStatus::CONFIRMED);
+            if ($customer !== null) {
+                $prefill->linkIfSameGuest($reservation, $customer);
             }
+            $this->em->persist($reservation);
+            $this->em->flush();
+            // Plánovač dohledává existující akce podle rezervace → potřebuje její ID.
+            $this->actionPlanner->planFor($reservation);
+            $this->em->flush();
+            $this->addFlash('success', 'Rezervace přidána.');
+
+            return $this->redirectToRoute('reservation_detail', ['id' => $reservation->getId()]);
         }
 
         $hostSearch = $request->query->getString('najit');
@@ -179,6 +174,11 @@ class ReservationController extends AbstractController
             'quick_messages' => $this->guestMessageTexts->forReservation($reservation),
             'register_czech_guests' => $this->guestRegistration->registerCzechGuests(),
             'customer_stays' => $customerStays->forReservation($reservation),
+            'stay_form' => $reservation->getChannel()->ownsStay()
+                ? $this->createForm(ReservationStayType::class, $reservation, [
+                    'action' => $this->generateUrl('reservation_stay', ['id' => $reservation->getId()]),
+                ])->createView()
+                : null,
         ]);
     }
 

@@ -12,18 +12,14 @@ declare(strict_types=1);
 namespace App\Form;
 
 use App\Enum\BillingMode;
-use App\Formatting\Money;
 use Symfony\Component\Form\Extension\Core\Type\CountryType;
-use Symfony\Component\Form\Extension\Core\Type\DateType;
 use Symfony\Component\Form\Extension\Core\Type\EnumType;
-use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
-use Symfony\Component\Validator\Constraints as Assert;
-use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 /**
  * Ruční přidání rezervace — přímý host bez OTA i webového funnelu. Přebírá pole
- * hosta z {@see ReservationDetailsType} a doplňuje termín, cenu a fakturační režim.
+ * hosta z {@see ReservationDetailsType}, termín a cenu z {@see ReservationStayType}
+ * a doplňuje fakturační režim.
  * Cena je vždy v Kč (přímí hosté platí v Kč).
  */
 class ReservationManualType extends ReservationDetailsType
@@ -38,31 +34,10 @@ class ReservationManualType extends ReservationDetailsType
      */
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
+        foreach (ReservationStayType::stayFields() as $name => [$type, $fieldOptions]) {
+            $builder->add($name, $type, $fieldOptions);
+        }
         $builder
-            ->add('checkIn', DateType::class, [
-                'label' => 'Příjezd',
-                'widget' => 'single_text',
-                'required' => true,
-                'input' => 'datetime_immutable',
-            ])
-            ->add('checkOut', DateType::class, [
-                'label' => 'Odjezd',
-                'widget' => 'single_text',
-                'required' => false,
-                'input' => 'datetime_immutable',
-            ])
-            ->add('priceTotal', TextType::class, [
-                'label' => 'Cena celkem (Kč)',
-                'required' => false,
-                'attr' => ['inputmode' => 'decimal', 'placeholder' => 'např. 8500'],
-                'constraints' => [
-                    new Assert\Callback(static function (?string $value, ExecutionContextInterface $context): void {
-                        if ($value !== null && trim($value) !== '' && Money::parse($value) === null) {
-                            $context->buildViolation('Cenu zadejte číslem, například 8500 nebo 8 500,50.')->addViolation();
-                        }
-                    }),
-                ],
-            ])
             ->add('billingMode', EnumType::class, [
                 'label' => 'Fakturační režim',
                 'class' => BillingMode::class,

@@ -17,6 +17,7 @@ use App\Entity\MessageTemplate;
 use App\Entity\Reservation;
 use App\Entity\ReservationAction;
 use App\Entity\Setting;
+use App\Enum\ActionOrigin;
 use App\Enum\ActionType;
 use App\Enum\BillingMode;
 use App\Enum\Channel;
@@ -172,6 +173,72 @@ final class ReservationActionPlannerTest extends KernelTestCase
         $this->em->flush();
 
         self::assertSame(0, $this->planner->planFor($r));
+    }
+
+    public function testReplanMovesOpenAutoActionsToNewStay(): void
+    {
+        $r = $this->confirmed(BillingMode::STANDARD_WITH_DEPOSIT, 'DE');
+        $this->planner->planFor($r);
+        $this->em->flush();
+
+        $r->setCheckIn($r->getCheckIn()->modify('+3 days'));
+        $r->setCheckOut($r->getCheckOut()?->modify('+3 days'));
+        $this->planner->replan($r);
+        $this->em->flush();
+
+        self::assertEquals($r->getCheckIn()->setTime(10, 0), $this->actionOf($r, ActionType::ISSUE_FINAL_INVOICE)->getScheduledFor());
+        self::assertEquals($r->getCheckIn()->modify('+1 day')->setTime(9, 0), $this->actionOf($r, ActionType::UBYPORT_EXPORT)->getScheduledFor());
+        self::assertSame(
+            $r->getCheckOut()?->modify('-1 day')->format('Y-m-d'),
+            $this->actionOf($r, ActionType::PRE_DEPARTURE_MESSAGE)->getScheduledFor()->format('Y-m-d'),
+        );
+        // Stejný termín podruhé nic nemění.
+        self::assertSame(0, $this->planner->replan($r));
+    }
+
+    public function testReplanLeavesManualAndClosedActions(): void
+    {
+        $r = $this->confirmed(BillingMode::STANDARD_WITH_DEPOSIT, 'CZ');
+        $this->planner->planFor($r);
+        $this->em->flush();
+        $manualAt = new \DateTimeImmutable('+2 days 14:00');
+        $manual = new ReservationAction($r, ActionType::PRE_ARRIVAL_MESSAGE, $manualAt, ActionOrigin::MANUAL);
+        $this->em->persist($manual);
+        $done = $this->actionOf($r, ActionType::ISSUE_FINAL_INVOICE);
+        $doneAt = $done->getScheduledFor();
+        $done->markDone();
+        $this->em->flush();
+
+        $r->setCheckIn($r->getCheckIn()->modify('+5 days'));
+        $r->setCheckOut($r->getCheckOut()?->modify('+5 days'));
+        $this->planner->replan($r);
+        $this->em->flush();
+
+        self::assertEquals($manualAt, $manual->getScheduledFor());
+        self::assertEquals($doneAt, $done->getScheduledFor());
+    }
+
+    public function testReplanAddsActionMadePossibleByNewStay(): void
+    {
+        $r = $this->confirmed(BillingMode::STANDARD_WITH_DEPOSIT, 'CZ');
+        $r->setCheckOut(null);
+        $this->planner->planFor($r);
+        $this->em->flush();
+        self::assertFalse($this->actions->hasOfType($r, ActionType::PRE_DEPARTURE_MESSAGE));
+
+        $r->setCheckOut($r->getCheckIn()->modify('+2 days'));
+        $this->planner->replan($r);
+        $this->em->flush();
+
+        self::assertTrue($this->actions->hasOfType($r, ActionType::PRE_DEPARTURE_MESSAGE));
+    }
+
+    private function actionOf(Reservation $r, ActionType $type): ReservationAction
+    {
+        $action = $this->em->getRepository(ReservationAction::class)->findOneBy(['reservation' => $r, 'type' => $type, 'origin' => ActionOrigin::AUTO]);
+        self::assertInstanceOf(ReservationAction::class, $action);
+
+        return $action;
     }
 
     private function overrideTemplate(MessageKind $kind, SendMode $mode, ?TimingAnchor $anchor = null, int $offsetDays = 0, ?string $sendAt = null): void

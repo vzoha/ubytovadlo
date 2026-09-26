@@ -1,0 +1,10 @@
+{# Pole termínu a ceny. Očekává: form (ReservationStayType), invoices. #}
+<div class="row g-3">
+    <div class="col-sm-6">{{ form_row(form.checkIn) }}</div>
+    <div class="col-sm-6">{{ form_row(form.checkOut) }}</div>
+    <div class="col-sm-6">{{ form_row(form.priceTotal) }}</div>
+</div>
+<p class="text-muted small mb-0 mt-3">Naplánované zprávy hostům a úkoly se posunou podle nového termínu, příjem na účtech se přepočítá.</p>
+{% if invoices is not empty %}
+    <div class="alert alert-warning py-2 mb-0 mt-3">Vystavené faktury se změnou termínu ani ceny nemění — případnou opravu udělejte v sekci Fakturace.</div>
+{% endif %}
