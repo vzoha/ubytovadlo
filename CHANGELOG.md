@@ -97,6 +97,10 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 - **E-mail drží zalomení řádků.** Tělo zprávy i patička se zobrazí s řádky tak, jak je
   napsané v editoru šablony.
 
+- **Doplatek u pobytů z Booking.com a Airbnb je nulový.** Host platí portálu už při
+  rezervaci, takže pobyt vede jako zaplacený i před vystavením faktury — proměnná
+  `{{ balance_due }}` zůstane prázdná a upomínka doplatku se nenaplánuje.
+
 - **Výplata z portálu na časové ose ukazuje jen datum.** Nese datum bez času, takže se
   u ní netiskne půlnoc.
 

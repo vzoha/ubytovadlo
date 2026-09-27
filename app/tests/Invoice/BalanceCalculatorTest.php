@@ -88,6 +88,31 @@ final class BalanceCalculatorTest extends KernelTestCase
         self::assertNull($this->calc->forReservation($r));
     }
 
+    public function testOtaChannelSettledWithoutInvoice(): void
+    {
+        $r = $this->reservation('4000.00', 'CZK', Channel::AIRBNB);
+        $this->em->flush();
+
+        $balance = $this->calc->forReservation($r);
+
+        self::assertNotNull($balance);
+        self::assertTrue($balance->isSettled());
+        self::assertSame(4000.0, $balance->paid);
+        self::assertSame(PaymentStatus::PAID, $balance->status());
+    }
+
+    public function testOtaBillingModeSettledWithoutInvoice(): void
+    {
+        $r = $this->reservation('4000.00', 'CZK');
+        $r->setBillingMode(BillingMode::BOOKING_COM);
+        $this->em->flush();
+
+        $balance = $this->calc->forReservation($r);
+
+        self::assertNotNull($balance);
+        self::assertSame(0.0, $balance->remaining);
+    }
+
     public function testManualPaymentCountsTowardPaid(): void
     {
         $r = $this->reservation('5000.00', 'CZK');
@@ -135,9 +160,9 @@ final class BalanceCalculatorTest extends KernelTestCase
         $this->em->persist($receipt);
     }
 
-    private function reservation(string $price, string $currency): Reservation
+    private function reservation(string $price, string $currency, Channel $channel = Channel::WEB): Reservation
     {
-        $r = new Reservation(Channel::WEB, new \DateTimeImmutable('2026-07-01'));
+        $r = new Reservation($channel, new \DateTimeImmutable('2026-07-01'));
         $r->setCheckOut(new \DateTimeImmutable('2026-07-03'));
         $r->setPriceTotal($price)->setPriceCurrency($currency);
         $r->setGuestName('Test Host');

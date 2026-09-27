@@ -21,6 +21,7 @@ use App\Repository\ReservationReceiptRepository;
  * Kolik hostovi zbývá doplatit = cena − (zaplacené faktury + ruční platby).
  * Bez DB sloupce, čistě dopočet. Smysl dává jen u CZK ceny a fakturovaných
  * režimů (Booking v EUR vs. faktury v CZK by se nesčítaly — tam vrací null).
+ * Pobyt přes portál je uhrazený od rezervace — host platí portálu, ne nám.
  */
 class BalanceCalculator
 {
@@ -33,14 +34,12 @@ class BalanceCalculator
     public function forReservation(Reservation $reservation): ?BalanceResult
     {
         $total = $reservation->getPriceTotal();
-        if ($total === null) {
+        if ($total === null || !$this->isComputable($reservation)) {
             return null;
         }
-        if ($reservation->getPriceCurrency() !== 'CZK') {
-            return null;
-        }
-        if ($reservation->getBillingMode() === BillingMode::WAIVED) {
-            return null;
+        // Host zaplatil celý pobyt portálu při rezervaci, i když doklad ještě nevznikl.
+        if ($reservation->isOtaIntermediated()) {
+            return new BalanceResult((float) $total, (float) $total, 0.0);
         }
 
         $paid = 0.0;
@@ -60,5 +59,11 @@ class BalanceCalculator
         $remaining = round($totalF - $paid, 2);
 
         return new BalanceResult($totalF, round($paid, 2), $remaining);
+    }
+
+    private function isComputable(Reservation $reservation): bool
+    {
+        return $reservation->getPriceCurrency() === 'CZK'
+            && $reservation->getBillingMode() !== BillingMode::WAIVED;
     }
 }

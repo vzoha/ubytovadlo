@@ -133,7 +133,7 @@ class InvoiceService
         }
         $issuedAt ??= $this->today();
 
-        $method = $this->isOtaIntermediated($reservation) ? PaymentMethod::PREPAID_INTERMEDIARY : PaymentMethod::BANK_TRANSFER;
+        $method = $reservation->isOtaIntermediated() ? PaymentMethod::PREPAID_INTERMEDIARY : PaymentMethod::BANK_TRANSFER;
         $dueAt = $method->hasDueDate() ? $issuedAt->modify('+' . $this->dueDays($reservation) . ' days') : null;
 
         $invoice = $this->buildInvoice($reservation, InvoiceType::FULL, $issuedAt, $dueAt);
@@ -378,12 +378,6 @@ class InvoiceService
             'Faktura ' . $invoice->getNumber(),
             $invoice->getDueAt(),
         ));
-    }
-
-    private function isOtaIntermediated(Reservation $reservation): bool
-    {
-        return $reservation->getChannel()->isOta()
-            || in_array($reservation->getBillingMode(), [BillingMode::BOOKING_COM, BillingMode::AIRBNB], true);
     }
 
     private function assertHasCustomer(Reservation $reservation): void

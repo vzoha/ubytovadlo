@@ -250,6 +250,13 @@ class Reservation
         return $this;
     }
 
+    /** Pobyt prodaný přes portál (Booking/Airbnb) — host ho zaplatil portálu už při rezervaci. */
+    public function isOtaIntermediated(): bool
+    {
+        return $this->channel->isOta()
+            || in_array($this->billingMode, [BillingMode::BOOKING_COM, BillingMode::AIRBNB], true);
+    }
+
     public function getMotopressPaymentGateway(): ?string
     {
         return $this->motopressPaymentGateway;
