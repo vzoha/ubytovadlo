@@ -40,6 +40,7 @@ security:
         - { path: ^/checkin, roles: PUBLIC_ACCESS }
         - { path: ^/ical, roles: PUBLIC_ACCESS }
         - { path: ^/qr, roles: PUBLIC_ACCESS }
+        - { path: ^/f/, roles: PUBLIC_ACCESS }
         - { path: ^/webhook, roles: PUBLIC_ACCESS }
         - { path: ^/dev/mrz, roles: PUBLIC_ACCESS }
         - { path: ^/logout, roles: ROLE_CLEANER }

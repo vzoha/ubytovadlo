@@ -1,0 +1,25 @@
+{# Veřejná stránka nedostupného odkazu na fakturu — host může mluvit česky i anglicky. #}
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Faktura není dostupná — {{ property_name }}</title>
+    <link href="{{ asset('assets/bootstrap.min.css') }}" rel="stylesheet">
+</head>
+<body class="bg-light">
+<main class="container py-5" style="max-width: 36rem;">
+    <div class="card">
+        <div class="card-body">
+            <h1 class="h4">Odkaz na fakturu už neplatí</h1>
+            <p>Platnost odkazu vypršela nebo byl zrušen. Napište prosím ubytovateli, fakturu vám pošle znovu.</p>
+            <hr>
+            <h2 class="h5" lang="en">This invoice link is no longer valid</h2>
+            <p class="mb-0" lang="en">The link has expired or was cancelled. Please contact your host to get the invoice again.</p>
+        </div>
+    </div>
+    <p class="text-center text-muted small mt-3">{{ property_name }}</p>
+</main>
+</body>
+</html>

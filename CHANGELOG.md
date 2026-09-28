@@ -8,6 +8,15 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Přidáno
 
+- **Poslat fakturu e-mailem, přes WhatsApp, SMS nebo chat.** Každá faktura v detailu
+  rezervace má tlačítko *Poslat*. Otevře okno, ze kterého faktura odejde e-mailem
+  s PDF v příloze (s náhledem e-mailu), nebo odkazem: *Vytvořit odkaz* připraví text
+  zprávy v jazyce hosta s odkazem na PDF a u nezaplacené faktury i s platebními údaji.
+  Text jde upravit a poslat přes WhatsApp, SMS nebo zkopírovat do chatu portálu.
+  Odkaz otevře jen PDF té faktury, platí 60 dní a jde ho zrušit. Okno ukazuje vytvořené
+  odkazy, kudy odešly a kdy je host naposledy otevřel. V telefonu okno nabízí
+  *Sdílet PDF* — soubor odejde přímo, bez odkazu.
+
 - **Souhrn ekonomiky dle zdroje.** Souhrn na stránce *Ekonomika* má přepínač *Dle kanálu /
   Dle zdroje*. Zdroj je údaj „odkud nás zná“ z detailu rezervace. Hodnoty se sčítají bez
   ohledu na velikost písmen a interpunkci („Booking“ i „Booking.com“ jsou jeden řádek).
