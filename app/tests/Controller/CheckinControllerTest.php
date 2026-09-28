@@ -22,6 +22,7 @@ use App\Entity\Reservation;
 use App\Entity\Setting;
 use App\Entity\VatPeriod;
 use App\Enum\Channel;
+use App\Enum\ReservationStatus;
 use App\Repository\GuestDocumentRepository;
 use App\Repository\ReservationRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -61,8 +62,8 @@ final class CheckinControllerTest extends WebTestCase
             $this->em->flush();
         }
 
-        $this->reservation = new Reservation(Channel::BOOKING, new \DateTimeImmutable('2026-06-15'));
-        $this->reservation->setCheckOut(new \DateTimeImmutable('2026-06-18'));
+        $this->reservation = new Reservation(Channel::BOOKING, new \DateTimeImmutable('+5 days'));
+        $this->reservation->setCheckOut(new \DateTimeImmutable('+8 days'));
         $this->reservation->setGuestsAdult(2);
         $this->em->persist($this->reservation);
         $this->em->flush();
@@ -79,6 +80,39 @@ final class CheckinControllerTest extends WebTestCase
     public function testInvalidTokenReturns404(): void
     {
         $this->client->request('GET', '/checkin/' . str_repeat('0', 64));
+
+        self::assertResponseStatusCodeSame(404);
+    }
+
+    /** Po odjezdu a lhůtě na hlášení token už k údajům hostů nepustí. */
+    public function testTokenExpiresAfterStay(): void
+    {
+        $this->reservation->setCheckIn(new \DateTimeImmutable('-20 days'));
+        $this->reservation->setCheckOut(new \DateTimeImmutable('-8 days'));
+        $this->em->flush();
+
+        $this->client->request('GET', '/checkin/' . $this->reservation->getCheckinToken());
+
+        self::assertResponseStatusCodeSame(404);
+    }
+
+    public function testTokenStillWorksShortlyAfterDeparture(): void
+    {
+        $this->reservation->setCheckIn(new \DateTimeImmutable('-10 days'));
+        $this->reservation->setCheckOut(new \DateTimeImmutable('-7 days'));
+        $this->em->flush();
+
+        $this->client->request('GET', '/checkin/' . $this->reservation->getCheckinToken());
+
+        self::assertResponseIsSuccessful();
+    }
+
+    public function testCancelledReservationReturns404(): void
+    {
+        $this->reservation->setStatus(ReservationStatus::CANCELLED);
+        $this->em->flush();
+
+        $this->client->request('GET', '/checkin/' . $this->reservation->getCheckinToken());
 
         self::assertResponseStatusCodeSame(404);
     }
@@ -212,8 +246,8 @@ final class CheckinControllerTest extends WebTestCase
 
     public function testEditGuestFromDifferentReservationReturns404(): void
     {
-        $other = new Reservation(Channel::WEB, new \DateTimeImmutable('2026-07-01'));
-        $other->setCheckOut(new \DateTimeImmutable('2026-07-03'));
+        $other = new Reservation(Channel::WEB, new \DateTimeImmutable('+20 days'));
+        $other->setCheckOut(new \DateTimeImmutable('+22 days'));
         $this->em->persist($other);
         $doc = new GuestDocument($other, 'X', 'X', new \DateTimeImmutable('1990-01-01'));
         $this->em->persist($doc);

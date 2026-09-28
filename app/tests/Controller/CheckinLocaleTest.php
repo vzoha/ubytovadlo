@@ -37,8 +37,8 @@ final class CheckinLocaleTest extends WebTestCase
         $em->createQuery('DELETE FROM ' . Reservation::class . ' r')->execute();
         $em->flush();
 
-        $this->reservation = new Reservation(Channel::BOOKING, new \DateTimeImmutable('2026-06-15'));
-        $this->reservation->setCheckOut(new \DateTimeImmutable('2026-06-18'));
+        $this->reservation = new Reservation(Channel::BOOKING, new \DateTimeImmutable('+5 days'));
+        $this->reservation->setCheckOut(new \DateTimeImmutable('+8 days'));
         $this->reservation->setGuestsAdult(2);
         $em->persist($this->reservation);
         $em->flush();

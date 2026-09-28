@@ -19,12 +19,14 @@ use App\Invoice\BalanceCalculator;
 use App\Invoice\BalanceResult;
 use App\Invoice\DepositPayment;
 use App\Invoice\DepositPaymentBuilder;
+use App\Invoice\PaymentQrLinks;
 use App\Mail\GuestLocaleResolver;
 use App\Mail\GuestVocative;
 use App\Mail\InvoiceMessageContext;
 use App\Mail\MessageVariableResolver;
 use App\Repository\AccommodationProfileRepository;
 use App\Repository\InvoiceRepository;
+use App\Security\PublicLinkSigner;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
@@ -136,7 +138,6 @@ final class MessageVariableResolverTest extends TestCase
         $resolver = $this->resolver(null, $deposit);
 
         $reservation = $this->reservation();
-        $reservation->setCheckinToken(str_repeat('0123456789abcdef', 4));
         (new \ReflectionProperty(Reservation::class, 'id'))->setValue($reservation, 42);
 
         $out = $resolver->render('{{ deposit_qr }}', $reservation);
@@ -222,7 +223,8 @@ final class MessageVariableResolverTest extends TestCase
         $deposits = $this->createStub(DepositPaymentBuilder::class);
         $deposits->method('forReservation')->willReturn($deposit);
 
-        $invoiceContext = new InvoiceMessageContext($url, new GuestLocaleResolver(), $this->createStub(InvoiceRepository::class));
+        $qrLinks = new PaymentQrLinks($url, new PublicLinkSigner('test-secret'));
+        $invoiceContext = new InvoiceMessageContext($qrLinks, new GuestLocaleResolver(), $this->createStub(InvoiceRepository::class));
 
         return new MessageVariableResolver(
             $profiles,
@@ -232,6 +234,7 @@ final class MessageVariableResolverTest extends TestCase
             $deposits,
             new GuestLocaleResolver(),
             $invoiceContext,
+            $qrLinks,
         );
     }
 

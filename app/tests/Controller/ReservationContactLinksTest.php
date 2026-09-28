@@ -65,6 +65,28 @@ final class ReservationContactLinksTest extends WebTestCase
         $this->em->flush();
     }
 
+    public function testCheckinLinkShowsValidityDate(): void
+    {
+        $r = new Reservation(Channel::DIRECT, new \DateTimeImmutable('2099-07-10'));
+        $r->setCheckOut(new \DateTimeImmutable('2099-07-13'));
+        $this->persist($r);
+
+        $this->client->request('GET', '/reservation/' . $r->getId());
+
+        self::assertSelectorTextContains('body', 'Odkaz platí do 20. 07. 2099');
+    }
+
+    public function testCheckinLinkIsClosedAfterStay(): void
+    {
+        $r = new Reservation(Channel::DIRECT, new \DateTimeImmutable('-30 days'));
+        $r->setCheckOut(new \DateTimeImmutable('-27 days'));
+        $this->persist($r);
+
+        $this->client->request('GET', '/reservation/' . $r->getId());
+
+        self::assertSelectorTextContains('body', 'Odkaz je uzavřený');
+    }
+
     public function testPhoneRendersCallSmsWhatsappLinks(): void
     {
         $r = new Reservation(Channel::DIRECT, new \DateTimeImmutable('+10 days'));

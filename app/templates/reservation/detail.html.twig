@@ -346,6 +346,11 @@
                         <input type="text" class="form-control" value="{{ checkin_url }}" readonly id="checkin-link">
                         <button class="btn btn-outline-secondary" type="button" data-copy="#checkin-link">Zkopírovat</button>
                     </div>
+                    {% if checkin_open(reservation) %}
+                        <p class="small text-muted mb-2">Odkaz platí do {{ checkin_closes_on(reservation)|date('d. m. Y') }} — týden po odjezdu se kvůli ochraně údajů hostů zavře.</p>
+                    {% else %}
+                        <p class="small text-warning-emphasis mb-2">Odkaz je uzavřený — host se na check-in už nedostane. Týden po odjezdu nebo u zrušené rezervace se zavírá kvůli ochraně údajů hostů.</p>
+                    {% endif %}
 
                     {% set checkin_code = reservation.externalId ?? reservation.motopressExternalId %}
                     {% if checkin_code %}

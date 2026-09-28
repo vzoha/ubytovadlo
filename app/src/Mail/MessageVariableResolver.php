@@ -17,6 +17,7 @@ use App\Formatting\Money;
 use App\Invoice\BalanceCalculator;
 use App\Invoice\DepositPayment;
 use App\Invoice\DepositPaymentBuilder;
+use App\Invoice\PaymentQrLinks;
 use App\Repository\AccommodationProfileRepository;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
@@ -94,6 +95,7 @@ final class MessageVariableResolver
         private readonly DepositPaymentBuilder $deposits,
         private readonly GuestLocaleResolver $guestLocale,
         private readonly InvoiceMessageContext $invoiceContext,
+        private readonly PaymentQrLinks $qrLinks,
     ) {
     }
 
@@ -348,14 +350,11 @@ final class MessageVariableResolver
     private function depositQr(Reservation $reservation, ?DepositPayment $deposit): string
     {
         $id = $reservation->getId();
-        $token = $reservation->getCheckinToken();
-        if ($deposit === null || $deposit->spayd === null || $id === null || $id <= 0 || $token === null) {
+        if ($deposit === null || $deposit->spayd === null || $id === null || $id <= 0) {
             return '';
         }
 
-        $url = $this->urlGenerator->generate('qr_deposit', ['token' => $token], UrlGeneratorInterface::ABSOLUTE_URL);
-
-        return sprintf('![QR platba zálohy](%s)', $url);
+        return sprintf('![QR platba zálohy](%s)', $this->qrLinks->depositUrl($id));
     }
 
     private function checkinUrl(Reservation $reservation): string

@@ -74,6 +74,14 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Změněno
 
+- **Platnost odkazu na online check-in.** Odkaz na check-in platí do týdne po odjezdu
+  a u zrušené rezervace se neotevře — stránka ukazuje osobní údaje hostů. Detail
+  rezervace u odkazu uvádí, do kdy platí, případně že je uzavřený.
+
+- **QR kódy pro platbu v e-mailech** mají vlastní podepsanou adresu platnou jen pro
+  danou zálohu nebo fakturu. Přeposlaný e-mail s fakturou tak neobsahuje přístup
+  k check-inu. Obrázky v dříve odeslaných e-mailech se zobrazují dál.
+
 - **Výsledek akce na časové ose.** Uzavřená akce ukazuje pod nadpisem, jak dopadla —
   komu zpráva odešla, proč se přeskočila nebo proč odeslání selhalo. Na mobilu stojí
   výsledek na vlastním řádku.

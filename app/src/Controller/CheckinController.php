@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Ares\AresClient;
+use App\Checkin\CheckinAccess;
 use App\Config\GuestRegistrationSettings;
 use App\Entity\GuestDocument;
 use App\Entity\Reservation;
@@ -22,7 +23,6 @@ use App\Mrz\MrzParser;
 use App\Notification\OwnerNotifier;
 use App\Repository\GuestDocumentRepository;
 use App\Repository\NationalityRepository;
-use App\Repository\ReservationRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -35,12 +35,13 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 /**
  * Veřejné stránky pro online check-in. Authorizace = unikátní token v URL
  * (256 bit entropie, vygenerován ReservationCheckinTokenListener při vzniku
- * rezervace). Bez tokenu => 404, špatný token => 404 — neprozrazujeme stav.
+ * rezervace). Bez tokenu => 404, špatný token => 404, check-in mimo časové
+ * okno (CheckinAccess) => 404 — neprozrazujeme stav.
  */
 class CheckinController extends AbstractController
 {
     public function __construct(
-        private readonly ReservationRepository $reservations,
+        private readonly CheckinAccess $access,
         private readonly GuestDocumentRepository $documents,
         private readonly NationalityRepository $nationalities,
         private readonly EntityManagerInterface $em,
@@ -237,7 +238,7 @@ class CheckinController extends AbstractController
 
     private function resolveReservation(string $token): Reservation
     {
-        $reservation = $this->reservations->findOneBy(['checkinToken' => $token]);
+        $reservation = $this->access->reservationForToken($token);
         if ($reservation === null) {
             throw new NotFoundHttpException();
         }

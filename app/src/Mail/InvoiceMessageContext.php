@@ -16,8 +16,8 @@ use App\Entity\Reservation;
 use App\Enum\InvoiceType;
 use App\Formatting\GuestDate;
 use App\Formatting\Money;
+use App\Invoice\PaymentQrLinks;
 use App\Repository\InvoiceRepository;
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 /**
  * Hodnoty proměnných `invoice_*` pro zprávu, která veze fakturu. Čte je z
@@ -50,7 +50,7 @@ final class InvoiceMessageContext
     private const RESERVATION_INVOICE_TYPES = [InvoiceType::FINAL, InvoiceType::FULL];
 
     public function __construct(
-        private readonly UrlGeneratorInterface $urlGenerator,
+        private readonly PaymentQrLinks $qrLinks,
         private readonly GuestLocaleResolver $guestLocale,
         private readonly InvoiceRepository $invoices,
     ) {
@@ -126,17 +126,10 @@ final class InvoiceMessageContext
     private function qr(Invoice $invoice): string
     {
         $id = $invoice->getId();
-        $token = $invoice->getReservation()->getCheckinToken();
-        if ($invoice->getPaidAt() !== null || $invoice->getQrPayload() === null || $id === null || $token === null) {
+        if ($invoice->getPaidAt() !== null || $invoice->getQrPayload() === null || $id === null) {
             return '';
         }
 
-        $url = $this->urlGenerator->generate(
-            'qr_invoice',
-            ['token' => $token, 'id' => $id],
-            UrlGeneratorInterface::ABSOLUTE_URL,
-        );
-
-        return sprintf('![QR platba faktury](%s)', $url);
+        return sprintf('![QR platba faktury](%s)', $this->qrLinks->invoiceUrl($id));
     }
 }

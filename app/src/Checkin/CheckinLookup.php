@@ -12,10 +12,8 @@ declare(strict_types=1);
 namespace App\Checkin;
 
 use App\Entity\Reservation;
-use App\Enum\ReservationStatus;
 use App\Formatting\PersonName;
 use App\Repository\ReservationRepository;
-use Psr\Clock\ClockInterface;
 
 /**
  * Vstup do online check-inu bez tokenu: host zadá kód rezervace a své příjmení.
@@ -27,12 +25,6 @@ use Psr\Clock\ClockInterface;
  */
 final class CheckinLookup
 {
-    /** Jak dlouho před příjezdem má smysl check-in otevírat. */
-    private const OPENS_BEFORE_CHECK_IN = 180;
-
-    /** Jak dlouho po odjezdu ještě jde dohledat (Ubyport hlásíme do 3 dnů). */
-    private const CLOSES_AFTER_CHECK_OUT = 7;
-
     /** Kratší kód by hledání zbytečně rozšířil na náhodné shody. */
     private const MIN_CODE_LENGTH = 3;
 
@@ -41,7 +33,7 @@ final class CheckinLookup
 
     public function __construct(
         private readonly ReservationRepository $reservations,
-        private readonly ClockInterface $clock,
+        private readonly CheckinWindow $window,
     ) {
     }
 
@@ -55,9 +47,8 @@ final class CheckinLookup
             return null;
         }
 
-        $today = $this->clock->now()->setTime(0, 0);
         foreach ($this->reservations->findByGuestCode($code) as $reservation) {
-            if ($this->matches($reservation, $lastName, $today)) {
+            if ($this->matches($reservation, $lastName)) {
                 return $reservation;
             }
         }
@@ -65,21 +56,11 @@ final class CheckinLookup
         return null;
     }
 
-    private function matches(Reservation $reservation, string $lastName, \DateTimeImmutable $today): bool
+    private function matches(Reservation $reservation, string $lastName): bool
     {
         return $reservation->getCheckinToken() !== null
-            && $reservation->getStatus() !== ReservationStatus::CANCELLED
-            && $this->isWithinStayWindow($reservation, $today)
+            && $this->window->allowsLookup($reservation)
             && $this->hasLastName($reservation, $lastName);
-    }
-
-    private function isWithinStayWindow(Reservation $reservation, \DateTimeImmutable $today): bool
-    {
-        $opens = $reservation->getCheckIn()->modify('-' . self::OPENS_BEFORE_CHECK_IN . ' days');
-        $closes = ($reservation->getCheckOut() ?? $reservation->getCheckIn())
-            ->modify('+' . self::CLOSES_AFTER_CHECK_OUT . ' days');
-
-        return $today >= $opens && $today <= $closes;
     }
 
     /** Příjmení = poslední slovo (nebo slova) jména hosta, bez ohledu na diakritiku. */

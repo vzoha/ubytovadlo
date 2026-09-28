@@ -16,9 +16,11 @@ use App\Entity\Reservation;
 use App\Enum\Channel;
 use App\Enum\InvoiceType;
 use App\Enum\PaymentMethod;
+use App\Invoice\PaymentQrLinks;
 use App\Mail\GuestLocaleResolver;
 use App\Mail\InvoiceMessageContext;
 use App\Repository\InvoiceRepository;
+use App\Security\PublicLinkSigner;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
@@ -148,7 +150,7 @@ final class InvoiceMessageContextTest extends TestCase
         $url = $this->createStub(UrlGeneratorInterface::class);
         $url->method('generate')->willReturn('https://app.example.com/qr/faktura/token/1.png');
 
-        return new InvoiceMessageContext($url, new GuestLocaleResolver(), $invoices ?? $this->createStub(InvoiceRepository::class));
+        return new InvoiceMessageContext(new PaymentQrLinks($url, new PublicLinkSigner('test-secret')), new GuestLocaleResolver(), $invoices ?? $this->createStub(InvoiceRepository::class));
     }
 
     private function invoice(Channel $channel = Channel::WEB): Invoice
