@@ -93,6 +93,17 @@ final class InvoiceLinkControllerTest extends WebTestCase
         self::assertNotNull($this->link()->getLastOpenedAt());
     }
 
+    /** Z nabídky je hned vidět, jestli jde o zálohu, nebo doplatek. */
+    public function testMenuSaysWhichInvoiceIsTheBalance(): void
+    {
+        $invoice = $this->invoice();
+        $crawler = $this->login()->request('GET', '/reservation/' . $invoice->getReservation()->getId());
+
+        $labels = $crawler->filter('form[action$="/invoice/' . $invoice->getId() . '/zprava"] button')->each(static fn ($b): string => trim($b->text()));
+
+        self::assertContains('Faktura na doplatek 2026099', $labels);
+    }
+
     public function testSmsOpensWithTextAndRecordsChannel(): void
     {
         $location = $this->send($this->invoice(), 'sms');

@@ -10,7 +10,8 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 - **Faktura a připomínka doplatku přes WhatsApp, SMS a chat.** Menu *Předvyplnit šablonou*
   u WhatsAppu a SMS v kartě hosta i okno *Zpráva do chatu* nabízí vedle rychlých zpráv
-  *Faktura …* (každá vystavená faktura s PDF) a *Připomínka doplatku* (když je co doplácet).
+  *Faktura na zálohu …*, *Faktura na doplatek …* či *Faktura …* (každá vystavená faktura
+  s PDF) a *Připomínka doplatku* (když je co doplácet).
   Text v jazyce hosta nese odkaz na PDF faktury a u nezaplacené částky účet a variabilní
   symbol; WhatsApp či SMS se otevře s textem připraveným k odeslání. Odkaz otevře jen PDF té
   faktury, platí 60 dní a dokud platí, posílá se znovu tentýž. Pod fakturami je vidět, do kdy

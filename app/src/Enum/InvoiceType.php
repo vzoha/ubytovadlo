@@ -25,4 +25,14 @@ enum InvoiceType: string
             self::FULL => 'Faktura',
         };
     }
+
+    /** Krátký název do nabídky zpráv hostovi — ať je hned vidět, co host platí. */
+    public function messageLabel(): string
+    {
+        return match ($this) {
+            self::DEPOSIT => 'Faktura na zálohu',
+            self::FINAL => 'Faktura na doplatek',
+            self::FULL => 'Faktura',
+        };
+    }
 }

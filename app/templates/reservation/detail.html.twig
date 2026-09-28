@@ -8,7 +8,7 @@
     {% for inv in invoices ?? [] %}
         {% if inv.pdfPath %}
             {% set payment_messages = payment_messages|merge([{
-                label: 'Faktura ' ~ inv.number,
+                label: inv.type.messageLabel ~ ' ' ~ inv.number,
                 url: path('invoice_guest_message', {id: inv.id}),
                 token: csrf_token('invoice-message-' ~ inv.id),
             }]) %}
