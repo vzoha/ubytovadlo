@@ -137,6 +137,20 @@ final readonly class TimelineItem
         return $this->action?->getStatus();
     }
 
+    /**
+     * Jak uzavřená akce dopadla (komu zpráva odešla, proč se přeskočila). Tečku
+     * na konci věty osa nepotřebuje, řádek pokračuje dalšími doplňky.
+     */
+    public function result(): ?string
+    {
+        if ($this->action === null || $this->isOpenAction()) {
+            return null;
+        }
+        $result = rtrim((string) $this->action->getResult(), '. ');
+
+        return $result === '' ? null : $result;
+    }
+
     /** Akce, která je stále otevřená (PLANNED) → v UI nabídnout odložit/zrušit/spustit. */
     public function isOpenAction(): bool
     {

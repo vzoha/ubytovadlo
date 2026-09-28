@@ -38,8 +38,10 @@
                             {% if item.body %}<div class="small">{{ item.body|nl2br }}</div>{% endif %}
                             {# Zastavené odesílání je překvapivý stav — rovnou řekni proč a kde se mění. #}
                             {% if item.outlook and item.outlook.isBlocked %}<div class="text-muted small">{{ item.outlook.hint }}</div>{% endif %}
-                            {% if item.meta or item.outlook %}
+                            {% if item.meta or item.outlook or item.result %}
                                 <div class="text-muted small">
+                                    {#- Na úzkém displeji jde výsledek na vlastní řádek místo oddělovače. -#}
+                                    {%- if item.result %}<span class="d-block d-sm-inline">{{ item.result }}</span>{% if item.meta %}<span class="d-none d-sm-inline"> · </span>{% endif %}{% endif -%}
                                     {%- if item.outlook and not item.outlook.isBlocked %}<span title="{{ item.outlook.hint }}">{{ item.outlook.label }}</span>{% if item.meta %} · {% endif %}{% endif -%}
                                     {{- item.meta -}}
                                 </div>

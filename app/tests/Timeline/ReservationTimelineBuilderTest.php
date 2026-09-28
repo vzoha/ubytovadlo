@@ -100,6 +100,7 @@ final class ReservationTimelineBuilderTest extends KernelTestCase
             1,
         );
         self::assertStringContainsString('plánováno', (string) $actionItem->meta);
+        self::assertSame('Vyřízeno ručně', $actionItem->result());
     }
 
     public function testMessageToOtaGuestWithoutEmailGoesByChat(): void
@@ -239,6 +240,7 @@ final class ReservationTimelineBuilderTest extends KernelTestCase
 
         self::assertSame($when->getTimestamp(), $actionItem->at->getTimestamp());
         self::assertStringNotContainsString('plánováno', (string) $actionItem->meta);
+        self::assertNull($actionItem->result());
     }
 
     /**

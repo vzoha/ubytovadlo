@@ -68,6 +68,10 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Změněno
 
+- **Výsledek akce na časové ose.** Uzavřená akce ukazuje pod nadpisem, jak dopadla —
+  komu zpráva odešla, proč se přeskočila nebo proč odeslání selhalo. Na mobilu stojí
+  výsledek na vlastním řádku.
+
 - **Výchozí texty zpráv hostům.** Žádost o zálohu nese celkovou cenu a větu o tom, do kdy
   termín platí; potvrzení a zpráva před příjezdem adresu ubytování a místo na pokyny k cestě
   a klíčům; zpráva před odjezdem místo na pravidla předání; připomínka doplatku číslo účtu,
