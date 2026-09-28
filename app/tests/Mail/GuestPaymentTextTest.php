@@ -130,7 +130,7 @@ final class GuestPaymentTextTest extends TestCase
 
     private function issued(): IssuedInvoiceLink
     {
-        $link = new InvoiceLink($this->invoice(), str_repeat('0', 64), new \DateTimeImmutable('2026-09-28'), new \DateTimeImmutable('2026-11-27'));
+        $link = new InvoiceLink($this->invoice(), str_repeat('0', 64), null, new \DateTimeImmutable('2026-09-28'), new \DateTimeImmutable('2026-11-27'));
 
         return new IssuedInvoiceLink($link, self::URL);
     }

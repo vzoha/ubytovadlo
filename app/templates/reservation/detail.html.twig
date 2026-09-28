@@ -3,6 +3,25 @@
 {% block title %}Rezervace #{{ reservation.id }}{% endblock %}
 
 {% block body %}
+    {#- Zprávy o platbě pro WhatsApp, SMS a chat — text s odkazem na PDF složí server. -#}
+    {% set payment_messages = [] %}
+    {% for inv in invoices ?? [] %}
+        {% if inv.pdfPath %}
+            {% set payment_messages = payment_messages|merge([{
+                label: 'Faktura ' ~ inv.number,
+                url: path('invoice_guest_message', {id: inv.id}),
+                token: csrf_token('invoice-message-' ~ inv.id),
+            }]) %}
+        {% endif %}
+    {% endfor %}
+    {% if balance and not balance.settled %}
+        {% set payment_messages = payment_messages|merge([{
+            label: 'Připomínka doplatku',
+            url: path('balance_reminder_message', {id: reservation.id}),
+            token: csrf_token('balance-reminder-' ~ reservation.id),
+        }]) %}
+    {% endif %}
+    {% set guest_texts = quick_messages is not empty or payment_messages is not empty %}
     <a href="{{ path('reservation_list') }}" class="text-decoration-none small">← Rezervace</a>
     <div class="d-flex justify-content-between align-items-start mb-3 gap-2 flex-wrap">
         <div>
@@ -183,33 +202,35 @@
                         {% endif %}
                     </dl>
 
-                    {% if phone or reservation.guestContact.hasEmail or quick_messages is not empty %}
+                    {% if phone or reservation.guestContact.hasEmail or guest_texts %}
                         <div class="d-flex gap-2 flex-wrap mt-3">
                             {% if phone %}
                                 <a href="tel:{{ phone.e164 }}" class="btn btn-sm btn-outline-primary">📞 Volat</a>
 
                                 <div class="btn-group">
                                     <a href="https://wa.me/{{ phone.whatsapp }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-success">WhatsApp</a>
-                                    {% if quick_messages is not empty %}
+                                    {% if guest_texts %}
                                         <button type="button" class="btn btn-sm btn-outline-success dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false"><span class="visually-hidden">Předvyplnit šablonou</span></button>
                                         <ul class="dropdown-menu">
                                             <li><h6 class="dropdown-header">Předvyplnit šablonou</h6></li>
                                             {% for m in quick_messages %}
                                                 <li><a class="dropdown-item" href="https://wa.me/{{ phone.whatsapp }}?text={{ m.text|url_encode }}" target="_blank" rel="noopener">{{ m.label }}</a></li>
                                             {% endfor %}
+                                            {{ include('reservation/_payment_message_items.html.twig', {channel: 'whatsapp'}) }}
                                         </ul>
                                     {% endif %}
                                 </div>
 
                                 <div class="btn-group">
                                     <a href="sms:{{ phone.e164 }}" class="btn btn-sm btn-outline-primary">💬 SMS</a>
-                                    {% if quick_messages is not empty %}
+                                    {% if guest_texts %}
                                         <button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false"><span class="visually-hidden">Předvyplnit šablonou</span></button>
                                         <ul class="dropdown-menu">
                                             <li><h6 class="dropdown-header">Předvyplnit šablonou</h6></li>
                                             {% for m in quick_messages %}
                                                 <li><a class="dropdown-item" href="sms:{{ phone.e164 }}?body={{ m.text|url_encode }}">{{ m.label }}</a></li>
                                             {% endfor %}
+                                            {{ include('reservation/_payment_message_items.html.twig', {channel: 'sms'}) }}
                                         </ul>
                                     {% endif %}
                                 </div>
@@ -217,7 +238,7 @@
                             {% if reservation.guestContact.deliveryEmail %}
                                 <a href="mailto:{{ reservation.guestContact.deliveryEmail }}" class="btn btn-sm btn-outline-primary">✉️ E-mail</a>
                             {% endif %}
-                            {% if quick_messages is not empty %}
+                            {% if guest_texts %}
                                 <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#chatMessage">Zpráva do chatu</button>
                             {% endif %}
                         </div>
@@ -647,7 +668,16 @@
                                 <td class="inv-actions text-end">
                                     <div class="d-flex gap-1 justify-content-end flex-wrap">
                                         <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editInvoice{{ inv.id }}">✎ Upravit</button>
-                                        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#sendInvoice{{ inv.id }}">Poslat</button>
+                                        {% if reservation.guestContact.hasEmail %}
+                                            <button type="button" class="btn btn-sm btn-outline-secondary"
+                                                    data-bs-toggle="modal" data-bs-target="#modalMessagePreview"
+                                                    data-preview-url="{{ path('invoice_message_preview', {id: inv.id}) }}">Náhled e-mailu</button>
+                                            <form method="post" action="{{ path('invoice_send_email', {id: inv.id}) }}"
+                                                  onsubmit="return confirm('{% if reservation.guestContact.deliversToPortal %}Faktura půjde na adresu portálu ({{ reservation.guestContact.deliveryEmail }}) — přílohu nemusí propustit. Poslat {{ inv.number }} přesto?{% else %}Poslat fakturu {{ inv.number }} hostovi na {{ reservation.guestContact.deliveryEmail }}?{% endif %}');">
+                                                <input type="hidden" name="_token" value="{{ csrf_token('invoice-email-' ~ inv.id) }}">
+                                                <button class="btn btn-sm btn-outline-primary">Poslat e-mailem</button>
+                                            </form>
+                                        {% endif %}
                                         {% if not inv.isPaid %}
                                             <form method="post" action="{{ path('invoice_mark_paid', {id: inv.id}) }}">
                                                 <input type="hidden" name="_token" value="{{ csrf_token('invoice-paid-' ~ inv.id) }}">
@@ -662,7 +692,7 @@
                     </table>
             {% endif %}
             {% for inv in invoices %}{% include 'invoice/_edit_modal.html.twig' with {invoice: inv} %}{% endfor %}
-            {% for inv in invoices %}{% include 'invoice/_send_modal.html.twig' with {invoice: inv} %}{% endfor %}
+            {% include 'invoice/_links.html.twig' %}
 
             <div class="mt-3 d-flex gap-2 flex-wrap">
                 {% set mode = reservation.billingMode %}
@@ -702,8 +732,7 @@
     {{ include('reservation/_timeline.html.twig') }}
     {{ include('reservation/_status_modals.html.twig') }}
     {% if stay_form %}{{ include('reservation/_stay_modal.html.twig', {form: stay_form}) }}{% endif %}
-    {% if quick_messages is not empty %}{{ include('reservation/_chat_message_modal.html.twig') }}{% endif %}
-    {{ include('send/_script.html.twig') }}
+    {% if guest_texts %}{{ include('reservation/_chat_message_modal.html.twig') }}{% endif %}
 {% endblock %}
 
 {% block stylesheets %}

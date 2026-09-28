@@ -17,8 +17,9 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * Veřejný odkaz na PDF jedné faktury (pro WhatsApp, SMS, chat). V databázi je
- * jen otisk tokenu — záloha databáze tak neobsahuje funkční odkazy. Odkaz
+ * Veřejný odkaz na PDF jedné faktury (pro WhatsApp, SMS, chat). Token se hledá
+ * podle otisku a pro opakované použití je uložený zašifrovaný klíčem úložiště
+ * přístupů — záloha databáze bez klíče tak neobsahuje funkční odkazy. Odkaz
  * platí omezenou dobu a jde ho zrušit.
  */
 #[ORM\Entity(repositoryClass: InvoiceLinkRepository::class)]
@@ -39,6 +40,10 @@ class InvoiceLink
     #[ORM\Column(length: 64)]
     private string $tokenHash;
 
+    /** Token zašifrovaný CredentialCipher; null bez nastaveného klíče (odkaz pak nejde použít znovu). */
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $tokenEncrypted = null;
+
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeImmutable $createdAt;
 
@@ -54,10 +59,11 @@ class InvoiceLink
     #[ORM\Column(length: 16, nullable: true, enumType: ShareChannel::class)]
     private ?ShareChannel $channel = null;
 
-    public function __construct(Invoice $invoice, string $tokenHash, \DateTimeImmutable $createdAt, \DateTimeImmutable $expiresAt)
+    public function __construct(Invoice $invoice, string $tokenHash, ?string $tokenEncrypted, \DateTimeImmutable $createdAt, \DateTimeImmutable $expiresAt)
     {
         $this->invoice = $invoice;
         $this->tokenHash = $tokenHash;
+        $this->tokenEncrypted = $tokenEncrypted;
         $this->createdAt = $createdAt;
         $this->expiresAt = $expiresAt;
     }
@@ -70,6 +76,11 @@ class InvoiceLink
     public function getInvoice(): Invoice
     {
         return $this->invoice;
+    }
+
+    public function getTokenEncrypted(): ?string
+    {
+        return $this->tokenEncrypted;
     }
 
     public function getCreatedAt(): \DateTimeImmutable

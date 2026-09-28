@@ -12,22 +12,27 @@ declare(strict_types=1);
 namespace App\Mail;
 
 use App\Entity\Reservation;
+use App\Enum\ShareChannel;
 use App\ValueObject\PhoneNumber;
 
 /**
- * Základ odkazů na WhatsApp a SMS hosta. Text zprávy jde před odesláním
- * upravit, parametr s textem proto doplní až prohlížeč.
+ * Odkaz, který otevře WhatsApp nebo SMS na telefon hosta s předvyplněným
+ * textem. Text se dá upravit ještě v aplikaci před odesláním.
  */
 final class GuestPhoneLinks
 {
-    /** @return array{whatsapp: ?string, sms: ?string} */
-    public static function forReservation(Reservation $reservation): array
+    /** null, když host nemá použitelné číslo nebo kanál nejde přes telefon. */
+    public static function compose(Reservation $reservation, ShareChannel $channel, string $text): ?string
     {
         $phone = PhoneNumber::tryFromString($reservation->getGuestContact()->getPhone());
+        if ($phone === null) {
+            return null;
+        }
 
-        return [
-            'whatsapp' => $phone !== null ? 'https://wa.me/' . $phone->whatsapp() : null,
-            'sms' => $phone !== null ? 'sms:' . $phone->e164() : null,
-        ];
+        return match ($channel) {
+            ShareChannel::WHATSAPP => 'https://wa.me/' . $phone->whatsapp() . '?text=' . rawurlencode($text),
+            ShareChannel::SMS => 'sms:' . $phone->e164() . '?body=' . rawurlencode($text),
+            default => null,
+        };
     }
 }

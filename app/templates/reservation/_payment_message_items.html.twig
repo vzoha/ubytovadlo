@@ -1,0 +1,17 @@
+{#
+    Položky „Faktura …" a „Připomínka doplatku" do menu u WhatsAppu a SMS. Text
+    s odkazem na PDF složí server a přesměruje do aplikace.
+    Očekává: payment_messages, channel ('whatsapp' | 'sms').
+#}
+{% if payment_messages is not empty %}
+    {% if quick_messages is not empty %}<li><hr class="dropdown-divider"></li>{% endif %}
+    {% for m in payment_messages %}
+        <li>
+            <form method="post" action="{{ m.url }}"{% if channel == 'whatsapp' %} target="_blank"{% endif %}>
+                <input type="hidden" name="_token" value="{{ m.token }}">
+                <input type="hidden" name="channel" value="{{ channel }}">
+                <button class="dropdown-item">{{ m.label }}</button>
+            </form>
+        </li>
+    {% endfor %}
+{% endif %}

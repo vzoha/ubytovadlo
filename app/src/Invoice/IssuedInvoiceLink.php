@@ -13,7 +13,7 @@ namespace App\Invoice;
 
 use App\Entity\InvoiceLink;
 
-/** Právě vytvořený odkaz — URL s tokenem existuje jen v tuhle chvíli, v DB je otisk. */
+/** Odkaz na fakturu i s URL — ta nese token, který v databázi leží jen jako otisk a šifra. */
 final class IssuedInvoiceLink
 {
     public function __construct(

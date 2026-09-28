@@ -1,4 +1,4 @@
-{# Text zprávy k vložení do chatu portálu. Očekává: reservation, quick_messages, extranet. #}
+{# Text zprávy k vložení do chatu portálu. Očekává: reservation, quick_messages, payment_messages, extranet. #}
 <div class="modal fade" id="chatMessage" tabindex="-1" aria-labelledby="chatMessageLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
         <div class="modal-content">
@@ -14,10 +14,14 @@
                     {% for m in quick_messages %}
                         <option value="{{ loop.index0 }}">{{ m.label }}</option>
                     {% endfor %}
+                    {# Text s odkazem na fakturu složí server až při výběru. #}
+                    {% for m in payment_messages %}
+                        <option value="payment-{{ loop.index0 }}" data-url="{{ m.url }}" data-token="{{ m.token }}">{{ m.label }}</option>
+                    {% endfor %}
                 </select>
 
                 <label class="form-label" for="chat-message-text">Text</label>
-                <textarea class="form-control" id="chat-message-text" rows="8">{{ quick_messages|first.text }}</textarea>
+                <textarea class="form-control" id="chat-message-text" rows="8">{{ quick_messages is not empty ? quick_messages|first.text }}</textarea>
             </div>
             <div class="modal-footer justify-content-between">
                 {% if extranet %}
@@ -50,8 +54,32 @@
         const ACTION = 'action';
         let actionText = '';
 
-        function fill() {
-            text.value = select.value === ACTION ? actionText : quick[select.value].text;
+        // Zprávu o platbě (vytvoří odkaz na fakturu) načte až výběr v seznamu, ne otevření okna.
+        async function fill(chosen) {
+            if (select.value === ACTION) {
+                text.value = actionText;
+                return;
+            }
+            const option = select.selectedOptions[0];
+            if (!option || !option.dataset.url) {
+                text.value = option ? quick[select.value].text : '';
+                return;
+            }
+            if (!chosen) {
+                text.value = '';
+                return;
+            }
+            text.value = '…';
+            const body = new FormData();
+            body.append('_token', option.dataset.token);
+            body.append('channel', 'copy');
+            try {
+                const res = await fetch(option.dataset.url, {method: 'POST', body: body});
+                const data = await res.json();
+                text.value = res.ok ? data.text : (data.error || 'Text se nepodařilo připravit.');
+            } catch (e) {
+                text.value = 'Text se nepodařilo připravit.';
+            }
         }
 
         function dropActionOption() {
@@ -59,7 +87,7 @@
             if (option) option.remove();
         }
 
-        select.addEventListener('change', fill);
+        select.addEventListener('change', function () { fill(true); });
 
         modal.addEventListener('show.bs.modal', async function (event) {
             const source = event.relatedTarget ? event.relatedTarget.dataset : {};

@@ -12,12 +12,12 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Controller\Concern\ChecksCsrf;
+use App\Controller\Concern\RespondsWithGuestText;
 use App\Entity\Invoice;
 use App\Entity\InvoiceLink;
 use App\Enum\ShareChannel;
 use App\Invoice\InvoiceLinks;
 use App\Mail\GuestPaymentText;
-use App\Mail\GuestPhoneLinks;
 use App\Storage\PdfStorage;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -29,13 +29,13 @@ use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\Routing\Attribute\Route;
 
 /**
- * Sdílení faktury odkazem (WhatsApp, SMS, chat). Majitel odkaz vytvoří
- * a dostane k němu hotový text zprávy; host přes odkaz otevře jen PDF té
- * jedné faktury, dokud odkaz platí.
+ * Faktura odkazem (WhatsApp, SMS, chat). Majitel pošle hotový text s odkazem
+ * na PDF; host přes odkaz otevře jen PDF té jedné faktury, dokud odkaz platí.
  */
 final class InvoiceLinkController extends AbstractController
 {
     use ChecksCsrf;
+    use RespondsWithGuestText;
 
     public function __construct(
         private readonly InvoiceLinks $links,
@@ -45,43 +45,35 @@ final class InvoiceLinkController extends AbstractController
     ) {
     }
 
-    #[Route('/invoice/{id}/odkaz', name: 'invoice_link_create', methods: ['POST'], requirements: ['id' => '\d+'])]
-    public function create(Invoice $invoice, Request $request): JsonResponse
+    /**
+     * Zpráva s fakturou pro WhatsApp, SMS nebo chat. Použije platný odkaz,
+     * jinak vytvoří nový.
+     */
+    #[Route('/invoice/{id}/zprava', name: 'invoice_guest_message', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function message(Invoice $invoice, Request $request): Response
     {
-        $this->assertCsrf($request, 'invoice-link-' . $invoice->getId());
+        $this->assertCsrf($request, 'invoice-message-' . $invoice->getId());
+        $channel = $this->channel($request);
+        $reservation = $invoice->getReservation();
 
         if ($this->pdfPath($invoice) === null) {
-            return new JsonResponse(['error' => sprintf('Faktura %s nemá vygenerované PDF.', $invoice->getNumber())], Response::HTTP_UNPROCESSABLE_ENTITY);
+            $error = sprintf('Faktura %s nemá vygenerované PDF.', $invoice->getNumber());
+            if ($channel === ShareChannel::COPY) {
+                return new JsonResponse(['error' => $error], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+            $this->addFlash('danger', $error);
+
+            return $this->redirectToRoute('reservation_detail', ['id' => $reservation->getId()]);
         }
 
-        $issued = $this->links->issue($invoice);
-        $text = $this->texts->invoice($invoice, $issued);
-
-        return new JsonResponse([
-            'id' => $issued->link->getId(),
-            'url' => $issued->url,
-            'text' => $text,
-            'expires' => $issued->link->getExpiresAt()->format('j. n. Y'),
-            ...GuestPhoneLinks::forReservation($invoice->getReservation()),
-            'sentUrl' => $this->generateUrl('invoice_link_sent', ['id' => $issued->link->getId()]),
-        ]);
-    }
-
-    /** Majitel zvolil kanál — zapíše se, kudy odkaz odešel. */
-    #[Route('/invoice-link/{id}/odeslano', name: 'invoice_link_sent', methods: ['POST'], requirements: ['id' => '\d+'])]
-    public function sent(InvoiceLink $link, Request $request): Response
-    {
-        $this->assertCsrf($request, 'invoice-link-sent');
-
-        $channel = ShareChannel::tryFrom((string) $request->request->get('channel'));
-        if ($channel === null) {
-            return new Response(null, Response::HTTP_BAD_REQUEST);
+        $issued = $this->links->obtain($invoice);
+        // Text pro chat se jen připraví — kudy odešel, zapíšeme u WhatsAppu a SMS.
+        if ($channel !== ShareChannel::COPY) {
+            $issued->link->markSentVia($channel);
+            $this->em->flush();
         }
 
-        $link->markSentVia($channel);
-        $this->em->flush();
-
-        return new Response(null, Response::HTTP_NO_CONTENT);
+        return $this->guestTextResponse($reservation, $channel, $this->texts->invoice($invoice, $issued));
     }
 
     #[Route('/invoice-link/{id}/zrusit', name: 'invoice_link_revoke', methods: ['POST'], requirements: ['id' => '\d+'])]

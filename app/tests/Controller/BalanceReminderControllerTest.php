@@ -22,7 +22,6 @@ use App\Enum\ActionStatus;
 use App\Enum\ActionType;
 use App\Enum\Channel;
 use App\Enum\InvoiceType;
-use App\Enum\ShareChannel;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -81,46 +80,59 @@ final class BalanceReminderControllerTest extends WebTestCase
         $this->em->createQuery('DELETE FROM ' . Reservation::class . ' r')->execute();
     }
 
-    public function testTextWithUnpaidInvoiceCarriesLink(): void
+    public function testWhatsappWithUnpaidInvoiceCarriesLinkAndClosesReminder(): void
     {
         $action = $this->reminder();
         $this->invoice($action->getReservation());
 
-        $data = $this->prepare($action);
+        $location = $this->send($action->getReservation(), 'whatsapp');
 
-        self::assertNotNull($data['url']);
-        self::assertStringContainsString('připomínáme doplatek', $data['text']);
-        self::assertStringContainsString((string) $data['url'], $data['text']);
-        self::assertSame('https://wa.me/420776123456', $data['whatsapp']);
-        self::assertNotNull($data['sentUrl']);
-    }
-
-    public function testTextWithoutInvoiceHasNoLink(): void
-    {
-        $data = $this->prepare($this->reminder());
-
-        self::assertNull($data['url']);
-        self::assertNull($data['sentUrl']);
-        self::assertStringContainsString('připomínáme doplatek', $data['text']);
-        self::assertSame(0, (int) $this->em->getConnection()->fetchOne('SELECT COUNT(*) FROM invoice_link'));
-    }
-
-    public function testSendingClosesReminderAndItCanBeReopened(): void
-    {
-        $action = $this->reminder();
-
-        $this->client->request('POST', '/reservation/action/' . $action->getId() . '/odeslano', [
-            '_token' => $this->token($action),
-            'channel' => ShareChannel::WHATSAPP->value,
-        ]);
-        self::assertResponseStatusCodeSame(Response::HTTP_NO_CONTENT);
+        self::assertStringStartsWith('https://wa.me/420776123456?text=', $location);
+        $text = $this->textOf($location);
+        self::assertStringContainsString('připomínáme doplatek', $text);
+        self::assertStringContainsString('/f/', $text);
 
         $closed = $this->reload($action);
         self::assertSame(ActionStatus::DONE, $closed->getStatus());
         self::assertSame(ActionDelivery::MANUAL, $closed->getDelivery());
         self::assertSame('Odesláno přes WhatsApp.', $closed->getResult());
+    }
 
-        $crawler = $this->client->request('GET', '/reservation/' . $closed->getReservation()->getId());
+    public function testWithoutInvoiceTextHasNoLink(): void
+    {
+        $action = $this->reminder();
+
+        $text = $this->textOf($this->send($action->getReservation(), 'sms'));
+
+        self::assertStringContainsString('připomínáme doplatek', $text);
+        self::assertStringNotContainsString('/f/', $text);
+        self::assertSame(0, (int) $this->em->getConnection()->fetchOne('SELECT COUNT(*) FROM invoice_link'));
+        self::assertSame('Odesláno SMS.', $this->reload($action)->getResult());
+    }
+
+    /** Z chatu appka odeslání nevidí — připomínka zůstane otevřená. */
+    public function testChatTextLeavesReminderOpen(): void
+    {
+        $action = $this->reminder();
+
+        $this->client->request('POST', '/reservation/' . $action->getReservation()->getId() . '/pripominka-doplatku', [
+            '_token' => $this->token($action->getReservation()),
+            'channel' => 'copy',
+        ]);
+
+        self::assertResponseIsSuccessful();
+        /** @var array{text: string} $data */
+        $data = json_decode((string) $this->client->getResponse()->getContent(), true);
+        self::assertStringContainsString('připomínáme doplatek', $data['text']);
+        self::assertSame(ActionStatus::PLANNED, $this->reload($action)->getStatus());
+    }
+
+    public function testClosedReminderCanBeReopened(): void
+    {
+        $action = $this->reminder();
+        $this->send($action->getReservation(), 'whatsapp');
+
+        $crawler = $this->client->request('GET', '/reservation/' . $action->getReservation()->getId());
         $form = $crawler->filter('form[action$="/reservation/action/' . $action->getId() . '/znovu-otevrit"]')->form();
         $this->client->submit($form);
         self::assertResponseRedirects();
@@ -133,43 +145,43 @@ final class BalanceReminderControllerTest extends WebTestCase
     public function testMailedReminderCannotBeReopened(): void
     {
         $action = $this->reminder();
-        $token = $this->token($action);
         $action->markDone('Odesláno.', ActionDelivery::EMAIL);
         $this->em->flush();
 
+        $crawler = $this->client->request('GET', '/reservation/' . $action->getReservation()->getId());
+        self::assertCount(0, $crawler->filter('form[action$="/znovu-otevrit"]'));
+
+        $token = (string) $crawler->filter('input[name="_token"]')->first()->attr('value');
         $this->client->request('POST', '/reservation/action/' . $action->getId() . '/znovu-otevrit', ['_token' => $token]);
 
-        self::assertResponseStatusCodeSame(Response::HTTP_NOT_FOUND);
+        self::assertResponseStatusCodeSame(Response::HTTP_FORBIDDEN);
     }
 
-    public function testOtherActionsHaveNoReminderText(): void
+    private function send(Reservation $reservation, string $channel): string
     {
-        $action = $this->reminder(ActionType::PRE_ARRIVAL_MESSAGE);
+        $this->client->request('POST', '/reservation/' . $reservation->getId() . '/pripominka-doplatku', [
+            '_token' => $this->token($reservation),
+            'channel' => $channel,
+        ]);
+        self::assertResponseStatusCodeSame(Response::HTTP_SEE_OTHER);
 
-        $this->client->request('POST', '/reservation/action/' . $action->getId() . '/pripominka', ['_token' => 'x']);
-
-        self::assertResponseStatusCodeSame(Response::HTTP_NOT_FOUND);
+        return (string) $this->client->getResponse()->headers->get('Location');
     }
 
-    /** @return array{url: ?string, text: string, whatsapp: ?string, sms: ?string, sentUrl: ?string} */
-    private function prepare(ReservationAction $action): array
+    /** Token z formuláře „Připomínka doplatku" v menu u WhatsAppu. */
+    private function token(Reservation $reservation): string
     {
-        $this->client->request('POST', '/reservation/action/' . $action->getId() . '/pripominka', ['_token' => $this->token($action)]);
+        $crawler = $this->client->request('GET', '/reservation/' . $reservation->getId());
         self::assertResponseIsSuccessful();
 
-        /** @var array{url: ?string, text: string, whatsapp: ?string, sms: ?string, sentUrl: ?string} $data */
-        $data = json_decode((string) $this->client->getResponse()->getContent(), true);
-
-        return $data;
+        return (string) $crawler->filter('form[action$="/pripominka-doplatku"] input[name="_token"]')->first()->attr('value');
     }
 
-    /** Token z okna „Poslat připomínku doplatku" v detailu rezervace. */
-    private function token(ReservationAction $action): string
+    private function textOf(string $location): string
     {
-        $crawler = $this->client->request('GET', '/reservation/' . $action->getReservation()->getId());
-        self::assertResponseIsSuccessful();
+        parse_str((string) parse_url($location, \PHP_URL_QUERY), $query);
 
-        return (string) $crawler->filter('#sendReminder' . $action->getId())->attr('data-text-token');
+        return (string) ($query['text'] ?? $query['body'] ?? '');
     }
 
     private function reload(ReservationAction $action): ReservationAction
@@ -183,7 +195,7 @@ final class BalanceReminderControllerTest extends WebTestCase
 
     private function reminder(ActionType $type = ActionType::BALANCE_REMINDER): ReservationAction
     {
-        $reservation = new Reservation(Channel::AIRBNB, new \DateTimeImmutable('+10 days'));
+        $reservation = new Reservation(Channel::WEB, new \DateTimeImmutable('+10 days'));
         $reservation->setCheckOut(new \DateTimeImmutable('+13 days'));
         $reservation->setGuestName('Připomínaný Host');
         $reservation->setPriceTotal('6000');

@@ -1,0 +1,24 @@
+{# Platné odkazy na faktury rezervace — kdy vyprší, kdy je host otevřel, zrušení. Očekává: invoices. #}
+{% set active_links = [] %}
+{% for inv in invoices %}
+    {% for item in invoice_links(inv) %}
+        {% if item.active %}{% set active_links = active_links|merge([item.link]) %}{% endif %}
+    {% endfor %}
+{% endfor %}
+{% if active_links is not empty %}
+    <ul class="list-unstyled small text-muted mb-2">
+        {% for link in active_links %}
+            <li class="d-flex flex-wrap gap-2 align-items-center">
+                <span>
+                    Odkaz na fakturu {{ link.invoice.number }}{% if link.channel %} ({{ link.channel.label }}){% endif %}
+                    platí do {{ link.expiresAt|date('d. m. Y') }}{% if link.lastOpenedAt %} · host otevřel {{ link.lastOpenedAt|date('d. m. Y H:i') }}{% endif %}
+                </span>
+                <form method="post" action="{{ path('invoice_link_revoke', {id: link.id}) }}"
+                      onsubmit="return confirm('Zrušit odkaz? Host fakturu přes něj už neotevře.');">
+                    <input type="hidden" name="_token" value="{{ csrf_token('invoice-link-revoke-' ~ link.id) }}">
+                    <button class="btn btn-sm btn-outline-danger py-0">Zrušit odkaz</button>
+                </form>
+            </li>
+        {% endfor %}
+    </ul>
+{% endif %}

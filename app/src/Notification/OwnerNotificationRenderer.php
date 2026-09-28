@@ -211,7 +211,7 @@ final class OwnerNotificationRenderer
         return new OwnerNotificationContent(
             'Připomínka doplatku k odeslání — ' . $this->reservationLabel($reservation),
             sprintf(
-                "Host %s ještě nedoplatil a připomínka neodejde sama. V detailu rezervace ji pošlete tlačítkem *Poslat* u připomínky na časové ose — e-mailem, přes WhatsApp, SMS nebo do chatu.\n\n%s",
+                "Host %s ještě nedoplatil a připomínka neodejde sama. V detailu rezervace ji pošlete e-mailem z časové osy, nebo přes WhatsApp či SMS v kartě hosta (*Předvyplnit šablonou → Připomínka doplatku*).\n\n%s",
                 $this->guestName($reservation),
                 $this->reservationButton($reservation, 'Otevřít rezervaci'),
             ),

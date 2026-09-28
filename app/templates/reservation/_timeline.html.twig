@@ -57,14 +57,10 @@
 
                             {% if item.isOpenAction %}
                                 <div class="d-flex gap-1 mt-1 flex-wrap align-items-center">
-                                    {% if item.action.type.value == 'balance_reminder' %}
-                                        {# Připomínka doplatku jde e-mailem i mimo poštu — jedno okno pro všechny kanály. #}
-                                        <button class="btn btn-outline-primary btn-sm py-0" type="button"
-                                                data-bs-toggle="modal" data-bs-target="#sendReminder{{ item.action.id }}">Poslat</button>
-                                    {% elseif item.action.type.sendsGuestMessage %}
+                                    {% if item.action.type.sendsGuestMessage %}
                                         {% if item.outlook and item.outlook.isChat %}
                                             {# Bez e-mailu vede komunikace přes chat portálu — text se zkopíruje a vloží tam. #}
-                                            {% if quick_messages is not empty %}
+                                            {% if guest_texts %}
                                                 <button class="btn btn-outline-primary btn-sm py-0" type="button"
                                                         data-bs-toggle="modal" data-bs-target="#chatMessage"
                                                         data-message-url="{{ path('reservation_action_preview', {id: item.action.id}) }}"
@@ -106,12 +102,6 @@
         {% endif %}
     </div>
 </div>
-
-{% for item in timeline %}
-    {% if item.isOpenAction and item.action.type.value == 'balance_reminder' %}
-        {{ include('reservation/_reminder_send_modal.html.twig', {action: item.action}) }}
-    {% endif %}
-{% endfor %}
 
 <div class="modal fade" id="modalNote" tabindex="-1" aria-labelledby="modalNoteLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">

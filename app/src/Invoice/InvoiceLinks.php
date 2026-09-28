@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Invoice;
 
+use App\Credential\CredentialCipher;
 use App\Entity\Invoice;
 use App\Entity\InvoiceLink;
 use App\Repository\InvoiceLinkRepository;
@@ -19,8 +20,9 @@ use Psr\Clock\ClockInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 /**
- * Veřejné odkazy na PDF faktury. Token (256 bitů) je jen v URL, v databázi
- * leží jeho sha256 otisk. Odkaz platí LIFETIME_DAYS dní a jde ho zrušit.
+ * Veřejné odkazy na PDF faktury. Token (256 bitů) se hledá podle sha256
+ * otisku; pro opakované odeslání je uložený i zašifrovaný. Odkaz platí
+ * LIFETIME_DAYS dní a jde ho zrušit.
  */
 final class InvoiceLinks
 {
@@ -34,21 +36,40 @@ final class InvoiceLinks
         private readonly EntityManagerInterface $em,
         private readonly UrlGeneratorInterface $urlGenerator,
         private readonly ClockInterface $clock,
+        private readonly CredentialCipher $cipher,
     ) {
+    }
+
+    /** Platný odkaz faktury, který jde poslat znovu; jinak nový. */
+    public function obtain(Invoice $invoice): IssuedInvoiceLink
+    {
+        $now = $this->clock->now();
+        foreach ($this->links->findForInvoice($invoice) as $link) {
+            $stored = $link->getTokenEncrypted();
+            $token = $link->isActive($now) && $stored !== null ? $this->cipher->decrypt($stored) : null;
+            if ($token !== null) {
+                return new IssuedInvoiceLink($link, $this->url($token));
+            }
+        }
+
+        return $this->issue($invoice);
     }
 
     public function issue(Invoice $invoice): IssuedInvoiceLink
     {
         $token = rtrim(strtr(base64_encode(random_bytes(32)), '+/', '-_'), '=');
         $now = $this->clock->now();
-        $link = new InvoiceLink($invoice, self::hash($token), $now, $now->modify('+' . self::LIFETIME_DAYS . ' days'));
+        $link = new InvoiceLink(
+            $invoice,
+            self::hash($token),
+            $this->cipher->isReady() ? $this->cipher->encrypt($token) : null,
+            $now,
+            $now->modify('+' . self::LIFETIME_DAYS . ' days'),
+        );
         $this->em->persist($link);
         $this->em->flush();
 
-        return new IssuedInvoiceLink(
-            $link,
-            $this->urlGenerator->generate('invoice_link_open', ['token' => $token], UrlGeneratorInterface::ABSOLUTE_URL),
-        );
+        return new IssuedInvoiceLink($link, $this->url($token));
     }
 
     /** Platný odkaz k tokenu (a zapíše otevření), jinak null — neznámý, vypršelý i zrušený vypadá stejně. */
@@ -75,6 +96,11 @@ final class InvoiceLinks
     {
         $link->revoke($this->clock->now());
         $this->em->flush();
+    }
+
+    private function url(string $token): string
+    {
+        return $this->urlGenerator->generate('invoice_link_open', ['token' => $token], UrlGeneratorInterface::ABSOLUTE_URL);
     }
 
     private static function hash(string $token): string

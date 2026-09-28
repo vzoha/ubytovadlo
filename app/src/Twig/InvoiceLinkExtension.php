@@ -15,21 +15,18 @@ use App\Entity\Invoice;
 use App\Entity\InvoiceLink;
 use App\Invoice\InvoiceLinks;
 use App\Repository\InvoiceLinkRepository;
-use App\Repository\InvoiceRepository;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFunction;
 
 /**
- * Data pro okna „Poslat": odkazy faktury
- * ({% for item in invoice_links(invoice) %}{{ item.link.expiresAt|date }} {{ item.active }}{% endfor %})
- * a nezaplacená faktura na doplatek ({{ balance_invoice(reservation).number }}).
+ * Odkazy faktury pro detail rezervace:
+ * {% for item in invoice_links(invoice) %}{{ item.link.expiresAt|date }} {{ item.active }}{% endfor %}.
  */
 class InvoiceLinkExtension extends AbstractExtension
 {
     public function __construct(
         private readonly InvoiceLinkRepository $repository,
         private readonly InvoiceLinks $links,
-        private readonly InvoiceRepository $invoices,
     ) {
     }
 
@@ -37,7 +34,6 @@ class InvoiceLinkExtension extends AbstractExtension
     {
         return [
             new TwigFunction('invoice_links', $this->forInvoice(...)),
-            new TwigFunction('balance_invoice', $this->invoices->findUnpaidBalanceInvoice(...)),
         ];
     }
 

@@ -8,23 +8,17 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Přidáno
 
-- **Připomínka doplatku e-mailem, přes WhatsApp, SMS nebo chat.** Otevřená připomínka
-  doplatku na časové ose má tlačítko *Poslat* se stejným oknem jako faktura: e-mail ze
-  šablony *Připomínka doplatku*, nebo text připomínky v jazyce hosta s platebními údaji
-  a odkazem na PDF nezaplacené faktury (bez vystavené faktury bez odkazu). Po odeslání
-  se připomínka uzavře a výsledek uvádí kanál („Odesláno přes WhatsApp.“). Ručně
-  uzavřenou zprávu jde tlačítkem *Znovu otevřít* vrátit mezi otevřené. Když připomínka
-  nemůže odejít sama (host bez e-mailu, šablona v ručním režimu), přijde ubytovateli
-  upozornění *Připomínka doplatku k odeslání*.
-
-- **Poslat fakturu e-mailem, přes WhatsApp, SMS nebo chat.** Každá faktura v detailu
-  rezervace má tlačítko *Poslat*. Otevře okno, ze kterého faktura odejde e-mailem
-  s PDF v příloze (s náhledem e-mailu), nebo odkazem: *Vytvořit odkaz* připraví text
-  zprávy v jazyce hosta s odkazem na PDF a u nezaplacené faktury i s platebními údaji.
-  Text jde upravit a poslat přes WhatsApp, SMS nebo zkopírovat do chatu portálu.
-  Odkaz otevře jen PDF té faktury, platí 60 dní a jde ho zrušit. Okno ukazuje vytvořené
-  odkazy, kudy odešly a kdy je host naposledy otevřel. V telefonu okno nabízí
-  *Sdílet PDF* — soubor odejde přímo, bez odkazu.
+- **Faktura a připomínka doplatku přes WhatsApp, SMS a chat.** Menu *Předvyplnit šablonou*
+  u WhatsAppu a SMS v kartě hosta i okno *Zpráva do chatu* nabízí vedle rychlých zpráv
+  *Faktura …* (každá vystavená faktura s PDF) a *Připomínka doplatku* (když je co doplácet).
+  Text v jazyce hosta nese odkaz na PDF faktury a u nezaplacené částky účet a variabilní
+  symbol; WhatsApp či SMS se otevře s textem připraveným k odeslání. Odkaz otevře jen PDF té
+  faktury, platí 60 dní a dokud platí, posílá se znovu tentýž. Pod fakturami je vidět, do kdy
+  odkaz platí a kdy ho host otevřel, a jde ho zrušit. Připomínka doplatku odeslaná přes
+  WhatsApp nebo SMS uzavře připomínku na časové ose s kanálem ve výsledku; ručně uzavřenou
+  zprávu jde tlačítkem *Znovu otevřít* vrátit mezi otevřené. Když připomínka nemůže odejít
+  sama (host bez e-mailu, šablona v ručním režimu), přijde ubytovateli upozornění
+  *Připomínka doplatku k odeslání*.
 
 - **Souhrn ekonomiky dle zdroje.** Souhrn na stránce *Ekonomika* má přepínač *Dle kanálu /
   Dle zdroje*. Zdroj je údaj „odkud nás zná“ z detailu rezervace. Hodnoty se sčítají bez
