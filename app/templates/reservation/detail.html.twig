@@ -214,7 +214,7 @@
                                         <ul class="dropdown-menu">
                                             <li><h6 class="dropdown-header">Předvyplnit šablonou</h6></li>
                                             {% for m in quick_messages %}
-                                                <li><a class="dropdown-item" href="https://wa.me/{{ phone.whatsapp }}?text={{ m.text|url_encode }}" target="_blank" rel="noopener">{{ m.label }}</a></li>
+                                                <li><a class="dropdown-item" href="https://wa.me/{{ phone.whatsapp }}?text={{ m.text|url_encode }}" target="_blank" rel="noopener" data-sent-channel="whatsapp" data-sent-label="{{ m.label }}">{{ m.label }}</a></li>
                                             {% endfor %}
                                             {{ include('reservation/_payment_message_items.html.twig', {channel: 'whatsapp'}) }}
                                         </ul>
@@ -228,7 +228,7 @@
                                         <ul class="dropdown-menu">
                                             <li><h6 class="dropdown-header">Předvyplnit šablonou</h6></li>
                                             {% for m in quick_messages %}
-                                                <li><a class="dropdown-item" href="sms:{{ phone.e164 }}?body={{ m.text|url_encode }}">{{ m.label }}</a></li>
+                                                <li><a class="dropdown-item" href="sms:{{ phone.e164 }}?body={{ m.text|url_encode }}" data-sent-channel="sms" data-sent-label="{{ m.label }}">{{ m.label }}</a></li>
                                             {% endfor %}
                                             {{ include('reservation/_payment_message_items.html.twig', {channel: 'sms'}) }}
                                         </ul>
@@ -777,6 +777,20 @@
 
 {% block javascripts %}
     <script>
+        // Rychlá zpráva otevřená ve WhatsAppu či SMS se zapíše na časovou osu.
+        window.recordSentMessage = function (channel, label) {
+            const body = new FormData();
+            body.append('_token', {{ csrf_token('sent-message-' ~ reservation.id)|json_encode|raw }});
+            body.append('channel', channel);
+            body.append('label', label);
+            navigator.sendBeacon({{ path('reservation_sent_message', {id: reservation.id})|json_encode|raw }}, body);
+        };
+        document.querySelectorAll('[data-sent-channel]').forEach(function (link) {
+            link.addEventListener('click', function () {
+                window.recordSentMessage(link.dataset.sentChannel, link.dataset.sentLabel);
+            });
+        });
+
         document.querySelectorAll('[data-copy]').forEach(function (btn) {
             btn.addEventListener('click', function () {
                 var input = document.querySelector(btn.dataset.copy);

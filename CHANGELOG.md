@@ -21,6 +21,11 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
   sama (host bez e-mailu, šablona v ručním režimu), přijde ubytovateli upozornění
   *Připomínka doplatku k odeslání*.
 
+- **Zprávy přes WhatsApp, SMS a chat na časové ose.** Rychlá zpráva, faktura či připomínka
+  otevřená z menu *Předvyplnit šablonou* nebo zkopírovaná z okna *Zpráva do chatu* se zapíše
+  na časovou osu rezervace jako *Zpráva* („WhatsApp: Faktura na doplatek 2026012“) i s tím,
+  kdo ji poslal.
+
 - **Souhrn ekonomiky dle zdroje.** Souhrn na stránce *Ekonomika* má přepínač *Dle kanálu /
   Dle zdroje*. Zdroj je údaj „odkud nás zná“ z detailu rezervace. Hodnoty se sčítají bez
   ohledu na velikost písmen a interpunkci („Booking“ i „Booking.com“ jsou jeden řádek).

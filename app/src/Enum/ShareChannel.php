@@ -28,6 +28,16 @@ enum ShareChannel: string
         };
     }
 
+    /** Záznam zprávy na časové ose — „WhatsApp: Uvítání". */
+    public function noteLabel(): string
+    {
+        return match ($this) {
+            self::WHATSAPP => 'WhatsApp',
+            self::SMS => 'SMS',
+            self::COPY => 'Zkopírováno do chatu',
+        };
+    }
+
     /** Výsledek akce na časové ose po odeslání tímhle kanálem. */
     public function sentResult(): string
     {

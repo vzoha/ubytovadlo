@@ -118,6 +118,13 @@
             }
         });
 
+        // Zkopírovaná šablona se zapíše na časovou osu; zpráva akce se zapíše uzavřením akce.
+        modal.querySelector('[data-copy="#chat-message-text"]').addEventListener('click', function () {
+            if (select.value !== ACTION && window.recordSentMessage) {
+                window.recordSentMessage('copy', select.selectedOptions[0].textContent);
+            }
+        });
+
         doneButton.addEventListener('click', function () {
             navigator.clipboard.writeText(text.value).then(function () {
                 doneForm.submit();

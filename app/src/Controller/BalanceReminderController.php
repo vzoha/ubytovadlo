@@ -24,6 +24,7 @@ use App\Mail\GuestPaymentText;
 use App\Repository\InvoiceRepository;
 use App\Repository\ReservationActionRepository;
 use App\Storage\PdfStorage;
+use App\Timeline\SentMessageRecorder;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -48,6 +49,7 @@ final class BalanceReminderController extends AbstractController
         private readonly GuestPaymentText $texts,
         private readonly PdfStorage $pdfStorage,
         private readonly EntityManagerInterface $em,
+        private readonly SentMessageRecorder $recorder,
     ) {
     }
 
@@ -64,7 +66,10 @@ final class BalanceReminderController extends AbstractController
         // Z chatu appka odeslání nevidí — tam připomínku uzavře ubytovatel sám.
         if ($channel !== ShareChannel::COPY) {
             $issued?->link->markSentVia($channel);
-            $this->closeOpenReminders($reservation, $channel);
+            // Uzavřená připomínka je na časové ose sama; jinak zprávu zapíšeme zvlášť.
+            if (!$this->closeOpenReminders($reservation, $channel)) {
+                $this->recorder->record($reservation, $channel, 'Připomínka doplatku');
+            }
             $this->em->flush();
         }
 
@@ -88,12 +93,17 @@ final class BalanceReminderController extends AbstractController
         return $this->redirectToRoute('reservation_detail', ['id' => $action->getReservation()->getId()]);
     }
 
-    private function closeOpenReminders(Reservation $reservation, ShareChannel $channel): void
+    /** true, když nějakou otevřenou připomínku uzavřela. */
+    private function closeOpenReminders(Reservation $reservation, ShareChannel $channel): bool
     {
+        $closed = false;
         foreach ($this->actions->findOpenForReservation($reservation) as $action) {
             if ($action->getType() === ActionType::BALANCE_REMINDER) {
                 $action->markDone($channel->sentResult(), ActionDelivery::MANUAL);
+                $closed = true;
             }
         }
+
+        return $closed;
     }
 }

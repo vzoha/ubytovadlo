@@ -15,6 +15,7 @@ use App\Entity\Embeddable\GuestContact;
 use App\Entity\Invoice;
 use App\Entity\InvoiceLink;
 use App\Entity\Reservation;
+use App\Entity\ReservationNote;
 use App\Entity\User;
 use App\Enum\Channel;
 use App\Enum\InvoiceType;
@@ -70,6 +71,7 @@ final class InvoiceLinkControllerTest extends WebTestCase
     {
         $this->em->createQuery('DELETE FROM ' . InvoiceLink::class . ' l')->execute();
         $this->em->createQuery('DELETE FROM ' . Invoice::class . ' i')->execute();
+        $this->em->createQuery('DELETE FROM ' . ReservationNote::class . ' n')->execute();
         $this->em->createQuery('DELETE FROM ' . Reservation::class . ' r')->execute();
     }
 
@@ -110,6 +112,16 @@ final class InvoiceLinkControllerTest extends WebTestCase
 
         self::assertStringStartsWith('sms:+420776123456?body=', $location);
         self::assertSame(ShareChannel::SMS, $this->link()->getChannel());
+    }
+
+    public function testWhatsappMessageLandsOnTimeline(): void
+    {
+        $invoice = $this->invoice();
+        $this->send($invoice, 'whatsapp');
+
+        $crawler = $this->client->request('GET', '/reservation/' . $invoice->getReservation()->getId());
+
+        self::assertStringContainsString('WhatsApp: Faktura na doplatek 2026099', $crawler->filter('.timeline')->text());
     }
 
     /** Text pro chat se jen připraví — kanál se nezapíše, odeslání appka nevidí. */

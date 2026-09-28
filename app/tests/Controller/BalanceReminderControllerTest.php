@@ -16,6 +16,7 @@ use App\Entity\Invoice;
 use App\Entity\InvoiceLink;
 use App\Entity\Reservation;
 use App\Entity\ReservationAction;
+use App\Entity\ReservationNote;
 use App\Entity\User;
 use App\Enum\ActionDelivery;
 use App\Enum\ActionStatus;
@@ -77,6 +78,7 @@ final class BalanceReminderControllerTest extends WebTestCase
         $this->em->createQuery('DELETE FROM ' . InvoiceLink::class . ' l')->execute();
         $this->em->createQuery('DELETE FROM ' . Invoice::class . ' i')->execute();
         $this->em->createQuery('DELETE FROM ' . ReservationAction::class . ' a')->execute();
+        $this->em->createQuery('DELETE FROM ' . ReservationNote::class . ' n')->execute();
         $this->em->createQuery('DELETE FROM ' . Reservation::class . ' r')->execute();
     }
 
@@ -108,6 +110,26 @@ final class BalanceReminderControllerTest extends WebTestCase
         self::assertStringNotContainsString('/f/', $text);
         self::assertSame(0, (int) $this->em->getConnection()->fetchOne('SELECT COUNT(*) FROM invoice_link'));
         self::assertSame('Odesláno SMS.', $this->reload($action)->getResult());
+    }
+
+    /** Uzavřená připomínka je na ose sama — zpráva se nezapíše podruhé. */
+    public function testClosedReminderIsNotRecordedTwice(): void
+    {
+        $action = $this->reminder();
+        $this->send($action->getReservation(), 'whatsapp');
+
+        self::assertSame(0, (int) $this->em->getConnection()->fetchOne('SELECT COUNT(*) FROM reservation_note'));
+    }
+
+    public function testReminderWithoutOpenActionLandsOnTimeline(): void
+    {
+        $action = $this->reminder();
+        $action->cancel();
+        $this->em->flush();
+
+        $this->send($action->getReservation(), 'sms');
+
+        self::assertSame('SMS: Připomínka doplatku', $this->em->getConnection()->fetchOne('SELECT body FROM reservation_note'));
     }
 
     /** Z chatu appka odeslání nevidí — připomínka zůstane otevřená. */

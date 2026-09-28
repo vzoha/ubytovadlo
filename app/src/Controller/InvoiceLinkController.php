@@ -19,6 +19,7 @@ use App\Enum\ShareChannel;
 use App\Invoice\InvoiceLinks;
 use App\Mail\GuestPaymentText;
 use App\Storage\PdfStorage;
+use App\Timeline\SentMessageRecorder;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -42,6 +43,7 @@ final class InvoiceLinkController extends AbstractController
         private readonly GuestPaymentText $texts,
         private readonly PdfStorage $pdfStorage,
         private readonly EntityManagerInterface $em,
+        private readonly SentMessageRecorder $recorder,
     ) {
     }
 
@@ -70,6 +72,7 @@ final class InvoiceLinkController extends AbstractController
         // Text pro chat se jen připraví — kudy odešel, zapíšeme u WhatsAppu a SMS.
         if ($channel !== ShareChannel::COPY) {
             $issued->link->markSentVia($channel);
+            $this->recorder->record($reservation, $channel, $invoice->getType()->messageLabel() . ' ' . $invoice->getNumber());
             $this->em->flush();
         }
 
