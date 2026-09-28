@@ -1,5 +1,29 @@
 {% extends 'base.html.twig' %}
 
+{% macro summary_row(label, s) %}
+    <tr>
+        <td>{{ label }}</td>
+        <td class="text-end">{{ s.count }}</td>
+        <td class="text-end">{{ s.nights }}</td>
+        <td class="text-end text-nowrap">{{ s.income|number_format(0, ',', ' ') }} Kč</td>
+        <td class="text-end text-nowrap">{{ s.expenses|number_format(0, ',', ' ') }} Kč</td>
+        <td class="text-end text-nowrap fw-bold {{ s.profit < 0 ? 'text-danger' : 'text-success' }}">{{ s.profit|number_format(0, ',', ' ') }} Kč</td>
+    </tr>
+{% endmacro %}
+
+{% macro summary_head(firstColumn) %}
+    <thead class="small text-muted">
+    <tr>
+        <th>{{ firstColumn }}</th>
+        <th class="text-end">Rezervací</th>
+        <th class="text-end">Nocí</th>
+        <th class="text-end">Příjem</th>
+        <th class="text-end">Výdaje</th>
+        <th class="text-end">Zisk</th>
+    </tr>
+    </thead>
+{% endmacro %}
+
 {% block title %}Ekonomika {{ year }} — {{ brand_name }}{% endblock %}
 
 {% block body %}
@@ -132,35 +156,40 @@
     </div>
 
     <div class="card">
-        <div class="card-header">Souhrn dle kanálu <span class="small text-muted">(včetně plánovaných pobytů)</span></div>
-        <div class="table-responsive">
-            <table class="table table-sm align-middle mb-0">
-                <thead class="small text-muted">
-                <tr>
-                    <th>Kanál</th>
-                    <th class="text-end">Rezervací</th>
-                    <th class="text-end">Nocí</th>
-                    <th class="text-end">Příjem</th>
-                    <th class="text-end">Výdaje</th>
-                    <th class="text-end">Zisk</th>
-                </tr>
-                </thead>
-                <tbody>
-                {% for channel in channels %}
-                    {% set s = byChannel[channel.value] ?? null %}
-                    {% if s %}
-                        <tr>
-                            <td>{{ channel.label }}</td>
-                            <td class="text-end">{{ s.count }}</td>
-                            <td class="text-end">{{ s.nights }}</td>
-                            <td class="text-end">{{ s.income|number_format(0, ',', ' ') }} Kč</td>
-                            <td class="text-end">{{ s.expenses|number_format(0, ',', ' ') }} Kč</td>
-                            <td class="text-end fw-bold {{ s.profit < 0 ? 'text-danger' : 'text-success' }}">{{ s.profit|number_format(0, ',', ' ') }} Kč</td>
-                        </tr>
-                    {% endif %}
-                {% endfor %}
-                </tbody>
-            </table>
+        <div class="card-header d-flex flex-wrap gap-2 justify-content-between align-items-center">
+            <span>Souhrn <span class="small text-muted">(včetně plánovaných pobytů)</span></span>
+            <div class="btn-group btn-group-sm" role="tablist">
+                <button type="button" class="btn btn-outline-secondary active" data-bs-toggle="tab" data-bs-target="#summary-channel" role="tab" aria-controls="summary-channel" aria-selected="true">Dle kanálu</button>
+                <button type="button" class="btn btn-outline-secondary" data-bs-toggle="tab" data-bs-target="#summary-source" role="tab" aria-controls="summary-source" aria-selected="false">Dle zdroje</button>
+            </div>
+        </div>
+        <div class="tab-content">
+            <div class="tab-pane show active" id="summary-channel" role="tabpanel">
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        {{ _self.summary_head('Kanál') }}
+                        <tbody>
+                        {% for channel in channels %}
+                            {% set s = byChannel[channel.value] ?? null %}
+                            {% if s %}{{ _self.summary_row(channel.label, s) }}{% endif %}
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="tab-pane" id="summary-source" role="tabpanel">
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        {{ _self.summary_head('Zdroj') }}
+                        <tbody>
+                        {% for source in bySource %}
+                            {{ _self.summary_row(source.label, source.summary) }}
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="card-footer small text-muted">Zdroj = odkud nás host zná (údaj v detailu rezervace). U portálů bez vyplněného zdroje se počítá portál.</div>
+            </div>
         </div>
     </div>
 

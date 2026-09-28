@@ -8,6 +8,12 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Přidáno
 
+- **Souhrn ekonomiky dle zdroje.** Souhrn na stránce *Ekonomika* má přepínač *Dle kanálu /
+  Dle zdroje*. Zdroj je údaj „odkud nás zná“ z detailu rezervace. Hodnoty se sčítají bez
+  ohledu na velikost písmen a interpunkci („Booking“ i „Booking.com“ jsou jeden řádek).
+  Rezervace z portálu bez vyplněného zdroje se počítá k portálu, web a přímá rezervace
+  bez zdroje k řádku *Neuvedeno*.
+
 - **Úprava termínu a ceny rezervace.** Detail ručně zadané rezervace má v kartě *Pobyt*
   tlačítko *✎ Upravit termín a cenu*. Po uložení se otevřené automatické zprávy hostům
   a úkoly (doplatková faktura, Ubyport) posunou podle nového termínu, doplní se ty, které

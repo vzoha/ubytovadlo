@@ -95,8 +95,9 @@ final class EconomicsControllerTest extends WebTestCase
         self::assertStringContainsString('Miluše Testová', $body);
         // příjem 4455 CZK
         self::assertStringContainsString('4 455', $body);
-        // souhrn dle kanálu obsahuje Web
-        self::assertStringContainsString('Souhrn dle kanálu', $body);
+        // souhrn s přepínačem kanál / zdroj
+        self::assertStringContainsString('Dle kanálu', $body);
+        self::assertStringContainsString('Dle zdroje', $body);
     }
 
     public function testCancelledReservationIsExcluded(): void

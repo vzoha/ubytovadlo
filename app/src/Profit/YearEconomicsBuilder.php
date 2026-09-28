@@ -41,6 +41,7 @@ final class YearEconomicsBuilder
      *     expected: Summary,
      *     total: Summary,
      *     byChannel: array<string, Summary>,
+     *     bySource: list<array{label: string, summary: Summary}>,
      *     generalExpenses: GeneralExpenses,
      * }
      */
@@ -53,14 +54,18 @@ final class YearEconomicsBuilder
         $expected = self::emptySummary();
         $total = self::emptySummary();
         $byChannel = [];
+        $bySource = [];
 
         foreach ($reservations as $reservation) {
             $profit = $profits[$reservation->getId()];
             $channel = $reservation->getChannel()->value;
             $byChannel[$channel] ??= self::emptySummary();
+            $source = AcquisitionSourceResolver::resolve($reservation);
+            $bySource[$source['key']] ??= ['label' => $source['label'], 'summary' => self::emptySummary()];
 
             self::add($total, $profit);
             self::add($byChannel[$channel], $profit);
+            self::add($bySource[$source['key']]['summary'], $profit);
             if (self::isRealized($reservation, $today)) {
                 self::add($realized, $profit);
             } else {
@@ -75,6 +80,7 @@ final class YearEconomicsBuilder
             'expected' => $expected,
             'total' => $total,
             'byChannel' => $byChannel,
+            'bySource' => self::sortSources($bySource),
             'generalExpenses' => $this->generalExpenses($year),
         ];
     }
@@ -100,6 +106,26 @@ final class YearEconomicsBuilder
         }
 
         return ['total' => $total, 'byCategory' => $byCategory];
+    }
+
+    /**
+     * Nejčastější zdroje nahoře, neuvedený zdroj vždy poslední.
+     *
+     * @param array<string, array{label: string, summary: Summary}> $bySource
+     *
+     * @return list<array{label: string, summary: Summary}>
+     */
+    private static function sortSources(array $bySource): array
+    {
+        uksort($bySource, static function (int|string $a, int|string $b) use ($bySource): int {
+            $unknownLast = ((string) $a === AcquisitionSourceResolver::UNKNOWN_KEY) <=> ((string) $b === AcquisitionSourceResolver::UNKNOWN_KEY);
+
+            return $unknownLast
+                ?: $bySource[$b]['summary']['count'] <=> $bySource[$a]['summary']['count']
+                ?: bccomp($bySource[$b]['summary']['income'], $bySource[$a]['summary']['income'], 2);
+        });
+
+        return array_values($bySource);
     }
 
     /** Pobyt je uskutečněný, jakmile proběhl odjezd. Probíhající pobyt patří do očekávaných. */
