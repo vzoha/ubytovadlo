@@ -146,7 +146,8 @@ class ReservationActionExecutor
     }
 
     /**
-     * Připomínka doplatku: uhrazeno → hotovo; jinak jedna připomínka hostovi.
+     * Připomínka doplatku: uhrazeno → hotovo; jinak jedna připomínka hostovi,
+     * a když neodejde sama (host bez e-mailu, ruční režim), upozornění ubytovateli.
      */
     private function handleBalanceReminder(ReservationAction $action): bool
     {
@@ -156,12 +157,16 @@ class ReservationActionExecutor
             return true;
         }
 
-        return $this->guestMessages->remindAboutBalance($action);
+        if ($this->guestMessages->remindAboutBalance($action)) {
+            return true;
+        }
+
+        return $this->notifyOwnerOnce($action, OwnerNotificationType::BALANCE_REMINDER_DUE);
     }
 
     /**
      * Ubyport: nahlášeno → hotovo; jinak jednou upozorni ubytovatele, že cizinec
-     * čeká na nahlášení (guard přes payload, ať cron neupozorňuje opakovaně).
+     * čeká na nahlášení.
      */
     private function handleUbyport(ReservationAction $action): bool
     {
@@ -171,6 +176,15 @@ class ReservationActionExecutor
             return true;
         }
 
+        return $this->notifyOwnerOnce($action, OwnerNotificationType::UBYPORT_DUE);
+    }
+
+    /**
+     * Upozorní ubytovatele na akci, kterou musí vyřídit sám — jednou (guard
+     * přes payload, ať cron neupozorňuje opakovaně).
+     */
+    private function notifyOwnerOnce(ReservationAction $action, OwnerNotificationType $type): bool
+    {
         $payload = $action->getPayload() ?? [];
         if (($payload['owner_notified'] ?? false) === true) {
             return false;
@@ -178,7 +192,7 @@ class ReservationActionExecutor
 
         // Guard nastavíme jen když se notifikace opravdu zařadila — jinak by při
         // zatím nenastaveném příjemci upozornění „propadlo" a už se neopakovalo.
-        if (!$this->notifier->notify(OwnerNotificationType::UBYPORT_DUE, $action->getReservation())) {
+        if (!$this->notifier->notify($type, $action->getReservation())) {
             return false;
         }
         $action->setPayload($payload + ['owner_notified' => true]);

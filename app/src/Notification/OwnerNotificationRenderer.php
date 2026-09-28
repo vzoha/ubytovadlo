@@ -90,6 +90,7 @@ final class OwnerNotificationRenderer
             OwnerNotificationType::UBYPORT_DUE => $this->ubyportDue($reservation),
             OwnerNotificationType::IDENTIFIED_PERSON_ONSET => $this->identifiedPersonOnset($payload),
             OwnerNotificationType::TASK_DUE => $this->taskDue($payload),
+            OwnerNotificationType::BALANCE_REMINDER_DUE => $this->balanceReminderDue($reservation),
         };
     }
 
@@ -203,6 +204,18 @@ final class OwnerNotificationRenderer
         );
 
         return new OwnerNotificationContent('Vznikla ti registrační povinnost — identifikovaná osoba', $body);
+    }
+
+    private function balanceReminderDue(?Reservation $reservation): OwnerNotificationContent
+    {
+        return new OwnerNotificationContent(
+            'Připomínka doplatku k odeslání — ' . $this->reservationLabel($reservation),
+            sprintf(
+                "Host %s ještě nedoplatil a připomínka neodejde sama. V detailu rezervace ji pošlete tlačítkem *Poslat* u připomínky na časové ose — e-mailem, přes WhatsApp, SMS nebo do chatu.\n\n%s",
+                $this->guestName($reservation),
+                $this->reservationButton($reservation, 'Otevřít rezervaci'),
+            ),
+        );
     }
 
     private function ubyportDue(?Reservation $reservation): OwnerNotificationContent

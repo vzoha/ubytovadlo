@@ -191,9 +191,8 @@ class InvoiceController extends AbstractController
             return $this->redirectToRoute('reservation_detail', ['id' => $reservation->getId()]);
         }
 
-        $stored = $invoice->getPdfPath();
-        $path = $stored === null ? null : $this->pdfStorage->absolute($stored);
-        if ($path === null || !is_file($path)) {
+        $path = $this->pdfStorage->existing($invoice->getPdfPath());
+        if ($path === null) {
             // Šablona slibuje fakturu v příloze — bez PDF zprávu neposílej.
             $this->addFlash('danger', sprintf('Faktura %s nemá vygenerované PDF — nejprve ho vytvoř.', $invoice->getNumber()));
 
@@ -219,9 +218,8 @@ class InvoiceController extends AbstractController
     #[Route('/invoice/{id}/pdf', name: 'invoice_pdf', methods: ['GET'], requirements: ['id' => '\d+'])]
     public function pdf(Invoice $invoice): Response
     {
-        $stored = $invoice->getPdfPath();
-        $path = $stored === null ? null : $this->pdfStorage->absolute($stored);
-        if ($path === null || !is_file($path)) {
+        $path = $this->pdfStorage->existing($invoice->getPdfPath());
+        if ($path === null) {
             throw $this->createNotFoundException('PDF nebylo vygenerováno.');
         }
 

@@ -663,7 +663,6 @@
             {% endif %}
             {% for inv in invoices %}{% include 'invoice/_edit_modal.html.twig' with {invoice: inv} %}{% endfor %}
             {% for inv in invoices %}{% include 'invoice/_send_modal.html.twig' with {invoice: inv} %}{% endfor %}
-            {% if invoices is not empty %}{% include 'invoice/_send_script.html.twig' %}{% endif %}
 
             <div class="mt-3 d-flex gap-2 flex-wrap">
                 {% set mode = reservation.billingMode %}
@@ -704,6 +703,7 @@
     {{ include('reservation/_status_modals.html.twig') }}
     {% if stay_form %}{{ include('reservation/_stay_modal.html.twig', {form: stay_form}) }}{% endif %}
     {% if quick_messages is not empty %}{{ include('reservation/_chat_message_modal.html.twig') }}{% endif %}
+    {{ include('send/_script.html.twig') }}
 {% endblock %}
 
 {% block stylesheets %}

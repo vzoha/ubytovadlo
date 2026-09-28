@@ -216,14 +216,15 @@ class ReservationAction
     }
 
     /**
-     * Vrátí zrušenou akci mezi naplánované — v původním čase, o jehož platnosti
-     * rozhodne až vykonavatel.
+     * Vrátí zrušenou nebo ručně uzavřenou akci mezi naplánované — v původním
+     * čase, o jehož platnosti rozhodne až vykonavatel.
      */
     public function replan(): self
     {
         $this->status = ActionStatus::PLANNED;
         $this->result = null;
         $this->executedAt = null;
+        $this->delivery = null;
         $this->touch();
 
         return $this;

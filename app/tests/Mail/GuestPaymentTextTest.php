@@ -21,8 +21,8 @@ use App\Invoice\DepositPaymentBuilder;
 use App\Invoice\IssuedInvoiceLink;
 use App\Invoice\PaymentQrLinks;
 use App\Mail\GuestLocaleResolver;
+use App\Mail\GuestPaymentText;
 use App\Mail\GuestVocative;
-use App\Mail\InvoiceLinkMessage;
 use App\Mail\InvoiceMessageContext;
 use App\Mail\MessageVariableResolver;
 use App\Repository\AccommodationProfileRepository;
@@ -31,13 +31,13 @@ use App\Security\PublicLinkSigner;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
-final class InvoiceLinkMessageTest extends TestCase
+final class GuestPaymentTextTest extends TestCase
 {
     private const URL = 'https://app.example.com/f/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
 
     public function testUnpaidInvoiceCarriesLinkAndPaymentDetails(): void
     {
-        $text = $this->message()->render($this->invoice(), $this->issued());
+        $text = $this->texts()->invoice($this->invoice(), $this->issued());
 
         self::assertStringContainsString('fakturu č. 2026012', $text);
         self::assertStringContainsString(self::URL, $text);
@@ -51,7 +51,7 @@ final class InvoiceLinkMessageTest extends TestCase
         $invoice = $this->invoice();
         $invoice->setPaidAt(new \DateTimeImmutable('2026-09-20'));
 
-        $text = $this->message()->render($invoice, $this->issued());
+        $text = $this->texts()->invoice($invoice, $this->issued());
 
         self::assertStringNotContainsString('Číslo účtu', $text);
         self::assertStringContainsString('uhrazeno', $text);
@@ -62,13 +62,39 @@ final class InvoiceLinkMessageTest extends TestCase
         $invoice = $this->invoice();
         $invoice->getReservation()->setGuestLocale('en');
 
-        $text = $this->message()->render($invoice, $this->issued());
+        $text = $this->texts()->invoice($invoice, $this->issued());
 
         self::assertStringContainsString('here is invoice no. 2026012', $text);
         self::assertStringContainsString('Payment reference: 2026012', $text);
     }
 
-    private function message(): InvoiceLinkMessage
+    public function testReminderWithInvoiceCarriesBalanceDueAndLink(): void
+    {
+        $invoice = $this->invoice();
+
+        $text = $this->texts()->reminder($invoice->getReservation(), $invoice, $this->issued());
+
+        self::assertStringContainsString('připomínáme doplatek', $text);
+        self::assertStringContainsString("splatnost 1.\u{00a0}10.\u{00a0}2026", $text);
+        self::assertStringContainsString('Variabilní symbol: 2026012', $text);
+        self::assertStringContainsString('Fakturu č. 2026012 najdete zde:', $text);
+        self::assertStringContainsString(self::URL, $text);
+        self::assertStringNotContainsString('{{', $text);
+    }
+
+    public function testReminderWithoutInvoiceHasNoLink(): void
+    {
+        $reservation = $this->invoice()->getReservation();
+
+        $text = $this->texts()->reminder($reservation, null, null);
+
+        self::assertStringContainsString('připomínáme doplatek', $text);
+        self::assertStringNotContainsString('najdete zde', $text);
+        self::assertStringNotContainsString('splatnost', $text);
+        self::assertStringNotContainsString('{{', $text);
+    }
+
+    private function texts(): GuestPaymentText
     {
         $url = $this->createStub(UrlGeneratorInterface::class);
         $url->method('generate')->willReturn('https://app.example.com/x');
@@ -86,7 +112,7 @@ final class InvoiceLinkMessageTest extends TestCase
             $qrLinks,
         );
 
-        return new InvoiceLinkMessage($variables, $invoiceContext, new GuestLocaleResolver());
+        return new GuestPaymentText($variables, $invoiceContext, new GuestLocaleResolver());
     }
 
     private function invoice(): Invoice

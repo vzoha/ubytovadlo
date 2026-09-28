@@ -1,15 +1,23 @@
-{# Chování oken „Poslat fakturu" (invoice/_send_modal.html.twig). Vložit jednou na stránku. #}
+{# Chování oken „Poslat" (send/_modal.html.twig). Vložit jednou na stránku. #}
 <script>
     (function () {
-        document.querySelectorAll('[data-invoice-send]').forEach(function (modal) {
-            const createButton = modal.querySelector('[data-link-create]');
-            const error = modal.querySelector('[data-link-error]');
-            const result = modal.querySelector('[data-link-result]');
-            const text = modal.querySelector('[data-link-text]');
-            const whatsapp = modal.querySelector('[data-link-channel="whatsapp"]');
-            const sms = modal.querySelector('[data-link-channel="sms"]');
-            const phoneMissing = modal.querySelector('[data-link-phone-missing]');
-            let link = null;
+        function post(url, fields) {
+            const body = new FormData();
+            Object.keys(fields).forEach(function (key) { body.append(key, fields[key]); });
+            // sendBeacon přežije i odchod stránky do WhatsAppu nebo SMS.
+            navigator.sendBeacon(url, body);
+        }
+
+        document.querySelectorAll('[data-send-modal]').forEach(function (modal) {
+            const createButton = modal.querySelector('[data-text-create]');
+            const error = modal.querySelector('[data-text-error]');
+            const result = modal.querySelector('[data-text-result]');
+            const text = modal.querySelector('[data-text]');
+            const whatsapp = modal.querySelector('[data-channel="whatsapp"]');
+            const sms = modal.querySelector('[data-channel="sms"]');
+            const phoneMissing = modal.querySelector('[data-phone-missing]');
+            let prepared = null;
+            let changed = false;
 
             // Náhled e-mailu se načte až při rozbalení.
             const preview = modal.querySelector('[data-email-preview]');
@@ -32,22 +40,34 @@
 
             // Odkazy na WhatsApp a SMS nesou aktuální (třeba upravený) text.
             function refreshChannelLinks() {
-                if (!link) return;
+                if (!prepared) return;
                 const message = encodeURIComponent(text.value);
-                if (link.whatsapp) whatsapp.href = link.whatsapp + '?text=' + message;
-                if (link.sms) sms.href = link.sms + '?body=' + message;
+                if (prepared.whatsapp) whatsapp.href = prepared.whatsapp + '?text=' + message;
+                if (prepared.sms) sms.href = prepared.sms + '?body=' + message;
+            }
+
+            // Zapíše kanál k odkazu na fakturu a uzavře akci na časové ose, pokud k ní okno patří.
+            function recordChannel(channel) {
+                if (prepared && prepared.sentUrl) {
+                    post(prepared.sentUrl, {_token: modal.dataset.linkSentToken, channel: channel});
+                }
+                if (modal.dataset.actionSentUrl) {
+                    post(modal.dataset.actionSentUrl, {_token: modal.dataset.actionToken, channel: channel});
+                }
+                changed = true;
             }
 
             createButton.addEventListener('click', async function () {
                 createButton.disabled = true;
                 error.hidden = true;
                 const body = new FormData();
-                body.append('_token', modal.dataset.linkToken);
+                body.append('_token', modal.dataset.textToken);
                 try {
-                    const res = await fetch(modal.dataset.linkUrl, {method: 'POST', body: body});
+                    const res = await fetch(modal.dataset.textUrl, {method: 'POST', body: body});
                     const data = await res.json();
-                    if (!res.ok) throw new Error(data.error || 'Odkaz se nepodařilo vytvořit.');
-                    link = data;
+                    if (!res.ok) throw new Error(data.error || '');
+                    prepared = data;
+                    changed = true;
                     text.value = data.text;
                     whatsapp.hidden = !data.whatsapp;
                     sms.hidden = !data.sms;
@@ -56,7 +76,7 @@
                     result.hidden = false;
                     createButton.hidden = true;
                 } catch (e) {
-                    error.textContent = e.message || 'Odkaz se nepodařilo vytvořit.';
+                    error.textContent = e.message || 'Zprávu se nepodařilo připravit.';
                     error.hidden = false;
                     createButton.disabled = false;
                 }
@@ -64,18 +84,10 @@
 
             text.addEventListener('input', refreshChannelLinks);
 
-            // Zapíše, kudy odkaz odešel — sendBeacon přežije i odchod do WhatsAppu.
-            function recordChannel(channel) {
-                const body = new FormData();
-                body.append('_token', modal.dataset.sentToken);
-                body.append('channel', channel);
-                navigator.sendBeacon(link.sentUrl, body);
-            }
-
-            modal.querySelectorAll('[data-link-channel]').forEach(function (el) {
+            modal.querySelectorAll('[data-channel]').forEach(function (el) {
                 el.addEventListener('click', function () {
-                    if (!link) return;
-                    const channel = el.dataset.linkChannel;
+                    if (!prepared) return;
+                    const channel = el.dataset.channel;
                     if (channel === 'copy') {
                         navigator.clipboard.writeText(text.value).then(function () {
                             const orig = el.textContent;
@@ -87,13 +99,14 @@
                 });
             });
 
-            // Nově vytvořený odkaz se v přehledu ukáže po zavření okna.
+            // Nový odkaz i uzavřená akce se ukážou po zavření okna.
             modal.addEventListener('hidden.bs.modal', function () {
-                if (link) window.location.reload();
+                if (changed) window.location.reload();
             });
 
             // Sdílení souboru umí jen některé prohlížeče (hlavně v telefonu). PDF se
             // stáhne předem, protože sdílení musí začít přímo po klepnutí.
+            if (!modal.dataset.pdfUrl) return;
             const share = modal.querySelector('[data-share-pdf]');
             const shareButton = modal.querySelector('[data-share-pdf-button]');
             const probe = new File([''], modal.dataset.pdfName, {type: 'application/pdf'});
@@ -112,7 +125,12 @@
                 }
             });
             shareButton.addEventListener('click', function () {
-                navigator.share({files: [file]}).catch(function () {});
+                navigator.share({files: [file]}).then(function () {
+                    if (modal.dataset.actionSentUrl) {
+                        post(modal.dataset.actionSentUrl, {_token: modal.dataset.actionToken, channel: 'file'});
+                        changed = true;
+                    }
+                }).catch(function () {});
             });
         });
     })();

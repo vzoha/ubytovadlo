@@ -40,6 +40,14 @@ class PdfStorage
         return $this->projectDir . '/' . $storedPath;
     }
 
+    /** Absolutní cesta k uloženému souboru, jen když na disku opravdu je. */
+    public function existing(?string $storedPath): ?string
+    {
+        $path = $storedPath === null ? '' : $this->absolute($storedPath);
+
+        return $path !== '' && is_file($path) ? $path : null;
+    }
+
     /** Relativní cesta (vůči projectDir) z absolutní cesty na disku. */
     public function relative(string $absolutePath): string
     {

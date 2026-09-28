@@ -167,6 +167,22 @@ class InvoiceRepository extends ServiceEntityRepository
             ->getOneOrNullResult();
     }
 
+    /** Nezaplacená faktura, kterou host doplácí (konečná, jinak na celou částku) — k připomínce doplatku. */
+    public function findUnpaidBalanceInvoice(Reservation $reservation): ?Invoice
+    {
+        return $this->createQueryBuilder('i')
+            ->andWhere('i.reservation = :r')
+            ->andWhere('i.type IN (:types)')
+            ->andWhere('i.paidAt IS NULL')
+            ->setParameter('r', $reservation)
+            ->setParameter('types', [InvoiceType::FINAL, InvoiceType::FULL])
+            ->orderBy('i.issuedAt', 'DESC')
+            ->addOrderBy('i.id', 'DESC')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
     /**
      * Vrátí ID rezervací, pro které už byla vystavena faktura některého z daných typů.
      * Hodí se pro detekci "co ještě nemá fakturu" v dashboardu.

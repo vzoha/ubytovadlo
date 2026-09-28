@@ -14,11 +14,11 @@ namespace App\Controller;
 use App\Controller\Concern\ChecksCsrf;
 use App\Entity\Invoice;
 use App\Entity\InvoiceLink;
-use App\Enum\InvoiceLinkChannel;
+use App\Enum\ShareChannel;
 use App\Invoice\InvoiceLinks;
-use App\Mail\InvoiceLinkMessage;
+use App\Mail\GuestPaymentText;
+use App\Mail\GuestPhoneLinks;
 use App\Storage\PdfStorage;
-use App\ValueObject\PhoneNumber;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -39,7 +39,7 @@ final class InvoiceLinkController extends AbstractController
 
     public function __construct(
         private readonly InvoiceLinks $links,
-        private readonly InvoiceLinkMessage $message,
+        private readonly GuestPaymentText $texts,
         private readonly PdfStorage $pdfStorage,
         private readonly EntityManagerInterface $em,
     ) {
@@ -55,17 +55,14 @@ final class InvoiceLinkController extends AbstractController
         }
 
         $issued = $this->links->issue($invoice);
-        $text = $this->message->render($invoice, $issued);
-        $phone = PhoneNumber::tryFromString($invoice->getReservation()->getGuestContact()->getPhone());
+        $text = $this->texts->invoice($invoice, $issued);
 
         return new JsonResponse([
             'id' => $issued->link->getId(),
             'url' => $issued->url,
             'text' => $text,
             'expires' => $issued->link->getExpiresAt()->format('j. n. Y'),
-            // Text jde před odesláním upravit — parametr s textem doplní prohlížeč.
-            'whatsapp' => $phone !== null ? 'https://wa.me/' . $phone->whatsapp() : null,
-            'sms' => $phone !== null ? 'sms:' . $phone->e164() : null,
+            ...GuestPhoneLinks::forReservation($invoice->getReservation()),
             'sentUrl' => $this->generateUrl('invoice_link_sent', ['id' => $issued->link->getId()]),
         ]);
     }
@@ -76,7 +73,7 @@ final class InvoiceLinkController extends AbstractController
     {
         $this->assertCsrf($request, 'invoice-link-sent');
 
-        $channel = InvoiceLinkChannel::tryFrom((string) $request->request->get('channel'));
+        $channel = ShareChannel::tryFrom((string) $request->request->get('channel'));
         if ($channel === null) {
             return new Response(null, Response::HTTP_BAD_REQUEST);
         }
@@ -132,9 +129,6 @@ final class InvoiceLinkController extends AbstractController
 
     private function pdfPath(Invoice $invoice): ?string
     {
-        $stored = $invoice->getPdfPath();
-        $path = $stored === null ? null : $this->pdfStorage->absolute($stored);
-
-        return $path !== null && is_file($path) ? $path : null;
+        return $this->pdfStorage->existing($invoice->getPdfPath());
     }
 }

@@ -8,6 +8,15 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Přidáno
 
+- **Připomínka doplatku e-mailem, přes WhatsApp, SMS nebo chat.** Otevřená připomínka
+  doplatku na časové ose má tlačítko *Poslat* se stejným oknem jako faktura: e-mail ze
+  šablony *Připomínka doplatku*, nebo text připomínky v jazyce hosta s platebními údaji
+  a odkazem na PDF nezaplacené faktury (bez vystavené faktury bez odkazu). Po odeslání
+  se připomínka uzavře a výsledek uvádí kanál („Odesláno přes WhatsApp.“). Ručně
+  uzavřenou zprávu jde tlačítkem *Znovu otevřít* vrátit mezi otevřené. Když připomínka
+  nemůže odejít sama (host bez e-mailu, šablona v ručním režimu), přijde ubytovateli
+  upozornění *Připomínka doplatku k odeslání*.
+
 - **Poslat fakturu e-mailem, přes WhatsApp, SMS nebo chat.** Každá faktura v detailu
   rezervace má tlačítko *Poslat*. Otevře okno, ze kterého faktura odejde e-mailem
   s PDF v příloze (s náhledem e-mailu), nebo odkazem: *Vytvořit odkaz* připraví text

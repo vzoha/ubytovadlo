@@ -1,97 +1,58 @@
-{# Okno „Poslat fakturu" — e-mail s PDF v příloze, odkaz pro WhatsApp/SMS/chat, soubor z telefonu. Očekává: invoice, reservation. #}
+{# Okno „Poslat fakturu". Očekává: invoice, reservation. #}
 {% set contact = reservation.guestContact %}
-{% set links = invoice_links(invoice) %}
-<div class="modal fade" id="sendInvoice{{ invoice.id }}" tabindex="-1" aria-labelledby="sendInvoice{{ invoice.id }}Label" aria-hidden="true"
-     data-invoice-send
-     data-link-url="{{ path('invoice_link_create', {id: invoice.id}) }}"
-     data-link-token="{{ csrf_token('invoice-link-' ~ invoice.id) }}"
-     data-sent-token="{{ csrf_token('invoice-link-sent') }}"
-     data-pdf-url="{{ path('invoice_pdf', {id: invoice.id}) }}"
-     data-pdf-name="{{ invoice.number }}.pdf">
-    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title h6 mb-0" id="sendInvoice{{ invoice.id }}Label">Poslat fakturu {{ invoice.number }}</h2>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zavřít"></button>
-            </div>
-            <div class="modal-body">
-                <h3 class="h6">E-mailem</h3>
-                {% if contact.hasEmail %}
-                    <p class="small mb-2">
-                        PDF odejde v příloze na <strong>{{ contact.deliveryEmail }}</strong>.
-                        {% if contact.deliversToPortal %}<span class="text-warning-emphasis">Je to adresa portálu — přílohu nemusí propustit.</span>{% endif %}
-                    </p>
-                    <details class="mb-2" data-email-preview data-url="{{ path('invoice_message_preview', {id: invoice.id}) }}">
-                        <summary class="small">Náhled e-mailu</summary>
-                        <p class="small text-muted my-2" data-email-preview-subject></p>
-                        <iframe title="Náhled e-mailu hostovi" style="width:100%; height:50vh; border:1px solid var(--bs-border-color); border-radius:6px; background:#fff;"></iframe>
-                    </details>
-                    <form method="post" action="{{ path('invoice_send_email', {id: invoice.id}) }}"
-                          onsubmit="return confirm('Poslat fakturu {{ invoice.number }} na {{ contact.deliveryEmail|e('js') }}?');">
-                        <input type="hidden" name="_token" value="{{ csrf_token('invoice-email-' ~ invoice.id) }}">
-                        <button class="btn btn-sm btn-primary">Poslat e-mailem</button>
-                    </form>
-                {% else %}
-                    <p class="small text-muted mb-0">Rezervace nemá e-mail hosta.</p>
-                {% endif %}
-
-                <hr>
-
-                <h3 class="h6">Odkazem — WhatsApp, SMS, chat</h3>
-                <p class="small text-muted mb-2">
-                    Vytvoří odkaz na PDF platný {{ constant('App\\Invoice\\InvoiceLinks::LIFETIME_DAYS') }} dní a k němu text zprávy.
-                    Kdo odkaz má, fakturu otevře — posílejte ho jen hostovi.
-                </p>
-                <button type="button" class="btn btn-sm btn-primary" data-link-create>Vytvořit odkaz</button>
-                <p class="small text-danger mt-2 mb-0" data-link-error hidden></p>
-                <div data-link-result hidden>
-                    <label class="form-label small mt-2 mb-1" for="invoiceLinkText{{ invoice.id }}">Text zprávy</label>
-                    <textarea class="form-control" id="invoiceLinkText{{ invoice.id }}" rows="10" data-link-text></textarea>
-                    <div class="d-flex flex-wrap gap-2 mt-2">
-                        <a class="btn btn-sm btn-outline-success" target="_blank" rel="noopener" data-link-channel="whatsapp" hidden>WhatsApp ↗</a>
-                        <a class="btn btn-sm btn-outline-primary" data-link-channel="sms" hidden>💬 SMS</a>
-                        <button type="button" class="btn btn-sm btn-outline-secondary" data-link-channel="copy">Zkopírovat</button>
-                    </div>
-                    <p class="small text-muted mt-2 mb-0" data-link-phone-missing hidden>Rezervace nemá telefon hosta — text zkopírujte a vložte do chatu.</p>
-                </div>
-
-                <div data-share-pdf hidden>
-                    <hr>
-                    <h3 class="h6">Soubor z telefonu</h3>
-                    <p class="small text-muted mb-2">Pošle přímo PDF přes WhatsApp nebo jinou aplikaci v telefonu — bez odkazu.</p>
-                    <button type="button" class="btn btn-sm btn-outline-primary" data-share-pdf-button disabled>Sdílet PDF</button>
-                </div>
-
-                {% if links is not empty %}
-                    <hr>
-                    <h3 class="h6">Vytvořené odkazy</h3>
-                    <ul class="list-group list-group-flush small">
-                        {% for item in links %}
-                            {% set link = item.link %}
-                            <li class="list-group-item px-0 d-flex flex-wrap gap-2 justify-content-between align-items-center">
-                                <span class="{{ item.active ? '' : 'text-muted' }}">
-                                    {{ link.createdAt|date('d. m. Y') }}{% if link.channel %} · {{ link.channel.label }}{% endif %}
-                                    ·
-                                    {% if link.revokedAt %}zrušen {{ link.revokedAt|date('d. m. Y') }}
-                                    {% elseif item.active %}platí do {{ link.expiresAt|date('d. m. Y') }}
-                                    {% else %}vypršel {{ link.expiresAt|date('d. m. Y') }}{% endif %}
-                                    {% if link.lastOpenedAt %} · naposledy otevřen {{ link.lastOpenedAt|date('d. m. Y H:i') }}{% endif %}
-                                </span>
-                                {% if item.active %}
-                                    <form method="post" action="{{ path('invoice_link_revoke', {id: link.id}) }}"
-                                          onsubmit="return confirm('Zrušit odkaz? Host fakturu přes něj už neotevře.');">
-                                        <input type="hidden" name="_token" value="{{ csrf_token('invoice-link-revoke-' ~ link.id) }}">
-                                        <button class="btn btn-sm btn-outline-danger">Zrušit</button>
-                                    </form>
-                                {% endif %}
-                            </li>
-                        {% endfor %}
-                    </ul>
-                {% endif %}
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Zavřít</button>
-            </div>
-        </div>
-    </div>
-</div>
+{% embed 'send/_modal.html.twig' with {
+    modal_id: 'sendInvoice' ~ invoice.id,
+    title: 'Poslat fakturu ' ~ invoice.number,
+    text_url: path('invoice_link_create', {id: invoice.id}),
+    text_token: csrf_token('invoice-link-' ~ invoice.id),
+    create_label: 'Vytvořit odkaz',
+    text_intro: 'Vytvoří odkaz na PDF platný ' ~ constant('App\\Invoice\\InvoiceLinks::LIFETIME_DAYS') ~ ' dní a k němu text zprávy. Kdo odkaz má, fakturu otevře — posílejte ho jen hostovi.',
+    pdf_url: path('invoice_pdf', {id: invoice.id}),
+    pdf_name: invoice.number ~ '.pdf',
+} %}
+    {% block email %}
+        {% if contact.hasEmail %}
+            <p class="small mb-2">
+                PDF odejde v příloze na <strong>{{ contact.deliveryEmail }}</strong>.
+                {% if contact.deliversToPortal %}<span class="text-warning-emphasis">Je to adresa portálu — přílohu nemusí propustit.</span>{% endif %}
+            </p>
+            {% include 'send/_email_preview.html.twig' with {preview_url: path('invoice_message_preview', {id: invoice.id})} %}
+            <form method="post" action="{{ path('invoice_send_email', {id: invoice.id}) }}"
+                  onsubmit="return confirm('Poslat fakturu {{ invoice.number }} na {{ contact.deliveryEmail|e('js') }}?');">
+                <input type="hidden" name="_token" value="{{ csrf_token('invoice-email-' ~ invoice.id) }}">
+                <button class="btn btn-sm btn-primary">Poslat e-mailem</button>
+            </form>
+        {% else %}
+            <p class="small text-muted mb-0">Rezervace nemá e-mail hosta.</p>
+        {% endif %}
+    {% endblock %}
+    {% block extra %}
+        {% set links = invoice_links(invoice) %}
+        {% if links is not empty %}
+            <hr>
+            <h3 class="h6">Vytvořené odkazy</h3>
+            <ul class="list-group list-group-flush small">
+                {% for item in links %}
+                    {% set link = item.link %}
+                    <li class="list-group-item px-0 d-flex flex-wrap gap-2 justify-content-between align-items-center">
+                        <span class="{{ item.active ? '' : 'text-muted' }}">
+                            {{ link.createdAt|date('d. m. Y') }}{% if link.channel %} · {{ link.channel.label }}{% endif %}
+                            ·
+                            {% if link.revokedAt %}zrušen {{ link.revokedAt|date('d. m. Y') }}
+                            {% elseif item.active %}platí do {{ link.expiresAt|date('d. m. Y') }}
+                            {% else %}vypršel {{ link.expiresAt|date('d. m. Y') }}{% endif %}
+                            {% if link.lastOpenedAt %} · naposledy otevřen {{ link.lastOpenedAt|date('d. m. Y H:i') }}{% endif %}
+                        </span>
+                        {% if item.active %}
+                            <form method="post" action="{{ path('invoice_link_revoke', {id: link.id}) }}"
+                                  onsubmit="return confirm('Zrušit odkaz? Host fakturu přes něj už neotevře.');">
+                                <input type="hidden" name="_token" value="{{ csrf_token('invoice-link-revoke-' ~ link.id) }}">
+                                <button class="btn btn-sm btn-outline-danger">Zrušit</button>
+                            </form>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    {% endblock %}
+{% endembed %}

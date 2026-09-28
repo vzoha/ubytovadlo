@@ -1,0 +1,57 @@
+{#
+    Obecné okno „Poslat hostovi" — e-mail (blok email), zpráva pro WhatsApp/SMS/chat
+    a PDF z telefonu. Chování: send/_script.html.twig.
+    Očekává: modal_id, title, text_url, text_token, create_label, text_intro;
+    volitelně pdf_url + pdf_name (sdílení souboru), action_sent_url + action_token
+    (akce na časové ose se po odeslání uzavře).
+    Bloky: email (sekce e-mailu), extra (obsah pod sekcemi).
+#}
+<div class="modal fade" id="{{ modal_id }}" tabindex="-1" aria-labelledby="{{ modal_id }}Label" aria-hidden="true"
+     data-send-modal
+     data-text-url="{{ text_url }}"
+     data-text-token="{{ text_token }}"
+     data-link-sent-token="{{ csrf_token('invoice-link-sent') }}"
+     {% if action_sent_url is defined %}data-action-sent-url="{{ action_sent_url }}" data-action-token="{{ action_token }}"{% endif %}
+     {% if pdf_url is defined and pdf_url %}data-pdf-url="{{ pdf_url }}" data-pdf-name="{{ pdf_name }}"{% endif %}>
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title h6 mb-0" id="{{ modal_id }}Label">{{ title }}</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zavřít"></button>
+            </div>
+            <div class="modal-body">
+                <h3 class="h6">E-mailem</h3>
+                {% block email %}{% endblock %}
+
+                <hr>
+
+                <h3 class="h6">WhatsApp, SMS, chat</h3>
+                <p class="small text-muted mb-2">{{ text_intro }}</p>
+                <button type="button" class="btn btn-sm btn-primary" data-text-create>{{ create_label }}</button>
+                <p class="small text-danger mt-2 mb-0" data-text-error hidden></p>
+                <div data-text-result hidden>
+                    <label class="form-label small mt-2 mb-1" for="{{ modal_id }}Text">Text zprávy</label>
+                    <textarea class="form-control" id="{{ modal_id }}Text" rows="10" data-text></textarea>
+                    <div class="d-flex flex-wrap gap-2 mt-2">
+                        <a class="btn btn-sm btn-outline-success" target="_blank" rel="noopener" data-channel="whatsapp" hidden>WhatsApp ↗</a>
+                        <a class="btn btn-sm btn-outline-primary" data-channel="sms" hidden>💬 SMS</a>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" data-channel="copy">Zkopírovat</button>
+                    </div>
+                    <p class="small text-muted mt-2 mb-0" data-phone-missing hidden>Rezervace nemá telefon hosta — text zkopírujte a vložte do chatu.</p>
+                </div>
+
+                <div data-share-pdf hidden>
+                    <hr>
+                    <h3 class="h6">Soubor z telefonu</h3>
+                    <p class="small text-muted mb-2">Pošle přímo PDF přes WhatsApp nebo jinou aplikaci v telefonu — bez odkazu.</p>
+                    <button type="button" class="btn btn-sm btn-outline-primary" data-share-pdf-button disabled>Sdílet PDF</button>
+                </div>
+
+                {% block extra %}{% endblock %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Zavřít</button>
+            </div>
+        </div>
+    </div>
+</div>

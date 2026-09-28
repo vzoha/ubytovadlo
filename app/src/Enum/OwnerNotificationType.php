@@ -26,6 +26,7 @@ enum OwnerNotificationType: string
     case UBYPORT_DUE = 'ubyport_due';
     case IDENTIFIED_PERSON_ONSET = 'identified_person_onset';
     case TASK_DUE = 'task_due';
+    case BALANCE_REMINDER_DUE = 'balance_reminder_due';
 
     /** Krátký název typu pro UI nastavení. */
     public function label(): string
@@ -39,6 +40,7 @@ enum OwnerNotificationType: string
             self::UBYPORT_DUE => 'Cizinec k nahlášení na Ubyport',
             self::IDENTIFIED_PERSON_ONSET => 'Vznik identifikované osoby',
             self::TASK_DUE => 'Blíží se hlídaný termín',
+            self::BALANCE_REMINDER_DUE => 'Připomínka doplatku k odeslání',
         };
     }
 
@@ -54,6 +56,7 @@ enum OwnerNotificationType: string
             self::UBYPORT_DUE => 'Zahraniční host čeká na nahlášení na Ubyport (lhůta 3 dny od příjezdu).',
             self::IDENTIFIED_PERSON_ONSET => 'První přijatá provize z OTA založila registrační povinnost identifikované osoby (do 15 dnů).',
             self::TASK_DUE => 'Blíží se termín revize, servisu nebo jiného hlídaného úkonu — nebo je už po něm.',
+            self::BALANCE_REMINDER_DUE => 'Nadešel čas připomenout hostovi doplatek a připomínka neodejde sama — host nemá e-mail nebo je šablona v ručním režimu.',
         };
     }
 

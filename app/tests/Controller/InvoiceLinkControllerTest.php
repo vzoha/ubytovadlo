@@ -17,8 +17,8 @@ use App\Entity\InvoiceLink;
 use App\Entity\Reservation;
 use App\Entity\User;
 use App\Enum\Channel;
-use App\Enum\InvoiceLinkChannel;
 use App\Enum\InvoiceType;
+use App\Enum\ShareChannel;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -151,7 +151,7 @@ final class InvoiceLinkControllerTest extends WebTestCase
         $invoice = $this->invoice(withPdf: false);
         $crawler = $this->login()->request('GET', '/reservation/' . $invoice->getReservation()->getId());
 
-        $this->client->request('POST', '/invoice/' . $invoice->getId() . '/odkaz', ['_token' => $this->modal($crawler, $invoice)->attr('data-link-token')]);
+        $this->client->request('POST', '/invoice/' . $invoice->getId() . '/odkaz', ['_token' => $this->modal($crawler, $invoice)->attr('data-text-token')]);
 
         self::assertResponseStatusCodeSame(Response::HTTP_UNPROCESSABLE_ENTITY);
         self::assertSame(0, (int) $this->em->getConnection()->fetchOne('SELECT COUNT(*) FROM invoice_link'));
@@ -180,12 +180,12 @@ final class InvoiceLinkControllerTest extends WebTestCase
         $crawler = $this->client->request('GET', '/reservation/' . $invoice->getReservation()->getId());
 
         $this->client->request('POST', $data['sentUrl'], [
-            '_token' => $this->modal($crawler, $invoice)->attr('data-sent-token'),
+            '_token' => $this->modal($crawler, $invoice)->attr('data-link-sent-token'),
             'channel' => 'whatsapp',
         ]);
 
         self::assertResponseStatusCodeSame(Response::HTTP_NO_CONTENT);
-        self::assertSame(InvoiceLinkChannel::WHATSAPP, $this->link()->getChannel());
+        self::assertSame(ShareChannel::WHATSAPP, $this->link()->getChannel());
     }
 
     /** @return array{id: int, url: string, text: string, whatsapp: ?string, sms: ?string, sentUrl: string} */
@@ -194,7 +194,7 @@ final class InvoiceLinkControllerTest extends WebTestCase
         $crawler = $this->login()->request('GET', '/reservation/' . $invoice->getReservation()->getId());
         self::assertResponseIsSuccessful();
 
-        $this->client->request('POST', '/invoice/' . $invoice->getId() . '/odkaz', ['_token' => $this->modal($crawler, $invoice)->attr('data-link-token')]);
+        $this->client->request('POST', '/invoice/' . $invoice->getId() . '/odkaz', ['_token' => $this->modal($crawler, $invoice)->attr('data-text-token')]);
         self::assertResponseIsSuccessful();
 
         /** @var array{id: int, url: string, text: string, whatsapp: ?string, sms: ?string, sentUrl: string} $data */

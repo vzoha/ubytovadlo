@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
-use App\Enum\InvoiceLinkChannel;
+use App\Enum\ShareChannel;
 use App\Repository\InvoiceLinkRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -51,8 +51,8 @@ class InvoiceLink
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
     private ?\DateTimeImmutable $lastOpenedAt = null;
 
-    #[ORM\Column(length: 16, nullable: true, enumType: InvoiceLinkChannel::class)]
-    private ?InvoiceLinkChannel $channel = null;
+    #[ORM\Column(length: 16, nullable: true, enumType: ShareChannel::class)]
+    private ?ShareChannel $channel = null;
 
     public function __construct(Invoice $invoice, string $tokenHash, \DateTimeImmutable $createdAt, \DateTimeImmutable $expiresAt)
     {
@@ -92,7 +92,7 @@ class InvoiceLink
         return $this->lastOpenedAt;
     }
 
-    public function getChannel(): ?InvoiceLinkChannel
+    public function getChannel(): ?ShareChannel
     {
         return $this->channel;
     }
@@ -112,7 +112,7 @@ class InvoiceLink
         $this->lastOpenedAt = $now;
     }
 
-    public function markSentVia(InvoiceLinkChannel $channel): void
+    public function markSentVia(ShareChannel $channel): void
     {
         $this->channel = $channel;
     }
