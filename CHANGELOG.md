@@ -126,6 +126,10 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Opraveno
 
+- **Storno poslední budoucí OTA rezervace z iCal feedu.** Když po stornu zůstane feed
+  kanálu prázdný, rezervace se zruší při druhém prázdném běhu v řadě. Jediný prázdný běh
+  storna jen odloží — může jít o výpadek feedu.
+
 - Knihovna pro čtení příchozí pošty (`zbateson/mail-mime-parser`) v 4.0.5 — opravy
   CVE-2026-61815 (vložení hlavičky přes název přílohy) a CVE-2026-61816 (zahlcení
   parseru podvrženým MIME).

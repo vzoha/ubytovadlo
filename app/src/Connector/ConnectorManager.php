@@ -30,6 +30,9 @@ class ConnectorManager
     /** Klíč v Connector::config s tajným tokenem push webhooku (neuhodnutelná část URL). */
     public const WEBHOOK_TOKEN_KEY = 'webhook_token';
 
+    /** Klíč v Connector::config s počtem po sobě jdoucích běhů, kdy iCal feed nevrátil žádnou událost. */
+    public const ICAL_EMPTY_RUNS_KEY = 'ical_empty_runs';
+
     public function __construct(
         private readonly ConnectorRepository $connectors,
         private readonly CredentialProvider $credentials,
@@ -106,6 +109,18 @@ class ConnectorManager
     {
         $this->connectors->getOrCreate($type)->setConfigValue(self::ICAL_FEED_URL_KEY, $url);
         $this->em->flush();
+    }
+
+    /** Kolik posledních běhů iCal importu v řadě skončilo prázdným feedem. */
+    public function getEmptyFeedRuns(ConnectorType $type): int
+    {
+        return (int) $this->connectors->findOneBy(['type' => $type])?->getConfigValue(self::ICAL_EMPTY_RUNS_KEY);
+    }
+
+    /** Zapíše délku řady prázdných běhů (0 ji smaže); uloží volající svým flushem. */
+    public function setEmptyFeedRuns(ConnectorType $type, int $runs): void
+    {
+        $this->connectors->getOrCreate($type)->setConfigValue(self::ICAL_EMPTY_RUNS_KEY, $runs > 0 ? (string) $runs : null);
     }
 
     /**

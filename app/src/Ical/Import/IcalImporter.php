@@ -32,10 +32,15 @@ use Psr\Log\LoggerInterface;
  * Upsert: rezervace se dohledá podle UID; když ještě UID nemá, adoptuje se
  * existující OTA blok téhož kanálu a příjezdu (typicky z MotoPressu) — tím se
  * zdroje slijí a nevznikne duplikát. Co v feedu bylo a zmizelo (a pobyt ještě
- * neskončil), se automaticky stornuje.
+ * neskončil), se automaticky stornuje. Prázdný feed se bere vážně až napodruhé
+ * v řadě — první může být výpadek OTA, druhý už znamená, že se stornoval i
+ * poslední budoucí pobyt.
  */
 final class IcalImporter
 {
+    /** Kolik prázdných běhů feedu v řadě je potřeba, aby z něj šla storna. */
+    private const EMPTY_RUNS_TO_CANCEL = 2;
+
     public function __construct(
         private readonly IcalFeedFetcher $fetcher,
         private readonly IcalParser $parser,
@@ -101,7 +106,9 @@ final class IcalImporter
             }
         }
 
-        $vanished = $this->cancelVanished($channel, $from, $seen, $events);
+        $vanished = $this->trustsVanishing($type, $events, $dryRun)
+            ? $this->cancelVanished($channel, $from, $seen)
+            : [];
         $cancelled = count($vanished);
 
         if (!$dryRun) {
@@ -187,24 +194,38 @@ final class IcalImporter
     }
 
     /**
+     * Smí se z tohoto běhu odvodit storna? Neprázdný feed ano (a řadu prázdných
+     * běhů vynuluje). Prázdný až když je prázdný i předchozí běh — jediný prázdný
+     * feed může být výpadek OTA, nejen storno posledního budoucího pobytu.
+     *
+     * @param list<IcalEvent> $events
+     */
+    private function trustsVanishing(ConnectorType $type, array $events, bool $dryRun): bool
+    {
+        $emptyRuns = $events === [] ? $this->connectors->getEmptyFeedRuns($type) + 1 : 0;
+        if (!$dryRun) {
+            $this->connectors->setEmptyFeedRuns($type, $emptyRuns);
+        }
+
+        if ($emptyRuns > 0 && $emptyRuns < self::EMPTY_RUNS_TO_CANCEL) {
+            $this->logger->warning('iCal feed bez událostí — storna odložena do dalšího běhu.', ['channel' => $type->value]);
+
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * Stornuje rezervace kanálu založené z feedu, jejichž UID v tomto běhu
-     * nedorazilo (host zrušil na OTA), a vrátí je. Bezpečnostní pojistka: při
-     * prázdném feedu (0 událostí) nic neruší — nerozlišíme „žádné rezervace"
-     * od výpadku feedu.
+     * nedorazilo (host zrušil na OTA), a vrátí je.
      *
      * @param array<string, true> $seen
-     * @param list<IcalEvent>     $events
      *
      * @return list<Reservation> stornované rezervace
      */
-    private function cancelVanished(Channel $channel, \DateTimeImmutable $from, array $seen, array $events): array
+    private function cancelVanished(Channel $channel, \DateTimeImmutable $from, array $seen): array
     {
-        if ($events === []) {
-            $this->logger->warning('iCal feed bez událostí — přeskakuji detekci storn.', ['channel' => $channel->value]);
-
-            return [];
-        }
-
         $cancelled = [];
         foreach ($this->reservations->findActiveIcalReservations($channel, $from) as $reservation) {
             $uid = $reservation->getIcalUid();

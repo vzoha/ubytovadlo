@@ -213,13 +213,56 @@ final class IcalImporterTest extends KernelTestCase
         self::assertSame([], $this->receipts->findForReservation($reservation));
     }
 
-    public function testEmptyFeedDoesNotCancel(): void
+    public function testSingleEmptyFeedDoesNotCancel(): void
     {
         $this->importFeed($this->ics($this->event('a@booking.com', $this->start, $this->end)));
         $result = $this->importFeed($this->ics());
 
         self::assertSame(0, $result->cancelled);
         self::assertSame(ReservationStatus::NEEDS_DETAILS, $this->reservations->findByIcalUid('a@booking.com')?->getStatus());
+    }
+
+    public function testSecondEmptyFeedInRowCancelsVanished(): void
+    {
+        // Stornoval se poslední budoucí pobyt → feed zůstává prázdný.
+        $this->importFeed($this->ics($this->event('a@booking.com', $this->start, $this->end)));
+        $this->importFeed($this->ics());
+        $result = $this->importFeed($this->ics());
+
+        self::assertSame(1, $result->cancelled);
+        self::assertSame(ReservationStatus::CANCELLED, $this->reservations->findByIcalUid('a@booking.com')?->getStatus());
+    }
+
+    public function testNonEmptyFeedResetsEmptyStreak(): void
+    {
+        $feed = $this->ics($this->event('a@booking.com', $this->start, $this->end));
+        $this->importFeed($feed);
+        $this->importFeed($this->ics());
+        $this->importFeed($feed);
+        $result = $this->importFeed($this->ics());
+
+        self::assertSame(0, $result->cancelled);
+        self::assertSame(ReservationStatus::NEEDS_DETAILS, $this->reservations->findByIcalUid('a@booking.com')?->getStatus());
+    }
+
+    public function testDryRunDoesNotAdvanceEmptyStreak(): void
+    {
+        $this->importFeed($this->ics($this->event('a@booking.com', $this->start, $this->end)));
+        $this->importer($this->ics())->import(ConnectorType::BOOKING, true);
+        $this->em->clear();
+        $result = $this->importFeed($this->ics());
+
+        self::assertSame(0, $result->cancelled);
+        self::assertSame(ReservationStatus::NEEDS_DETAILS, $this->reservations->findByIcalUid('a@booking.com')?->getStatus());
+    }
+
+    public function testEmptyStreakIsPerConnector(): void
+    {
+        $this->importFeed($this->ics($this->event('a@booking.com', $this->start, $this->end)));
+        $this->importFeed($this->ics(), ConnectorType::AIRBNB);
+        $result = $this->importFeed($this->ics());
+
+        self::assertSame(0, $result->cancelled);
     }
 
     public function testCancelledStatusEventCancelsExisting(): void
