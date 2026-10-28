@@ -57,9 +57,7 @@ class CheckinController extends AbstractController
     public function index(string $token, Request $request): Response
     {
         $reservation = $this->resolveReservation($token);
-        if ($reservation->getCheckinCompletedAt() === null) {
-            $this->progress->visit($reservation, $request);
-        }
+        $this->progress->visit($reservation, $request);
         $guests = $this->documents->findByReservation($reservation);
 
         return $this->render('checkin/index.html.twig', [

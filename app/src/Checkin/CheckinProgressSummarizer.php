@@ -12,7 +12,9 @@ declare(strict_types=1);
 namespace App\Checkin;
 
 use App\Entity\CheckinEvent;
+use App\Enum\CheckinDevice;
 use App\Enum\CheckinStep;
+use App\Enum\DocumentReadSource;
 
 /**
  * Složí kroky hosta z check-inu do čitelného průběhu. Opakované čtení dokladu
@@ -20,18 +22,6 @@ use App\Enum\CheckinStep;
  */
 class CheckinProgressSummarizer
 {
-    private const array DEVICES = [
-        'mobile' => 'mobil',
-        'tablet' => 'tablet',
-        'desktop' => 'počítač',
-    ];
-
-    private const array SOURCES = [
-        'live' => 'živá kamera',
-        'photo' => 'fotka',
-        'manual' => 'opsaný kód',
-    ];
-
     private const array FIELDS = [
         'lastName' => 'Příjmení',
         'firstName' => 'Jméno',
@@ -80,15 +70,13 @@ class CheckinProgressSummarizer
     private function groupReads(array $events): array
     {
         $groups = [];
-        $previous = null;
         foreach ($events as $event) {
             $last = array_key_last($groups);
-            if ($last !== null && $previous !== null && self::isSameRead($previous, $event)) {
+            if ($last !== null && self::isSameRead($groups[$last][0], $event)) {
                 $groups[$last][] = $event;
                 continue;
             }
             $groups[] = [$event];
-            $previous = $event;
         }
 
         return $groups;
@@ -110,11 +98,11 @@ class CheckinProgressSummarizer
         $details = $event->getDetails();
 
         return match ($event->getStep()) {
-            CheckinStep::VISIT => 'Otevření check-inu · ' . (self::DEVICES[$details['device'] ?? ''] ?? 'neznámé zařízení'),
+            CheckinStep::VISIT => 'Otevření check-inu · ' . self::deviceLabel($event),
             CheckinStep::HOST_FORM => ($details['new'] ?? false) ? 'Formulář nového hosta' : 'Úprava hosta',
             CheckinStep::DOCUMENT_READ => $this->describeReads($group),
             CheckinStep::HOST_INVALID => 'Formulář neprošel: ' . $this->fieldList($details['fields'] ?? []),
-            CheckinStep::HOST_SAVED => (($details['new'] ?? false) ? 'Host uložen' : 'Úprava hosta uložena') . ' · ' . $this->prefillLabel($details['prefill'] ?? null),
+            CheckinStep::HOST_SAVED => (($details['new'] ?? false) ? 'Host uložen' : 'Úprava hosta uložena') . ' · ' . self::prefillLabel($event),
             CheckinStep::HOST_DELETED => 'Host smazán',
             CheckinStep::BILLING_SAVED => 'Fakturační údaje uloženy',
         };
@@ -125,18 +113,30 @@ class CheckinProgressSummarizer
      */
     private function describeReads(array $group): string
     {
-        $source = self::SOURCES[$group[0]->getDetails()['source'] ?? ''] ?? 'neznámý zdroj';
+        $source = DocumentReadSource::fromInput($group[0]->getDetails()['source'] ?? null)?->label() ?? 'neznámý zdroj';
         $recognized = \count(array_filter($group, static fn (CheckinEvent $e) => ($e->getDetails()['ok'] ?? false) === true));
         $attempts = \count($group);
 
         return sprintf('Čtení dokladu (%s): %d× pokus, rozpoznáno %d×', $source, $attempts, $recognized);
     }
 
-    private function prefillLabel(mixed $prefill): string
+    private static function deviceLabel(CheckinEvent $visit): string
     {
-        $source = \is_string($prefill) ? (self::SOURCES[$prefill] ?? null) : null;
+        $device = $visit->getDetails()['device'] ?? null;
 
-        return $source !== null ? 'předvyplněno z dokladu (' . $source . ')' : 'vyplněno ručně';
+        return (\is_string($device) ? CheckinDevice::tryFrom($device)?->label() : null) ?? 'neznámé zařízení';
+    }
+
+    private static function prefillSource(CheckinEvent $saved): ?DocumentReadSource
+    {
+        return DocumentReadSource::fromInput($saved->getDetails()['prefill'] ?? null);
+    }
+
+    private static function prefillLabel(CheckinEvent $saved): string
+    {
+        $source = self::prefillSource($saved);
+
+        return $source !== null ? 'předvyplněno z dokladu (' . $source->label() . ')' : 'vyplněno ručně';
     }
 
     private function fieldList(mixed $fields): string
@@ -155,16 +155,13 @@ class CheckinProgressSummarizer
     {
         $parts = [$this->spanLabel($startedAt, $completedAt, $timeFormat)];
 
-        $devices = array_unique(array_map(
-            static fn (CheckinEvent $e) => self::DEVICES[$e->getDetails()['device'] ?? ''] ?? 'neznámé zařízení',
-            self::ofStep($events, CheckinStep::VISIT),
-        ));
+        $devices = array_unique(array_map(self::deviceLabel(...), self::ofStep($events, CheckinStep::VISIT)));
         if ($devices !== []) {
             $parts[] = implode(', ', $devices);
         }
 
         $newHosts = array_filter(self::ofStep($events, CheckinStep::HOST_SAVED), static fn (CheckinEvent $e) => ($e->getDetails()['new'] ?? false) === true);
-        $fromDocument = \count(array_filter($newHosts, static fn (CheckinEvent $e) => CheckinProgressRecorder::documentSource($e->getDetails()['prefill'] ?? null) !== null));
+        $fromDocument = \count(array_filter($newHosts, static fn (CheckinEvent $e) => self::prefillSource($e) !== null));
         if ($newHosts !== []) {
             $parts[] = sprintf('hosté: %d (z dokladu %d, ručně %d)', \count($newHosts), $fromDocument, \count($newHosts) - $fromDocument);
         }

@@ -13,7 +13,10 @@ namespace App\Checkin;
 
 use App\Entity\CheckinEvent;
 use App\Entity\Reservation;
+use App\Enum\CheckinDevice;
 use App\Enum\CheckinStep;
+use App\Enum\DocumentReadSource;
+use App\Mrz\MrzResult;
 use App\Repository\CheckinEventRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -28,9 +31,6 @@ use Symfony\Component\HttpFoundation\Request;
  */
 class CheckinProgressRecorder
 {
-    /** Odkud host předvyplnil formulář ze strojově čitelné zóny dokladu. */
-    public const array DOCUMENT_SOURCES = ['live', 'photo', 'manual'];
-
     /** Návrat po delší pauze je nová návštěva; přesměrování po uložení ne. */
     private const int VISIT_GAP_SECONDS = 1800;
 
@@ -45,14 +45,31 @@ class CheckinProgressRecorder
     ) {
     }
 
+    /** Prohlížení už dokončeného check-inu se nezapisuje. */
     public function visit(Reservation $reservation, Request $request): void
     {
+        if ($reservation->getCheckinCompletedAt() !== null) {
+            return;
+        }
         $last = $this->events->lastOccurredAt($reservation);
         if ($last !== null && $this->clock->now()->getTimestamp() - $last->getTimestamp() < self::VISIT_GAP_SECONDS) {
             return;
         }
 
-        $this->record($reservation, CheckinStep::VISIT, ['device' => self::device((string) $request->headers->get('User-Agent'))]);
+        $device = CheckinDevice::fromUserAgent((string) $request->headers->get('User-Agent'));
+        $this->record($reservation, CheckinStep::VISIT, ['device' => $device->value]);
+    }
+
+    /**
+     * @param MrzResult|null $result null = text se nepodařilo rozpoznat
+     */
+    public function documentRead(Reservation $reservation, ?DocumentReadSource $source, ?MrzResult $result): void
+    {
+        $this->record($reservation, CheckinStep::DOCUMENT_READ, [
+            'source' => $source?->value,
+            'ok' => $result !== null,
+            'confidence' => $result?->confidence,
+        ]);
     }
 
     /** Uložený host; prohlížeč v `checkin_prefill` hlásí, odkud formulář předvyplnil. */
@@ -60,7 +77,7 @@ class CheckinProgressRecorder
     {
         $this->record($reservation, CheckinStep::HOST_SAVED, [
             'new' => $isNew,
-            'prefill' => self::documentSource($request->request->get('checkin_prefill')),
+            'prefill' => DocumentReadSource::fromInput($request->request->get('checkin_prefill'))?->value,
         ]);
     }
 
@@ -100,7 +117,7 @@ class CheckinProgressRecorder
     /**
      * @param array<string, mixed> $details
      */
-    public function record(Reservation $reservation, CheckinStep $step, array $details = []): void
+    private function record(Reservation $reservation, CheckinStep $step, array $details = []): void
     {
         if ($this->security->getUser() !== null || $this->events->countForReservation($reservation) >= self::MAX_EVENTS) {
             return;
@@ -108,22 +125,5 @@ class CheckinProgressRecorder
 
         $this->em->persist(new CheckinEvent($reservation, $step, $details, $this->clock->now()));
         $this->em->flush();
-    }
-
-    /** Neznámou hodnotu z prohlížeče zahodí — do DB jde jen povolený zdroj. */
-    public static function documentSource(mixed $value): ?string
-    {
-        return \in_array($value, self::DOCUMENT_SOURCES, true) ? $value : null;
-    }
-
-    private static function device(string $userAgent): string
-    {
-        // iPad hlásí i „Mobile", Android tablet naopak „Mobile" nemá — proto toto pořadí.
-        return match (true) {
-            preg_match('/iPad|Tablet/i', $userAgent) === 1 => 'tablet',
-            preg_match('/Mobi|iPhone/i', $userAgent) === 1 => 'mobile',
-            preg_match('/Android/i', $userAgent) === 1 => 'tablet',
-            default => 'desktop',
-        };
     }
 }

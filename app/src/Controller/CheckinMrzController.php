@@ -13,7 +13,7 @@ namespace App\Controller;
 
 use App\Checkin\CheckinAccess;
 use App\Checkin\CheckinProgressRecorder;
-use App\Enum\CheckinStep;
+use App\Enum\DocumentReadSource;
 use App\Mrz\MrzParser;
 use App\Mrz\MrzResult;
 use App\Repository\NationalityRepository;
@@ -50,23 +50,7 @@ class CheckinMrzController extends AbstractController
 
         $payload = json_decode((string) $request->getContent(), true);
         $payload = \is_array($payload) ? $payload : [];
-        $response = $this->read($payload, $request);
 
-        $data = json_decode((string) $response->getContent(), true);
-        $this->progress->record($reservation, CheckinStep::DOCUMENT_READ, [
-            'source' => CheckinProgressRecorder::documentSource($payload['source'] ?? null),
-            'ok' => $response->isSuccessful(),
-            'confidence' => $data['confidence'] ?? null,
-        ]);
-
-        return $response;
-    }
-
-    /**
-     * @param array<mixed> $payload
-     */
-    private function read(array $payload, Request $request): JsonResponse
-    {
         $texts = self::mrzTexts($payload);
         if ($texts === []) {
             return new JsonResponse(['error' => $this->translator->trans('error.mrz_missing', [], 'checkin')], 400);
@@ -78,6 +62,7 @@ class CheckinMrzController extends AbstractController
         $result = \is_array($payload['mrz_texts'] ?? null)
             ? $this->mrzParser->parseMany($texts)
             : $this->mrzParser->parse($texts[0]);
+        $this->progress->documentRead($reservation, DocumentReadSource::fromInput($payload['source'] ?? null), $result);
 
         if ($result === null) {
             return new JsonResponse(['error' => $this->translator->trans('error.mrz_unrecognized', [], 'checkin')], 422);
