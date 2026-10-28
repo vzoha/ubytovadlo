@@ -24,6 +24,12 @@ interface McpTool
 
     public function name(): string;
 
+    /**
+     * False = nástroj něco mění nebo odesílá mimo aplikaci; klient si pak před
+     * voláním vyžádá souhlas uživatele.
+     */
+    public function readOnly(): bool;
+
     public function description(): string;
 
     /**

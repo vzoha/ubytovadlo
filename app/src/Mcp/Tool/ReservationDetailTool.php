@@ -30,6 +30,11 @@ final class ReservationDetailTool implements McpTool
         return 'get_reservation';
     }
 
+    public function readOnly(): bool
+    {
+        return true;
+    }
+
     public function description(): string
     {
         return 'Detail rezervace podle ID (z find_guest) nebo kódu, který host zná z potvrzení '

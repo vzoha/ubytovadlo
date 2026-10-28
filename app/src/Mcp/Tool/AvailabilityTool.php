@@ -35,6 +35,11 @@ final class AvailabilityTool implements McpTool
         return 'check_availability';
     }
 
+    public function readOnly(): bool
+    {
+        return true;
+    }
+
     public function description(): string
     {
         return 'Ověří, jestli je ubytování volné od data příjezdu do data odjezdu. Den odjezdu '

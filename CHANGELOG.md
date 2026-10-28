@@ -36,10 +36,14 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
   *Dotazy hostů*, včetně složky odeslaných).
 
 - **AI asistent (MCP).** Ubytovadlo je MCP server pro AI klienta (Claude, ChatGPT, Gemini CLI…):
-  asistent podle něj připraví odpověď na dotaz hosta. Nástroje jen čtou — e-maily hostů
-  (přehled nezodpovězených, celý text i předchozí korespondence s hostem), host podle
-  e-mailu, telefonu nebo jména i s pobyty, detail rezervace (kontakt, časy, doplatek, časová
-  osa, e-maily), volné termíny napříč kanály a informace o ubytování od majitele.
+  asistent podle něj připraví odpověď na dotaz hosta a po schválení majitelem ji odešle.
+  Čtecí nástroje — e-maily hostů (přehled nezodpovězených, celý text i předchozí korespondence
+  s hostem), host podle e-mailu, telefonu nebo jména i s pobyty, detail rezervace (kontakt,
+  časy, doplatek, časová osa, e-maily), volné termíny napříč kanály a informace o ubytování od
+  majitele. Nástroj `reply_to_guest_email` odešle odpověď na e-mail hosta stejně jako tlačítko
+  *Odpovědět* v aplikaci (do vlákna, uloží se ke korespondenci, e-mail označí jako
+  zodpovězený); text s nevyplněným místem `[Sem …]` odmítne. Klient ho vidí jako nástroj,
+  který odesílá ven, a před voláním si vyžádá souhlas.
   *Nastavení → AI asistent* drží text pro asistenta (ceník, příjezd, parkování, zvířata…),
   ukazuje, kdy se naposledy stáhla schránka hostů, a vydává přístupový token, který se ukáže
   jen jednou; v databázi zůstává jen jeho otisk. Endpoint `/mcp` přijímá Streamable HTTP bez

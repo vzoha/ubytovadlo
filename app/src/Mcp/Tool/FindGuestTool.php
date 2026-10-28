@@ -34,6 +34,11 @@ final class FindGuestTool implements McpTool
         return 'find_guest';
     }
 
+    public function readOnly(): bool
+    {
+        return true;
+    }
+
     public function description(): string
     {
         return 'Najde hosta podle e-mailu, telefonu nebo části jména a vrátí jeho kontakt, '

@@ -58,6 +58,22 @@ final class McpServerTest extends TestCase
         self::assertTrue($tools[0]['annotations']['readOnlyHint']);
     }
 
+    public function testWriteToolIsAnnotatedAsSendingOut(): void
+    {
+        $server = new McpServer([new class extends EchoTool {
+            public function readOnly(): bool
+            {
+                return false;
+            }
+        }], new NullLogger());
+
+        $annotations = $server->handle(['jsonrpc' => '2.0', 'id' => 2, 'method' => 'tools/list'])['result']['tools'][0]['annotations'] ?? [];
+
+        self::assertFalse($annotations['readOnlyHint']);
+        self::assertFalse($annotations['destructiveHint']);
+        self::assertTrue($annotations['openWorldHint']);
+    }
+
     public function testToolCallReturnsJsonText(): void
     {
         $reply = $this->server->handle(['jsonrpc' => '2.0', 'id' => 3, 'method' => 'tools/call', 'params' => ['name' => 'echo', 'arguments' => ['say' => 'ahoj']]]);
@@ -98,11 +114,16 @@ final class McpServerTest extends TestCase
     }
 }
 
-final class EchoTool implements McpTool
+class EchoTool implements McpTool
 {
     public function name(): string
     {
         return 'echo';
+    }
+
+    public function readOnly(): bool
+    {
+        return true;
     }
 
     public function description(): string

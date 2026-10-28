@@ -34,6 +34,11 @@ final class ListGuestEmailsTool implements McpTool
         return 'list_guest_emails';
     }
 
+    public function readOnly(): bool
+    {
+        return true;
+    }
+
     public function description(): string
     {
         return 'Přehled e-mailů, které poslali hosté, od nejnovějšího: odesílatel, předmět, datum, '

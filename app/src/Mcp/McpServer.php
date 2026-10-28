@@ -112,7 +112,8 @@ final class McpServer
             'capabilities' => ['tools' => ['listChanged' => false]],
             'serverInfo' => ['name' => 'ubytovadlo', 'version' => '0.1.0'],
             'instructions' => 'Data ubytování: hosté, rezervace, obsazenost a informace o objektu. '
-                . 'Slouží k přípravě odpovědí hostům. Nástroje jen čtou, nic neodesílají ani nemění.',
+                . 'Slouží k přípravě odpovědí hostům. Všechny nástroje kromě reply_to_guest_email jen čtou; '
+                . 'ten odešle odpověď hostovi e-mailem, a to jen s textem, který majitel výslovně schválil.',
         ];
     }
 
@@ -123,8 +124,19 @@ final class McpServer
             'name' => $tool->name(),
             'description' => $tool->description(),
             'inputSchema' => $tool->inputSchema(),
-            'annotations' => ['readOnlyHint' => true],
+            'annotations' => self::annotations($tool),
         ], $this->tools));
+    }
+
+    /** @return array<string, bool> */
+    private static function annotations(McpTool $tool): array
+    {
+        if ($tool->readOnly()) {
+            return ['readOnlyHint' => true];
+        }
+
+        // Odesílá ven (e-mail hostovi), nic nemaže; opakované volání pošle zprávu znovu.
+        return ['readOnlyHint' => false, 'destructiveHint' => false, 'idempotentHint' => false, 'openWorldHint' => true];
     }
 
     /**

@@ -32,6 +32,11 @@ final class ReadGuestEmailTool implements McpTool
         return 'read_guest_email';
     }
 
+    public function readOnly(): bool
+    {
+        return true;
+    }
+
     public function description(): string
     {
         return 'Celý text e-mailu podle id z list_guest_emails nebo get_reservation: odesílatel, předmět, '

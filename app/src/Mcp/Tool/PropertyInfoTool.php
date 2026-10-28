@@ -39,6 +39,11 @@ final class PropertyInfoTool implements McpTool
         return 'get_property_info';
     }
 
+    public function readOnly(): bool
+    {
+        return true;
+    }
+
     public function description(): string
     {
         return 'Informace o ubytování od majitele (ceník, příjezd a klíče, parkování, zvířata, okolí, '
