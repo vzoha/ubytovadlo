@@ -11,11 +11,12 @@ declare(strict_types=1);
 
 namespace App\Credential;
 
+use App\Email\ImapAccount;
 use App\Repository\CredentialRepository;
 
 /**
- * Jediné místo, které ví, odkud se berou přístupové údaje (IMAP, MotoPress).
- * Přístupové údaje (IMAP, MotoPress, SMTP) čte z DB (šifrovaně, zadané v UI).
+ * Jediné místo, které ví, odkud se berou přístupové údaje (IMAP, MotoPress, SMTP):
+ * z DB, šifrovaně, zadané v UI.
  * Nenastavené pole vrací prázdno — pollery/sync se pak tiše přeskočí.
  * Konzumenti (MotoPressClient, IMAP poller) čtou jen přes tohoto providera.
  */
@@ -29,6 +30,12 @@ final class CredentialProvider
         'imapUsername' => ['imap.username', false],
         'imapPassword' => ['imap.password', true],
         'imapFolder' => ['imap.folder', false],
+        'guestImapHost' => ['guest_imap.host', false],
+        'guestImapPort' => ['guest_imap.port', false],
+        'guestImapEncryption' => ['guest_imap.encryption', false],
+        'guestImapUsername' => ['guest_imap.username', false],
+        'guestImapPassword' => ['guest_imap.password', true],
+        'guestImapFolder' => ['guest_imap.folder', false],
         'motopressBaseUrl' => ['motopress.base_url', false],
         'motopressConsumerKey' => ['motopress.consumer_key', true],
         'motopressConsumerSecret' => ['motopress.consumer_secret', true],
@@ -78,6 +85,18 @@ final class CredentialProvider
     public function imapConfigured(): bool
     {
         return $this->imapHost() !== '' && $this->imapUsername() !== '';
+    }
+
+    /** Automatizační schránka — e-maily portálů a banky. */
+    public function automationMailbox(): ImapAccount
+    {
+        return $this->mailbox('imap');
+    }
+
+    /** Schránka, kam píšou hosté — čte ji AI asistent. */
+    public function guestMailbox(): ImapAccount
+    {
+        return $this->mailbox('guestImap');
     }
 
     public function motopressBaseUrl(): string
@@ -180,6 +199,18 @@ final class CredentialProvider
         }
 
         return ['values' => $values, 'secretsSet' => $secretsSet];
+    }
+
+    private function mailbox(string $prefix): ImapAccount
+    {
+        return new ImapAccount(
+            host: $this->get($prefix . 'Host'),
+            port: (int) $this->get($prefix . 'Port'),
+            encryption: $this->get($prefix . 'Encryption'),
+            username: $this->get($prefix . 'Username'),
+            password: $this->get($prefix . 'Password'),
+            folder: $this->get($prefix . 'Folder'),
+        );
     }
 
     private function get(string $field): string

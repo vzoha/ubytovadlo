@@ -20,8 +20,9 @@ use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
- * Přístupy k poště: příchozí schránka (IMAP), ze které se čtou zprávy portálů
- * a banky, a odchozí server (SMTP), kterým aplikace posílá. Názvy polí odpovídají
+ * Přístupy k poště: automatizační schránka (IMAP), ze které se čtou zprávy portálů
+ * a banky, schránka s dotazy hostů pro AI asistenta (IMAP) a odchozí server
+ * (SMTP), kterým aplikace posílá. Názvy polí odpovídají
  * {@see \App\Credential\CredentialProvider::FIELDS}, ukládá je controller šifrovaně.
  * Tajemství jsou write-only: prázdné pole = beze změny.
  *
@@ -44,6 +45,16 @@ class MailboxSettingsType extends AbstractType
             ->add('imapUsername', TextType::class, ['label' => 'Uživatel (e-mail)', 'required' => false])
             ->add('imapPassword', PasswordType::class, ['label' => 'Heslo', 'help' => 'Prázdné = beze změny.'] + $secret)
             ->add('imapFolder', TextType::class, ['label' => 'Složka', 'required' => false, 'help' => 'Obvykle INBOX.'])
+            ->add('guestImapHost', TextType::class, ['label' => 'IMAP server', 'required' => false, 'help' => 'Např. mail.example.com'])
+            ->add('guestImapPort', IntegerType::class, ['label' => 'Port', 'required' => false, 'help' => 'Obvykle 993 (SSL).', 'attr' => ['min' => 1, 'max' => 65535]])
+            ->add('guestImapEncryption', ChoiceType::class, [
+                'label' => 'Šifrování',
+                'required' => false,
+                'choices' => ['SSL' => 'ssl', 'TLS' => 'tls', 'Žádné' => ''],
+            ])
+            ->add('guestImapUsername', TextType::class, ['label' => 'Uživatel (e-mail)', 'required' => false])
+            ->add('guestImapPassword', PasswordType::class, ['label' => 'Heslo', 'help' => 'Prázdné = beze změny.'] + $secret)
+            ->add('guestImapFolder', TextType::class, ['label' => 'Složka', 'required' => false, 'help' => 'Prázdné = INBOX.'])
             ->add('smtpHost', TextType::class, ['label' => 'SMTP server', 'required' => false, 'help' => 'Adresa odchozího serveru, např. mail.vasedomena.cz.'])
             ->add('smtpPort', IntegerType::class, ['label' => 'Port', 'required' => false, 'help' => 'Obvykle 465 (SSL) nebo 587 (TLS).', 'attr' => ['min' => 1, 'max' => 65535]])
             ->add('smtpEncryption', ChoiceType::class, [

@@ -16,8 +16,8 @@ use Webklex\PHPIMAP\Client;
 use Webklex\PHPIMAP\ClientManager;
 
 /**
- * Připojení k automatizační schránce z uložených přístupů. Sdílené mezi pollerem
- * (čte zprávy) a testem konektoru (jen ověří přihlášení).
+ * Připojení k IMAP schránce z uložených přístupů. Bez argumentu automatizační
+ * schránka (poller, test konektoru), jinak zadaná — např. schránka hostů.
  */
 final class ImapClientFactory
 {
@@ -27,15 +27,16 @@ final class ImapClientFactory
     }
 
     /** Připojený IMAP klient. Vyhodí výjimku, když se přihlášení nepovede. */
-    public function connect(): Client
+    public function connect(?ImapAccount $account = null): Client
     {
+        $account ??= $this->credentials->automationMailbox();
         $client = (new ClientManager())->make([
-            'host' => $this->credentials->imapHost(),
-            'port' => $this->credentials->imapPort(),
-            'encryption' => $this->credentials->imapEncryption(),
+            'host' => $account->host,
+            'port' => $account->port,
+            'encryption' => $account->encryption,
             'validate_cert' => true,
-            'username' => $this->credentials->imapUsername(),
-            'password' => $this->credentials->imapPassword(),
+            'username' => $account->username,
+            'password' => $account->password,
             'protocol' => 'imap',
         ]);
         $client->connect();

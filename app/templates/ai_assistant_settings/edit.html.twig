@@ -1,0 +1,95 @@
+{% extends 'settings/base.html.twig' %}
+
+{% block title %}AI asistent{% endblock %}
+
+{% block settings_active %}ai{% endblock %}
+
+{% block settings_content %}
+    <h2 class="h5 mb-2">AI asistent</h2>
+    <p class="text-muted small">
+        Asistent ve vašem AI klientovi (Claude, ChatGPT, Gemini…) vidí hosty, rezervace, volné termíny
+        a&nbsp;informace o&nbsp;ubytování a&nbsp;podle nich připraví odpověď na dotaz hosta. Data jen čte,
+        nic neodesílá ani nemění. Odpověď před odesláním vždy zkontrolujte.
+    </p>
+
+    {{ form_start(form) }}
+        <div class="card mb-3">
+            <div class="card-body">
+                {{ form_row(form.propertyInfo) }}
+            </div>
+        </div>
+        <div class="d-flex justify-content-end mb-4">
+            <button type="submit" class="btn btn-primary">Uložit</button>
+        </div>
+    {{ form_end(form) }}
+
+    <div class="card mb-3">
+        <div class="card-body">
+            <h3 class="h6">Přístup pro AI klienta</h3>
+
+            {% if issuedToken %}
+                <div class="alert alert-warning small">
+                    Token se zobrazí jen teď. Zkopírujte ho do AI klienta — po opuštění stránky už ho
+                    nepůjde zobrazit, jen vydat nový.
+                </div>
+            {% endif %}
+
+            <label class="form-label small mb-1" for="mcp-endpoint-url">Adresa serveru (MCP)</label>
+            <div class="input-group input-group-sm mb-3">
+                <input type="text" class="form-control font-monospace" id="mcp-endpoint-url" value="{{ endpointUrl }}" readonly>
+                <button type="button" class="btn btn-outline-secondary" data-copy="#mcp-endpoint-url">Kopírovat</button>
+            </div>
+
+            {% if issuedToken %}
+                <label class="form-label small mb-1" for="mcp-token">Token</label>
+                <div class="input-group input-group-sm mb-3">
+                    <input type="text" class="form-control font-monospace" id="mcp-token" value="{{ issuedToken }}" readonly>
+                    <button type="button" class="btn btn-outline-secondary" data-copy="#mcp-token">Kopírovat</button>
+                </div>
+
+                <label class="form-label small mb-1" for="mcp-claude-code">Příkaz pro Claude Code</label>
+                <div class="input-group input-group-sm mb-3">
+                    <input type="text" class="form-control font-monospace" id="mcp-claude-code" readonly
+                           value="claude mcp add --transport http ubytovadlo {{ endpointUrl }} --header &quot;Authorization: Bearer {{ issuedToken }}&quot;">
+                    <button type="button" class="btn btn-outline-secondary" data-copy="#mcp-claude-code">Kopírovat</button>
+                </div>
+            {% elseif tokenIssued %}
+                <p class="small mb-3">Přístup je vydaný. Klient se přihlašuje hlavičkou <code>Authorization: Bearer &lt;token&gt;</code>.</p>
+            {% else %}
+                <p class="small text-muted mb-3">Přístup není vydaný — žádný AI klient se k datům nepřipojí.</p>
+            {% endif %}
+
+            <div class="d-flex flex-wrap gap-2">
+                <form method="post" action="{{ path('ai_assistant_token_issue') }}"
+                      {% if tokenIssued %}onsubmit="return confirm('Nový token zneplatní ten dosavadní. Pokračovat?');"{% endif %}>
+                    <input type="hidden" name="_token" value="{{ csrf_token('ai_assistant_token') }}">
+                    <button type="submit" class="btn {{ tokenIssued ? 'btn-outline-primary' : 'btn-primary' }}">
+                        {{ tokenIssued ? 'Vydat nový token' : 'Vydat přístup' }}
+                    </button>
+                </form>
+                {% if tokenIssued %}
+                    <form method="post" action="{{ path('ai_assistant_token_revoke') }}"
+                          onsubmit="return confirm('Zrušit přístup? AI klient se přestane připojovat.');">
+                        <input type="hidden" name="_token" value="{{ csrf_token('ai_assistant_token') }}">
+                        <button type="submit" class="btn btn-outline-danger">Zrušit přístup</button>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+    document.querySelectorAll('[data-copy]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            const field = document.querySelector(btn.dataset.copy);
+            navigator.clipboard.writeText(field.value).then(function () {
+                const orig = btn.textContent;
+                btn.textContent = 'Zkopírováno';
+                setTimeout(function () { btn.textContent = orig; }, 1500);
+            });
+        });
+    });
+</script>
+{% endblock %}

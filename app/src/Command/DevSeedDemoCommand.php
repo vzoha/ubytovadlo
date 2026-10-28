@@ -44,6 +44,7 @@ use App\Enum\UserRole;
 use App\Formatting\Money;
 use App\Invoice\InvoiceService;
 use App\Mail\MessageLocales;
+use App\Mcp\Tool\PropertyInfoTool;
 use App\Repository\CleaningRepository;
 use App\Task\TaskCatalog;
 use Doctrine\DBAL\Connection;
@@ -159,6 +160,13 @@ class DevSeedDemoCommand extends Command
             ->setNote('Rekreační poplatek obce — Kč / dospělý / noc.'));
         $this->em->persist((new Setting(BookingHotelId::SETTING_KEY, '1000001'))
             ->setNote('Booking.com: ID ubytování pro odkaz do extranetu.'));
+        $this->em->persist((new Setting(PropertyInfoTool::SETTING_KEY, implode("\n", [
+            'Ceník: mimo sezónu 2 000 Kč/noc (2 osoby), každá další osoba 300 Kč/noc. Léto (červenec–srpen) jen po týdnech sobota–sobota, 14 000 Kč/týden.',
+            'Příjezd od 15:00, odjezd do 10:00. Klíče jsou ve schránce u vchodu, kód pošleme den před příjezdem.',
+            'Parkování: zdarma na dvoře, 2 auta.',
+            'Pes: vítaný, 200 Kč/noc, max. 1 pes.',
+            'Okolí: koupání v rybníce 10 min pěšky, cyklostezka kolem domu.',
+        ])))->setNote('Informace o ubytování pro AI asistenta.'));
 
         $this->em->flush();
         $io->writeln('  Uživatel, tarif a nastavení vytvořeny.');

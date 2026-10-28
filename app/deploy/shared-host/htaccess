@@ -13,6 +13,11 @@ DirectoryIndex index.php
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
+    # PHP přes CGI/FPM hlavičku Authorization nedostane — předej ji, jinak
+    # MCP endpoint (Bearer token AI asistenta) přístup vždy odmítne.
+    RewriteCond %{HTTP:Authorization} .+
+    RewriteRule ^ - [E=HTTP_AUTHORIZATION:%0]
+
     # Přesměrování na URI bez front controlleru (index.php) pro hezčí adresy.
     RewriteCond %{ENV:REDIRECT_STATUS} =""
     RewriteRule ^index\.php(?:/(.*)|$) %{ENV:BASE}/$1 [R=301,L]

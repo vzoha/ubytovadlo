@@ -103,6 +103,35 @@ final class CredentialProviderTest extends TestCase
         self::assertNull($this->provider()->smtpDsn());
     }
 
+    public function testGuestMailboxIsSeparateFromAutomationMailbox(): void
+    {
+        $this->repo->method('getDecrypted')->willReturnMap([
+            ['imap.host', 'mail.example.com'],
+            ['imap.username', 'automat@example.com'],
+            ['guest_imap.host', 'mail.example.com'],
+            ['guest_imap.port', '993'],
+            ['guest_imap.username', 'info@example.com'],
+            ['guest_imap.password', 'tajne'],
+        ]);
+
+        $guest = $this->provider()->guestMailbox();
+        $automation = $this->provider()->automationMailbox();
+
+        self::assertTrue($guest->isConfigured());
+        self::assertSame('info@example.com', $guest->username);
+        self::assertSame(993, $guest->port);
+        self::assertSame('INBOX', $guest->folderOrInbox());
+        self::assertSame('automat@example.com', $automation->username);
+        self::assertSame('', $automation->password);
+    }
+
+    public function testGuestMailboxNotConfiguredWithoutHost(): void
+    {
+        $this->repo->method('getDecrypted')->willReturnMap([['guest_imap.username', 'info@example.com']]);
+
+        self::assertFalse($this->provider()->guestMailbox()->isConfigured());
+    }
+
     private function provider(): CredentialProvider
     {
         return new CredentialProvider($this->repo);

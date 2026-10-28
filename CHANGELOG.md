@@ -8,6 +8,16 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Přidáno
 
+- **AI asistent (MCP).** Ubytovadlo je MCP server pro AI klienta (Claude, ChatGPT, Gemini CLI…):
+  asistent podle něj připraví odpověď na dotaz hosta. Nástroje jen čtou — e-maily ze schránky,
+  kam píšou hosté (přehled nezodpovězených i celý text, zprávy zůstávají nepřečtené), host podle
+  e-mailu, telefonu nebo jména i s pobyty, detail rezervace (kontakt, časy, doplatek, časová
+  osa), volné termíny napříč kanály a informace o ubytování od majitele. Přístupy ke schránce
+  hostů jsou v *Nastavení → Připojení* (karta *Dotazy hostů*). *Nastavení → AI asistent*
+  drží text pro asistenta (ceník, příjezd, parkování, zvířata…) a vydává přístupový token,
+  který se ukáže jen jednou; v databázi zůstává jen jeho otisk. Endpoint `/mcp` přijímá
+  Streamable HTTP bez sezení s hlavičkou `Authorization: Bearer`.
+
 - **Faktura a připomínka doplatku přes WhatsApp, SMS a chat.** Menu *Předvyplnit šablonou*
   u WhatsAppu a SMS v kartě hosta i okno *Zpráva do chatu* nabízí vedle rychlých zpráv
   *Faktura na zálohu …*, *Faktura na doplatek …* či *Faktura …* (každá vystavená faktura

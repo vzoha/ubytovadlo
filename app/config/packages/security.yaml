@@ -18,6 +18,12 @@ security:
         dev:
             pattern: ^/(_profiler|_wdt|assets|build)/
             security: false
+        # MCP endpoint AI asistenta: stroj s Bearer tokenem, bez session a loginu.
+        # Token ověřuje McpController.
+        mcp:
+            pattern: ^/mcp$
+            stateless: true
+            security: false
         main:
             lazy: true
             provider: app_user_provider
