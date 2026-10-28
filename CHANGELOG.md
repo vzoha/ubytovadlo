@@ -145,6 +145,9 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Opraveno
 
+- **Časy zapsané cronem v pražském čase.** Aplikace si pásmo `Europe/Prague` nastavuje sama, takže
+  cron i web zapisují čas stejně, i když má hosting pro příkazovou řádku nastavené UTC.
+
 - **Storno poslední budoucí OTA rezervace z iCal feedu.** Když po stornu zůstane feed
   kanálu prázdný, rezervace se zruší při druhém prázdném běhu v řadě. Jediný prázdný běh
   storna jen odloží — může jít o výpadek feedu.

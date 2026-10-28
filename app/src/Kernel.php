@@ -15,4 +15,16 @@ use Symfony\Component\HttpKernel\Kernel as BaseKernel;
 class Kernel extends BaseKernel
 {
     use MicroKernelTrait;
+
+    /**
+     * Časy v DB jsou bez pásma, takže web i cron musí zapisovat ve stejném.
+     * Nespoléhá na php.ini — sdílený hosting má pro CLI UTC a pro web Prahu.
+     */
+    public const TIMEZONE = 'Europe/Prague';
+
+    public function boot(): void
+    {
+        date_default_timezone_set(self::TIMEZONE);
+        parent::boot();
+    }
 }
