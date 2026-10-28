@@ -8,6 +8,15 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Přidáno
 
+- **Zprávy hostům přes WhatsApp a SMS na časové ose.** Rychlá zpráva může zastupovat automatickou
+  zprávu (před příjezdem, před odjezdem, po pobytu) — volba *Zastupuje automatickou zprávu*
+  v *Nastavení → Rychlé zprávy*. Odeslání takové zprávy přes WhatsApp nebo SMS naplánovanou akci
+  uzavře, takže hostovi stejný obsah nepřijde ještě e-mailem a na ose zůstane jedna položka
+  „Odesláno přes WhatsApp". Naplánovaná zpráva na ose má tlačítko *WhatsApp / SMS*, které
+  otevře text automatické zprávy k úpravě a odeslání telefonem. Další odeslání už vyřízené
+  zprávy (stejný text ještě SMS) se zobrazí u té zprávy. Ručně uzavřenou zprávu jde vrátit
+  tlačítkem *Znovu otevřít*.
+
 - **Průběh online check-inu.** Na časové ose rezervace je položka *Průběh online check-inu*:
   souhrn (od–do a doba vyplňování, zařízení, počet hostů předvyplněných z dokladu a vyplněných
   ručně, chyby ve formuláři) a po rozbalení jednotlivé kroky — otevření check-inu, formulář

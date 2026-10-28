@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Enum\MessageKind;
 use App\Repository\QuickMessageRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -18,7 +19,9 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * Uživatelsky definovaná krátká zpráva pro rychlé předvyplnění SMS/WhatsApp
  * z detailu rezervace (např. „Kód dveří", „Jsme na cestě"). Tělo smí obsahovat
- * placeholdery {{ nazev }} dosazené z rezervace.
+ * placeholdery {{ nazev }} dosazené z rezervace. Zpráva navázaná na druh
+ * automatické zprávy ({@see MessageKind::quickMessageKinds()}) ji po odeslání
+ * přes WhatsApp či SMS vyřídí.
  */
 #[ORM\Entity(repositoryClass: QuickMessageRepository::class)]
 #[ORM\Table(name: 'quick_message')]
@@ -37,6 +40,10 @@ class QuickMessage
 
     #[ORM\Column(type: Types::INTEGER)]
     private int $sortOrder = 0;
+
+    /** Automatická zpráva, kterou tahle rychlá zpráva zastoupí (null = samostatná). */
+    #[ORM\Column(length: 32, nullable: true, enumType: MessageKind::class)]
+    private ?MessageKind $kind = null;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeImmutable $updatedAt;
@@ -87,6 +94,19 @@ class QuickMessage
     public function setSortOrder(int $sortOrder): self
     {
         $this->sortOrder = $sortOrder;
+
+        return $this;
+    }
+
+    public function getKind(): ?MessageKind
+    {
+        return $this->kind;
+    }
+
+    public function setKind(?MessageKind $kind): self
+    {
+        $this->kind = $kind;
+        $this->touch();
 
         return $this;
     }

@@ -43,6 +43,7 @@ use App\Enum\DocumentType;
 use App\Enum\EmailDirection;
 use App\Enum\ExpenseCategory;
 use App\Enum\LedgerEntryType;
+use App\Enum\MessageKind;
 use App\Enum\PaymentSource;
 use App\Enum\ReservationStatus;
 use App\Enum\UserRole;
@@ -252,7 +253,6 @@ class DevSeedDemoCommand extends Command
         $io->writeln('  Účty, výdaje, převod a uzávěrka vytvořeny.');
     }
 
-    /** Demo rychlé zprávy pro SMS/WhatsApp (neutrální texty s proměnnými). */
     /** Zákazníky zakládá párování samo; demo jen doplní poznámku vracejícímu se hostovi. */
     private function seedCustomerNotes(SymfonyStyle $io): void
     {
@@ -301,16 +301,19 @@ class DevSeedDemoCommand extends Command
         $io->writeln('  Korespondence s hosty vytvořena.');
     }
 
+    /** Demo rychlé zprávy pro SMS/WhatsApp (neutrální texty s proměnnými); dvě zastupují automatickou zprávu. */
     private function seedQuickMessages(SymfonyStyle $io): void
     {
         $messages = [
-            ['Uvítání', 'Dobrý den {{ guest_first_name_vocative }}, těšíme se na vás {{ check_in }}. Kdybyste cokoli potřebovali, stačí napsat.'],
-            ['Online check-in', 'Dobrý den {{ guest_first_name_vocative }}, před příjezdem prosím vyplňte online check-in: {{ checkin_url }}'],
-            ['Poděkování', 'Dobrý den {{ guest_first_name_vocative }}, děkujeme za návštěvu a budeme se těšit příště. Budeme rádi za vaši recenzi.'],
+            ['Uvítání', 'Dobrý den {{ guest_first_name_vocative }}, těšíme se na vás {{ check_in }}. Kdybyste cokoli potřebovali, stačí napsat.', null],
+            ['Online check-in', 'Dobrý den {{ guest_first_name_vocative }}, před příjezdem prosím vyplňte online check-in: {{ checkin_url }}', null],
+            ['Před odjezdem', 'Dobrý den {{ guest_first_name_vocative }}, odjezd máte {{ check_out }} do {{ check_out_time }}. Klíče prosím nechte na stole.', MessageKind::PRE_DEPARTURE],
+            ['Poděkování', 'Dobrý den {{ guest_first_name_vocative }}, děkujeme za návštěvu a budeme se těšit příště. Budeme rádi za vaši recenzi.', MessageKind::POST_STAY],
         ];
-        foreach ($messages as $i => [$label, $body]) {
+        foreach ($messages as $i => [$label, $body, $kind]) {
             $message = new QuickMessage($label, $body);
             $message->setSortOrder($i);
+            $message->setKind($kind);
             $this->em->persist($message);
         }
         $this->em->flush();

@@ -12,7 +12,9 @@ declare(strict_types=1);
 namespace App\Form;
 
 use App\Entity\QuickMessage;
+use App\Enum\MessageKind;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\EnumType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
@@ -40,6 +42,15 @@ class QuickMessageType extends AbstractType
                 'constraints' => [new NotBlank()],
                 'attr' => ['rows' => 5],
                 'help' => 'Krátký text bez formátování. Proměnné vložíš tlačítky níže.',
+            ])
+            ->add('kind', EnumType::class, [
+                'class' => MessageKind::class,
+                'choices' => MessageKind::quickMessageKinds(),
+                'choice_label' => static fn (MessageKind $kind): string => $kind->label(),
+                'label' => 'Zastupuje automatickou zprávu',
+                'required' => false,
+                'placeholder' => '— žádnou —',
+                'help' => 'Odeslání přes WhatsApp nebo SMS vyřídí naplánovanou automatickou zprávu stejného druhu, takže hostovi nepřijde ještě e-mailem.',
             ]);
     }
 

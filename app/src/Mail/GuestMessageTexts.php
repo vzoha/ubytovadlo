@@ -30,7 +30,7 @@ final class GuestMessageTexts
     }
 
     /**
-     * @return list<array{label: string, text: string}>
+     * @return list<array{label: string, text: string, kind: string|null}>
      */
     public function forReservation(Reservation $reservation): array
     {
@@ -45,7 +45,7 @@ final class GuestMessageTexts
             if ($signature !== '') {
                 $text .= "\n\n" . $signature;
             }
-            $texts[] = ['label' => $message->getLabel(), 'text' => $text];
+            $texts[] = ['label' => $message->getLabel(), 'text' => $text, 'kind' => $message->getKind()?->value];
         }
 
         return $texts;

@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace App\Mail;
 
 use App\Entity\QuickMessage;
+use App\Enum\MessageKind;
 
 /**
  * Připravené texty rychlých zpráv pokrývající běžný pobyt od potvrzení
@@ -21,12 +22,13 @@ use App\Entity\QuickMessage;
  * se do ní nijak nepromítá.
  *
  * Texty jsou prostý text bez formátování — míří do SMS, WhatsAppu a chatu portálů.
+ * Vzor s druhem zastupuje automatickou zprávu stejného obsahu.
  *
  * @see MessageVariableResolver::plainTextVariables() dostupné proměnné
  */
 final class QuickMessageDefaults
 {
-    /** @var list<array{label: string, body: string}> */
+    /** @var list<array{label: string, body: string, kind?: MessageKind}> */
     private const DEFAULTS = [
         [
             'label' => 'Uvítání',
@@ -56,6 +58,7 @@ final class QuickMessageDefaults
         ],
         [
             'label' => 'Pokyny k příjezdu',
+            'kind' => MessageKind::PRE_ARRIVAL,
             'body' => <<<'TXT'
                 Dobrý den,
 
@@ -77,6 +80,7 @@ final class QuickMessageDefaults
         ],
         [
             'label' => 'Před odjezdem',
+            'kind' => MessageKind::PRE_DEPARTURE,
             'body' => <<<'TXT'
                 Dobrý den,
 
@@ -89,6 +93,7 @@ final class QuickMessageDefaults
         ],
         [
             'label' => 'Poděkování po pobytu',
+            'kind' => MessageKind::POST_STAY,
             'body' => <<<'TXT'
                 Dobrý den,
 
@@ -106,11 +111,15 @@ final class QuickMessageDefaults
     /**
      * Vzory pro předvyplnění formuláře.
      *
-     * @return list<array{label: string, body: string}>
+     * @return list<array{label: string, body: string, kind: string|null}>
      */
     public static function templates(): array
     {
-        return self::DEFAULTS;
+        return array_map(static fn (array $default): array => [
+            'label' => $default['label'],
+            'body' => $default['body'],
+            'kind' => ($default['kind'] ?? null)?->value,
+        ], self::DEFAULTS);
     }
 
     /** @return list<QuickMessage> */
@@ -120,6 +129,7 @@ final class QuickMessageDefaults
         foreach (self::DEFAULTS as $order => $default) {
             $message = new QuickMessage($default['label'], $default['body']);
             $message->setSortOrder($order);
+            $message->setKind($default['kind'] ?? null);
             $messages[] = $message;
         }
 

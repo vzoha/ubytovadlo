@@ -66,6 +66,30 @@ enum MessageKind: string
         };
     }
 
+    /**
+     * Druhy, které ubytovatel vyřídí i rychlou zprávou přes WhatsApp či SMS —
+     * odeslaná rychlá zpráva takového druhu uzavře naplánovanou akci.
+     *
+     * @return list<self>
+     */
+    public static function quickMessageKinds(): array
+    {
+        return [self::PRE_ARRIVAL, self::PRE_DEPARTURE, self::POST_STAY];
+    }
+
+    /** Naplánovaná akce, která zprávu tohoto druhu posílá (null = druh se na osu neplánuje). */
+    public function actionType(): ?ActionType
+    {
+        return match ($this) {
+            self::RESERVATION_REQUEST => ActionType::RESERVATION_REQUEST_MESSAGE,
+            self::PRE_ARRIVAL => ActionType::PRE_ARRIVAL_MESSAGE,
+            self::PRE_DEPARTURE => ActionType::PRE_DEPARTURE_MESSAGE,
+            self::POST_STAY => ActionType::POST_STAY_MESSAGE,
+            self::BALANCE_REMINDER => ActionType::BALANCE_REMINDER,
+            default => null,
+        };
+    }
+
     /** Mapování naplánované akce na druh zprávy (null = akce není zpráva hostovi). */
     public static function fromActionType(ActionType $type): ?self
     {

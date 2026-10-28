@@ -23,6 +23,8 @@
                 const template = templates[picker.value];
                 form.querySelector('[name$="[label]"]').value = template.label;
                 form.querySelector('[name$="[body]"]').value = template.body;
+                const kind = form.querySelector('[name$="[kind]"]');
+                if (kind) { kind.value = template.kind || ''; }
             });
         });
     })();

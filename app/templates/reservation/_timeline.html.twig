@@ -52,6 +52,10 @@
                                     {{- item.meta -}}
                                 </div>
                             {% endif %}
+                            {# Stejná zpráva odeslaná ještě jinou cestou patří k akci, ne vedle ní. #}
+                            {% for follow_up in item.followUps %}
+                                <div class="text-muted small">{{ follow_up.body }} · {{ follow_up.occurredAt|date('d. m. Y H:i') }}</div>
+                            {% endfor %}
 
                             {% if item.kind == 'action' and item.action.status.value == 'done' and item.action.delivery and item.action.delivery.value == 'manual' %}
                                 <form method="post" action="{{ path('reservation_action_reopen', {id: item.action.id}) }}" class="mt-1"
@@ -66,13 +70,12 @@
                                     {% if item.action.type.sendsGuestMessage %}
                                         {% if item.outlook and item.outlook.isChat %}
                                             {# Bez e-mailu vede komunikace přes chat portálu — text se zkopíruje a vloží tam. #}
-                                            {% if guest_texts %}
-                                                <button class="btn btn-outline-primary btn-sm py-0" type="button"
-                                                        data-bs-toggle="modal" data-bs-target="#chatMessage"
-                                                        data-message-url="{{ path('reservation_action_preview', {id: item.action.id}) }}"
-                                                        data-done-url="{{ path('reservation_action_done', {id: item.action.id}) }}"
-                                                        data-done-token="{{ csrf_token('action-edit-' ~ item.action.id) }}">Zpráva do chatu</button>
-                                            {% endif %}
+                                            <button class="btn btn-outline-primary btn-sm py-0" type="button"
+                                                    data-bs-toggle="modal" data-bs-target="#chatMessage"
+                                                    data-message-url="{{ path('reservation_action_preview', {id: item.action.id}) }}"
+                                                    data-action-id="{{ item.action.id }}"
+                                                    data-done-url="{{ path('reservation_action_done', {id: item.action.id}) }}"
+                                                    data-done-token="{{ csrf_token('action-edit-' ~ item.action.id) }}">Zpráva do chatu</button>
                                         {% elseif reservation.guestContact.hasEmail %}
                                             <button class="btn btn-outline-secondary btn-sm py-0" type="button"
                                                     data-bs-toggle="modal" data-bs-target="#modalMessagePreview"
@@ -81,6 +84,13 @@
                                                 <input type="hidden" name="_token" value="{{ csrf_token('action-edit-' ~ item.action.id) }}">
                                                 <button class="btn btn-outline-primary btn-sm py-0">Odeslat</button>
                                             </form>
+                                        {% endif %}
+                                        {% if phone|default and not (item.outlook and item.outlook.isChat) %}
+                                            {# Stejný text jde poslat i telefonem — odeslání pak akci uzavře a e-mail neodejde. #}
+                                            <button class="btn btn-outline-primary btn-sm py-0" type="button"
+                                                    data-bs-toggle="modal" data-bs-target="#chatMessage"
+                                                    data-message-url="{{ path('reservation_action_preview', {id: item.action.id}) }}"
+                                                    data-action-id="{{ item.action.id }}">WhatsApp / SMS</button>
                                         {% endif %}
                                     {% endif %}
                                     <form method="post" action="{{ path('reservation_action_done', {id: item.action.id}) }}" class="d-inline">

@@ -17,12 +17,11 @@ use App\Entity\Reservation;
 use App\Entity\ReservationAction;
 use App\Enum\ActionDelivery;
 use App\Enum\ActionStatus;
-use App\Enum\ActionType;
+use App\Enum\MessageKind;
 use App\Enum\ShareChannel;
 use App\Invoice\InvoiceLinks;
 use App\Mail\GuestPaymentText;
 use App\Repository\InvoiceRepository;
-use App\Repository\ReservationActionRepository;
 use App\Storage\PdfStorage;
 use App\Timeline\SentMessageRecorder;
 use Doctrine\ORM\EntityManagerInterface;
@@ -44,7 +43,6 @@ final class BalanceReminderController extends AbstractController
 
     public function __construct(
         private readonly InvoiceRepository $invoices,
-        private readonly ReservationActionRepository $actions,
         private readonly InvoiceLinks $links,
         private readonly GuestPaymentText $texts,
         private readonly PdfStorage $pdfStorage,
@@ -67,9 +65,7 @@ final class BalanceReminderController extends AbstractController
         if ($channel !== ShareChannel::COPY) {
             $issued?->link->markSentVia($channel);
             // Uzavřená připomínka je na časové ose sama; jinak zprávu zapíšeme zvlášť.
-            if (!$this->closeOpenReminders($reservation, $channel)) {
-                $this->recorder->record($reservation, $channel, 'Připomínka doplatku');
-            }
+            $this->recorder->record($reservation, $channel, 'Připomínka doplatku', MessageKind::BALANCE_REMINDER);
             $this->em->flush();
         }
 
@@ -91,19 +87,5 @@ final class BalanceReminderController extends AbstractController
         $this->addFlash('success', 'Akce je znovu otevřená.');
 
         return $this->redirectToRoute('reservation_detail', ['id' => $action->getReservation()->getId()]);
-    }
-
-    /** true, když nějakou otevřenou připomínku uzavřela. */
-    private function closeOpenReminders(Reservation $reservation, ShareChannel $channel): bool
-    {
-        $closed = false;
-        foreach ($this->actions->findOpenForReservation($reservation) as $action) {
-            if ($action->getType() === ActionType::BALANCE_REMINDER) {
-                $action->markDone($channel->sentResult(), ActionDelivery::MANUAL);
-                $closed = true;
-            }
-        }
-
-        return $closed;
     }
 }

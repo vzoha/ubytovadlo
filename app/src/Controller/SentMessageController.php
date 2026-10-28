@@ -13,17 +13,22 @@ namespace App\Controller;
 
 use App\Controller\Concern\ChecksCsrf;
 use App\Entity\Reservation;
+use App\Entity\ReservationAction;
+use App\Enum\MessageKind;
 use App\Enum\ShareChannel;
+use App\Repository\ReservationActionRepository;
 use App\Timeline\SentMessageRecorder;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
 /**
  * Zápis rychlé zprávy, kterou prohlížeč otevřel ve WhatsAppu či SMS nebo
- * zkopíroval do chatu, na časovou osu. Volá se na pozadí (sendBeacon).
+ * zkopíroval do chatu, na časovou osu. Volá se na pozadí; zpráva, která
+ * zastupuje naplánovanou automatickou zprávu, tu akci uzavře.
  */
 final class SentMessageController extends AbstractController
 {
@@ -31,6 +36,7 @@ final class SentMessageController extends AbstractController
 
     public function __construct(
         private readonly SentMessageRecorder $recorder,
+        private readonly ReservationActionRepository $actions,
         private readonly EntityManagerInterface $em,
     ) {
     }
@@ -45,9 +51,25 @@ final class SentMessageController extends AbstractController
             return new Response(null, Response::HTTP_BAD_REQUEST);
         }
 
-        $this->recorder->record($reservation, $channel, (string) $request->request->get('label'));
+        $closed = $this->recorder->record(
+            $reservation,
+            $channel,
+            (string) $request->request->get('label'),
+            MessageKind::tryFrom((string) $request->request->get('kind')),
+            $this->action($reservation, $request),
+        );
         $this->em->flush();
 
-        return new Response(null, Response::HTTP_NO_CONTENT);
+        // Uzavřená akce mění osu — stránka se podle odpovědi obnoví.
+        return new JsonResponse(['closed' => $closed]);
+    }
+
+    /** Akce z osy, jejíž text se odeslal; cizí rezervace se nepočítá. */
+    private function action(Reservation $reservation, Request $request): ?ReservationAction
+    {
+        $id = (int) $request->request->get('action');
+        $action = $id > 0 ? $this->actions->find($id) : null;
+
+        return $action?->getReservation() === $reservation ? $action : null;
     }
 }

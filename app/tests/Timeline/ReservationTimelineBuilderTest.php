@@ -144,6 +144,28 @@ final class ReservationTimelineBuilderTest extends KernelTestCase
         self::assertSame('💬', $items[ActionType::PRE_ARRIVAL_MESSAGE->value]->icon);
     }
 
+    public function testNoteAttachedToActionIsShownWithIt(): void
+    {
+        $r = new Reservation(Channel::WEB, new \DateTimeImmutable('-1 day'));
+        $r->setGuestName('Test');
+        $this->em->persist($r);
+
+        $action = new ReservationAction($r, ActionType::PRE_DEPARTURE_MESSAGE, new \DateTimeImmutable('-2 hours'));
+        $action->markDone('Odesláno přes WhatsApp.', ActionDelivery::MANUAL);
+        $this->em->persist($action);
+        $followUp = (new ReservationNote($r, NoteType::ZPRAVA, 'SMS: Před odjezdem'))->setAction($action);
+        $this->em->persist($followUp);
+        $this->em->persist(new ReservationNote($r, NoteType::ZPRAVA, 'WhatsApp: Uvítání'));
+        $this->em->flush();
+
+        $items = $this->builder->build($r);
+
+        $notes = array_values(array_filter($items, static fn (TimelineItem $i): bool => $i->kind === 'note'));
+        self::assertCount(1, $notes);
+        self::assertSame('WhatsApp: Uvítání', $notes[0]->body);
+        self::assertSame([$followUp], $this->actionsByType($items)[ActionType::PRE_DEPARTURE_MESSAGE->value]->followUps);
+    }
+
     public function testMessageSentByMailKeepsEnvelopeIcon(): void
     {
         $r = new Reservation(Channel::AIRBNB, new \DateTimeImmutable('+5 days'));

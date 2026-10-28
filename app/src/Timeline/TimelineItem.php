@@ -35,6 +35,12 @@ final readonly class TimelineItem
 
     public ?GuestEmail $email;
 
+    /** Co se se zprávou stane, až nadejde čas — jen u otevřené zprávy hostovi. */
+    public ?MessageOutlook $outlook;
+
+    /** @var list<ReservationNote> další odeslání zprávy, kterou akce vyřídila */
+    public array $followUps;
+
     /**
      * @param 'event'|'note'|'action'|'email'   $kind
      * @param ReservationAction|GuestEmail|null $source záznam, ze kterého položka vznikla (akce s tlačítky, e-mail s odpovědí)
@@ -48,11 +54,12 @@ final readonly class TimelineItem
         public ?string $meta = null,
         ReservationAction|GuestEmail|null $source = null,
         public bool $dateOnly = false,
-        /** Co se se zprávou stane, až nadejde čas — jen u otevřené zprávy hostovi. */
-        public ?MessageOutlook $outlook = null,
+        ?ActionContext $context = null,
     ) {
         $this->action = $source instanceof ReservationAction ? $source : null;
         $this->email = $source instanceof GuestEmail ? $source : null;
+        $this->outlook = $context?->outlook;
+        $this->followUps = $context === null ? [] : $context->followUps;
     }
 
     /**
@@ -93,10 +100,9 @@ final readonly class TimelineItem
     }
 
     /**
-     * @param bool                $byChat  zpráva k hostovi vede chatem portálu, ne e-mailem
-     * @param MessageOutlook|null $outlook jak zpráva dopadne; null u akce, která zprávu neposílá
+     * @param bool $byChat zpráva k hostovi vede chatem portálu, ne e-mailem
      */
-    public static function fromAction(ReservationAction $action, bool $byChat = false, ?MessageOutlook $outlook = null): self
+    public static function fromAction(ReservationAction $action, bool $byChat = false, ?ActionContext $context = null): self
     {
         // Uzavřená akce patří na osu časem, kdy se opravdu stala (ruční potvrzení
         // přijde často až po termínu); otevřená stojí na svém termínu.
@@ -111,7 +117,7 @@ final readonly class TimelineItem
             $action->getLabel() !== $action->getType()->label() ? $action->getLabel() : null,
             self::actionMeta($action, $at),
             $action,
-            outlook: $outlook,
+            context: $context,
         );
     }
 

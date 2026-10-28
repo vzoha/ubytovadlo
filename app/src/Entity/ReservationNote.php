@@ -46,6 +46,14 @@ class ReservationNote
     #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
     private ?User $author = null;
 
+    /**
+     * Akce, na kterou zápis navazuje — další odeslání zprávy, kterou už akce
+     * vyřídila (např. stejný text ještě SMS). Osa ho ukáže u té akce.
+     */
+    #[ORM\ManyToOne(targetEntity: ReservationAction::class)]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    private ?ReservationAction $action = null;
+
     /** Kdy se to stalo (lze zadat zpětně, default = teď). */
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeImmutable $occurredAt;
@@ -104,6 +112,18 @@ class ReservationNote
     public function setAuthor(?User $author): self
     {
         $this->author = $author;
+
+        return $this;
+    }
+
+    public function getAction(): ?ReservationAction
+    {
+        return $this->action;
+    }
+
+    public function setAction(?ReservationAction $action): self
+    {
+        $this->action = $action;
 
         return $this;
     }

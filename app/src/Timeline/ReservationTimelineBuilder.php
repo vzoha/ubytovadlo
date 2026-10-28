@@ -53,7 +53,14 @@ class ReservationTimelineBuilder
             $items[] = $progress;
         }
 
+        // Zápis navázaný na akci se ukáže u ní, ne jako samostatná položka.
+        $followUps = [];
         foreach ($this->notes->findForReservation($reservation) as $note) {
+            $actionId = $note->getAction()?->getId();
+            if ($actionId !== null) {
+                $followUps[$actionId][] = $note;
+                continue;
+            }
             $items[] = TimelineItem::fromNote($note);
         }
 
@@ -66,7 +73,7 @@ class ReservationTimelineBuilder
             // Jak zpráva dopadne, má smysl u akce, která teprve čeká — uzavřená
             // už svůj výsledek nese.
             $outlook = $action->getStatus() === ActionStatus::PLANNED ? $this->outlook->forAction($action) : null;
-            $items[] = TimelineItem::fromAction($action, $byChat, $outlook);
+            $items[] = TimelineItem::fromAction($action, $byChat, new ActionContext($outlook, $followUps[$action->getId()] ?? []));
         }
 
         usort($items, static function (TimelineItem $a, TimelineItem $b): int {

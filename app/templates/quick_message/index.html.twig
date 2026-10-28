@@ -13,6 +13,8 @@
         Krátké texty pro <strong>SMS</strong>, <strong>WhatsApp</strong> a <strong>zprávu do chatu</strong>
         portálu — nabídnou se u tlačítek na detailu rezervace. V textu lze používat proměnné jako
         <code>{{ '{{ guest_first_name_vocative }}' }}</code>.
+        Zpráva, která zastupuje automatickou zprávu, ji po odeslání přes WhatsApp nebo SMS vyřídí —
+        hostovi pak stejný obsah nepřijde ještě e-mailem.
     </p>
 
     {% if messages is empty %}
@@ -25,7 +27,10 @@
             {% for message in messages %}
                 <div class="list-group-item d-flex justify-content-between align-items-start gap-3">
                     <div class="me-auto">
-                        <div class="fw-semibold">{{ message.label }}</div>
+                        <div class="fw-semibold">
+                            {{ message.label }}
+                            {% if message.kind %}<span class="badge text-bg-light border fw-normal">zastupuje: {{ message.kind.label }}</span>{% endif %}
+                        </div>
                         <div class="small text-muted text-break">{{ message.body }}</div>
                     </div>
                     <div class="d-flex align-items-center gap-1 flex-shrink-0">
@@ -80,9 +85,10 @@
                             {{ form_help(newForm.body) }}
                             {{ form_errors(newForm.body) }}
                         </div>
-                        <div class="mb-0">
+                        <div class="mb-3">
                             {{ include('_partials/variable_palette.html.twig', {groups: variables}) }}
                         </div>
+                        <div class="mb-0">{{ form_row(newForm.kind) }}</div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Zrušit</button>

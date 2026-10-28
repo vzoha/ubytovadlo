@@ -14,6 +14,7 @@ namespace App\Tests\Controller;
 use App\Entity\QuickMessage;
 use App\Entity\Setting;
 use App\Entity\User;
+use App\Enum\MessageKind;
 use App\Enum\UserRole;
 use App\Mail\QuickMessageDefaults;
 use App\Mail\QuickMessageSeeder;
@@ -78,6 +79,34 @@ final class QuickMessageControllerTest extends WebTestCase
         $saved = $this->messages->findOneBy(['label' => 'Kód dveří']);
         self::assertNotNull($saved);
         self::assertSame('Kód dveří je 1234.', $saved->getBody());
+        self::assertNull($saved->getKind());
+    }
+
+    public function testCreateLinkedToAutomaticMessage(): void
+    {
+        $this->client->request('GET', '/nastaveni/rychle-zpravy/nova');
+        $this->client->submitForm('Uložit', [
+            'quick_message[label]' => 'Odjezd',
+            'quick_message[body]' => 'Odjezd do 10:00.',
+            'quick_message[kind]' => 'pre_departure',
+        ]);
+
+        self::assertResponseRedirects('/nastaveni/rychle-zpravy');
+        self::assertSame(MessageKind::PRE_DEPARTURE, $this->messages->findOneBy(['label' => 'Odjezd'])?->getKind());
+    }
+
+    public function testKindOutsideQuickMessageKindsIsRejected(): void
+    {
+        $this->client->request('GET', '/nastaveni/rychle-zpravy/nova');
+        $form = $this->client->getCrawler()->selectButton('Uložit')->form();
+        $values = $form->getPhpValues();
+        $values['quick_message']['label'] = 'Faktura';
+        $values['quick_message']['body'] = 'Text';
+        $values['quick_message']['kind'] = 'invoice';
+        $this->client->request('POST', $form->getUri(), $values);
+
+        self::assertResponseIsSuccessful();
+        self::assertNull($this->messages->findOneBy(['label' => 'Faktura']));
     }
 
     public function testEdit(): void
