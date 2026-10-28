@@ -16,6 +16,7 @@ use App\Entity\Embeddable\GuestContact;
 use App\Entity\Reservation;
 use App\Enum\Channel;
 use App\Enum\MessageKind;
+use App\Mail\GuestEmailFactory;
 use App\Mail\GuestMessageRenderer;
 use App\Mail\GuestMessageSender;
 use App\Mail\MailSettingsProvider;
@@ -45,14 +46,7 @@ final class GuestMessageSenderTest extends KernelTestCase
 
     public function testSentMessageCarriesStoredMessageIdForReplyMatching(): void
     {
-        $mailer = new class implements MailerInterface {
-            public ?RawMessage $sent = null;
-
-            public function send(RawMessage $message, ?Envelope $envelope = null): void
-            {
-                $this->sent = $message;
-            }
-        };
+        $mailer = new CapturingMailer();
 
         $message = $this->sender($mailer)->send($this->reservation(), MessageKind::RESERVATION_CONFIRMED);
 
@@ -88,6 +82,7 @@ final class GuestMessageSenderTest extends KernelTestCase
             $this->em,
             new NullLogger(),
             $container->get(LogoStorage::class),
+            $container->get(GuestEmailFactory::class),
         );
     }
 

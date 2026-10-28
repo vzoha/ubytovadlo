@@ -18,10 +18,13 @@ use App\Entity\Reservation;
 use App\Entity\User;
 use App\Enum\Channel;
 use App\Enum\EmailDirection;
+use App\Mail\MailSettingsProvider;
 use App\Repository\GuestEmailRepository;
+use App\Repository\SettingRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\Mime\Email;
 
 final class GuestEmailControllerTest extends WebTestCase
 {
@@ -73,6 +76,30 @@ final class GuestEmailControllerTest extends WebTestCase
         $this->client->request('POST', '/e-maily-hostu/' . $email->getId() . '/rezervace', ['_token' => $token, 'reservation' => $foreign->getId()]);
 
         self::assertResponseStatusCodeSame(400);
+    }
+
+    public function testOwnerRepliesFromCustomerDetail(): void
+    {
+        $stay = $this->stay('jana@example.com', '2030-07-12');
+        $this->email($stay);
+        static::getContainer()->get(SettingRepository::class)->set(MailSettingsProvider::SENDER_EMAIL, 'info@example.com');
+        $this->em->flush();
+        $detail = '/hoste/' . $stay->getCustomer()?->getId();
+
+        $crawler = $this->client->request('GET', $detail);
+        $button = $crawler->selectButton('Odpovědět');
+        $this->client->request('POST', (string) $button->attr('data-reply-url'), [
+            '_token' => $button->attr('data-reply-token'),
+            'back' => $detail,
+            'subject' => (string) $button->attr('data-reply-subject'),
+            'text' => "Dobrý den,\n\nano, máme volno.",
+        ]);
+
+        self::assertResponseRedirects($detail);
+        self::assertEmailCount(1);
+        $sent = self::getMailerMessage();
+        self::assertInstanceOf(Email::class, $sent);
+        self::assertSame('Re: Dotaz', $sent->getSubject());
     }
 
     private function stay(string $address, string $checkIn): Reservation

@@ -13,8 +13,10 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
   odpovědí. K rezervaci se e-mail přiřadí, když navazuje na vlákno se známou rezervací (i na
   zprávu, kterou hostovi poslala aplikace), cituje kód rezervace, nebo host má jediný pobyt,
   kterého se může týkat; jinak zůstane u hosta a v jeho detailu jde k pobytu přiřadit ručně.
-  Přiřazené e-maily jsou na časové ose rezervace. Dotaz je zodpovězený, když na něj ve
-  vlákně přišla odpověď. Přístupy ke schránce hostů jsou v *Nastavení → Připojení* (karta
+  Přiřazené e-maily jsou na časové ose rezervace. Na e-mail od hosta jde z časové osy i z detailu
+  hosta odpovědět tlačítkem *Odpovědět*: odpověď odejde přes odchozí poštu aplikace do stejného
+  vlákna, uloží se do korespondence a dotaz se označí jako zodpovězený. Dotaz je zodpovězený, když
+  na něj ve vlákně přišla odpověď. Přístupy ke schránce hostů jsou v *Nastavení → Připojení* (karta
   *Dotazy hostů*, včetně složky odeslaných).
 
 - **AI asistent (MCP).** Ubytovadlo je MCP server pro AI klienta (Claude, ChatGPT, Gemini CLI…):

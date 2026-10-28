@@ -37,6 +37,7 @@
                             </div>
                             {% if item.kind == 'email' %}
                                 {{ include('guest_email/_text.html.twig', {text: item.body}) }}
+                                {{ include('guest_email/_reply_button.html.twig', {email: item.email}) }}
                             {% elseif item.body %}<div class="small">{{ item.body|nl2br }}</div>{% endif %}
                             {# Zastavené odesílání je překvapivý stav — rovnou řekni proč a kde se mění. #}
                             {% if item.outlook and item.outlook.isBlocked %}<div class="text-muted small">{{ item.outlook.hint }}</div>{% endif %}

@@ -1,0 +1,44 @@
+{# Odpověď hostovi do stejného vlákna. Pole doplní tlačítko, které okno otevřelo (_reply_button). #}
+<div class="modal fade" id="guestEmailReply" tabindex="-1" aria-labelledby="guestEmailReplyLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <form method="post" data-reply-form>
+                <div class="modal-header">
+                    <h2 class="modal-title h6 mb-0" id="guestEmailReplyLabel">Odpověď hostovi</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zavřít"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="_token" data-reply-field="token">
+                    <input type="hidden" name="back" value="{{ app.request.requestUri }}">
+                    <dl class="row small mb-2">
+                        <dt class="col-3 col-sm-2 fw-normal text-muted">Komu</dt>
+                        <dd class="col-9 col-sm-10 mb-0" data-reply-field="to"></dd>
+                    </dl>
+                    <div class="mb-2">
+                        <label class="form-label small mb-1" for="guest-email-reply-subject">Předmět</label>
+                        <input type="text" name="subject" id="guest-email-reply-subject" class="form-control form-control-sm" data-reply-field="subject" required>
+                    </div>
+                    <div>
+                        <label class="form-label small mb-1" for="guest-email-reply-text">Text</label>
+                        <textarea name="text" id="guest-email-reply-text" class="form-control form-control-sm" rows="12" required></textarea>
+                        <div class="form-text">Odejde jako odpověď ve stejném vlákně a uloží se do korespondence s hostem.</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Zrušit</button>
+                    <button type="submit" class="btn btn-sm btn-primary">Odeslat</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+    document.getElementById('guestEmailReply').addEventListener('show.bs.modal', function (event) {
+        const data = event.relatedTarget.dataset;
+        const form = this.querySelector('[data-reply-form]');
+        form.action = data.replyUrl;
+        form.querySelector('[data-reply-field="token"]').value = data.replyToken;
+        form.querySelector('[data-reply-field="to"]').textContent = data.replyTo;
+        form.querySelector('[data-reply-field="subject"]').value = data.replySubject;
+    });
+</script>

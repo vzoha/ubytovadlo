@@ -20,8 +20,6 @@ use App\Enum\MessageKind;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Mailer\MailerInterface;
-use Symfony\Component\Mime\Address;
-use Symfony\Component\Mime\Email;
 
 /**
  * Odešle zprávu hostovi e-mailem a zaznamená výsledek do guest_message (audit +
@@ -37,6 +35,7 @@ class GuestMessageSender
         private readonly EntityManagerInterface $em,
         private readonly LoggerInterface $logger,
         private readonly LogoStorage $logo,
+        private readonly GuestEmailFactory $emails,
     ) {
     }
 
@@ -68,7 +67,7 @@ class GuestMessageSender
 
         $status = GuestMessageStatus::SENT;
         $error = null;
-        $messageId = $this->newMessageId();
+        $messageId = $this->emails->newMessageId();
         try {
             $this->dispatch($to, $rendered, $useLogo, $attachmentPaths, $messageId);
         } catch (\Throwable $e) {
@@ -111,21 +110,10 @@ class GuestMessageSender
      */
     private function dispatch(string $to, RenderedMessage $rendered, bool $useLogo, array $attachmentPaths, ?string $messageId = null): void
     {
-        $settings = $this->mailSettings->current();
-
-        $email = (new Email())
-            ->from(new Address($settings->senderEmail, $settings->senderName))
-            ->to($to)
-            ->subject($rendered->subject)
+        $email = $this->emails->create($to, $rendered->subject, $messageId)
             ->text($rendered->text)
             ->html($rendered->html);
 
-        if ($settings->replyTo !== null) {
-            $email->replyTo($settings->replyTo);
-        }
-        if ($messageId !== null) {
-            $email->getHeaders()->addIdHeader('Message-ID', $messageId);
-        }
         if ($useLogo) {
             $email->embedFromPath($this->logo->absolutePath(), 'logo');
         }
@@ -136,14 +124,6 @@ class GuestMessageSender
         }
 
         $this->mailer->send($email);
-    }
-
-    /** Vlastní Message-ID, ať jde odpověď hosta spárovat s rezervací podle vlákna. */
-    private function newMessageId(): string
-    {
-        $domain = substr(strrchr($this->mailSettings->current()->senderEmail, '@') ?: '@ubytovadlo.local', 1);
-
-        return bin2hex(random_bytes(16)) . '@' . $domain;
     }
 
     private function useLogo(): bool

@@ -171,6 +171,23 @@ class GuestEmail
         $this->answered = true;
     }
 
+    /** Odpovědět jde na e-mail od hosta se známou adresou. */
+    public function isReplyable(): bool
+    {
+        return $this->isInbound() && $this->counterpartEmail !== null;
+    }
+
+    /**
+     * Předmět odpovědi: původní s „Re:", pokud už nezačíná předponou odpovědi —
+     * i českou „Odp:" nebo německou „AW:" z poštovních klientů hostů.
+     */
+    public function replySubject(): string
+    {
+        $subject = trim($this->subject);
+
+        return preg_match('/^(re|odp|aw|sv)\s*:/iu', $subject) === 1 ? $subject : 'Re: ' . $subject;
+    }
+
     public function getCustomer(): ?Customer
     {
         return $this->customer;

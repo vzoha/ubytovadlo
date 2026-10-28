@@ -20,18 +20,24 @@ use App\Enum\ActionStatus;
 use App\Enum\MessageOutlook;
 
 /**
- * Jedna položka na časové ose rezervace. Sjednocuje tři přírody:
+ * Jedna položka na časové ose rezervace. Sjednocuje čtyři přírody:
  *  - 'event' — odvozená systémová událost (neukládá se)
  *  - 'note'  — ruční CRM poznámka (ReservationNote)
  *  - 'action'— naplánovaná akce (ReservationAction), v UI s tlačítky
+ *  - 'email' — e-mail z korespondence s hostem (GuestEmail), u doručeného s odpovědí
  */
 final readonly class TimelineItem
 {
     /** Menší odchylka od plánu je běžný posun cronu — ta se na ose nepřipomíná. */
     private const int PLAN_DRIFT_SECONDS = 3600;
 
+    public ?ReservationAction $action;
+
+    public ?GuestEmail $email;
+
     /**
-     * @param 'event'|'note'|'action'|'email' $kind
+     * @param 'event'|'note'|'action'|'email'   $kind
+     * @param ReservationAction|GuestEmail|null $source záznam, ze kterého položka vznikla (akce s tlačítky, e-mail s odpovědí)
      */
     private function __construct(
         public \DateTimeImmutable $at,
@@ -40,11 +46,13 @@ final readonly class TimelineItem
         public string $title,
         public ?string $body = null,
         public ?string $meta = null,
-        public ?ReservationAction $action = null,
+        ReservationAction|GuestEmail|null $source = null,
         public bool $dateOnly = false,
         /** Co se se zprávou stane, až nadejde čas — jen u otevřené zprávy hostovi. */
         public ?MessageOutlook $outlook = null,
     ) {
+        $this->action = $source instanceof ReservationAction ? $source : null;
+        $this->email = $source instanceof GuestEmail ? $source : null;
     }
 
     /**
@@ -65,6 +73,7 @@ final readonly class TimelineItem
             $email->getDirection()->label() . ': ' . $email->getSubject(),
             $email->getBody(),
             $email->getCounterpartEmail(),
+            $email,
         );
     }
 

@@ -733,6 +733,7 @@
     {{ include('reservation/_status_modals.html.twig') }}
     {% if stay_form %}{{ include('reservation/_stay_modal.html.twig', {form: stay_form}) }}{% endif %}
     {% if guest_texts %}{{ include('reservation/_chat_message_modal.html.twig') }}{% endif %}
+    {{ include('guest_email/_reply_modal.html.twig') }}
 {% endblock %}
 
 {% block stylesheets %}
