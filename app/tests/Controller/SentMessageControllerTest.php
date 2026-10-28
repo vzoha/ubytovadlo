@@ -176,6 +176,17 @@ final class SentMessageControllerTest extends WebTestCase
         self::assertSame('WhatsApp: Cizí', $this->em->getConnection()->fetchOne('SELECT body FROM reservation_note'));
     }
 
+    public function testActionThatIsNotGuestMessageIsIgnored(): void
+    {
+        $reservation = $this->reservation();
+        $reminder = $this->action($reservation, ActionType::CUSTOM_REMINDER);
+
+        $this->send($reservation, ['channel' => 'sms', 'label' => 'Připomínka', 'action' => (string) $reminder->getId()]);
+
+        $this->em->clear();
+        self::assertSame(ActionStatus::PLANNED, $this->em->find(ReservationAction::class, $reminder->getId())?->getStatus());
+    }
+
     public function testOpenActionOffersPhoneDelivery(): void
     {
         $reservation = $this->reservation();

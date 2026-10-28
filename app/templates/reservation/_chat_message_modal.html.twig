@@ -73,22 +73,24 @@
         }
         text.addEventListener('input', syncSendLinks);
 
-        // Zprávu o platbě (vytvoří odkaz na fakturu) načte až výběr v seznamu, ne otevření okna.
         async function fill(chosen) {
+            await fillText(chosen);
+            syncSendLinks();
+        }
+
+        // Zprávu o platbě (vytvoří odkaz na fakturu) načte až výběr v seznamu, ne otevření okna.
+        async function fillText(chosen) {
             if (select.value === ACTION) {
                 text.value = actionText;
-                syncSendLinks();
                 return;
             }
             const option = select.selectedOptions[0];
             if (!option || !option.dataset.url) {
                 text.value = option ? quick[select.value].text : '';
-                syncSendLinks();
                 return;
             }
             if (!chosen) {
                 text.value = '';
-                syncSendLinks();
                 return;
             }
             text.value = '…';
@@ -102,7 +104,6 @@
             } catch (e) {
                 text.value = 'Text se nepodařilo připravit.';
             }
-            syncSendLinks();
         }
 
         function dropActionOption() {
@@ -148,12 +149,14 @@
         sendLinks.forEach(function (link) {
             link.addEventListener('click', function () {
                 if (!window.recordSentMessage) return;
-                if (select.value === ACTION) {
-                    window.recordSentMessage(link.dataset.sendChannel, select.selectedOptions[0].textContent, null, actionId);
-                    return;
-                }
+                const fromAction = select.value === ACTION;
                 const message = quick[select.value];
-                window.recordSentMessage(link.dataset.sendChannel, select.selectedOptions[0].textContent, message ? message.kind : null, null);
+                window.recordSentMessage(
+                    link.dataset.sendChannel,
+                    select.selectedOptions[0].textContent,
+                    !fromAction && message ? message.kind : null,
+                    fromAction ? actionId : null,
+                );
             });
         });
 

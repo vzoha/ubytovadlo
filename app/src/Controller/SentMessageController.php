@@ -64,12 +64,15 @@ final class SentMessageController extends AbstractController
         return new JsonResponse(['closed' => $closed]);
     }
 
-    /** Akce z osy, jejíž text se odeslal; cizí rezervace se nepočítá. */
+    /** Zpráva hostovi z osy, jejíž text se odeslal; akce cizí rezervace ani jiného druhu se nepočítá. */
     private function action(Reservation $reservation, Request $request): ?ReservationAction
     {
         $id = (int) $request->request->get('action');
         $action = $id > 0 ? $this->actions->find($id) : null;
+        if ($action === null || $action->getReservation() !== $reservation) {
+            return null;
+        }
 
-        return $action?->getReservation() === $reservation ? $action : null;
+        return $action->getType()->sendsGuestMessage() ? $action : null;
     }
 }

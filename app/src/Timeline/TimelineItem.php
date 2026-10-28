@@ -59,7 +59,7 @@ final readonly class TimelineItem
         $this->action = $source instanceof ReservationAction ? $source : null;
         $this->email = $source instanceof GuestEmail ? $source : null;
         $this->outlook = $context?->outlook;
-        $this->followUps = $context === null ? [] : $context->followUps;
+        $this->followUps = $context->followUps ?? [];
     }
 
     /**

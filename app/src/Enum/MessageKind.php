@@ -80,14 +80,13 @@ enum MessageKind: string
     /** Naplánovaná akce, která zprávu tohoto druhu posílá (null = druh se na osu neplánuje). */
     public function actionType(): ?ActionType
     {
-        return match ($this) {
-            self::RESERVATION_REQUEST => ActionType::RESERVATION_REQUEST_MESSAGE,
-            self::PRE_ARRIVAL => ActionType::PRE_ARRIVAL_MESSAGE,
-            self::PRE_DEPARTURE => ActionType::PRE_DEPARTURE_MESSAGE,
-            self::POST_STAY => ActionType::POST_STAY_MESSAGE,
-            self::BALANCE_REMINDER => ActionType::BALANCE_REMINDER,
-            default => null,
-        };
+        foreach (ActionType::cases() as $type) {
+            if (self::fromActionType($type) === $this) {
+                return $type;
+            }
+        }
+
+        return null;
     }
 
     /** Mapování naplánované akce na druh zprávy (null = akce není zpráva hostovi). */
