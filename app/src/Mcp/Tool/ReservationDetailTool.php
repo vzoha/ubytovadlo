@@ -34,7 +34,8 @@ final class ReservationDetailTool implements McpTool
     {
         return 'Detail rezervace podle ID (z find_guest) nebo kódu, který host zná z potvrzení '
             . '(kód Bookingu/Airbnb, číslo rezervace z webu). Vrací kontakt, časy příjezdu a odjezdu, '
-            . 'zvíře, poznámky, stav online check-inu, doplatek v CZK a historii komunikace z časové osy.';
+            . 'zvíře, poznámky, stav online check-inu, doplatek v CZK, historii komunikace z časové osy '
+            . 'a e-maily přiřazené k rezervaci (text přes read_guest_email podle id).';
     }
 
     public function inputSchema(): array

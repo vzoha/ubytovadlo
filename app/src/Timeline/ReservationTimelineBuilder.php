@@ -15,13 +15,14 @@ use App\Entity\Reservation;
 use App\Enum\ActionStatus;
 use App\Mail\GuestMessageDelivery;
 use App\Mail\MessageLocales;
+use App\Repository\GuestEmailRepository;
 use App\Repository\InvoiceRepository;
 use App\Repository\ReservationActionRepository;
 use App\Repository\ReservationNoteRepository;
 
 /**
  * Sestaví časovou osu rezervace: odvozené systémové události (neukládané) +
- * ruční poznámky + naplánované akce, seřazené chronologicky.
+ * ruční poznámky + naplánované akce + přiřazené e-maily, seřazené chronologicky.
  */
 class ReservationTimelineBuilder
 {
@@ -31,6 +32,7 @@ class ReservationTimelineBuilder
         private readonly InvoiceRepository $invoices,
         private readonly GuestMessageDelivery $delivery,
         private readonly GuestMessageOutlookResolver $outlook,
+        private readonly GuestEmailRepository $emails,
     ) {
     }
 
@@ -43,6 +45,10 @@ class ReservationTimelineBuilder
 
         foreach ($this->notes->findForReservation($reservation) as $note) {
             $items[] = TimelineItem::fromNote($note);
+        }
+
+        foreach ($this->emails->findForReservation($reservation) as $email) {
+            $items[] = TimelineItem::fromEmail($email);
         }
 
         $byChat = $this->delivery->byChat($reservation);

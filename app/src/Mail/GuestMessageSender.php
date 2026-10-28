@@ -68,8 +68,9 @@ class GuestMessageSender
 
         $status = GuestMessageStatus::SENT;
         $error = null;
+        $messageId = $this->newMessageId();
         try {
-            $this->dispatch($to, $rendered, $useLogo, $attachmentPaths);
+            $this->dispatch($to, $rendered, $useLogo, $attachmentPaths, $messageId);
         } catch (\Throwable $e) {
             $status = GuestMessageStatus::FAILED;
             $error = $e->getMessage();
@@ -80,7 +81,9 @@ class GuestMessageSender
             ]);
         }
 
-        $message = new GuestMessage($reservation, $kind, $to, $rendered->subject, $status, $error);
+        // Message-ID neodeslaného e-mailu by sliboval vlákno, které neexistuje.
+        $sentMessageId = $status === GuestMessageStatus::SENT ? $messageId : null;
+        $message = new GuestMessage($reservation, $kind, $to, $rendered->subject, $status, $error, $sentMessageId);
         $this->em->persist($message);
         $this->em->flush();
 
@@ -106,7 +109,7 @@ class GuestMessageSender
     /**
      * @param list<string> $attachmentPaths
      */
-    private function dispatch(string $to, RenderedMessage $rendered, bool $useLogo, array $attachmentPaths): void
+    private function dispatch(string $to, RenderedMessage $rendered, bool $useLogo, array $attachmentPaths, ?string $messageId = null): void
     {
         $settings = $this->mailSettings->current();
 
@@ -120,6 +123,9 @@ class GuestMessageSender
         if ($settings->replyTo !== null) {
             $email->replyTo($settings->replyTo);
         }
+        if ($messageId !== null) {
+            $email->getHeaders()->addIdHeader('Message-ID', $messageId);
+        }
         if ($useLogo) {
             $email->embedFromPath($this->logo->absolutePath(), 'logo');
         }
@@ -130,6 +136,14 @@ class GuestMessageSender
         }
 
         $this->mailer->send($email);
+    }
+
+    /** Vlastní Message-ID, ať jde odpověď hosta spárovat s rezervací podle vlákna. */
+    private function newMessageId(): string
+    {
+        $domain = substr(strrchr($this->mailSettings->current()->senderEmail, '@') ?: '@ubytovadlo.local', 1);
+
+        return bin2hex(random_bytes(16)) . '@' . $domain;
     }
 
     private function useLogo(): bool

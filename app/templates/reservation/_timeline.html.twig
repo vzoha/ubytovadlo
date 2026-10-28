@@ -35,7 +35,9 @@
                                 </span>
                                 <span class="text-muted small text-nowrap ms-2">{{ item.at|date(item.dateOnly ? 'd. m. Y' : 'd. m. Y H:i') }}</span>
                             </div>
-                            {% if item.body %}<div class="small">{{ item.body|nl2br }}</div>{% endif %}
+                            {% if item.kind == 'email' %}
+                                {{ include('guest_email/_text.html.twig', {text: item.body}) }}
+                            {% elseif item.body %}<div class="small">{{ item.body|nl2br }}</div>{% endif %}
                             {# Zastavené odesílání je překvapivý stav — rovnou řekni proč a kde se mění. #}
                             {% if item.outlook and item.outlook.isBlocked %}<div class="text-muted small">{{ item.outlook.hint }}</div>{% endif %}
                             {% if item.meta or item.outlook or item.result %}

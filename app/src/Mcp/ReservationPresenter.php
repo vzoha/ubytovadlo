@@ -14,18 +14,21 @@ namespace App\Mcp;
 use App\Entity\Reservation;
 use App\Entity\ReservationNote;
 use App\Invoice\BalanceCalculator;
+use App\Repository\GuestEmailRepository;
 use App\Repository\ReservationNoteRepository;
 
 /**
  * Podoba rezervace pro AI asistenta — sdílená všemi nástroji, ať model vidí
- * rezervaci vždy stejně. Souhrn stačí na přehled pobytů, detail přidá doplatek
- * a poznámky z časové osy.
+ * rezervaci vždy stejně. Souhrn stačí na přehled pobytů, detail přidá doplatek,
+ * poznámky z časové osy a e-maily přiřazené k rezervaci.
  */
 final class ReservationPresenter
 {
     public function __construct(
         private readonly BalanceCalculator $balance,
         private readonly ReservationNoteRepository $notes,
+        private readonly GuestEmailRepository $emails,
+        private readonly GuestEmailPresenter $emailPresenter,
     ) {
     }
 
@@ -77,6 +80,7 @@ final class ReservationPresenter
                 'type' => $note->getType()->label(),
                 'text' => $note->getBody(),
             ], $this->notes->findForReservation($reservation)),
+            'emails' => array_map($this->emailPresenter->headline(...), $this->emails->findForReservation($reservation)),
         ];
     }
 }

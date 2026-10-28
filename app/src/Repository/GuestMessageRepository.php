@@ -37,4 +37,26 @@ class GuestMessageRepository extends ServiceEntityRepository
             'status' => GuestMessageStatus::SENT,
         ]) > 0;
     }
+
+    /**
+     * Rezervace, ke které patří některý z odeslaných e-mailů — pro odpověď hosta ve stejném vlákně.
+     *
+     * @param list<string> $messageIds
+     */
+    public function findReservationByMessageIds(array $messageIds): ?Reservation
+    {
+        if ($messageIds === []) {
+            return null;
+        }
+
+        $message = $this->createQueryBuilder('m')
+            ->andWhere('m.messageId IN (:ids)')
+            ->setParameter('ids', $messageIds)
+            ->orderBy('m.id', 'DESC')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+
+        return $message instanceof GuestMessage ? $message->getReservation() : null;
+    }
 }

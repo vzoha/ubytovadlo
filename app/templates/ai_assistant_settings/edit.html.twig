@@ -7,9 +7,19 @@
 {% block settings_content %}
     <h2 class="h5 mb-2">AI asistent</h2>
     <p class="text-muted small">
-        Asistent ve vašem AI klientovi (Claude, ChatGPT, Gemini…) vidí hosty, rezervace, volné termíny
-        a&nbsp;informace o&nbsp;ubytování a&nbsp;podle nich připraví odpověď na dotaz hosta. Data jen čte,
-        nic neodesílá ani nemění. Odpověď před odesláním vždy zkontrolujte.
+        Asistent ve vašem AI klientovi (Claude, ChatGPT, Gemini…) vidí hosty, rezervace, volné termíny,
+        korespondenci s&nbsp;hosty a&nbsp;informace o&nbsp;ubytování a&nbsp;podle nich připraví odpověď
+        na dotaz hosta. Data jen čte, nic neodesílá ani nemění. Odpověď před odesláním vždy zkontrolujte.
+    </p>
+    <p class="small mb-3">
+        {% if not guestMailboxConfigured %}
+            Schránka hostů není nastavená — asistent e-maily hostů nevidí.
+            <a href="{{ path('connection_settings_edit') }}" class="text-decoration-none">Připojení →</a>
+        {% elseif guestMailSyncedAt %}
+            Schránka hostů naposledy stažena {{ guestMailSyncedAt|date('d. m. Y H:i') }}.
+        {% else %}
+            Schránka hostů zatím nebyla stažena — stahuje ji cron každých pár minut.
+        {% endif %}
     </p>
 
     {{ form_start(form) }}

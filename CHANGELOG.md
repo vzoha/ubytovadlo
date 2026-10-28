@@ -8,15 +8,24 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Přidáno
 
+- **Korespondence s hosty.** E-maily ze schránky, kam píšou hosté, se každých 15 minut ukládají
+  k hostům — doručené i odpovědi odeslané z poštovního klienta, bez rozesílek a automatických
+  odpovědí. K rezervaci se e-mail přiřadí, když navazuje na vlákno se známou rezervací (i na
+  zprávu, kterou hostovi poslala aplikace), cituje kód rezervace, nebo host má jediný pobyt,
+  kterého se může týkat; jinak zůstane u hosta a v jeho detailu jde k pobytu přiřadit ručně.
+  Přiřazené e-maily jsou na časové ose rezervace. Dotaz je zodpovězený, když na něj ve
+  vlákně přišla odpověď. Přístupy ke schránce hostů jsou v *Nastavení → Připojení* (karta
+  *Dotazy hostů*, včetně složky odeslaných).
+
 - **AI asistent (MCP).** Ubytovadlo je MCP server pro AI klienta (Claude, ChatGPT, Gemini CLI…):
-  asistent podle něj připraví odpověď na dotaz hosta. Nástroje jen čtou — e-maily ze schránky,
-  kam píšou hosté (přehled nezodpovězených i celý text, zprávy zůstávají nepřečtené), host podle
+  asistent podle něj připraví odpověď na dotaz hosta. Nástroje jen čtou — e-maily hostů
+  (přehled nezodpovězených, celý text i předchozí korespondence s hostem), host podle
   e-mailu, telefonu nebo jména i s pobyty, detail rezervace (kontakt, časy, doplatek, časová
-  osa), volné termíny napříč kanály a informace o ubytování od majitele. Přístupy ke schránce
-  hostů jsou v *Nastavení → Připojení* (karta *Dotazy hostů*). *Nastavení → AI asistent*
-  drží text pro asistenta (ceník, příjezd, parkování, zvířata…) a vydává přístupový token,
-  který se ukáže jen jednou; v databázi zůstává jen jeho otisk. Endpoint `/mcp` přijímá
-  Streamable HTTP bez sezení s hlavičkou `Authorization: Bearer`.
+  osa, e-maily), volné termíny napříč kanály a informace o ubytování od majitele.
+  *Nastavení → AI asistent* drží text pro asistenta (ceník, příjezd, parkování, zvířata…),
+  ukazuje, kdy se naposledy stáhla schránka hostů, a vydává přístupový token, který se ukáže
+  jen jednou; v databázi zůstává jen jeho otisk. Endpoint `/mcp` přijímá Streamable HTTP bez
+  sezení s hlavičkou `Authorization: Bearer`.
 
 - **Faktura a připomínka doplatku přes WhatsApp, SMS a chat.** Menu *Předvyplnit šablonou*
   u WhatsAppu a SMS v kartě hosta i okno *Zpráva do chatu* nabízí vedle rychlých zpráv

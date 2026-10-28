@@ -24,6 +24,7 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity(repositoryClass: GuestMessageRepository::class)]
 #[ORM\Table(name: 'guest_message')]
 #[ORM\Index(name: 'idx_guest_message_reservation_kind', columns: ['reservation_id', 'kind'])]
+#[ORM\Index(name: 'idx_guest_message_message_id', columns: ['message_id'])]
 class GuestMessage
 {
     #[ORM\Id]
@@ -53,6 +54,10 @@ class GuestMessage
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeImmutable $createdAt;
 
+    /** Message-ID odeslaného e-mailu (bez < >) — odpověď hosta podle něj najde svou rezervaci. */
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $messageId = null;
+
     public function __construct(
         Reservation $reservation,
         MessageKind $kind,
@@ -60,6 +65,7 @@ class GuestMessage
         string $subject,
         GuestMessageStatus $status,
         ?string $error = null,
+        ?string $messageId = null,
     ) {
         $this->reservation = $reservation;
         $this->kind = $kind;
@@ -67,6 +73,7 @@ class GuestMessage
         $this->subject = $subject;
         $this->status = $status;
         $this->error = $error;
+        $this->messageId = $messageId;
         $this->createdAt = new \DateTimeImmutable();
     }
 
@@ -108,5 +115,10 @@ class GuestMessage
     public function getCreatedAt(): \DateTimeImmutable
     {
         return $this->createdAt;
+    }
+
+    public function getMessageId(): ?string
+    {
+        return $this->messageId;
     }
 }

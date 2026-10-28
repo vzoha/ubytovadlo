@@ -13,11 +13,14 @@ namespace App\Tests\Customer;
 
 use App\Customer\CustomerDuplicateFinder;
 use App\Customer\CustomerMerger;
+use App\Email\GuestInbox\MailAddress;
 use App\Entity\Customer;
 use App\Entity\CustomerDistinctPair;
 use App\Entity\Embeddable\GuestContact;
+use App\Entity\GuestEmail;
 use App\Entity\Reservation;
 use App\Enum\Channel;
+use App\Enum\EmailDirection;
 use App\Enum\ReservationStatus;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -38,8 +41,24 @@ final class CustomerMergerTest extends KernelTestCase
         $this->merger = $container->get(CustomerMerger::class);
         $this->finder = $container->get(CustomerDuplicateFinder::class);
 
+        $this->em->getConnection()->executeStatement('DELETE FROM guest_email');
         $this->em->getConnection()->executeStatement('DELETE FROM reservation');
         $this->em->getConnection()->executeStatement('DELETE FROM customer');
+    }
+
+    public function testMergeMovesCorrespondence(): void
+    {
+        $keep = $this->stay('2025-06-01', 'Markéta Dvořáková', 'marketa@example.com')->getCustomer();
+        $merge = $this->stay('2025-08-01', 'M. Dvořáková', 'm.dvorakova@example.com')->getCustomer();
+        \assert($keep instanceof Customer && $merge instanceof Customer);
+        $email = new GuestEmail(EmailDirection::INBOUND, 'merge-1@example.com', new MailAddress(null, 'm.dvorakova@example.com'), 'Dotaz', new \DateTimeImmutable('2025-07-01'), 'Dobrý den');
+        $email->completeMatch($merge, null);
+        $this->em->persist($email);
+        $this->em->flush();
+
+        $this->merger->merge($keep, $merge);
+
+        self::assertSame($keep, $email->getCustomer());
     }
 
     private function stay(string $checkIn, string $name, ?string $email = null): Reservation

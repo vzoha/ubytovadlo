@@ -130,6 +130,40 @@
                     </table>
                 </div>
             </div>
+
+            <div class="card mt-3">
+                <div class="card-header">E-maily <span class="small text-muted">({{ emails|length }})</span></div>
+                {% if emails is empty %}
+                    <div class="card-body"><p class="text-muted small mb-0">Žádná korespondence ze schránky hostů.</p></div>
+                {% else %}
+                    <ul class="list-group list-group-flush small">
+                        {% for email in emails %}
+                            <li class="list-group-item">
+                                <div class="d-flex justify-content-between gap-2">
+                                    <span><span title="{{ email.direction.label }}">{{ email.direction.icon }}</span> {{ email.subject ?: '(bez předmětu)' }}</span>
+                                    <span class="text-muted text-nowrap">{{ email.sentAt|date('d. m. Y H:i') }}</span>
+                                </div>
+                                {{ include('guest_email/_text.html.twig', {text: email.body}) }}
+                                {% if email.reservation %}
+                                    <a href="{{ path('reservation_detail', {id: email.reservation.id}) }}" class="text-decoration-none">
+                                        Pobyt {{ email.reservation.checkIn|date('d. m. Y') }} →
+                                    </a>
+                                {% elseif stays is not empty %}
+                                    <form method="post" action="{{ path('guest_email_assign', {id: email.id}) }}" class="d-flex flex-wrap gap-2 mt-1">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('guest-email-assign-' ~ email.id) }}">
+                                        <select name="reservation" class="form-select form-select-sm w-auto" aria-label="Pobyt, ke kterému e-mail patří">
+                                            {% for stay in stays %}
+                                                <option value="{{ stay.id }}">{{ stay.checkIn|date('d. m. Y') }}{% if stay.checkOut %} – {{ stay.checkOut|date('d. m. Y') }}{% endif %}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <button type="submit" class="btn btn-sm btn-outline-primary">Přiřadit k pobytu</button>
+                                    </form>
+                                {% endif %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
         </div>
     </div>
 

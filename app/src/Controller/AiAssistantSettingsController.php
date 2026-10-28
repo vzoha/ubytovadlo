@@ -12,7 +12,9 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Controller\Concern\ChecksCsrf;
+use App\Credential\CredentialProvider;
 use App\Form\AiAssistantSettingsType;
+use App\GuestMail\GuestMailSync;
 use App\Mcp\McpAccessToken;
 use App\Mcp\Tool\PropertyInfoTool;
 use App\Repository\SettingRepository;
@@ -42,6 +44,7 @@ class AiAssistantSettingsController extends AbstractController
         private readonly SettingRepository $settings,
         private readonly McpAccessToken $token,
         private readonly EntityManagerInterface $em,
+        private readonly CredentialProvider $credentials,
     ) {
     }
 
@@ -103,6 +106,8 @@ class AiAssistantSettingsController extends AbstractController
             'tokenIssued' => $this->token->isIssued(),
             'issuedToken' => is_string($issuedToken) ? $issuedToken : null,
             'endpointUrl' => $this->generateUrl('mcp_endpoint', [], UrlGeneratorInterface::ABSOLUTE_URL),
+            'guestMailboxConfigured' => $this->credentials->guestMailbox()->isConfigured(),
+            'guestMailSyncedAt' => $this->settings->getString(GuestMailSync::SYNCED_AT_KEY),
         ]);
     }
 }

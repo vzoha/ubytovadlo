@@ -11,15 +11,19 @@ declare(strict_types=1);
 
 namespace App\Email\GuestInbox;
 
-/** Hlavička zprávy ze schránky hostů — co stačí na přehled bez stahování těla. */
+/** Hlavička zprávy ze schránky hostů — co stačí na rozhodnutí, jestli zprávu stahovat celou. */
 final readonly class InboxSummary
 {
     public function __construct(
         public string $uid,
-        public InboxSender $from,
+        public string $messageId,
+        public MailAddress $from,
+        public MailAddress $to,
         public string $subject,
         public \DateTimeImmutable $date,
         public bool $answered,
+        /** Rozesílka nebo automatická odpověď (List-Unsubscribe, Auto-Submitted, Precedence: bulk). */
+        public bool $automated,
     ) {
     }
 }

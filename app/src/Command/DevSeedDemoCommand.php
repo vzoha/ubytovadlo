@@ -13,6 +13,7 @@ namespace App\Command;
 
 use App\Booking\BookingHotelId;
 use App\Cashflow\IncomeUpserter;
+use App\Email\GuestInbox\MailAddress;
 use App\Entity\Account;
 use App\Entity\BalanceStatement;
 use App\Entity\Customer;
@@ -23,6 +24,7 @@ use App\Entity\Embeddable\ElectricityUsage;
 use App\Entity\Embeddable\GuestContact;
 use App\Entity\Embeddable\VatReverseCharge;
 use App\Entity\GuestDocument;
+use App\Entity\GuestEmail;
 use App\Entity\Invoice;
 use App\Entity\LedgerEntry;
 use App\Entity\Payment;
@@ -36,12 +38,14 @@ use App\Enum\AccountType;
 use App\Enum\Channel;
 use App\Enum\CleaningType;
 use App\Enum\DocumentType;
+use App\Enum\EmailDirection;
 use App\Enum\ExpenseCategory;
 use App\Enum\LedgerEntryType;
 use App\Enum\PaymentSource;
 use App\Enum\ReservationStatus;
 use App\Enum\UserRole;
 use App\Formatting\Money;
+use App\GuestMail\GuestEmailMatcher;
 use App\Invoice\InvoiceService;
 use App\Mail\MessageLocales;
 use App\Mcp\Tool\PropertyInfoTool;
@@ -83,6 +87,7 @@ class DevSeedDemoCommand extends Command
         private readonly TaskCatalog $catalog,
         private readonly IncomeUpserter $incomeUpserter,
         private readonly UserPasswordHasherInterface $hasher,
+        private readonly GuestEmailMatcher $emailMatcher,
         private readonly string $appEnv,
     ) {
         parent::__construct();
@@ -115,6 +120,7 @@ class DevSeedDemoCommand extends Command
         $this->seedTasks($io);
         $reservations = $this->seedReservations($io);
         $this->seedCustomerNotes($io);
+        $this->seedGuestEmails($io);
         $this->seedReservationIncomes($reservations, $io);
         $this->seedVatPeriods($io);
 
@@ -130,7 +136,7 @@ class DevSeedDemoCommand extends Command
             'reservation_receipt', 'balance_statement', 'ledger_entry', 'account',
             'invoice_line', 'invoice', 'cleaning', 'guest_document', 'airbnb_statement',
             'booking_monthly_invoice', 'vat_period', 'electricity_reading', 'electricity_tariff',
-            'payment', 'email_log', 'reservation', 'customer_distinct_pair', 'customer', 'app_user', 'setting', 'accommodation_profile',
+            'payment', 'email_log', 'guest_email', 'reservation', 'customer_distinct_pair', 'customer', 'app_user', 'setting', 'accommodation_profile',
             'quick_message', 'task_completion', 'recurring_task',
         ];
         $this->connection->executeStatement('SET FOREIGN_KEY_CHECKS = 0');
@@ -252,6 +258,45 @@ class DevSeedDemoCommand extends Command
         $customer?->setNote('Jezdí s dětmi, ocení postýlku a místo na kočárek.');
         $this->em->flush();
         $io->writeln('  Poznámka k vracejícímu se hostovi vytvořena.');
+    }
+
+    /** Korespondence ze schránky hostů: vlákno vracejícího se hosta a nezodpovězený dotaz nového. */
+    private function seedGuestEmails(SymfonyStyle $io): void
+    {
+        $jan = new MailAddress('Jan Novák', 'jan.novak@email.cz');
+        $question = new GuestEmail(
+            EmailDirection::INBOUND,
+            'demo-1@email.cz',
+            $jan,
+            'Parkování a postýlka',
+            new \DateTimeImmutable('-3 days 09:12'),
+            "Dobrý den,\n\nmůžeme zaparkovat dvě auta u domu? A je k dispozici dětská postýlka?\n\nDěkuji, Jan Novák"
+        );
+        $reply = new GuestEmail(
+            EmailDirection::OUTBOUND,
+            'demo-2@example.com',
+            $jan,
+            'Re: Parkování a postýlka',
+            new \DateTimeImmutable('-3 days 14:40'),
+            "Dobrý den,\n\ndvě auta se u domu vejdou a postýlku vám připravíme.\n\nS pozdravem",
+            ['demo-1@email.cz']
+        );
+        $question->markAnswered();
+        $inquiry = new GuestEmail(
+            EmailDirection::INBOUND,
+            'demo-3@example.com',
+            new MailAddress('Eva Malá', 'eva.mala@example.com'),
+            'Volno o prodlouženém víkendu?',
+            new \DateTimeImmutable('-1 day 20:05'),
+            "Dobrý den,\n\nmáte volno od pátku do pondělí na začátku příštího měsíce? Byli bychom dva dospělí a pes.\n\nEva Malá"
+        );
+
+        foreach ([$question, $reply, $inquiry] as $email) {
+            $this->em->persist($email);
+            $this->emailMatcher->match($email);
+            $this->em->flush();
+        }
+        $io->writeln('  Korespondence s hosty vytvořena.');
     }
 
     private function seedQuickMessages(SymfonyStyle $io): void

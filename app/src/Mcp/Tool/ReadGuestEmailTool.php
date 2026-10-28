@@ -11,19 +11,19 @@ declare(strict_types=1);
 
 namespace App\Mcp\Tool;
 
-use App\Email\GuestInbox\GuestInbox;
-use App\Email\GuestInbox\GuestInboxException;
+use App\Mcp\GuestEmailPresenter;
 use App\Mcp\McpTool;
 use App\Mcp\McpToolException;
+use App\Repository\GuestEmailRepository;
 
-/** Celý text jedné zprávy ze schránky hostů. */
+/** Celý text jednoho e-mailu a předchozí korespondence se stejným hostem. */
 final class ReadGuestEmailTool implements McpTool
 {
-    /** Strop délky textu — dlouhé citace starší korespondence model k odpovědi nepotřebuje celé. */
-    private const MAX_TEXT = 20000;
+    private const CONVERSATION_LIMIT = 10;
 
     public function __construct(
-        private readonly GuestInbox $inbox,
+        private readonly GuestEmailRepository $emails,
+        private readonly GuestEmailPresenter $presenter,
     ) {
     }
 
@@ -34,9 +34,10 @@ final class ReadGuestEmailTool implements McpTool
 
     public function description(): string
     {
-        return 'Celý text e-mailu ze schránky hostů podle uid z list_guest_emails: odesílatel, předmět, datum, '
-            . 'text (včetně citované předchozí korespondence) a názvy příloh. Zprávu nechá nepřečtenou. '
-            . 'Pak dohledej hosta přes find_guest podle adresy odesílatele.';
+        return 'Celý text e-mailu podle id z list_guest_emails nebo get_reservation: odesílatel, předmět, '
+            . 'datum, text (včetně citace), názvy příloh, známý host a rezervace. Přidá přehled dalších '
+            . 'e-mailů se stejnou adresou (conversation), ať je vidět, co už si host s majitelem napsali. '
+            . 'Rezervace chybí, když nešla přiřadit jistě — pak ji dohledej přes find_guest.';
     }
 
     public function inputSchema(): array
@@ -44,40 +45,22 @@ final class ReadGuestEmailTool implements McpTool
         return [
             'type' => 'object',
             'properties' => [
-                'uid' => ['type' => 'string', 'description' => 'uid zprávy z list_guest_emails'],
+                'id' => ['type' => 'integer', 'description' => 'id e-mailu'],
             ],
-            'required' => ['uid'],
+            'required' => ['id'],
         ];
     }
 
     public function call(array $arguments): array
     {
-        $uid = trim((string) ($arguments['uid'] ?? ''));
-        if ($uid === '') {
-            throw new McpToolException('Zadej uid zprávy.');
+        $id = (int) ($arguments['id'] ?? 0);
+        $email = $id > 0 ? $this->emails->find($id) : null;
+        if ($email === null) {
+            throw new McpToolException(sprintf('E-mail s id %d neexistuje.', $id));
         }
 
-        try {
-            $message = $this->inbox->find($uid);
-        } catch (GuestInboxException $e) {
-            throw new McpToolException($e->getMessage(), previous: $e);
-        }
-        if ($message === null) {
-            throw new McpToolException(sprintf('Zpráva s uid %s ve schránce není.', $uid));
-        }
-
-        $summary = $message->summary;
-
-        return [
-            'uid' => $summary->uid,
-            'messageId' => $message->messageId,
-            'inReplyTo' => $message->inReplyTo,
-            'from' => $summary->from->toArray(),
-            'subject' => $summary->subject,
-            'date' => $summary->date->format('Y-m-d H:i'),
-            'answered' => $summary->answered,
-            'text' => mb_strimwidth($message->text, 0, self::MAX_TEXT, "\n[…zkráceno]"),
-            'attachments' => $message->attachmentNames,
+        return $this->presenter->full($email) + [
+            'conversation' => array_map($this->presenter->headline(...), $this->emails->findConversation($email, self::CONVERSATION_LIMIT)),
         ];
     }
 }

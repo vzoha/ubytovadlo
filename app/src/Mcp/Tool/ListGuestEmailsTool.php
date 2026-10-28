@@ -11,25 +11,21 @@ declare(strict_types=1);
 
 namespace App\Mcp\Tool;
 
-use App\Email\GuestInbox\GuestInbox;
-use App\Email\GuestInbox\GuestInboxException;
-use App\Email\GuestInbox\InboxSummary;
+use App\Mcp\GuestEmailPresenter;
 use App\Mcp\McpTool;
-use App\Mcp\McpToolException;
-use App\Repository\CustomerRepository;
+use App\Repository\GuestEmailRepository;
+use Psr\Clock\ClockInterface;
 
-/**
- * Co hosté poslali: přehled hlaviček zpráv ze schránky hostů a jestli odesílatele
- * známe. Těla se nestahují (přílohy by přehled zpomalily), text vrací read_guest_email.
- */
+/** Co hosté poslali: doručené e-maily z korespondence s hosty, uložené v DB. */
 final class ListGuestEmailsTool implements McpTool
 {
     private const MAX_DAYS = 90;
     private const MAX_LIMIT = 50;
 
     public function __construct(
-        private readonly GuestInbox $inbox,
-        private readonly CustomerRepository $customers,
+        private readonly GuestEmailRepository $emails,
+        private readonly GuestEmailPresenter $presenter,
+        private readonly ClockInterface $clock,
     ) {
     }
 
@@ -40,10 +36,11 @@ final class ListGuestEmailsTool implements McpTool
 
     public function description(): string
     {
-        return 'Přehled e-mailů ve schránce, kam píšou hosté, od nejnovějšího: odesílatel, předmět, datum, '
-            . 'jestli už byla zodpovězena (příznak Answered z poštovního klienta) '
-            . 'a jestli odesílatele známe jako hosta. Výchozí je jen nezodpovězené za posledních 14 dní. '
-            . 'Text zprávy načti přes read_guest_email podle uid.';
+        return 'Přehled e-mailů, které poslali hosté, od nejnovějšího: odesílatel, předmět, datum, '
+            . 'jestli už je zodpovězený (majitel odpověděl ve stejném vlákně nebo zprávu označil), '
+            . 'známý host a rezervace, pokud ji šlo jistě přiřadit. Výchozí je jen nezodpovězené '
+            . 'za posledních 14 dní. Schránka se stahuje každých pár minut. '
+            . 'Text a předchozí korespondenci vrací read_guest_email podle id.';
     }
 
     public function inputSchema(): array
@@ -62,37 +59,14 @@ final class ListGuestEmailsTool implements McpTool
     {
         $days = max(1, min(self::MAX_DAYS, (int) ($arguments['days'] ?? 14)));
         $limit = max(1, min(self::MAX_LIMIT, (int) ($arguments['limit'] ?? 20)));
-        $includeAnswered = (bool) ($arguments['includeAnswered'] ?? false);
+        $since = $this->clock->now()->modify(sprintf('-%d days', $days))->setTime(0, 0);
 
-        try {
-            $messages = $this->inbox->recent($days, $limit);
-        } catch (GuestInboxException $e) {
-            throw new McpToolException($e->getMessage(), previous: $e);
-        }
-
-        if (!$includeAnswered) {
-            $messages = array_values(array_filter($messages, static fn (InboxSummary $m): bool => !$m->answered));
-        }
+        $emails = $this->emails->findInbound($since, (bool) ($arguments['includeAnswered'] ?? false), $limit);
 
         return [
             'days' => $days,
-            'count' => count($messages),
-            'emails' => array_map($this->row(...), $messages),
-        ];
-    }
-
-    /** @return array<string, mixed> */
-    private function row(InboxSummary $message): array
-    {
-        $guest = $message->from->email !== null ? ($this->customers->findByEmail($message->from->email)[0] ?? null) : null;
-
-        return [
-            'uid' => $message->uid,
-            'from' => $message->from->toArray(),
-            'knownGuest' => $guest?->getDisplayName(),
-            'subject' => $message->subject,
-            'date' => $message->date->format('Y-m-d H:i'),
-            'answered' => $message->answered,
+            'count' => count($emails),
+            'emails' => array_map($this->presenter->headline(...), $emails),
         ];
     }
 }

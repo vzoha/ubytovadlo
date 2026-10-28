@@ -36,6 +36,7 @@ final class CredentialProvider
         'guestImapUsername' => ['guest_imap.username', false],
         'guestImapPassword' => ['guest_imap.password', true],
         'guestImapFolder' => ['guest_imap.folder', false],
+        'guestImapSentFolder' => ['guest_imap.sent_folder', false],
         'motopressBaseUrl' => ['motopress.base_url', false],
         'motopressConsumerKey' => ['motopress.consumer_key', true],
         'motopressConsumerSecret' => ['motopress.consumer_secret', true],
@@ -93,10 +94,16 @@ final class CredentialProvider
         return $this->mailbox('imap');
     }
 
-    /** Schránka, kam píšou hosté — čte ji AI asistent. */
+    /** Schránka, kam píšou hosté — korespondence se z ní ukládá k hostům. */
     public function guestMailbox(): ImapAccount
     {
         return $this->mailbox('guestImap');
+    }
+
+    /** Složka odeslaných ve schránce hostů; prázdná = najít podle obvyklých názvů. */
+    public function guestSentFolder(): string
+    {
+        return $this->get('guestImapSentFolder');
     }
 
     public function motopressBaseUrl(): string

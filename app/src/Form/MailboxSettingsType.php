@@ -55,6 +55,7 @@ class MailboxSettingsType extends AbstractType
             ->add('guestImapUsername', TextType::class, ['label' => 'Uživatel (e-mail)', 'required' => false])
             ->add('guestImapPassword', PasswordType::class, ['label' => 'Heslo', 'help' => 'Prázdné = beze změny.'] + $secret)
             ->add('guestImapFolder', TextType::class, ['label' => 'Složka', 'required' => false, 'help' => 'Prázdné = INBOX.'])
+            ->add('guestImapSentFolder', TextType::class, ['label' => 'Složka odeslaných', 'required' => false, 'help' => 'Prázdné = najde se podle obvyklých názvů (Sent, Odeslane, Odeslaná pošta…).'])
             ->add('smtpHost', TextType::class, ['label' => 'SMTP server', 'required' => false, 'help' => 'Adresa odchozího serveru, např. mail.vasedomena.cz.'])
             ->add('smtpPort', IntegerType::class, ['label' => 'Port', 'required' => false, 'help' => 'Obvykle 465 (SSL) nebo 587 (TLS).', 'attr' => ['min' => 1, 'max' => 65535]])
             ->add('smtpEncryption', ChoiceType::class, [

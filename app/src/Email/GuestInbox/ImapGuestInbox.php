@@ -16,6 +16,8 @@ use App\Email\HtmlToTextConverter;
 use App\Email\ImapClientFactory;
 use Psr\Clock\ClockInterface;
 use Symfony\Component\DependencyInjection\Attribute\AsAlias;
+use Webklex\PHPIMAP\Address;
+use Webklex\PHPIMAP\Client;
 use Webklex\PHPIMAP\Exceptions\MessageHeaderFetchingException;
 use Webklex\PHPIMAP\Folder;
 use Webklex\PHPIMAP\Message;
@@ -24,6 +26,14 @@ use Webklex\PHPIMAP\Message;
 #[AsAlias(GuestInbox::class)]
 final class ImapGuestInbox implements GuestInbox
 {
+    /** Obvyklé názvy odeslaných, když je majitel nevyplnil (Dovecot, Outlook, české webmaily). */
+    private const SENT_FOLDER_CANDIDATES = ['Sent', 'INBOX.Sent', 'Sent Items', 'Sent Messages', 'Odeslane', 'INBOX.Odeslane', 'Odeslaná pošta', 'INBOX.Odeslaná pošta'];
+
+    private ?Client $client = null;
+
+    /** @var array<string, Folder> nalezené složky podle MailFolder — hledání stojí IMAP LIST (a STATUS) */
+    private array $folders = [];
+
     public function __construct(
         private readonly CredentialProvider $credentials,
         private readonly ImapClientFactory $imap,
@@ -37,10 +47,14 @@ final class ImapGuestInbox implements GuestInbox
         return $this->credentials->guestMailbox()->isConfigured();
     }
 
-    public function recent(int $days, int $limit): array
+    public function ownAddress(): string
     {
-        $since = $this->clock->now()->modify(sprintf('-%d days', $days))->setTime(0, 0);
-        $query = $this->folder()->query()->since($since)->leaveUnread()->setFetchBody(false)->setFetchOrderDesc()->limit($limit);
+        return mb_strtolower($this->credentials->guestMailbox()->username);
+    }
+
+    public function summaries(MailFolder $folder, \DateTimeImmutable $since): array
+    {
+        $query = $this->folder($folder)->query()->since($since)->leaveUnread()->setFetchBody(false)->setFetchOrderDesc();
 
         try {
             $messages = $query->get();
@@ -56,13 +70,13 @@ final class ImapGuestInbox implements GuestInbox
         return $result;
     }
 
-    public function find(string $uid): ?InboxMessage
+    public function fetch(MailFolder $folder, string $uid): ?InboxMessage
     {
         if (!ctype_digit($uid)) {
             return null;
         }
 
-        $query = $this->folder()->query()->leaveUnread();
+        $query = $this->folder($folder)->query()->leaveUnread();
 
         try {
             $message = $query->getMessageByUid((int) $uid);
@@ -72,26 +86,95 @@ final class ImapGuestInbox implements GuestInbox
             throw new GuestInboxException(sprintf('Načtení zprávy %s ze schránky hostů selhalo: %s', $uid, $e->getMessage()), previous: $e);
         }
 
-        return $this->toInboxMessage($message);
+        return new InboxMessage(
+            summary: $this->summary($message),
+            text: $this->text($message),
+            threadIds: self::threadIds($message),
+            attachmentNames: self::attachmentNames($message),
+        );
     }
 
-    private function folder(): Folder
+    private function folder(MailFolder $folder): Folder
     {
+        return $this->folders[$folder->name] ??= $this->findFolder($folder);
+    }
+
+    private function findFolder(MailFolder $folder): Folder
+    {
+        if ($folder === MailFolder::INBOX) {
+            $path = $this->credentials->guestMailbox()->folderOrInbox();
+
+            return $this->existingFolders([$path])[0] ?? throw self::missingFolder([$path]);
+        }
+
+        $configured = $this->credentials->guestSentFolder();
+        $paths = $configured !== '' ? [$configured] : self::SENT_FOLDER_CANDIDATES;
+        $found = $this->existingFolders($paths);
+        // Server může mít vedle skutečných odeslaných i prázdnou výchozí `Sent` (hukot: `Odeslane`).
+        foreach ($found as $candidate) {
+            if (self::messageCount($candidate) > 0) {
+                return $candidate;
+            }
+        }
+
+        return $found[0] ?? throw self::missingFolder($paths);
+    }
+
+    /**
+     * @param list<string> $paths
+     *
+     * @return list<Folder>
+     */
+    private function existingFolders(array $paths): array
+    {
+        $client = $this->client();
+        $found = [];
+        foreach ($paths as $path) {
+            try {
+                $folder = $client->getFolderByPath($path);
+            } catch (\Throwable $e) {
+                throw new GuestInboxException('Připojení ke schránce hostů selhalo: ' . $e->getMessage(), previous: $e);
+            }
+            if ($folder !== null) {
+                $found[] = $folder;
+            }
+        }
+
+        return $found;
+    }
+
+    private static function messageCount(Folder $folder): int
+    {
+        try {
+            return (int) ($folder->status()['messages'] ?? 0);
+        } catch (\Throwable $e) {
+            throw new GuestInboxException(sprintf('Zjištění obsahu složky %s selhalo: %s', $folder->path, $e->getMessage()), previous: $e);
+        }
+    }
+
+    /** @param list<string> $paths */
+    private static function missingFolder(array $paths): GuestInboxException
+    {
+        return new GuestInboxException('Ve schránce hostů chybí složka ' . implode(' / ', $paths) . '.');
+    }
+
+    /** Jedno spojení na celý běh — synchronizace sahá do dvou složek a pro každou zprávu zvlášť. */
+    private function client(): Client
+    {
+        if ($this->client !== null) {
+            return $this->client;
+        }
+
         $account = $this->credentials->guestMailbox();
         if (!$account->isConfigured()) {
             throw new GuestInboxException('Schránka hostů nemá vyplněné přístupy (Nastavení → Připojení).');
         }
 
         try {
-            $folder = $this->imap->connect($account)->getFolderByPath($account->folderOrInbox());
+            return $this->client = $this->imap->connect($account);
         } catch (\Throwable $e) {
             throw new GuestInboxException('Připojení ke schránce hostů selhalo: ' . $e->getMessage(), previous: $e);
         }
-        if ($folder === null) {
-            throw new GuestInboxException('Ve schránce hostů chybí složka ' . $account->folderOrInbox() . '.');
-        }
-
-        return $folder;
     }
 
     private function summary(Message $message): InboxSummary
@@ -100,39 +183,64 @@ final class ImapGuestInbox implements GuestInbox
 
         return new InboxSummary(
             uid: (string) $message->getUid(),
-            from: $this->sender($message),
-            subject: self::decode((string) $message->getSubject()),
-            date: $date instanceof \DateTimeInterface ? \DateTimeImmutable::createFromInterface($date) : $this->clock->now(),
-            answered: $message->hasFlag('answered'),
-        );
-    }
-
-    private function toInboxMessage(Message $message): InboxMessage
-    {
-        $inReplyTo = trim((string) $message->getInReplyTo());
-
-        return new InboxMessage(
-            summary: $this->summary($message),
             messageId: trim((string) $message->getMessageId()),
-            text: $this->text($message),
-            inReplyTo: $inReplyTo !== '' ? $inReplyTo : null,
-            attachmentNames: self::attachmentNames($message),
+            from: $this->address($message->getFrom()->first()),
+            to: $this->recipient($message),
+            subject: self::decode((string) $message->getSubject()),
+            date: $date instanceof \DateTimeInterface ? self::localTime($date) : $this->clock->now(),
+            answered: $message->hasFlag('answered'),
+            automated: self::isAutomated($message),
         );
     }
 
-    private function sender(Message $message): InboxSender
+    /** První příjemce, který není schránka sama — majitel si občas posílá kopii nebo píše víc lidem. */
+    private function recipient(Message $message): MailAddress
     {
-        $from = $message->getFrom()->first();
-        if ($from === null) {
-            return new InboxSender(null, null);
+        $own = $this->ownAddress();
+        $first = null;
+        foreach ($message->getTo()->all() as $address) {
+            $recipient = $this->address($address);
+            $first ??= $recipient;
+            if ($recipient->email !== null && $recipient->email !== $own) {
+                return $recipient;
+            }
         }
-        $name = (string) $from->personal;
-        $email = (string) $from->mail;
 
-        return new InboxSender(
+        return $first ?? new MailAddress(null, null);
+    }
+
+    /** Hlavička Date nese pásmo odesílatele; DB ukládá čas bez pásma, tak ho sjednotíme na pásmo aplikace. */
+    private static function localTime(\DateTimeInterface $date): \DateTimeImmutable
+    {
+        return \DateTimeImmutable::createFromInterface($date)->setTimezone(new \DateTimeZone(date_default_timezone_get()));
+    }
+
+    private function address(mixed $address): MailAddress
+    {
+        if (!$address instanceof Address) {
+            return new MailAddress(null, null);
+        }
+        $name = $address->personal;
+        $email = $address->mail;
+
+        return new MailAddress(
             $name !== '' ? self::decode($name) : null,
             $email !== '' ? mb_strtolower($email) : null,
         );
+    }
+
+    private static function isAutomated(Message $message): bool
+    {
+        $header = $message->getHeader();
+        if ($header === null) {
+            return false;
+        }
+        $autoSubmitted = mb_strtolower(trim((string) $header->get('auto-submitted')));
+        $precedence = mb_strtolower(trim((string) $header->get('precedence')));
+
+        return $header->has('list-unsubscribe')
+            || ($autoSubmitted !== '' && $autoSubmitted !== 'no')
+            || \in_array($precedence, ['bulk', 'list', 'junk'], true);
     }
 
     /** Hosté píšou běžně prostým textem; HTML se převádí, jen když text chybí. */
@@ -144,12 +252,28 @@ final class ImapGuestInbox implements GuestInbox
     }
 
     /** @return list<string> */
+    private static function threadIds(Message $message): array
+    {
+        $ids = [trim((string) $message->getInReplyTo())];
+        foreach ($message->getReferences()->toArray() as $reference) {
+            $ids[] = trim((string) $reference);
+        }
+
+        return array_values(array_unique(array_filter($ids, static fn (string $id): bool => $id !== '')));
+    }
+
+    /**
+     * Jen skutečné přílohy — vložené obrázky (logo v podpisu, obrázky v HTML) nic neříkají.
+     *
+     * @return list<string>
+     */
     private static function attachmentNames(Message $message): array
     {
         $names = [];
         foreach ($message->getAttachments() as $attachment) {
             $name = (string) $attachment->getName();
-            if ($name !== '') {
+            $inline = str_starts_with(mb_strtolower(trim((string) $attachment->disposition)), 'inline');
+            if ($name !== '' && !$inline) {
                 $names[] = $name;
             }
         }

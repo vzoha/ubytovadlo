@@ -9,8 +9,14 @@
 
 declare(strict_types=1);
 
-/* Cron wrapper: čte automatizační schránku (Booking/Airbnb). Konfigurace v app/.env.local. */
+/*
+ * Cron wrapper: čte automatizační schránku (Booking/Airbnb) a ukládá korespondenci
+ * ze schránky hostů. Konfigurace v app/.env.local.
+ */
 
 $run = require __DIR__ . '/_kernel.php';
 
-exit($run('app:imap:poll'));
+$automation = $run('app:imap:poll');
+$guestMail = $run('app:guest-mail:sync');
+
+exit(max($automation, $guestMail));

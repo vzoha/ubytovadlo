@@ -11,8 +11,8 @@ declare(strict_types=1);
 
 namespace App\Email\GuestInbox;
 
-/** Odesílatel zprávy ve schránce hostů; e-mail malými písmeny kvůli párování s hostem. */
-final readonly class InboxSender
+/** Adresa v hlavičce zprávy (odesílatel, příjemce); e-mail malými písmeny kvůli párování s hostem. */
+final readonly class MailAddress
 {
     public function __construct(
         public ?string $name,

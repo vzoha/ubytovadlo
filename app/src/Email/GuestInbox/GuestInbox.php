@@ -19,17 +19,20 @@ interface GuestInbox
 {
     public function isConfigured(): bool;
 
+    /** Adresa schránky — odesílatel odpovědí majitele. */
+    public function ownAddress(): string;
+
     /**
-     * Hlavičky zpráv přijatých za posledních `$days` dní, od nejnovější.
+     * Hlavičky zpráv ve složce přijatých od `$since`, od nejnovější.
      *
      * @return list<InboxSummary>
      *
-     * @throws GuestInboxException když se ke schránce nejde připojit
+     * @throws GuestInboxException když se ke schránce nebo složce nejde dostat
      */
-    public function recent(int $days, int $limit): array;
+    public function summaries(MailFolder $folder, \DateTimeImmutable $since): array;
 
     /**
-     * @throws GuestInboxException když se ke schránce nejde připojit
+     * @throws GuestInboxException když se ke schránce nebo složce nejde dostat
      */
-    public function find(string $uid): ?InboxMessage;
+    public function fetch(MailFolder $folder, string $uid): ?InboxMessage;
 }

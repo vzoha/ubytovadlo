@@ -15,6 +15,7 @@ use App\Entity\Customer;
 use App\Entity\CustomerDistinctPair;
 use App\Entity\Reservation;
 use App\Repository\CustomerDistinctPairRepository;
+use App\Repository\GuestEmailRepository;
 use App\Repository\ReservationRepository;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -28,6 +29,7 @@ final class CustomerMerger
     public function __construct(
         private readonly ReservationRepository $reservations,
         private readonly CustomerDistinctPairRepository $distinctPairs,
+        private readonly GuestEmailRepository $emails,
         private readonly EntityManagerInterface $em,
     ) {
     }
@@ -49,6 +51,7 @@ final class CustomerMerger
             $reservation->setCustomer($keep);
         }
         $keep->mergeFrom($merge);
+        $this->emails->moveToCustomer($merge, $keep);
         $distinctFromMerged = [];
         foreach ($this->distinctPairs->findInvolving($merge) as $pair) {
             $distinctFromMerged[] = $pair->otherThan($merge);

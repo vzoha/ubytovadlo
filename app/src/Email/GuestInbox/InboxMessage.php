@@ -11,17 +11,17 @@ declare(strict_types=1);
 
 namespace App\Email\GuestInbox;
 
-/** Celá zpráva ze schránky hostů, jak ji vidí AI asistent. */
+/** Celá zpráva ze schránky hostů. */
 final readonly class InboxMessage
 {
     /**
+     * @param list<string> $threadIds       Message-ID zpráv, na které navazuje (In-Reply-To, References)
      * @param list<string> $attachmentNames
      */
     public function __construct(
         public InboxSummary $summary,
-        public string $messageId,
         public string $text,
-        public ?string $inReplyTo = null,
+        public array $threadIds = [],
         public array $attachmentNames = [],
     ) {
     }

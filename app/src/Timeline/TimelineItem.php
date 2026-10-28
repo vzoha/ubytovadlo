@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Timeline;
 
+use App\Entity\GuestEmail;
 use App\Entity\ReservationAction;
 use App\Entity\ReservationNote;
 use App\Enum\ActionDelivery;
@@ -30,7 +31,7 @@ final readonly class TimelineItem
     private const int PLAN_DRIFT_SECONDS = 3600;
 
     /**
-     * @param 'event'|'note'|'action' $kind
+     * @param 'event'|'note'|'action'|'email' $kind
      */
     private function __construct(
         public \DateTimeImmutable $at,
@@ -52,6 +53,19 @@ final readonly class TimelineItem
     public static function event(\DateTimeImmutable $at, string $icon, string $title, ?string $meta = null, bool $dateOnly = false): self
     {
         return new self($at, 'event', $icon, $title, null, $meta, dateOnly: $dateOnly);
+    }
+
+    /** E-mail z korespondence: předmět v titulku, text sbalený pod ním. */
+    public static function fromEmail(GuestEmail $email): self
+    {
+        return new self(
+            $email->getSentAt(),
+            'email',
+            $email->getDirection()->icon(),
+            $email->getDirection()->label() . ': ' . $email->getSubject(),
+            $email->getBody(),
+            $email->getCounterpartEmail(),
+        );
     }
 
     public static function fromNote(ReservationNote $note): self

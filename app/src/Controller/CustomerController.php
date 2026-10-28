@@ -20,6 +20,7 @@ use App\Customer\CustomerMerger;
 use App\Entity\Customer;
 use App\Entity\Reservation;
 use App\Repository\CustomerRepository;
+use App\Repository\GuestEmailRepository;
 use App\Repository\ReservationRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -61,7 +62,7 @@ class CustomerController extends AbstractController
     }
 
     #[Route('/hoste/{id}', name: 'customer_detail', methods: ['GET'], requirements: ['id' => '\d+'])]
-    public function detail(Customer $customer, CustomerEconomicsCalculator $economics): Response
+    public function detail(Customer $customer, CustomerEconomicsCalculator $economics, GuestEmailRepository $emails): Response
     {
         $stays = $this->reservations->findAllOfCustomer($customer);
         [$summary, $profits] = $economics->forStays($stays);
@@ -69,6 +70,7 @@ class CustomerController extends AbstractController
         return $this->render('customer/detail.html.twig', [
             'customer' => $customer,
             'stays' => $stays,
+            'emails' => $emails->findForCustomer($customer),
             'economics' => $summary,
             'profits' => $profits,
             'suggestions' => $this->duplicates->findFor($customer),

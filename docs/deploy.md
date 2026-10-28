@@ -243,6 +243,9 @@ V panelu **Cron úlohy** založ čtyři úlohy á 15 min a jednu denní:
 
 (Cesta je relativní z úrovně `www`, proto `/src/app/...`.)
 
+`imap-poll` čte automatizační schránku (`app:imap:poll` — e-maily portálů a banky)
+a pak ukládá korespondenci ze schránky hostů (`app:guest-mail:sync` — doručené
+i odeslané k hostům a rezervacím, bez vyplněných přístupů se přeskočí).
 `channels-sync` obsluhuje kanály, na které se ptáme sami: `app:motopress:sync`
 (rezervace z vlastního webu přes REST) a `app:ical:sync` (iCal feedy zapnutých OTA
 konektorů — Booking, Airbnb, eChalupy, CS chalupy; URL feedu se zadává na stránce
@@ -283,6 +286,7 @@ Zdravý výstup: `Found N message(s) … [OK] Done. processed=…` resp.
 - [ ] detail rezervace → existující PDF faktury se otevřou (var/invoices přenesené, cesty relativní)
 - [ ] `php bin/console app:imap:poll --dry-run --env=prod` projde (IMAP creds)
 - [ ] `php bin/console app:ical:sync --dry-run --env=prod` projde (feedy zapnutých OTA konektorů)
+- [ ] `php bin/console app:guest-mail:sync --env=prod` projde (schránka hostů; najde složku odeslaných)
 - [ ] `~/_log/cron/*.log` po čtvrthodině obsahují úspěšné běhy
 
 ---
