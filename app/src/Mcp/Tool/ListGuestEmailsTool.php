@@ -13,6 +13,7 @@ namespace App\Mcp\Tool;
 
 use App\Mcp\GuestEmailPresenter;
 use App\Mcp\McpTool;
+use App\Mcp\McpToolEffect;
 use App\Repository\GuestEmailRepository;
 use Psr\Clock\ClockInterface;
 
@@ -34,9 +35,9 @@ final class ListGuestEmailsTool implements McpTool
         return 'list_guest_emails';
     }
 
-    public function readOnly(): bool
+    public function effect(): McpToolEffect
     {
-        return true;
+        return McpToolEffect::READ;
     }
 
     public function description(): string

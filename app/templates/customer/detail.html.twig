@@ -144,7 +144,7 @@
                                     <span class="text-muted text-nowrap">{{ email.sentAt|date('d. m. Y H:i') }}</span>
                                 </div>
                                 {{ include('guest_email/_text.html.twig', {text: email.body}) }}
-                                {{ include('guest_email/_reply_button.html.twig', {email: email}) }}
+                                {{ include('guest_email/_actions.html.twig', {email: email}) }}
                                 {% if email.reservation %}
                                     <a href="{{ path('reservation_detail', {id: email.reservation.id}) }}" class="text-decoration-none">
                                         Pobyt {{ email.reservation.checkIn|date('d. m. Y') }} →

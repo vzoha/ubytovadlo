@@ -13,6 +13,7 @@ namespace App\Tests\Mcp;
 
 use App\Mcp\McpServer;
 use App\Mcp\McpTool;
+use App\Mcp\McpToolEffect;
 use App\Mcp\McpToolException;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
@@ -58,12 +59,12 @@ final class McpServerTest extends TestCase
         self::assertTrue($tools[0]['annotations']['readOnlyHint']);
     }
 
-    public function testWriteToolIsAnnotatedAsSendingOut(): void
+    public function testSendingToolIsAnnotatedAsOpenWorld(): void
     {
         $server = new McpServer([new class extends EchoTool {
-            public function readOnly(): bool
+            public function effect(): McpToolEffect
             {
-                return false;
+                return McpToolEffect::SEND;
             }
         }], new NullLogger());
 
@@ -121,9 +122,9 @@ class EchoTool implements McpTool
         return 'echo';
     }
 
-    public function readOnly(): bool
+    public function effect(): McpToolEffect
     {
-        return true;
+        return McpToolEffect::READ;
     }
 
     public function description(): string

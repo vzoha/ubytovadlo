@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace App\Mcp\Tool;
 
 use App\Mcp\McpTool;
+use App\Mcp\McpToolEffect;
 use App\Mcp\McpToolException;
 use App\Repository\ReservationRepository;
 use Psr\Clock\ClockInterface;
@@ -35,9 +36,9 @@ final class AvailabilityTool implements McpTool
         return 'check_availability';
     }
 
-    public function readOnly(): bool
+    public function effect(): McpToolEffect
     {
-        return true;
+        return McpToolEffect::READ;
     }
 
     public function description(): string

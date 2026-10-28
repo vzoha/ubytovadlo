@@ -17,11 +17,12 @@ use App\Enum\EmailDirection;
 use App\GuestMail\GuestEmailReplier;
 use App\Mail\GuestEmailFactory;
 use App\Mail\MailSettingsProvider;
+use App\Mcp\GuestEmailArgument;
 use App\Mcp\McpToolException;
 use App\Mcp\Tool\ListGuestEmailsTool;
+use App\Mcp\Tool\MarkGuestEmailHandledTool;
 use App\Mcp\Tool\ReadGuestEmailTool;
 use App\Mcp\Tool\ReplyToGuestEmailTool;
-use App\Repository\GuestEmailRepository;
 use App\Repository\SettingRepository;
 use App\Tests\Mail\CapturingMailer;
 use Doctrine\ORM\EntityManagerInterface;
@@ -130,6 +131,25 @@ final class GuestEmailToolsTest extends KernelTestCase
         }
     }
 
+    public function testMarkHandledDropsEmailFromUnanswered(): void
+    {
+        $ad = $this->email('1', EmailDirection::INBOUND, 'Nabídka prohlídek', 'now -1 day');
+        $tool = static::getContainer()->get(MarkGuestEmailHandledTool::class);
+
+        $tool->call(['id' => $ad->getId()]);
+        $tool->call(['id' => $ad->getId()]);
+
+        self::assertSame(0, $this->listTool()->call([])['count']);
+    }
+
+    public function testMarkHandledRefusesOwnReply(): void
+    {
+        $own = $this->email('3', EmailDirection::OUTBOUND, 'Re: Volno', 'now -1 day');
+
+        $this->expectException(McpToolException::class);
+        static::getContainer()->get(MarkGuestEmailHandledTool::class)->call(['id' => $own->getId()]);
+    }
+
     private function email(string $id, EmailDirection $direction, string $subject, string $sentAt, string $body = 'Dobrý den', bool $answered = false, string $from = 'jana@example.com'): GuestEmail
     {
         $email = new GuestEmail($direction, $id . '@example.com', new MailAddress(null, $from), $subject, new \DateTimeImmutable($sentAt), $body);
@@ -154,7 +174,7 @@ final class GuestEmailToolsTest extends KernelTestCase
         $this->em->flush();
         $replier = new GuestEmailReplier($mailer, $container->get(GuestEmailFactory::class), $this->em, new MockClock());
 
-        return new ReplyToGuestEmailTool($container->get(GuestEmailRepository::class), $replier);
+        return new ReplyToGuestEmailTool($container->get(GuestEmailArgument::class), $replier);
     }
 
     private function readTool(): ReadGuestEmailTool

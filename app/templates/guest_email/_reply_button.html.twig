@@ -1,8 +1,0 @@
-{# Tlačítko „Odpovědět" u e-mailu od hosta; okno je jedno na stránce (_reply_modal). #}
-{% if email.replyable %}
-    <button type="button" class="btn btn-sm btn-outline-primary py-0 mt-1" data-bs-toggle="modal" data-bs-target="#guestEmailReply"
-            data-reply-url="{{ path('guest_email_reply', {id: email.id}) }}"
-            data-reply-token="{{ csrf_token('guest-email-reply-' ~ email.id) }}"
-            data-reply-to="{{ email.counterpartName ? email.counterpartName ~ ' <' ~ email.counterpartEmail ~ '>' : email.counterpartEmail }}"
-            data-reply-subject="{{ email.replySubject }}">Odpovědět</button>
-{% endif %}

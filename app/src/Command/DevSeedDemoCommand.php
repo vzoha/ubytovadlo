@@ -284,6 +284,16 @@ class DevSeedDemoCommand extends Command
             ['demo-1@email.cz']
         );
         $question->markAnswered();
+        // Poděkování, na které se neodpovídá — v detailu hosta jde označit tlačítkem Vyřízeno.
+        $thanks = new GuestEmail(
+            EmailDirection::INBOUND,
+            'demo-4@email.cz',
+            $jan,
+            'Re: Parkování a postýlka',
+            new \DateTimeImmutable('-2 days 08:30'),
+            "Děkujeme, to je skvělé.\n\nJan Novák",
+            ['demo-1@email.cz', 'demo-2@example.com']
+        );
         $inquiry = new GuestEmail(
             EmailDirection::INBOUND,
             'demo-3@example.com',
@@ -293,7 +303,7 @@ class DevSeedDemoCommand extends Command
             "Dobrý den,\n\nmáte volno od pátku do pondělí na začátku příštího měsíce? Byli bychom dva dospělí a pes.\n\nEva Malá"
         );
 
-        foreach ([$question, $reply, $inquiry] as $email) {
+        foreach ([$question, $reply, $thanks, $inquiry] as $email) {
             $this->em->persist($email);
             $this->emailMatcher->match($email);
             $this->em->flush();

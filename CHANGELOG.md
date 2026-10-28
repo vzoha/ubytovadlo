@@ -32,7 +32,8 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
   Přiřazené e-maily jsou na časové ose rezervace. Na e-mail od hosta jde z časové osy i z detailu
   hosta odpovědět tlačítkem *Odpovědět*: odpověď odejde přes odchozí poštu aplikace do stejného
   vlákna, uloží se do korespondence a dotaz se označí jako zodpovězený. Dotaz je zodpovězený, když
-  na něj ve vlákně přišla odpověď. Přístupy ke schránce hostů jsou v *Nastavení → Připojení* (karta
+  na něj ve vlákně přišla odpověď, nebo ho majitel tlačítkem *Vyřízeno* označil za vyřízený bez
+  odpovědi. Přístupy ke schránce hostů jsou v *Nastavení → Připojení* (karta
   *Dotazy hostů*, včetně složky odeslaných).
 
 - **AI asistent (MCP).** Ubytovadlo je MCP server pro AI klienta (Claude, ChatGPT, Gemini CLI…):
@@ -42,8 +43,9 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
   časy, doplatek, časová osa, e-maily), volné termíny napříč kanály a informace o ubytování od
   majitele. Nástroj `reply_to_guest_email` odešle odpověď na e-mail hosta stejně jako tlačítko
   *Odpovědět* v aplikaci (do vlákna, uloží se ke korespondenci, e-mail označí jako
-  zodpovězený); text s nevyplněným místem `[Sem …]` odmítne. Klient ho vidí jako nástroj,
-  který odesílá ven, a před voláním si vyžádá souhlas.
+  zodpovězený); text s nevyplněným místem `[Sem …]` odmítne. Nástroj `mark_guest_email_handled`
+  označí e-mail jako vyřízený bez odpovědi (reklama, newsletter, dotaz vyřízený telefonem).
+  Klient oba vidí jako nástroje, které mění data, a před voláním si vyžádá souhlas.
   *Nastavení → AI asistent* drží text pro asistenta (ceník, příjezd, parkování, zvířata…),
   ukazuje, kdy se naposledy stáhla schránka hostů, a vydává přístupový token, který se ukáže
   jen jednou; v databázi zůstává jen jeho otisk. Endpoint `/mcp` přijímá Streamable HTTP bez

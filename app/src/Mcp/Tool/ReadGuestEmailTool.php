@@ -11,9 +11,10 @@ declare(strict_types=1);
 
 namespace App\Mcp\Tool;
 
+use App\Mcp\GuestEmailArgument;
 use App\Mcp\GuestEmailPresenter;
 use App\Mcp\McpTool;
-use App\Mcp\McpToolException;
+use App\Mcp\McpToolEffect;
 use App\Repository\GuestEmailRepository;
 
 /** Celý text jednoho e-mailu a předchozí korespondence se stejným hostem. */
@@ -22,6 +23,7 @@ final class ReadGuestEmailTool implements McpTool
     private const CONVERSATION_LIMIT = 10;
 
     public function __construct(
+        private readonly GuestEmailArgument $email,
         private readonly GuestEmailRepository $emails,
         private readonly GuestEmailPresenter $presenter,
     ) {
@@ -32,9 +34,9 @@ final class ReadGuestEmailTool implements McpTool
         return 'read_guest_email';
     }
 
-    public function readOnly(): bool
+    public function effect(): McpToolEffect
     {
-        return true;
+        return McpToolEffect::READ;
     }
 
     public function description(): string
@@ -58,11 +60,7 @@ final class ReadGuestEmailTool implements McpTool
 
     public function call(array $arguments): array
     {
-        $id = (int) ($arguments['id'] ?? 0);
-        $email = $id > 0 ? $this->emails->find($id) : null;
-        if ($email === null) {
-            throw new McpToolException(sprintf('E-mail s id %d neexistuje.', $id));
-        }
+        $email = $this->email->resolve($arguments);
 
         return $this->presenter->full($email) + [
             'conversation' => array_map($this->presenter->headline(...), $this->emails->findConversation($email, self::CONVERSATION_LIMIT)),

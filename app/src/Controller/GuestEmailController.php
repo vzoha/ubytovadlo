@@ -23,7 +23,7 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Routing\Attribute\Route;
 
-/** E-mail z korespondence s hostem: ruční přiřazení k rezervaci a odpověď z aplikace. */
+/** E-mail z korespondence s hostem: ruční přiřazení k rezervaci, odpověď z aplikace a vyřízení bez odpovědi. */
 class GuestEmailController extends AbstractController
 {
     use ChecksCsrf;
@@ -68,6 +68,21 @@ class GuestEmailController extends AbstractController
         }
 
         return $this->redirect($back);
+    }
+
+    #[Route('/e-maily-hostu/{id}/vyrizeno', name: 'guest_email_handled', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function handled(GuestEmail $email, Request $request): Response
+    {
+        $this->assertCsrf($request, 'guest-email-handled-' . $email->getId());
+        if (!$email->isInbound()) {
+            throw new BadRequestHttpException('Vyřídit jde jen e-mail od hosta.');
+        }
+
+        $email->markAnswered();
+        $this->em->flush();
+        $this->addFlash('success', 'E-mail označen jako vyřízený.');
+
+        return $this->redirect($this->backUrl($request));
     }
 
     /** Návrat na stránku, odkud se odpovídalo — jen cesta v rámci aplikace. */

@@ -78,7 +78,7 @@ final class McpControllerTest extends WebTestCase
         $names = array_column($this->call('tools/list')['result']['tools'], 'name');
 
         sort($names);
-        self::assertSame(['check_availability', 'find_guest', 'get_property_info', 'get_reservation', 'list_guest_emails', 'read_guest_email', 'reply_to_guest_email'], $names);
+        self::assertSame(['check_availability', 'find_guest', 'get_property_info', 'get_reservation', 'list_guest_emails', 'mark_guest_email_handled', 'read_guest_email', 'reply_to_guest_email'], $names);
     }
 
     public function testAvailabilityTreatsCheckoutDayAsFree(): void

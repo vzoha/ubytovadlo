@@ -37,7 +37,7 @@
                             </div>
                             {% if item.kind == 'email' %}
                                 {{ include('guest_email/_text.html.twig', {text: item.body}) }}
-                                {{ include('guest_email/_reply_button.html.twig', {email: item.email}) }}
+                                {{ include('guest_email/_actions.html.twig', {email: item.email}) }}
                             {% elseif item.body and item.kind == 'event' %}
                                 {# Podrobnosti události (kroky check-inu) jsou dlouhé — souhrn je vidět, kroky se rozbalí. #}
                                 <details class="small"><summary class="text-muted">{{ item.meta ?: 'Jednotlivé kroky' }}</summary>{{ item.body|nl2br }}</details>

@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace App\Mcp\Tool;
 
 use App\Mcp\McpTool;
+use App\Mcp\McpToolEffect;
 use App\Mcp\McpToolException;
 use App\Mcp\ReservationPresenter;
 use App\Repository\ReservationRepository;
@@ -30,9 +31,9 @@ final class ReservationDetailTool implements McpTool
         return 'get_reservation';
     }
 
-    public function readOnly(): bool
+    public function effect(): McpToolEffect
     {
-        return true;
+        return McpToolEffect::READ;
     }
 
     public function description(): string

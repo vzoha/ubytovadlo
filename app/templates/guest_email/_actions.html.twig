@@ -1,0 +1,15 @@
+{# Akce u e-mailu od hosta: odpověď (okno je jedno na stránce, _reply_modal) a vyřízení bez odpovědi. #}
+{% if email.replyable %}
+    <button type="button" class="btn btn-sm btn-outline-primary py-0 mt-1" data-bs-toggle="modal" data-bs-target="#guestEmailReply"
+            data-reply-url="{{ path('guest_email_reply', {id: email.id}) }}"
+            data-reply-token="{{ csrf_token('guest-email-reply-' ~ email.id) }}"
+            data-reply-to="{{ email.counterpartName ? email.counterpartName ~ ' <' ~ email.counterpartEmail ~ '>' : email.counterpartEmail }}"
+            data-reply-subject="{{ email.replySubject }}">Odpovědět</button>
+{% endif %}
+{% if email.inbound and not email.answered %}
+    <form method="post" action="{{ path('guest_email_handled', {id: email.id}) }}" class="d-inline">
+        <input type="hidden" name="_token" value="{{ csrf_token('guest-email-handled-' ~ email.id) }}">
+        <input type="hidden" name="back" value="{{ app.request.requestUri }}">
+        <button type="submit" class="btn btn-sm btn-outline-success py-0 mt-1">Vyřízeno</button>
+    </form>
+{% endif %}

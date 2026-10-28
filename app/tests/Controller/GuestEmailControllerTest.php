@@ -102,6 +102,21 @@ final class GuestEmailControllerTest extends WebTestCase
         self::assertSame('Re: Dotaz', $sent->getSubject());
     }
 
+    public function testOwnerMarksEmailHandledFromCustomerDetail(): void
+    {
+        $stay = $this->stay('jana@example.com', '2030-07-12');
+        $email = $this->email($stay);
+        $detail = '/hoste/' . $stay->getCustomer()?->getId();
+
+        $form = $this->client->request('GET', $detail)->selectButton('Vyřízeno')->form();
+        $this->client->submit($form);
+
+        self::assertResponseRedirects($detail);
+        $this->em->clear();
+        self::assertTrue(static::getContainer()->get(GuestEmailRepository::class)->find($email->getId())?->isAnswered());
+        self::assertCount(0, $this->client->request('GET', $detail)->selectButton('Vyřízeno'));
+    }
+
     private function stay(string $address, string $checkIn): Reservation
     {
         $reservation = new Reservation(Channel::WEB, new \DateTimeImmutable($checkIn));

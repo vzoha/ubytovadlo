@@ -13,6 +13,7 @@ namespace App\Mcp\Tool;
 
 use App\Config\InstanceSettings;
 use App\Mcp\McpTool;
+use App\Mcp\McpToolEffect;
 use App\Repository\SettingRepository;
 use App\Ubyport\AccommodationProfileWriter;
 use Psr\Clock\ClockInterface;
@@ -39,9 +40,9 @@ final class PropertyInfoTool implements McpTool
         return 'get_property_info';
     }
 
-    public function readOnly(): bool
+    public function effect(): McpToolEffect
     {
-        return true;
+        return McpToolEffect::READ;
     }
 
     public function description(): string

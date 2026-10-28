@@ -12,9 +12,10 @@ declare(strict_types=1);
 namespace App\Mcp\Tool;
 
 use App\GuestMail\GuestEmailReplier;
+use App\Mcp\GuestEmailArgument;
 use App\Mcp\McpTool;
+use App\Mcp\McpToolEffect;
 use App\Mcp\McpToolException;
-use App\Repository\GuestEmailRepository;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 
 /**
@@ -27,7 +28,7 @@ final class ReplyToGuestEmailTool implements McpTool
     private const UNFILLED_PLACEHOLDER = '[Sem ';
 
     public function __construct(
-        private readonly GuestEmailRepository $emails,
+        private readonly GuestEmailArgument $email,
         private readonly GuestEmailReplier $replier,
     ) {
     }
@@ -37,9 +38,9 @@ final class ReplyToGuestEmailTool implements McpTool
         return 'reply_to_guest_email';
     }
 
-    public function readOnly(): bool
+    public function effect(): McpToolEffect
     {
-        return false;
+        return McpToolEffect::SEND;
     }
 
     public function description(): string
@@ -67,11 +68,7 @@ final class ReplyToGuestEmailTool implements McpTool
 
     public function call(array $arguments): array
     {
-        $id = (int) ($arguments['id'] ?? 0);
-        $email = $id > 0 ? $this->emails->find($id) : null;
-        if ($email === null) {
-            throw new McpToolException(sprintf('E-mail s id %d neexistuje.', $id));
-        }
+        $email = $this->email->resolve($arguments);
         $text = (string) ($arguments['text'] ?? '');
         $subject = (string) ($arguments['subject'] ?? '');
         if (str_contains($text, self::UNFILLED_PLACEHOLDER)) {
