@@ -13,13 +13,13 @@ namespace App\Controller;
 
 use App\Ares\AresClient;
 use App\Checkin\CheckinAccess;
+use App\Checkin\CheckinProgressRecorder;
 use App\Config\GuestRegistrationSettings;
 use App\Entity\GuestDocument;
 use App\Entity\Reservation;
 use App\Enum\OwnerNotificationType;
 use App\Form\CheckinBillingType;
 use App\Form\GuestDocumentType;
-use App\Mrz\MrzParser;
 use App\Notification\OwnerNotifier;
 use App\Repository\GuestDocumentRepository;
 use App\Repository\NationalityRepository;
@@ -45,18 +45,21 @@ class CheckinController extends AbstractController
         private readonly GuestDocumentRepository $documents,
         private readonly NationalityRepository $nationalities,
         private readonly EntityManagerInterface $em,
-        private readonly MrzParser $mrzParser,
         private readonly AresClient $ares,
         private readonly OwnerNotifier $notifier,
         private readonly TranslatorInterface $translator,
         private readonly GuestRegistrationSettings $guestRegistration,
+        private readonly CheckinProgressRecorder $progress,
     ) {
     }
 
     #[Route('/checkin/{token}', name: 'checkin_index', methods: ['GET'], requirements: ['token' => '[a-f0-9]{64}'])]
-    public function index(string $token): Response
+    public function index(string $token, Request $request): Response
     {
         $reservation = $this->resolveReservation($token);
+        if ($reservation->getCheckinCompletedAt() === null) {
+            $this->progress->visit($reservation, $request);
+        }
         $guests = $this->documents->findByReservation($reservation);
 
         return $this->render('checkin/index.html.twig', [
@@ -84,6 +87,7 @@ class CheckinController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             $this->em->flush();
+            $this->progress->billingSaved($reservation);
             $this->addFlash('success', $this->translator->trans('flash.billing_saved', [], 'checkin'));
 
             return $this->redirectToRoute('checkin_index', ['token' => $token]);
@@ -146,6 +150,7 @@ class CheckinController extends AbstractController
         $doc = $this->resolveDocument($reservation, $id);
         $this->em->remove($doc);
         $this->em->flush();
+        $this->progress->hostDeleted($reservation);
         $this->addFlash('success', $this->translator->trans('flash.host_deleted', [], 'checkin'));
 
         return $this->redirectToRoute('checkin_index', ['token' => $token]);
@@ -184,56 +189,6 @@ class CheckinController extends AbstractController
         return $this->render('checkin/thanks.html.twig', [
             'reservation' => $reservation,
         ]);
-    }
-
-    #[Route('/checkin/{token}/mrz', name: 'checkin_mrz', methods: ['POST'], requirements: ['token' => '[a-f0-9]{64}'])]
-    public function parseMrz(string $token, Request $request): JsonResponse
-    {
-        $this->resolveReservation($token);
-
-        $payload = json_decode((string) $request->getContent(), true);
-
-        // The browser OCRs the photo several ways (preprocessing variants) and
-        // sends all reads; we merge them by per-field majority vote. A single
-        // `mrz` text (manual entry / legacy) is still accepted.
-        $texts = $payload['mrz_texts'] ?? null;
-        if (\is_array($texts)) {
-            $texts = array_values(array_filter(
-                array_map(static fn ($t) => \is_string($t) ? $t : '', $texts),
-                static fn (string $t) => trim($t) !== '',
-            ));
-            if ($texts === []) {
-                return new JsonResponse(['error' => $this->translator->trans('error.mrz_missing', [], 'checkin')], 400);
-            }
-            $result = $this->mrzParser->parseMany($texts);
-        } else {
-            $mrzText = $payload['mrz'] ?? '';
-            if (!\is_string($mrzText) || trim($mrzText) === '') {
-                return new JsonResponse(['error' => $this->translator->trans('error.mrz_missing', [], 'checkin')], 400);
-            }
-            $result = $this->mrzParser->parse($mrzText);
-        }
-
-        if ($result === null) {
-            return new JsonResponse(['error' => $this->translator->trans('error.mrz_unrecognized', [], 'checkin')], 422);
-        }
-
-        $data = $result->toArray();
-        // Confidence lets the browser gate its locate-then-recrop pass: a
-        // checksum-solid read is accepted, otherwise it falls back to the
-        // whole-image passes before prefilling.
-        $data['confidence'] = $result->confidence;
-
-        $nationality = $this->nationalities->find($result->nationalityCode);
-        $data['nationalityFound'] = $nationality !== null;
-        $nationalityName = $nationality !== null
-            ? ($request->getLocale() === 'cs' ? $nationality->getNameCs() : $nationality->getNameEn())
-            : null;
-        $data['nationalityLabel'] = $nationality
-            ? sprintf('%s — %s', $nationality->getCode(), $nationalityName)
-            : null;
-
-        return new JsonResponse($data);
     }
 
     private function resolveReservation(string $token): Reservation
@@ -289,10 +244,13 @@ class CheckinController extends AbstractController
                 $this->em->persist($doc);
             }
             $this->em->flush();
+            $this->progress->hostSaved($doc->getReservation(), $isNew, $request);
             $this->addFlash('success', $this->translator->trans('flash.host_saved', [], 'checkin'));
 
             return $this->redirectToRoute('checkin_index', ['token' => $token]);
         }
+
+        $this->progress->hostForm($doc->getReservation(), $form, $isNew);
 
         return $this->render('checkin/host.html.twig', [
             'form' => $form->createView(),

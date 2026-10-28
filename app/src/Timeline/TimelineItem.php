@@ -56,11 +56,12 @@ final readonly class TimelineItem
     }
 
     /**
-     * @param bool $dateOnly událost nese jen datum (bez smysluplného času, např. faktura) → v UI skrýt čas
+     * @param bool        $dateOnly událost nese jen datum (bez smysluplného času, např. faktura) → v UI skrýt čas
+     * @param string|null $body     podrobnosti pod titulkem (např. kroky check-inu po řádcích)
      */
-    public static function event(\DateTimeImmutable $at, string $icon, string $title, ?string $meta = null, bool $dateOnly = false): self
+    public static function event(\DateTimeImmutable $at, string $icon, string $title, ?string $meta = null, bool $dateOnly = false, ?string $body = null): self
     {
-        return new self($at, 'event', $icon, $title, null, $meta, dateOnly: $dateOnly);
+        return new self($at, 'event', $icon, $title, $body, $meta, dateOnly: $dateOnly);
     }
 
     /** E-mail z korespondence: předmět v titulku, text sbalený pod ním. */

@@ -16,6 +16,7 @@ use App\Cashflow\IncomeUpserter;
 use App\Email\GuestInbox\MailAddress;
 use App\Entity\Account;
 use App\Entity\BalanceStatement;
+use App\Entity\CheckinEvent;
 use App\Entity\Customer;
 use App\Entity\ElectricityTariff;
 use App\Entity\Embeddable\Address;
@@ -36,6 +37,7 @@ use App\Entity\User;
 use App\Entity\VatPeriod;
 use App\Enum\AccountType;
 use App\Enum\Channel;
+use App\Enum\CheckinStep;
 use App\Enum\CleaningType;
 use App\Enum\DocumentType;
 use App\Enum\EmailDirection;
@@ -344,6 +346,9 @@ class DevSeedDemoCommand extends Command
         foreach ($created as $i => $reservation) {
             $this->maybeAddCleaning($reservation, $specs[$i]);
             $this->maybeAddGuestDocuments($reservation, $specs[$i]);
+            if ($specs[$i]['checkinProgress'] ?? false) {
+                $this->addCheckinProgress($reservation);
+            }
         }
         $this->em->flush();
 
@@ -547,6 +552,30 @@ class DevSeedDemoCommand extends Command
             $gd->confirm();
             $this->em->persist($gd);
         }
+    }
+
+    /**
+     * Průběh online check-inu den před příjezdem: první host předvyplněný živou
+     * kamerou, druhý ručně po jedné chybě ve formuláři.
+     */
+    private function addCheckinProgress(Reservation $r): void
+    {
+        $day = $r->getCheckIn()->modify('-1 day')->format('Y-m-d');
+        $steps = [
+            ['19:12', CheckinStep::VISIT, ['device' => 'mobile']],
+            ['19:13', CheckinStep::HOST_FORM, ['new' => true]],
+            ['19:14', CheckinStep::DOCUMENT_READ, ['source' => 'live', 'ok' => false, 'confidence' => null]],
+            ['19:14', CheckinStep::DOCUMENT_READ, ['source' => 'live', 'ok' => true, 'confidence' => 0.62]],
+            ['19:15', CheckinStep::DOCUMENT_READ, ['source' => 'live', 'ok' => true, 'confidence' => 1.0]],
+            ['19:17', CheckinStep::HOST_SAVED, ['new' => true, 'prefill' => 'live']],
+            ['19:18', CheckinStep::HOST_FORM, ['new' => true]],
+            ['19:22', CheckinStep::HOST_INVALID, ['fields' => ['documentNumber']]],
+            ['19:23', CheckinStep::HOST_SAVED, ['new' => true, 'prefill' => null]],
+        ];
+        foreach ($steps as [$time, $step, $details]) {
+            $this->em->persist(new CheckinEvent($r, $step, $details, new \DateTimeImmutable($day . ' ' . $time)));
+        }
+        $r->markCheckinCompleted(new \DateTimeImmutable($day . ' 19:24'));
     }
 
     /** @param array<string, mixed> $s */
@@ -838,6 +867,7 @@ class DevSeedDemoCommand extends Command
                     ['George', 'Smith', '1985-03-12', 'GBR', '512345678', '21 Baker Street, London, United Kingdom'],
                     ['Emily', 'Smith', '1988-07-30', 'GBR', '512345679', '21 Baker Street, London, United Kingdom'],
                 ],
+                'checkinProgress' => true,
             ],
 
             // ── Potvrzené budoucí (CONFIRMED) ────────────────────────────────

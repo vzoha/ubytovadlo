@@ -85,6 +85,8 @@
             {% endif %}
 
             {{ form_start(form) }}
+                {# Odkud se formulář předvyplnil (průběh check-inu pro majitele); drží se i přes neplatné odeslání. #}
+                <input type="hidden" name="checkin_prefill" id="checkin-prefill" value="{{ app.request.request.get('checkin_prefill') }}">
                 <div class="card">
                     <div class="card-body">
                         <div class="row g-3">
@@ -254,7 +256,7 @@
                 locateRecropTexts(img).then(function(texts) {
                     if (texts.length === 0) { fallbackPasses(file); return; }
                     statusEl.textContent = T.evaluating;
-                    postTexts(texts).then(function(res) {
+                    postTexts(texts, 'photo').then(function(res) {
                         if (res.ok && (res.data.confidence || 0) >= LOCATE_ACCEPT) {
                             handleBackendResponse(res);
                         } else {
@@ -747,25 +749,26 @@
             if (!res.ok) {
                 return false;
             }
-            prefillForm(res.data);
+            prefillForm(res.data, res.source);
             showSuccess(T.success_prefill);
             return true;
         }
 
         // Several OCR reads → backend merges by majority vote.
         function sendTexts(texts) {
-            return postTexts(texts).then(handleBackendResponse)
+            return postTexts(texts, 'photo').then(handleBackendResponse)
                 .catch(function(err) { showError(T.comm_error + err.message); return false; });
         }
 
         // Low-level POST that returns {ok, data} without prefilling, so the
         // caller can gate on data.confidence before deciding to use the read.
-        function postTexts(texts) {
+        // `source` (live/photo/manual) only feeds the owner's check-in progress.
+        function postTexts(texts, source) {
             return fetch(mrzEndpoint, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({mrz_texts: texts})
-            }).then(function(resp) { return resp.json().then(function(d) { return {ok: resp.ok, data: d}; }); });
+                body: JSON.stringify({mrz_texts: texts, source: source})
+            }).then(function(resp) { return resp.json().then(function(d) { return {ok: resp.ok, data: d, source: source}; }); });
         }
 
         // Single text (manual entry).
@@ -773,14 +776,16 @@
             return fetch(mrzEndpoint, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({mrz: mrzText})
+                body: JSON.stringify({mrz: mrzText, source: 'manual'})
             })
-            .then(function(resp) { return resp.json().then(function(d) { return {ok: resp.ok, data: d}; }); })
+            .then(function(resp) { return resp.json().then(function(d) { return {ok: resp.ok, data: d, source: 'manual'}; }); })
             .then(handleBackendResponse)
             .catch(function(err) { showError(T.comm_error + err.message); return false; });
         }
 
-        function prefillForm(data) {
+        function prefillForm(data, source) {
+            var prefill = document.getElementById('checkin-prefill');
+            if (prefill) prefill.value = source || '';
             setField('guest_document_lastName', data.lastName);
             setField('guest_document_firstName', data.firstName);
             setField('guest_document_birthDate', data.birthDate);
@@ -938,7 +943,7 @@
                 locateRecropTexts(frame).then(function(texts) {
                     if (done) return null;
                     if (!texts.length) { miss(); return null; }
-                    return postTexts(texts).then(function(res) {
+                    return postTexts(texts, 'live').then(function(res) {
                         if (done) return;
                         if (res.ok && (res.data.confidence || 0) >= LOCATE_ACCEPT) {
                             success(res, frame);
@@ -959,7 +964,7 @@
                 image.src = frame.toDataURL('image/jpeg', 0.8);
                 preview.classList.remove('d-none');
                 stop();
-                prefillForm(res.data);
+                prefillForm(res.data, 'live');
                 showSuccess(T.camera_success);
             }
 

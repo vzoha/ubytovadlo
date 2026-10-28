@@ -797,9 +797,9 @@ class Reservation
         return $this->checkinCompletedAt;
     }
 
-    public function markCheckinCompleted(): self
+    public function markCheckinCompleted(?\DateTimeImmutable $at = null): self
     {
-        $this->checkinCompletedAt = new \DateTimeImmutable();
+        $this->checkinCompletedAt = $at ?? new \DateTimeImmutable();
         $this->touch();
 
         return $this;

@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace App\Tests\Timeline;
 
 use App\Config\ChannelMessagingSettings;
+use App\Entity\CheckinEvent;
 use App\Entity\Embeddable\GuestContact;
 use App\Entity\Reservation;
 use App\Entity\ReservationAction;
@@ -20,6 +21,7 @@ use App\Entity\Setting;
 use App\Enum\ActionDelivery;
 use App\Enum\ActionType;
 use App\Enum\Channel;
+use App\Enum\CheckinStep;
 use App\Enum\GuestMessaging;
 use App\Enum\NoteType;
 use App\Timeline\ReservationTimelineBuilder;
@@ -258,5 +260,25 @@ final class ReservationTimelineBuilderTest extends KernelTestCase
         }
 
         return $byType;
+    }
+
+    public function testCheckinProgressAppearsAtFirstStepWithCollapsedSteps(): void
+    {
+        $r = new Reservation(Channel::WEB, new \DateTimeImmutable('+5 days'));
+        $this->em->persist($r);
+        $opened = new \DateTimeImmutable('-2 hours');
+        $this->em->persist(new CheckinEvent($r, CheckinStep::VISIT, ['device' => 'desktop'], $opened));
+        $this->em->persist(new CheckinEvent($r, CheckinStep::HOST_SAVED, ['new' => true, 'prefill' => 'photo'], new \DateTimeImmutable('-1 hour')));
+        $this->em->flush();
+
+        $items = array_values(array_filter(
+            $this->builder->build($r),
+            static fn (TimelineItem $i) => $i->title === 'Průběh online check-inu',
+        ));
+
+        self::assertCount(1, $items);
+        self::assertEquals($opened, $items[0]->at);
+        self::assertStringContainsString('Host uložen · předvyplněno z dokladu (fotka)', (string) $items[0]->body);
+        self::assertStringContainsString('nedokončeno', (string) $items[0]->meta);
     }
 }

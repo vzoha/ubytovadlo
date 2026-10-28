@@ -8,6 +8,13 @@ verzování dle [SemVer](https://semver.org/lang/cs/).
 
 ### Přidáno
 
+- **Průběh online check-inu.** Na časové ose rezervace je položka *Průběh online check-inu*:
+  souhrn (od–do a doba vyplňování, zařízení, počet hostů předvyplněných z dokladu a vyplněných
+  ručně, chyby ve formuláři) a po rozbalení jednotlivé kroky — otevření check-inu, formulář
+  hosta, čtení dokladu (živá kamera, fotka nebo opsaný kód; počet pokusů a rozpoznání), pole,
+  která neprošla, uložení hosta, fakturační údaje, dokončení. Zapisují se jen technické údaje,
+  žádné hodnoty z dokladu; prohlížení check-inu přihlášeným uživatelem se nezapisuje.
+
 - **Korespondence s hosty.** E-maily ze schránky, kam píšou hosté, se každých 15 minut ukládají
   k hostům — doručené i odpovědi odeslané z poštovního klienta, bez rozesílek a automatických
   odpovědí. K rezervaci se e-mail přiřadí, když navazuje na vlákno se známou rezervací (i na

@@ -11,10 +11,12 @@ declare(strict_types=1);
 
 namespace App\Timeline;
 
+use App\Checkin\CheckinProgressSummarizer;
 use App\Entity\Reservation;
 use App\Enum\ActionStatus;
 use App\Mail\GuestMessageDelivery;
 use App\Mail\MessageLocales;
+use App\Repository\CheckinEventRepository;
 use App\Repository\GuestEmailRepository;
 use App\Repository\InvoiceRepository;
 use App\Repository\ReservationActionRepository;
@@ -22,7 +24,8 @@ use App\Repository\ReservationNoteRepository;
 
 /**
  * Sestaví časovou osu rezervace: odvozené systémové události (neukládané) +
- * ruční poznámky + naplánované akce + přiřazené e-maily, seřazené chronologicky.
+ * průběh online check-inu + ruční poznámky + naplánované akce + přiřazené
+ * e-maily, seřazené chronologicky.
  */
 class ReservationTimelineBuilder
 {
@@ -33,6 +36,8 @@ class ReservationTimelineBuilder
         private readonly GuestMessageDelivery $delivery,
         private readonly GuestMessageOutlookResolver $outlook,
         private readonly GuestEmailRepository $emails,
+        private readonly CheckinEventRepository $checkinEvents,
+        private readonly CheckinProgressSummarizer $checkinProgress,
     ) {
     }
 
@@ -42,6 +47,11 @@ class ReservationTimelineBuilder
     public function build(Reservation $reservation): array
     {
         $items = $this->systemEvents($reservation);
+
+        $progress = $this->checkinProgress($reservation);
+        if ($progress !== null) {
+            $items[] = $progress;
+        }
 
         foreach ($this->notes->findForReservation($reservation) as $note) {
             $items[] = TimelineItem::fromNote($note);
@@ -64,6 +74,20 @@ class ReservationTimelineBuilder
         });
 
         return $items;
+    }
+
+    /** Kroky hosta v online check-inu jako jedna položka se souhrnem a sbalenými kroky. */
+    private function checkinProgress(Reservation $reservation): ?TimelineItem
+    {
+        $progress = $this->checkinProgress->summarize(
+            $this->checkinEvents->findForReservation($reservation),
+            $reservation->getCheckinCompletedAt(),
+        );
+        if ($progress === null) {
+            return null;
+        }
+
+        return TimelineItem::event($progress->startedAt, '🧭', 'Průběh online check-inu', $progress->summary, body: implode("\n", $progress->steps));
     }
 
     /**
