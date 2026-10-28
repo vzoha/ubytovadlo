@@ -23,6 +23,9 @@ use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
  */
 final class ReplyToGuestEmailTool implements McpTool
 {
+    /** Začátek místa k doplnění, které asistent nechává v konceptu (viz PropertyInfoTool). */
+    private const UNFILLED_PLACEHOLDER = '[Sem ';
+
     public function __construct(
         private readonly GuestEmailRepository $emails,
         private readonly GuestEmailReplier $replier,
@@ -69,13 +72,14 @@ final class ReplyToGuestEmailTool implements McpTool
         if ($email === null) {
             throw new McpToolException(sprintf('E-mail s id %d neexistuje.', $id));
         }
-        $text = is_string($arguments['text'] ?? null) ? $arguments['text'] : '';
-        if (str_contains($text, '[Sem ')) {
+        $text = (string) ($arguments['text'] ?? '');
+        $subject = (string) ($arguments['subject'] ?? '');
+        if (str_contains($text, self::UNFILLED_PLACEHOLDER)) {
             throw new McpToolException('Text obsahuje místo k doplnění [Sem …] — doplň ho s majitelem, pak odešli.');
         }
 
         try {
-            $reply = $this->replier->reply($email, is_string($arguments['subject'] ?? null) ? $arguments['subject'] : '', $text);
+            $reply = $this->replier->reply($email, $subject, $text);
         } catch (\InvalidArgumentException $e) {
             throw new McpToolException($e->getMessage(), previous: $e);
         } catch (TransportExceptionInterface $e) {
