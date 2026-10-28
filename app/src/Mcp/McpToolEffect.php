@@ -17,7 +17,6 @@ namespace App\Mcp;
  */
 enum McpToolEffect
 {
-    /** Jen čte. */
     case READ;
     /** Změní stav v aplikaci, nic nemaže; opakované volání nic dalšího neudělá. */
     case CHANGE;
